@@ -61,6 +61,7 @@ class AuthController extends GetxController {
     _countdownWorker?.dispose();
     phoneController.dispose();
     otpController.dispose();
+    
     super.onClose();
   }
 }
