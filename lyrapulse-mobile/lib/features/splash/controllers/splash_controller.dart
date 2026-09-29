@@ -1,19 +1,19 @@
 import 'package:get/get.dart';
 
+import '../../../app/routes/app_routes.dart';
+
 class SplashController extends GetxController {
   @override
   void onReady() {
     super.onReady();
-
-    _navigateToLogin();
+    _startSplash();
   }
 
-  Future<void> _navigateToLogin() async {
+  Future<void> _startSplash() async {
     await Future.delayed(
-      const Duration(seconds: 2),
+      const Duration(seconds: 6),
     );
 
-    // TODO: Replace with your actual login route
-    // Get.offNamed(AppRoutes.login);
+    Get.offNamed(AppRoutes.login);
   }
 }

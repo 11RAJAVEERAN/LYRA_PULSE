@@ -1,7 +1,7 @@
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_dimensions.dart';
 import '../../../app/theme/app_text_styles.dart';
 import '../../../core/widgets/app_button.dart';
@@ -16,50 +16,75 @@ class LoginScreen extends GetView<AuthController> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: LayoutBuilder(builder: (context, constraints) {
-          return SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(
-                AppDimensions.pagePadding, 30, AppDimensions.pagePadding, 20),
-            child: ConstrainedBox(
-              constraints:
-                  BoxConstraints(minHeight: constraints.maxHeight - 50),
-              child: Column(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(
+                AppDimensions.pagePadding,
+                40,
+                AppDimensions.pagePadding,
+                20,
+              ),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: constraints.maxHeight - 60,
+                ),
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const AppLogo(compact: true),
-                    const SpacerBox(height: 76),
-                    Text('Welcome Back', style: AppTextStyles.headline),
+                    
+
+                         
+
+                    Text(
+                      'Welcome Back',
+                      style: AppTextStyles.headline,
+                    ),
+
                     const SizedBox(height: 10),
-                    Text('Login to continue to your employee account',
-                        style: AppTextStyles.bodySmall),
+
+                    Text(
+                      'Login to continue to your employee account',
+                      style: AppTextStyles.bodySmall,
+                    ),
+
                     const SizedBox(height: 36),
-                    Text('Phone number', style: AppTextStyles.label),
+
+                    Text(
+                      'Phone number',
+                      style: AppTextStyles.label,
+                    ),
+
                     const SizedBox(height: 10),
-                    PhoneInput(controller: controller.phoneController),
+
+                    PhoneInput(
+                      controller: controller.phoneController,
+                    ),
+
                     const SizedBox(height: 24),
+
                     AppButton(
-                        label: 'Send OTP',
-                        onPressed: controller.sendOtp,
-                        icon: Icons.arrow_forward_rounded),
-                    const SpacerBox(height: 48),
+                      label: 'Send OTP',
+                      onPressed: controller.sendOtp,
+                      icon: Icons.arrow_forward_rounded,
+                    ),
+
+                    const SizedBox(height: 48),
+
                     Center(
-                        child: Text('Powered by LyraTech',
-                            style: AppTextStyles.bodySmall
-                                .copyWith(color: AppColors.textSecondary))),
-                  ]),
-            ),
-          );
-        }),
+                      child: Text(
+                        'Powered by LyraTech',
+                        style: AppTextStyles.bodySmall,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
       ),
     );
   }
 }
 
-class SpacerBox extends StatelessWidget {
-  const SpacerBox({required this.height, super.key});
-
-  final double height;
-
-  @override
-  Widget build(BuildContext context) => SizedBox(height: height);
-}
