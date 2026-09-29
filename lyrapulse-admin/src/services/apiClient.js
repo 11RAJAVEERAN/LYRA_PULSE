@@ -23,19 +23,21 @@ apiClient.interceptors.request.use((config) => {
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
-    if (error.response?.status === 401 && apiConfig.refreshEnabled) {
+    if (error.response?.status === 401 && apiConfig.refreshEnabled && !error.config?._retry) {
       const refreshToken = storageService.getRefreshToken()
 
       if (refreshToken) {
         try {
-          const refreshResponse = await axios.post(`${apiConfig.baseUrl}/auth/refresh/`, {
+          const refreshResponse = await axios.post(`${apiConfig.baseUrl}/auth/token/refresh/`, {
             refresh: refreshToken,
           })
 
-          const nextToken = refreshResponse.data?.access ?? refreshResponse.data?.token
+          const refreshData = refreshResponse.data?.data ?? refreshResponse.data
+          const nextToken = refreshData?.access
           if (nextToken) {
-            storageService.setAuthTokens(nextToken, refreshToken)
+            storageService.setAuthTokens(nextToken, refreshData.refresh ?? refreshToken)
             if (error.config) {
+              error.config._retry = true
               error.config.headers = error.config.headers ?? {}
               error.config.headers.Authorization = `Bearer ${nextToken}`
               return apiClient.request(error.config)

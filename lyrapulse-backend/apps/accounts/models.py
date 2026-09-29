@@ -4,20 +4,25 @@ from django.db import models
 
 
 class UserManager(BaseUserManager):
-    def create_user(self, phone_number, **extra_fields):
+    def create_user(self, phone_number, password=None, **extra_fields):
         if not phone_number:
             raise ValueError("Phone number is required")
         user = self.model(phone_number=phone_number, **extra_fields)
-        user.set_unusable_password()
+        if password:
+            user.set_password(password)
+        else:
+            user.set_unusable_password()
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, phone_number, **extra_fields):
+    def create_superuser(self, phone_number, password=None, **extra_fields):
+        if not password:
+            raise ValueError("Superusers must have a password")
         extra_fields.setdefault("role", User.Role.SUPERADMIN)
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
         extra_fields.setdefault("is_active", True)
-        return self.create_user(phone_number, **extra_fields)
+        return self.create_user(phone_number, password=password, **extra_fields)
 
 
 class User(AbstractBaseUser, PermissionsMixin):
@@ -38,7 +43,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     objects = UserManager()
     USERNAME_FIELD = "phone_number"
-    REQUIRED_FIELDS = []
+    REQUIRED_FIELDS = ["email"]
 
     def __str__(self):
         return self.phone_number

@@ -37,10 +37,10 @@ class LoginScreen extends GetView<AuthController> {
                     const SizedBox(height: 10),
                     PhoneInput(controller: controller.phoneController),
                     const SizedBox(height: 24),
-                    AppButton(
-                        label: 'Send OTP',
-                        onPressed: controller.sendOtp,
-                        icon: Icons.arrow_forward_rounded),
+                    Obx(() => AppButton(
+                        label: controller.isSendingOtp.value ? 'Sending OTP…' : 'Send OTP',
+                        onPressed: controller.isSendingOtp.value ? null : controller.sendOtp,
+                        icon: Icons.arrow_forward_rounded)),
                     const SpacerBox(height: 48),
                     Center(
                         child: Text('Powered by LyraTech',

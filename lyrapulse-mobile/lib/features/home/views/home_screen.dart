@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../auth/controllers/auth_controller.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_dimensions.dart';
 import '../../../app/theme/app_text_styles.dart';
@@ -22,6 +23,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final authController = Get.find<AuthController>();
     return Scaffold(
       body: SafeArea(
         child: CustomScrollView(slivers: [
@@ -30,7 +32,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 AppDimensions.pagePadding, 22, AppDimensions.pagePadding, 0),
             sliver: SliverList(
                 delegate: SliverChildListDelegate([
-              WelcomeHeader(onNotificationTap: () => _comingSoon()),
+              Obx(() => WelcomeHeader(
+                    employeeName: authController.employee.value?.name ?? 'Employee',
+                    employeeCode: authController.employee.value?.employeeCode ?? '',
+                    onNotificationTap: () => _comingSoon(),
+                  )),
               const SizedBox(height: 26),
               const TodayStatusCard(),
               const SizedBox(height: 28),

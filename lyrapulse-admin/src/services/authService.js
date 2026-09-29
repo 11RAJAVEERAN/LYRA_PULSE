@@ -1,45 +1,38 @@
 import { storageService } from './storageService'
+import { authApi } from '../features/auth/api/authApi'
+import apiClient from './apiClient'
 
 export const authService = {
   async login({ email, password, rememberMe = false }) {
-    if (!import.meta.env.DEV) {
-      throw new Error('Production authentication is not configured.')
+    try {
+      const session = await authApi.login({ email: email.trim(), password })
+      if (!session?.access || !session?.refresh || !session?.user) {
+        throw new Error('The server returned an incomplete login response.')
+      }
+      storageService.setAuthTokens(session.access, session.refresh, session.user, rememberMe)
+      return session
+    } catch (error) {
+      const message = error.response?.data?.detail
+        ?? error.response?.data?.message
+        ?? error.message
+        ?? 'Unable to sign in.'
+      throw new Error(message)
     }
-
-    const { DEMO_ADMIN } = await import('../features/auth/config/demoAuth')
-    const emailMatches = email.trim().toLowerCase() === DEMO_ADMIN.email.toLowerCase()
-    if (!emailMatches || password !== DEMO_ADMIN.password) {
-      throw new Error('Invalid email or password')
-    }
-
-    const session = {
-      authenticated: true,
-      user: {
-        name: DEMO_ADMIN.name,
-        email: DEMO_ADMIN.email,
-        role: DEMO_ADMIN.role,
-      },
-    }
-
-    storageService.setDemoSession(session, rememberMe)
-    return session
   },
-  logout() {
-    storageService.clearAuth()
+  async logout() {
+    const refresh = storageService.getRefreshToken()
+    try {
+      if (refresh) await apiClient.post('/auth/logout/', { refresh })
+    } catch {
+      // The local session still needs to end if the API is unreachable.
+    } finally {
+      storageService.clearAuth()
+    }
   },
   isAuthenticated() {
-    if (!import.meta.env.DEV) {
-      return Boolean(storageService.getAccessToken())
-    }
-
-    const session = storageService.getDemoSession()
-    return Boolean(session?.authenticated && session.user) || Boolean(storageService.getAccessToken())
+    return Boolean(storageService.getAccessToken())
   },
   getCurrentUser() {
-    if (!import.meta.env.DEV) {
-      return null
-    }
-
-    return storageService.getDemoSession()?.user ?? null
+    return storageService.getCurrentUser()
   },
 }

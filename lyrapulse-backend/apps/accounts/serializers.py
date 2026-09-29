@@ -21,3 +21,8 @@ class PhoneSerializer(serializers.Serializer):
 
 class VerifyOTPSerializer(PhoneSerializer):
     otp = serializers.RegexField(regex=r"^\d{6}$")
+
+
+class AdminLoginSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField(trim_whitespace=False, write_only=True)

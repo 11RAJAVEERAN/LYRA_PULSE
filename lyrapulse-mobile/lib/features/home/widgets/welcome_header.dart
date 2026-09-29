@@ -4,17 +4,19 @@ import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_text_styles.dart';
 
 class WelcomeHeader extends StatelessWidget {
-  const WelcomeHeader({required this.onNotificationTap, super.key});
+  const WelcomeHeader({required this.employeeName, required this.employeeCode, required this.onNotificationTap, super.key});
 
+  final String employeeName;
+  final String employeeCode;
   final VoidCallback onNotificationTap;
 
   @override
   Widget build(BuildContext context) {
     return Row(children: [
-      const CircleAvatar(
+      CircleAvatar(
           radius: 25,
           backgroundColor: AppColors.accent,
-          child: Text('R',
+          child: Text(employeeName.isEmpty ? 'E' : employeeName.substring(0, 1).toUpperCase(),
               style: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w700,
@@ -23,9 +25,9 @@ class WelcomeHeader extends StatelessWidget {
       Expanded(
           child:
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('Good Morning, Rajaveeran 👋', style: AppTextStyles.title),
+        Text('Welcome, $employeeName 👋', style: AppTextStyles.title),
         SizedBox(height: 4),
-        Text("Here's your today's overview", style: AppTextStyles.bodySmall),
+        Text(employeeCode.isEmpty ? 'Employee account' : 'Employee ID: $employeeCode', style: AppTextStyles.bodySmall),
       ])),
       IconButton(
           onPressed: onNotificationTap,

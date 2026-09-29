@@ -7,8 +7,8 @@ export function Topbar({ title = 'Overview' }) {
   const navigate = useNavigate()
   const { currentUser, logout } = useAuth()
 
-  const handleLogout = () => {
-    logout()
+  const handleLogout = async () => {
+    await logout()
     navigate('/login', { replace: true })
   }
 

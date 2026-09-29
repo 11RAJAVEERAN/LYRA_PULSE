@@ -19,10 +19,13 @@ export function useAuth() {
     }
   }, [])
 
-  const logout = useCallback(() => {
-    authService.logout()
-    setIsAuthenticated(false)
-    setCurrentUser(null)
+  const logout = useCallback(async () => {
+    try {
+      await authService.logout()
+    } finally {
+      setIsAuthenticated(false)
+      setCurrentUser(null)
+    }
   }, [])
 
   return useMemo(
