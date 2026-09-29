@@ -7,8 +7,19 @@ import '../../features/splash/controllers/splash_controller.dart';
 class InitialBinding extends Bindings {
   @override
   void dependencies() {
-    Get.lazyPut<SplashController>(() => SplashController());
-    Get.lazyPut<AuthController>(() => AuthController());
-    Get.lazyPut<HomeController>(() => HomeController());
+    Get.put<SplashController>(
+      SplashController(),
+      permanent: true,
+    );
+
+    Get.put<AuthController>(
+      AuthController(),
+      permanent: true,
+    );
+
+    Get.put<HomeController>(
+      HomeController(),
+      permanent: true,
+    );
   }
 }

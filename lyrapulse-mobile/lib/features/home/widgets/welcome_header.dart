@@ -23,7 +23,7 @@ class WelcomeHeader extends StatelessWidget {
       Expanded(
           child:
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('Good Morning, Rajaveeran 👋', style: AppTextStyles.title),
+        Text('Good Morning, Angel 👋', style: AppTextStyles.title),
         SizedBox(height: 4),
         Text("Here's your today's overview", style: AppTextStyles.bodySmall),
       ])),

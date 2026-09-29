@@ -17,7 +17,7 @@ abstract final class AppTheme {
         textTheme: AppTextStyles.textTheme,
         appBarTheme: const AppBarTheme(
           backgroundColor: AppColors.background,
-          foregroundColor: AppColors.textPrimary,
+          foregroundColor: Color(0xFF172033),
           elevation: 0,
           centerTitle: false,
         ),
