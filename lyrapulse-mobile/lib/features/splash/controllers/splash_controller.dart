@@ -1,19 +1,21 @@
+import 'dart:async';
 import 'package:get/get.dart';
 
-import '../../../app/routes/app_routes.dart';
-
 class SplashController extends GetxController {
+  Timer? _timer;
+
   @override
-  void onReady() {
-    super.onReady();
-    _startSplash();
+  void onInit() {
+    super.onInit();
+
+    _timer = Timer(const Duration(seconds: 3), () {
+      Get.offNamed('/login');
+    });
   }
 
-  Future<void> _startSplash() async {
-    await Future.delayed(
-      const Duration(seconds: 6),
-    );
-
-    Get.offNamed(AppRoutes.login);
+  @override
+  void onClose() {
+    _timer?.cancel();
+    super.onClose();
   }
 }

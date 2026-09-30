@@ -1,19 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:flutter/services.dart';
 
-import '../../../app/theme/app_colors.dart';
-import '../controllers/splash_controller.dart';
 import '../widgets/splash_content.dart';
 
-class SplashView extends GetView<SplashController> {
+class SplashView extends StatelessWidget {
   const SplashView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      backgroundColor: AppColors.primaryDark,
-      body: SafeArea(
-        child: SplashContent(),
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Color(0xFF07164F),
+        statusBarIconBrightness: Brightness.light,
+        systemNavigationBarColor: Color(0xFF07164F),
+        systemNavigationBarIconBrightness: Brightness.light,
+      ),
+      child: const Scaffold(
+        body: SplashContent(),
       ),
     );
   }
