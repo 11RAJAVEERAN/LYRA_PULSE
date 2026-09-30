@@ -6,7 +6,6 @@ import {
   Checkbox,
   CircularProgress,
   FormControlLabel,
-  Link,
   Stack,
   TextField,
   Typography,
@@ -19,15 +18,18 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { colors } from '../../../theme/colors'
 
+// ========================================
+// 1. LOGIN VALIDATION
+// Email + Password removed
+// Mobile number added
+// ========================================
+
 const loginSchema = z.object({
-  email: z
+  mobile: z
     .string()
     .trim()
-    .min(1, 'Please enter your email address')
-    .email('Please enter a valid email address'),
-  password: z
-    .string()
-    .min(1, 'Please enter your password'),
+    .min(1, 'Please enter your mobile number')
+    .regex(/^[0-9]{10}$/, 'Please enter a valid 10-digit mobile number'),
 })
 
 export function LoginPage() {
@@ -36,6 +38,12 @@ export function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false)
   const [loginError, setLoginError] = useState('')
 
+  // ========================================
+  // 2. FORM DEFAULT VALUES
+  // email + password removed
+  // mobile added
+  // ========================================
+
   const {
     register,
     handleSubmit,
@@ -43,16 +51,23 @@ export function LoginPage() {
   } = useForm({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: '',
-      password: '',
+      mobile: '',
     },
   })
+
+  // ========================================
+  // 3. LOGIN SUBMIT
+  // ========================================
 
   const onSubmit = async (values) => {
     setLoginError('')
 
     try {
-      await login({ ...values, rememberMe })
+      await login({
+        mobile: values.mobile,
+        rememberMe,
+      })
+
       navigate('/dashboard', { replace: true })
     } catch (error) {
       setLoginError(error.message || 'Unable to sign in.')
@@ -62,34 +77,34 @@ export function LoginPage() {
   return (
     <Box
       sx={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        backgroundColor: "#002147",
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#002147',
         px: 2,
       }}
     >
       {/* Login Box */}
       <Box
         sx={{
-          width: "100%",
+          width: '100%',
           maxWidth: 440,
           height: 500,
-          backgroundColor: "#ffffff",
+          backgroundColor: '#ffffff',
           borderRadius: 3,
           p: { xs: 3, sm: 4 },
-          boxShadow: "0 20px 50px rgba(0, 0, 0, 0.25)",
+          boxShadow: '0 20px 50px rgba(0, 0, 0, 0.25)',
         }}
       >
         {/* Brand */}
-        <Box sx={{ textAlign: "center", mb: 3 }}>
+        <Box sx={{ textAlign: 'center', mb: 3 }}>
           <Typography
             sx={{
-              color: "#002147",
+              color: '#002147',
               fontWeight: 800,
               fontSize: { xs: 24, sm: 28 },
-              letterSpacing: "2px",
+              letterSpacing: '2px',
               lineHeight: 1.2,
             }}
           >
@@ -102,8 +117,8 @@ export function LoginPage() {
               color: colors.textSecondary,
               fontWeight: 600,
               fontSize: 13,
-              letterSpacing: "3px",
-              textTransform: "uppercase",
+              letterSpacing: '3px',
+              textTransform: 'uppercase',
             }}
           >
             Admin
@@ -115,7 +130,7 @@ export function LoginPage() {
           component="h2"
           variant="h3"
           sx={{
-            textAlign: "center",
+            textAlign: 'center',
             fontSize: {
               xs: 30,
               md: 36,
@@ -130,12 +145,13 @@ export function LoginPage() {
           color="text.secondary"
           sx={{
             mt: 1,
-            textAlign: "center",
+            textAlign: 'center',
           }}
         >
-          Sign in to continue to your workspace.
+          Sign in with your mobile number to continue.
         </Typography>
 
+        {/* Login Form */}
         <Box
           component="form"
           onSubmit={handleSubmit(onSubmit)}
@@ -143,58 +159,52 @@ export function LoginPage() {
           sx={{ mt: 4 }}
         >
           <Stack spacing={2.5}>
-            <TextField
-              label="Work email"
-              type="email"
-              fullWidth
-              autoComplete="username"
-              {...register("email")}
-              error={Boolean(errors.email)}
-              helperText={errors.email?.message}
-            />
+
+            {/* ========================================
+                4. MOBILE NUMBER FIELD
+                OLD: Work email
+                NEW: Mobile number
+            ======================================== */}
 
             <TextField
-              label="Password"
-              type="password"
+              label="Mobile Number"
+              type="tel"
               fullWidth
-              autoComplete="current-password"
-              {...register("password")}
-              error={Boolean(errors.password)}
-              helperText={errors.password?.message}
+              autoComplete="tel"
+              inputProps={{
+                maxLength: 10,
+              }}
+              {...register('mobile')}
+              error={Boolean(errors.mobile)}
+              helperText={errors.mobile?.message}
             />
 
+            {/* ========================================
+                5. PASSWORD FIELD REMOVED
+            ======================================== */}
+
+            {/* Remember Me */}
             <Box
               sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                gap: 1,
-                flexWrap: "wrap",
+                display: 'flex',
+                justifyContent: 'flex-start',
+                alignItems: 'center',
               }}
             >
               <FormControlLabel
                 control={
                   <Checkbox
                     checked={rememberMe}
-                    onChange={(event) => setRememberMe(event.target.checked)}
+                    onChange={(event) =>
+                      setRememberMe(event.target.checked)
+                    }
                   />
                 }
                 label="Remember me"
               />
-
-              <Link
-                href="#"
-                underline="hover"
-                color="primary.main"
-                sx={{
-                  fontSize: 14,
-                  fontWeight: 600,
-                }}
-              >
-                Forgot password?
-              </Link>
             </Box>
 
+            {/* Sign In Button */}
             <Button
               type="submit"
               variant="contained"
@@ -202,30 +212,41 @@ export function LoginPage() {
               disabled={isLoading}
               sx={{
                 minHeight: 52,
-                backgroundColor: "#002147",
-                "&:hover": {
-                  backgroundColor: "#003366",
+                backgroundColor: '#002147',
+                '&:hover': {
+                  backgroundColor: '#003366',
                 },
               }}
             >
               {isLoading ? (
                 <>
-                  <CircularProgress size={18} color="inherit" sx={{ mr: 1 }} />
+                  <CircularProgress
+                    size={18}
+                    color="inherit"
+                    sx={{ mr: 1 }}
+                  />
                   Signing in...
                 </>
               ) : (
-                "Sign In"
+                'Sign In'
               )}
             </Button>
 
-            {loginError ? <Alert severity="error">{loginError}</Alert> : null}
+            {/* Login Error */}
+            {loginError ? (
+              <Alert severity="error">
+                {loginError}
+              </Alert>
+            ) : null}
+
           </Stack>
         </Box>
 
+        {/* Footer */}
         <Typography
           sx={{
             mt: 4,
-            textAlign: "center",
+            textAlign: 'center',
             color: colors.textSecondary,
             fontSize: 12,
           }}
@@ -234,6 +255,5 @@ export function LoginPage() {
         </Typography>
       </Box>
     </Box>
-  );
+  )
 }
-
