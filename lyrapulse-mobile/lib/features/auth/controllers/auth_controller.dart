@@ -8,16 +8,8 @@ import '../../../core/utils/validators.dart';
 import '../../../core/widgets/app_snackbar.dart';
 
 class AuthController extends GetxController {
-  // ============================================================
-  // CONTROLLERS
-  // ============================================================
-
   final phoneController = TextEditingController();
   final otpController = TextEditingController();
-
-  // ============================================================
-  // OTP STATE
-  // ============================================================
 
   final secondsRemaining =
       AppConstants.otpCountdownSeconds.obs;
@@ -26,38 +18,8 @@ class AuthController extends GetxController {
 
   Worker? _countdownWorker;
 
-  // ============================================================
-  // LOGIN
-  // ============================================================
-
   bool login() {
     final phone = phoneController.text.trim();
-
-    // ----------------------------------------------------------
-    // PHONE VALIDATION
-    // ----------------------------------------------------------
-
-    final phoneError = Validators.phone(phone);
-
-    if (phoneError != null) {
-      AppSnackbar.show(phoneError);
-      return false;
-    }
-
-    // ----------------------------------------------------------
-    // SEND OTP
-    // ----------------------------------------------------------
-
-    return sendOtp();
-  }
-
-  // ============================================================
-  // SEND OTP
-  // ============================================================
-
-  bool sendOtp() {
-    final phone = phoneController.text.trim();
-
     final error = Validators.phone(phone);
 
     if (error != null) {
@@ -65,50 +27,16 @@ class AuthController extends GetxController {
       return false;
     }
 
-    // Clear previous OTP
-    otpController.clear();
-
-    // Reset countdown
-    secondsRemaining.value =
-        AppConstants.otpCountdownSeconds;
-
-    // Go to OTP screen
-    Get.toNamed(AppRoutes.otp);
-
-    return true;
+    return sendOtp();
   }
 
-  // ============================================================
-  // START OTP COUNTDOWN
-  // ============================================================
+  bool sendOtp() {
+    final phone = phoneController.text.trim();
+    final error = Validators.phone(phone);
 
-  void startCountdown() {
-    _countdownWorker?.dispose();
-
-    _countdownWorker = ever(
-      secondsRemaining,
-      (seconds) {
-        if (seconds > 0) {
-          Future<void>.delayed(
-            const Duration(seconds: 1),
-            () {
-              if (secondsRemaining.value > 0) {
-                secondsRemaining.value--;
-              }
-            },
-          );
-        }
-      },
-    );
-  }
-
-  // ============================================================
-  // RESEND OTP
-  // ============================================================
-
-  void resendOtp() {
-    if (secondsRemaining.value > 0) {
-      return;
+    if (error != null) {
+      AppSnackbar.show(error);
+      return false;
     }
 
     otpController.clear();
@@ -116,22 +44,56 @@ class AuthController extends GetxController {
     secondsRemaining.value =
         AppConstants.otpCountdownSeconds;
 
-    AppSnackbar.show(
-      'A new OTP has been sent',
+    Get.toNamed(AppRoutes.otp);
+
+    return true;
+  }
+
+  void startCountdown() {
+    _countdownWorker?.dispose();
+
+    _countdownWorker = ever<int>(
+      secondsRemaining,
+      (seconds) {
+        if (seconds <= 0) return;
+
+        Future<void>.delayed(
+          const Duration(seconds: 1),
+          () {
+            if (isClosed) return;
+
+            if (secondsRemaining.value > 0) {
+              secondsRemaining.value--;
+            }
+          },
+        );
+      },
     );
   }
 
-  // ============================================================
-  // VERIFY OTP
-  // ============================================================
+  void resendOtp() {
+    if (secondsRemaining.value > 0) return;
+
+    otpController.clear();
+
+    secondsRemaining.value =
+        AppConstants.otpCountdownSeconds;
+
+    AppSnackbar.show('A new OTP has been sent');
+  }
 
   void verifyOtp() {
+    if (isVerifying.value) return;
+
     final otp = otpController.text.trim();
 
+    if (otp.length != 6) {
+      AppSnackbar.show('Enter the valid 6-digit OTP');
+      return;
+    }
+
     if (otp != AppConfig.mockOtp) {
-      AppSnackbar.show(
-        'Enter the valid 6-digit OTP',
-      );
+      AppSnackbar.show('Enter the valid 6-digit OTP');
       return;
     }
 
@@ -140,23 +102,18 @@ class AuthController extends GetxController {
     Future<void>.delayed(
       const Duration(milliseconds: 450),
       () {
+        if (isClosed) return;
+
         isVerifying.value = false;
 
-        Get.offAllNamed(
-          AppRoutes.home,
-        );
+        Get.offAllNamed(AppRoutes.home);
       },
     );
   }
 
-  // ============================================================
-  // CLEANUP
-  // ============================================================
-
   @override
   void onClose() {
     _countdownWorker?.dispose();
-
     phoneController.dispose();
     otpController.dispose();
 

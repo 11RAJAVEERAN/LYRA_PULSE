@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -9,162 +10,345 @@ class LoginScreen extends GetView<AuthController> {
 
   @override
   Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
+    final size = MediaQuery.of(context).size;
+
+    // Reference design size
+    const double designWidth = 441;
+    const double designHeight = 776;
+
+    final double sx = size.width / designWidth;
+    final double sy = size.height / designHeight;
+
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
+        statusBarBrightness: Brightness.light,
+        systemNavigationBarColor: Color(0xFFF8FBFF),
+        systemNavigationBarIconBrightness: Brightness.dark,
+      ),
+    );
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF7FAFE),
       resizeToAvoidBottomInset: true,
 
-      body: SafeArea(
+      body: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+
         child: Stack(
           children: [
-            // ============================================================
-            // MAIN LOGIN CONTENT
-            // ============================================================
-Positioned(
-  top: screenHeight * 0.23,
-  left: 10,
-  right: 10,
-  child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // ======================================================
-                  // LYRA L LOGO
-                  // ======================================================
 
-                  SizedBox(
-                    width: 65,
-                    height: 65,
-                    child: CustomPaint(
-                      painter: _LyraLogoPainter(),
-                    ),
+            // ==========================================================
+            // BACKGROUND
+            // ==========================================================
+
+            Positioned.fill(
+              child: Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Color(0xFFF8FBFF),
+                      Color(0xFFF6FAFF),
+                      Color(0xFFF9FCFF),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            // ==========================================================
+            // TOP ILLUSTRATION
+            // ==========================================================
+
+            Positioned(
+              left: 0,
+              top: 0,
+              width: size.width,
+              height: 300 * sy,
+              child: Image.asset(
+                'assets/images/login_illustration.png.png',
+                fit: BoxFit.fill,
+              ),
+            ),
+
+            // ==========================================================
+            // LYRA PULSE
+            // ==========================================================
+
+            Positioned(
+              top: 384 * sy,
+              left: 0,
+              right: 0,
+              child: Text(
+                'Lyra Pulse',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.poppins(
+                  color: const Color(0xFF11295E),
+                  fontSize: 28 * ((sx + sy) / 2),
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.7,
+                  height: 1,
+                ),
+              ),
+            ),
+
+            // ==========================================================
+            // EMPLOYEE LOGIN
+            // ==========================================================
+
+            Positioned(
+              top: 418 * sy,
+              left: 0,
+              right: 0,
+              child: Text(
+                'Employee Login',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.poppins(
+                  color: const Color(0xFF29436F),
+                  fontSize: 12 * ((sx + sy) / 2),
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+            ),
+
+            // ==========================================================
+            // PHONE NUMBER LABEL
+            // ==========================================================
+
+            Positioned(
+              top: 465 * sy,
+              left: 28 * sx,
+              child: Text(
+                'Phone Number',
+                style: GoogleFonts.poppins(
+                  color: const Color(0xFF29477B),
+                  fontSize: 12 * ((sx + sy) / 2),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+
+            // ==========================================================
+            // PHONE FIELD
+            // ==========================================================
+
+            Positioned(
+              top: 487 * sy,
+              left: 28 * sx,
+              right: 26 * sx,
+              height: 48 * sy,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.72),
+
+                  borderRadius: BorderRadius.circular(
+                    8 * ((sx + sy) / 2),
                   ),
 
-                  const SizedBox(height: 7),
-
-                  // ======================================================
-                  // LYRA PULSE
-                  // ======================================================
-
-                  Text(
-                    'Lyra Pulse',
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.poppins(
-                      color: const Color(0xFF172B5C),
-                      fontSize: 26,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: -0.5,
-                      height: 1.1,
-                    ),
+                  border: Border.all(
+                    color: const Color(0xFFD6E2F2),
+                    width: 1,
                   ),
+                ),
 
-                  const SizedBox(height: 2),
+                child: Row(
+                  children: [
 
-                  // ======================================================
-                  // EMPLOYEE LOGIN
-                  // ======================================================
+                    // ==================================================
+                    // +91
+                    // ==================================================
 
-                  Text(
-                    'Employee Login',
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.poppins(
-                      color: const Color(0xFF30446F),
-                      fontSize: 13,
-                      fontWeight: FontWeight.w400,
-                      height: 1.2,
-                    ),
-                  ),
+                    Padding(
+                      padding: EdgeInsets.only(
+                        left: 15 * sx,
+                        right: 10 * sx,
+                      ),
 
-                  const SizedBox(height: 28),
+                      child: Row(
+                        children: [
 
-                  // ======================================================
-                  // PHONE NUMBER LABEL
-                  // ======================================================
+                          Text(
+                            '+91',
+                            style: GoogleFonts.poppins(
+                              color: const Color(0xFF34517E),
+                              fontSize: 11 * ((sx + sy) / 2),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
 
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      'Phone Number',
-                      style: GoogleFonts.poppins(
-                        color: const Color(0xFF243B68),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        height: 1.2,
+                          SizedBox(
+                            width: 3 * sx,
+                          ),
+
+                          Icon(
+                            Icons.keyboard_arrow_down_rounded,
+                            size: 15 * ((sx + sy) / 2),
+                            color: const Color(0xFF577296),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
 
-                  const SizedBox(height: 6),
+                    // ==================================================
+                    // DIVIDER
+                    // ==================================================
 
-                  // ======================================================
-                  // PHONE NUMBER FIELD
-                  // ======================================================
-
-                  SizedBox(
-                    width: double.infinity,
-                    height: 46,
-                    child: _PhoneField(
-                      controller: controller.phoneController,
+                    Container(
+                      width: 1,
+                      height: 24 * sy,
+                      color: const Color(0xFFDCE6F2),
                     ),
-                  ),
 
-                  const SizedBox(height: 16),
+                    // ==================================================
+                    // PHONE INPUT
+                    // ==================================================
 
-                  // ======================================================
-                  // LOGIN BUTTON
-                  // ======================================================
+                    Expanded(
+                      child: TextField(
+                        controller: controller.phoneController,
 
-                  SizedBox(
-                    width: double.infinity,
-                    height: 46,
-                    child: ElevatedButton(
-                      onPressed: controller.login,
+                        keyboardType: TextInputType.phone,
 
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF4038B5),
-                        foregroundColor: Colors.white,
+                        textInputAction: TextInputAction.done,
 
-                        elevation: 0,
+                        maxLength: 10,
 
-                        padding: EdgeInsets.zero,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                        ],
 
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(6),
+                        style: GoogleFonts.poppins(
+                          color: const Color(0xFF1C3764),
+                          fontSize: 11 * ((sx + sy) / 2),
+                          fontWeight: FontWeight.w500,
+                        ),
+
+                        decoration: InputDecoration(
+                          counterText: '',
+                          border: InputBorder.none,
+
+                          hintText:
+                              'Enter your phone number',
+
+                          hintStyle: GoogleFonts.poppins(
+                            color: const Color(0xFFA0B0C7),
+                            fontSize: 10.5 * ((sx + sy) / 2),
+                            fontWeight: FontWeight.w400,
+                          ),
+
+                          contentPadding:
+                              EdgeInsets.symmetric(
+                            horizontal: 12 * sx,
+                            vertical: 0,
+                          ),
                         ),
                       ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
 
+            // ==========================================================
+            // LOGIN BUTTON
+            // ==========================================================
+
+            Positioned(
+              top: 554 * sy,
+              left: 28 * sx,
+              right: 26 * sx,
+              height: 46 * sy,
+
+              child: Material(
+                color: Colors.transparent,
+
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(
+                    8 * ((sx + sy) / 2),
+                  ),
+
+                  onTap: () {
+                    FocusScope.of(context).unfocus();
+                    controller.sendOtp();
+                  },
+
+                  child: Ink(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(
+                        8 * ((sx + sy) / 2),
+                      ),
+
+                      gradient: const LinearGradient(
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+
+                        colors: [
+                          Color(0xFF4139B5),
+                          Color(0xFF5D55DF),
+                        ],
+                      ),
+
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF4D45C9)
+                              .withOpacity(0.18),
+                          blurRadius: 12,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
+                    ),
+
+                    child: Center(
                       child: Text(
                         'Login',
                         style: GoogleFonts.poppins(
                           color: Colors.white,
-                          fontSize: 12,
+                          fontSize: 12 * ((sx + sy) / 2),
                           fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
                   ),
-                ],
+                ),
               ),
             ),
 
-            // ============================================================
+            // ==========================================================
             // POWERED BY LYRATECH
-            // ============================================================
+            // ==========================================================
+
+            Positioned(
+              top: 699 * sy,
+              left: 0,
+              right: 0,
+              child: Text(
+                'POWERED BY LYRATECH',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.poppins(
+                  color: const Color(0xFF94A7C0),
+                  fontSize: 8 * ((sx + sy) / 2),
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: 1.3,
+                ),
+              ),
+            ),
+
+            // ==========================================================
+            // BOTTOM SOFT WAVES
+            // ==========================================================
 
             Positioned(
               left: 0,
               right: 0,
-              bottom: 52,
+              bottom: 0,
+              height: 105 * sy,
 
-              child: Center(
-                child: Text(
-                 'POWERED BY LYRATECH',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.poppins(
-                    color: const Color(0xFF8996B0),
-                    fontSize: 10,
-                    fontWeight: FontWeight.w400,
-                  ),
+              child: IgnorePointer(
+                child: CustomPaint(
+                  painter: _LoginBottomWavePainter(),
                 ),
               ),
             ),
@@ -175,123 +359,11 @@ Positioned(
   }
 }
 
-// ======================================================================
-// PHONE FIELD
-// ======================================================================
+// ====================================================================
+// BOTTOM WAVES
+// ====================================================================
 
-class _PhoneField extends StatelessWidget {
-  final TextEditingController controller;
-
-  const _PhoneField({
-    required this.controller,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      height: 46,
-
-      decoration: BoxDecoration(
-        color: Colors.white,
-
-        border: Border.all(
-          color: const Color(0xFFD4DCEB),
-          width: 1,
-        ),
-
-        borderRadius: BorderRadius.circular(6),
-      ),
-
-      child: Row(
-        children: [
-          const SizedBox(width: 12),
-
-          // ============================================================
-          // COUNTRY CODE
-          // ============================================================
-
-          Text(
-            '+91',
-            style: GoogleFonts.poppins(
-              color: const Color(0xFF30446F),
-              fontSize: 10,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-
-          const SizedBox(width: 10),
-
-          // ============================================================
-          // VERTICAL DIVIDER
-          // ============================================================
-
-          Container(
-            width: 1,
-            height: 21,
-            color: const Color(0xFFD9DFEA),
-          ),
-
-          const SizedBox(width: 10),
-
-          // ============================================================
-          // PHONE INPUT
-          // ============================================================
-
-          Expanded(
-            child: TextField(
-              controller: controller,
-
-              keyboardType: TextInputType.phone,
-
-              textInputAction: TextInputAction.done,
-
-              maxLength: 10,
-
-              cursorColor: const Color(0xFF4038B5),
-
-              style: GoogleFonts.poppins(
-                color: const Color(0xFF172B5C),
-                fontSize: 10,
-                fontWeight: FontWeight.w500,
-              ),
-
-              decoration: InputDecoration(
-                counterText: '',
-
-                border: InputBorder.none,
-
-                enabledBorder: InputBorder.none,
-
-                focusedBorder: InputBorder.none,
-
-                isDense: true,
-
-                contentPadding: EdgeInsets.zero,
-
-                hintText: 'Enter your phone number',
-
-                hintStyle: GoogleFonts.poppins(
-                  color: const Color(0xFFA5B0C3),
-                  fontSize: 10,
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-            ),
-          ),
-
-          const SizedBox(width: 12),
-        ],
-      ),
-    );
-  }
-}
-
-// ======================================================================
-// LYRA L LOGO
-// ======================================================================
-
-class _LyraLogoPainter extends CustomPainter {
+class _LoginBottomWavePainter extends CustomPainter {
   @override
   void paint(
     Canvas canvas,
@@ -300,131 +372,54 @@ class _LyraLogoPainter extends CustomPainter {
     final double w = size.width;
     final double h = size.height;
 
-    final Path path = Path();
+    // ---------------------------------------------------------------
+    // First wave
+    // ---------------------------------------------------------------
 
-    // ================================================================
-    // TOP OF L
-    // ================================================================
+    final Path wave1 = Path();
 
-    path.moveTo(
-      w * 0.38,
-      h * 0.08,
+    wave1.moveTo(
+      0,
+      h * 0.38,
     );
 
-    path.cubicTo(
-      w * 0.38,
-      h * 0.03,
-      w * 0.43,
-      0,
-      w * 0.50,
-      0,
+    wave1.cubicTo(
+      w * 0.18,
+      h * 0.12,
+      w * 0.35,
+      h * 0.48,
+      w * 0.54,
+      h * 0.56,
     );
 
-    path.cubicTo(
-      w * 0.57,
-      0,
-      w * 0.62,
-      h * 0.05,
-      w * 0.62,
+    wave1.cubicTo(
+      w * 0.72,
+      h * 0.64,
+      w * 0.82,
+      h * 0.27,
+      w,
       h * 0.12,
     );
 
-    // ================================================================
-    // VERTICAL SECTION
-    // ================================================================
-
-    path.lineTo(
-      w * 0.62,
-      h * 0.58,
-    );
-
-    // ================================================================
-    // CURVED INNER TRANSITION
-    // ================================================================
-
-    path.cubicTo(
-      w * 0.62,
-      h * 0.63,
-      w * 0.65,
-      h * 0.65,
-      w * 0.70,
-      h * 0.65,
-    );
-
-    // ================================================================
-    // HORIZONTAL SECTION
-    // ================================================================
-
-    path.lineTo(
-      w * 0.87,
-      h * 0.65,
-    );
-
-    path.cubicTo(
-      w * 0.94,
-      h * 0.65,
+    wave1.lineTo(
       w,
-      h * 0.70,
-      w,
-      h * 0.77,
+      h,
     );
 
-    path.cubicTo(
-      w,
-      h * 0.84,
-      w * 0.94,
-      h * 0.89,
-      w * 0.87,
-      h * 0.89,
+    wave1.lineTo(
+      0,
+      h,
     );
 
-    path.lineTo(
-      w * 0.48,
-      h * 0.89,
-    );
+    wave1.close();
 
-    // ================================================================
-    // BOTTOM CURVE
-    // ================================================================
-
-    path.cubicTo(
-      w * 0.38,
-      h * 0.89,
-      w * 0.31,
-      h * 0.82,
-      w * 0.31,
-      h * 0.72,
-    );
-
-    path.lineTo(
-      w * 0.31,
-      h * 0.12,
-    );
-
-    path.cubicTo(
-      w * 0.31,
-      h * 0.06,
-      w * 0.34,
-      h * 0.03,
-      w * 0.38,
-      h * 0.08,
-    );
-
-    path.close();
-
-    // ================================================================
-    // LOGO GRADIENT
-    // ================================================================
-
-    final Paint logoPaint = Paint()
-      ..isAntiAlias = true
+    final Paint paint1 = Paint()
       ..shader = const LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
         colors: [
-          Color(0xFF5C6EFF),
-          Color(0xFF3D82FF),
-          Color(0xFF087DFF),
+          Color(0x221C82FF),
+          Color(0x121D6DFF),
         ],
       ).createShader(
         Rect.fromLTWH(
@@ -435,36 +430,78 @@ class _LyraLogoPainter extends CustomPainter {
         ),
       );
 
-    // ================================================================
-    // SOFT LOGO GLOW
-    // ================================================================
+    canvas.drawPath(
+      wave1,
+      paint1,
+    );
 
-    final Paint glowPaint = Paint()
-      ..isAntiAlias = true
-      ..color = const Color(0xFF3479FF).withOpacity(0.18)
-      ..maskFilter = const MaskFilter.blur(
-        BlurStyle.normal,
-        8,
+    // ---------------------------------------------------------------
+    // Second wave
+    // ---------------------------------------------------------------
+
+    final Path wave2 = Path();
+
+    wave2.moveTo(
+      0,
+      h * 0.58,
+    );
+
+    wave2.cubicTo(
+      w * 0.18,
+      h * 0.34,
+      w * 0.35,
+      h * 0.80,
+      w * 0.55,
+      h * 0.82,
+    );
+
+    wave2.cubicTo(
+      w * 0.76,
+      h * 0.84,
+      w * 0.84,
+      h * 0.36,
+      w,
+      h * 0.30,
+    );
+
+    wave2.lineTo(
+      w,
+      h,
+    );
+
+    wave2.lineTo(
+      0,
+      h,
+    );
+
+    wave2.close();
+
+    final Paint paint2 = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          Color(0x171B78FF),
+          Color(0x081B65FF),
+        ],
+      ).createShader(
+        Rect.fromLTWH(
+          0,
+          0,
+          w,
+          h,
+        ),
       );
 
     canvas.drawPath(
-      path,
-      glowPaint,
-    );
-
-    // ================================================================
-    // DRAW LOGO
-    // ================================================================
-
-    canvas.drawPath(
-      path,
-      logoPaint,
+      wave2,
+      paint2,
     );
   }
 
   @override
   bool shouldRepaint(
-    covariant CustomPainter oldDelegate,
+    covariant _LoginBottomWavePainter oldDelegate,
   ) {
     return false;
   }

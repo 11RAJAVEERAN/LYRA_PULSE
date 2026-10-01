@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../features/auth/controllers/auth_controller.dart';
 import '../../features/auth/views/login_screen.dart';
 import '../../features/auth/views/otp_screen.dart';
 import '../../features/home/views/home_screen.dart';
 import '../../features/splash/views/splash_screen.dart';
-
 import '../../features/attendance/views/location_verification_screen.dart';
-
 import '../../features/permission/views/permission_start_screen.dart';
 import '../../features/permission/views/permission_submitted_screen.dart';
 import '../../features/permission/views/permission_return_screen.dart';
@@ -16,96 +15,71 @@ import 'app_routes.dart';
 
 abstract final class AppPages {
   static final List<GetPage<dynamic>> pages = [
-    // ===============================================================
     // INITIAL
-    // ===============================================================
-
     GetPage(
       name: AppRoutes.initial,
       page: () => const SplashScreen(),
     ),
 
-    // ===============================================================
     // SPLASH
-    // ===============================================================
-
     GetPage(
       name: AppRoutes.splash,
       page: () => const SplashScreen(),
     ),
 
-    // ===============================================================
-    // AUTH
-    // ===============================================================
-
+    // LOGIN
     GetPage(
       name: AppRoutes.login,
       page: () => const LoginScreen(),
+      binding: BindingsBuilder(() {
+        if (!Get.isRegistered<AuthController>()) {
+          Get.put<AuthController>(AuthController());
+        }
+      }),
     ),
 
+    // OTP
     GetPage(
       name: AppRoutes.otp,
       page: () => const OtpScreen(),
+      binding: BindingsBuilder(() {
+        if (!Get.isRegistered<AuthController>()) {
+          Get.put<AuthController>(AuthController());
+        }
+      }),
     ),
 
-    // ===============================================================
     // HOME
-    // ===============================================================
-
     GetPage(
       name: AppRoutes.home,
       page: () => const HomeScreen(),
     ),
 
-    // ===============================================================
-    // ATTENDANCE FLOW
-    // ===============================================================
-
+    // ATTENDANCE
     GetPage(
       name: AppRoutes.locationVerification,
       page: () => const LocationVerificationScreen(),
     ),
 
-    // ===============================================================
-    // PERMISSION FLOW
-    // ===============================================================
-
-    // Step 1
-    // Home
-    //   ↓
-    // Permission Start
-
+    // PERMISSION START
     GetPage(
       name: AppRoutes.permissionStart,
       page: () => const PermissionStartScreen(),
     ),
 
-    // Step 2
-    // Permission Start
-    //   ↓
-    // Permission Submitted
-
+    // PERMISSION SUBMITTED
     GetPage(
       name: AppRoutes.permissionSubmitted,
       page: () => const PermissionSubmittedScreen(),
     ),
 
-    // Step 3
-    // Permission Submitted
-    //   ↓
-    // Permission Return
-    //   ↓
-    // Location + Face Verification
-
+    // PERMISSION RETURN
     GetPage(
       name: AppRoutes.permissionReturn,
       page: () => const PermissionReturnScreen(),
     ),
 
-    // ===============================================================
     // BOTTOM NAVIGATION
-    // ===============================================================
-
     GetPage(
       name: AppRoutes.attendance,
       page: () => const _PlaceholderPage(
@@ -132,14 +106,7 @@ abstract final class AppPages {
   ];
 }
 
-// ===================================================================
 // PLACEHOLDER PAGE
-// ===================================================================
-//
-// Temporary screen for bottom navigation.
-// Later Attendance / Leave / Profile can be replaced
-// with their actual screens.
-// ===================================================================
 
 class _PlaceholderPage extends StatelessWidget {
   const _PlaceholderPage({
@@ -154,11 +121,9 @@ class _PlaceholderPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF04111F),
-
       appBar: AppBar(
         backgroundColor: const Color(0xFF04111F),
         elevation: 0,
-
         leading: IconButton(
           onPressed: Get.back,
           icon: const Icon(
@@ -166,7 +131,6 @@ class _PlaceholderPage extends StatelessWidget {
             color: Colors.white,
           ),
         ),
-
         title: Text(
           title,
           style: const TextStyle(
@@ -176,7 +140,6 @@ class _PlaceholderPage extends StatelessWidget {
           ),
         ),
       ),
-
       body: Center(
         child: Icon(
           icon,
