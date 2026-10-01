@@ -1,12 +1,14 @@
 import 'package:get/get.dart';
+import 'app_routes.dart';
 
 import '../../features/auth/controllers/auth_controller.dart';
 import '../../features/auth/views/login_screen.dart';
 import '../../features/auth/views/otp_screen.dart';
-import '../../features/home/views/home_screen.dart';
 import '../../features/splash/controllers/splash_controller.dart';
 import '../../features/splash/views/splash_screen.dart';
-import 'app_routes.dart';
+import '../../features/home/bindings/home_binding.dart';
+import '../../features/home/views/home_screen.dart';
+
 
 abstract final class AppPages {
   static final List<GetPage<dynamic>> pages = [
@@ -50,11 +52,11 @@ abstract final class AppPages {
         }
       }),
     ),
+GetPage(
+  name: AppRoutes.home,
+  page: () => const HomeScreen(),
+  binding: HomeBinding(),
+),
 
-    // Home
-    GetPage(
-      name: AppRoutes.home,
-      page: () => const HomeScreen(),
-    ),
   ];
 }

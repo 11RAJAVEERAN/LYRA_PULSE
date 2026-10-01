@@ -2,88 +2,103 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../app/theme/app_colors.dart';
-import '../../../app/theme/app_dimensions.dart';
-import '../../../app/theme/app_text_styles.dart';
-import '../widgets/bottom_nav_bar.dart';
-import '../widgets/quick_action_card.dart';
-import '../widgets/today_status_card.dart';
-import '../widgets/today_summary_card.dart';
-import '../widgets/welcome_header.dart';
+import '../controllers/home_controller.dart';
+import '../widgets/attendance_status_card.dart';
+import '../widgets/attendance_summary.dart';
+import '../widgets/check_in_out_card.dart';
+import '../widgets/home_bottom_navigation.dart';
+import '../widgets/home_content.dart';
+import '../widgets/location_status_card.dart';
+import '../widgets/today_progress_card.dart';
+import '../widgets/weekly_attendance.dart';
 
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends GetView<HomeController> {
   const HomeScreen({super.key});
-
-  @override
-  State<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends State<HomeScreen> {
-  int selectedIndex = 0;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
+
       body: SafeArea(
-        child: CustomScrollView(slivers: [
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(
-                AppDimensions.pagePadding, 22, AppDimensions.pagePadding, 0),
-            sliver: SliverList(
-                delegate: SliverChildListDelegate([
-              WelcomeHeader(onNotificationTap: () => _comingSoon()),
-              const SizedBox(height: 26),
-              const TodayStatusCard(),
-              const SizedBox(height: 28),
-              Text('Quick Actions', style: AppTextStyles.title),
-              const SizedBox(height: 14),
-              GridView.count(
-                crossAxisCount: 2,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                mainAxisSpacing: 12,
-                crossAxisSpacing: 12,
-                childAspectRatio: 1.65,
-                children: const [
-                  QuickActionCard(
-                      icon: Icons.login_rounded,
-                      title: 'Check In',
-                      color: AppColors.primary),
-                  QuickActionCard(
-                      icon: Icons.calendar_month_rounded,
-                      title: 'Attendance',
-                      color: AppColors.secondary),
-                  QuickActionCard(
-                      icon: Icons.description_outlined,
-                      title: 'Permission',
-                      color: AppColors.warning),
-                  QuickActionCard(
-                      icon: Icons.logout_rounded,
-                      title: 'Check Out',
-                      color: AppColors.success),
-                ],
+        child: Obx(
+          () => CustomScrollView(
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              // Header
+              SliverToBoxAdapter(
+                child: HomeHeader(
+                  employeeName: controller.employeeName.value,
+                  designation: controller.designation.value,
+                  employeeId: controller.employeeId.value,
+                ),
               ),
-              const SizedBox(height: 28),
-              Text('Today\'s Summary', style: AppTextStyles.title),
-              const SizedBox(height: 14),
-              const TodaySummaryCard(),
-              const SizedBox(height: 22),
-            ])),
+
+              // Today's attendance
+              SliverToBoxAdapter(
+                child: AttendanceStatusCard(
+                  status: controller.attendanceStatus.value,
+                  currentTime: controller.currentTime.value,
+                  currentDate: controller.currentDate.value,
+                  checkInTime: controller.checkInTime.value,
+                  checkOutTime: controller.checkOutTime.value,
+                  workingHours: controller.workingHours.value,
+                  isCheckedIn: controller.isCheckedIn.value,
+                ),
+              ),
+
+              // Weekly attendance
+              const SliverToBoxAdapter(
+                child: WeeklyAttendance(),
+              ),
+
+              // Location
+              SliverToBoxAdapter(
+                child: LocationStatusCard(
+                  isVerified: controller.isLocationVerified.value,
+                  locationName: controller.locationName.value,
+                  distance: controller.locationDistance.value,
+                ),
+              ),
+
+              // Check In / Check Out
+              SliverToBoxAdapter(
+                child: CheckInOutCard(
+                  isCheckedIn: controller.isCheckedIn.value,
+                  onCheckIn: controller.checkIn,
+                  onCheckOut: controller.checkOut,
+                ),
+              ),
+
+              // Progress
+              SliverToBoxAdapter(
+                child: TodayProgressCard(
+                  progress: controller.progress.value,
+                  workingHours: controller.workingHours.value,
+                  checkInTime: controller.checkInTime.value,
+                  totalShiftHours: controller.totalShiftHours.value,
+                ),
+              ),
+
+              // Monthly summary
+              SliverToBoxAdapter(
+                child: AttendanceSummary(
+                  present: controller.presentDays.value,
+                  absent: controller.absentDays.value,
+                  late: controller.lateDays.value,
+                  leave: controller.leaveDays.value,
+                ),
+              ),
+
+              const SliverToBoxAdapter(
+                child: SizedBox(height: 20),
+              ),
+            ],
           ),
-        ]),
+        ),
       ),
-      bottomNavigationBar: BottomNavBar(
-          selectedIndex: selectedIndex,
-          onChanged: (index) {
-            setState(() => selectedIndex = index);
-            if (index != 0) _comingSoon();
-          }),
+
+      bottomNavigationBar: const HomeBottomNavigation(),
     );
   }
-
-  void _comingSoon() => Get.snackbar('Lyra Pulse', 'Coming Soon',
-      snackPosition: SnackPosition.BOTTOM,
-      margin: const EdgeInsets.all(16),
-      borderRadius: 14,
-      backgroundColor: AppColors.primaryDark,
-      colorText: Colors.white);
 }
