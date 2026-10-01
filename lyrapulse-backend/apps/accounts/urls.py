@@ -1,5 +1,6 @@
 from django.urls import path
-from .views import AdminLoginView, LogoutView, MeView, ResendOTPView, SendOTPView, TokenRefreshEnvelopeView, VerifyOTPView
+from .views import AdminOTPSendView, AdminOTPVerifyView, LogoutView, MeView, ResendOTPView, SendOTPView, TokenRefreshEnvelopeView, VerifyOTPView
+from .admin_views import AdminUserDetailView, AdminUserListCreateView
 
 urlpatterns = [
     # ==========================================
@@ -17,7 +18,10 @@ urlpatterns = [
     # ==========================================
     # ADMIN WEB AUTHENTICATION APIs
     # ==========================================
-    path("admin-login/", AdminLoginView.as_view(), name="admin-login"),
+    path("admin/send-otp/", AdminOTPSendView.as_view(), name="admin-send-otp"),
+    path("admin/verify-otp/", AdminOTPVerifyView.as_view(), name="admin-verify-otp"),
+    path("admin/users/", AdminUserListCreateView.as_view(), name="admin-users"),
+    path("admin/users/<int:pk>/", AdminUserDetailView.as_view(), name="admin-user-detail"),
 
     # ==========================================
     # COMMON AUTHENTICATION APIs

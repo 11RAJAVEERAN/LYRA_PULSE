@@ -28,7 +28,9 @@ class UserManager(BaseUserManager):
 class User(AbstractBaseUser, PermissionsMixin):
     class Role(models.TextChoices):
         SUPERADMIN = "SUPERADMIN", "Superadmin"
+        ADMIN = "ADMIN", "Admin"
         HR = "HR", "HR"
+        MANAGER = "MANAGER", "Manager"
         EMPLOYEE = "EMPLOYEE", "Employee"
 
     phone_number = models.CharField(max_length=15, unique=True)
@@ -56,6 +58,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 class OTPVerification(models.Model):
     class Purpose(models.TextChoices):
         LOGIN = "LOGIN", "Login"
+        ADMIN_LOGIN = "ADMIN_LOGIN", "Admin login"
         PHONE_VERIFICATION = "PHONE_VERIFICATION", "Phone verification"
 
     phone_number = models.CharField(max_length=15, db_index=True)

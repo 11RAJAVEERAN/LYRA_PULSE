@@ -4,7 +4,7 @@ from rest_framework.generics import ListCreateAPIView, RetrieveUpdateAPIView, Re
 from rest_framework.permissions import IsAuthenticated
 from drf_spectacular.utils import extend_schema, OpenApiResponse, inline_serializer
 
-from apps.accounts.permissions import IsEmployee, IsHROrAdmin
+from apps.accounts.permissions import CanAddEmployees, CanChangeEmployees, CanViewEmployees, IsEmployee
 from apps.common.responses import success_response
 
 from .models import Employee
@@ -12,7 +12,9 @@ from .serializers import EmployeeManagementSerializer, EmployeeSerializer
 
 
 class EmployeeManagementListCreateView(ListCreateAPIView):
-    permission_classes = [IsAuthenticated, IsHROrAdmin]
+    def get_permissions(self):
+        permission = CanAddEmployees if self.request.method == "POST" else CanViewEmployees
+        return [IsAuthenticated(), permission()]
     serializer_class = EmployeeManagementSerializer
 
     def get_queryset(self):
@@ -39,7 +41,9 @@ class EmployeeManagementListCreateView(ListCreateAPIView):
 
 
 class EmployeeManagementDetailView(RetrieveUpdateAPIView):
-    permission_classes = [IsAuthenticated, IsHROrAdmin]
+    def get_permissions(self):
+        permission = CanChangeEmployees if self.request.method in {"PUT", "PATCH"} else CanViewEmployees
+        return [IsAuthenticated(), permission()]
     serializer_class = EmployeeManagementSerializer
     queryset = Employee.objects.select_related("user", "branch", "department", "designation")
 

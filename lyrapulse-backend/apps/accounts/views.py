@@ -11,7 +11,7 @@ from drf_spectacular.utils import extend_schema, OpenApiResponse, inline_seriali
 from apps.common.responses import success_response
 
 from .models import OTPVerification
-from .serializers import AdminLoginSerializer, PhoneSerializer, VerifyOTPSerializer
+from .serializers import AdminOTPSendSerializer, AdminOTPVerifySerializer, PhoneSerializer, VerifyOTPSerializer
 from .services.otp_service import create_otp, verify_otp
 
 User = get_user_model()
@@ -36,6 +36,7 @@ def _user_schema_fields():
         "first_name": serializers.CharField(allow_blank=True),
         "last_name": serializers.CharField(allow_blank=True),
         "name": serializers.CharField(), "role": serializers.CharField(),
+        "permissions": serializers.ListField(child=serializers.CharField()),
     }
 
 
@@ -52,7 +53,8 @@ def _employee_schema_fields():
 def user_payload(user):
     return {"id": user.id, "phone_number": user.phone_number, "email": user.email,
             "first_name": user.first_name, "last_name": user.last_name,
-            "name": user.full_name, "role": user.role}
+            "name": user.full_name, "role": user.role,
+            "permissions": ["*"] if user.role == User.Role.SUPERADMIN else sorted(user.get_all_permissions())}
 
 
 def employee_payload(user):
@@ -70,27 +72,53 @@ def employee_payload(user):
     }
 
 
-class AdminLoginView(APIView):
+ADMIN_ROLES = {User.Role.SUPERADMIN, User.Role.ADMIN, User.Role.HR, User.Role.MANAGER}
+
+
+def _admin_user_for_identifier(identifier):
+    value = identifier.strip()
+    if "@" in value:
+        matches = User.objects.filter(email__iexact=value, is_active=True, role__in=ADMIN_ROLES)
+        return matches.first() if matches.count() == 1 else None
+    from .serializers import normalize_phone_number
+    try:
+        phone = normalize_phone_number(value)
+    except serializers.ValidationError:
+        return None
+    return User.objects.filter(phone_number=phone, is_active=True, role__in=ADMIN_ROLES).first()
+
+
+class AdminOTPSendView(APIView):
+    permission_classes = [AllowAny]
+    def post(self, request):
+        serializer = AdminOTPSendSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = _admin_user_for_identifier(serializer.validated_data["identifier"])
+        if not user:
+            return success_response({"accepted": True}, "If the account exists, an OTP was sent")
+        try:
+            otp_record = create_otp(user.phone_number, purpose=OTPVerification.Purpose.ADMIN_LOGIN)
+        except ValueError as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_429_TOO_MANY_REQUESTS)
+        response_data = {"accepted": True}
+        if settings.DEBUG and settings.SMS_PROVIDER == "mock":
+            response_data["dev_otp"] = otp_record._dev_otp
+        return success_response(response_data, "If the account exists, an OTP was sent")
+
+
+class AdminOTPVerifyView(APIView):
     permission_classes = [AllowAny]
 
-    @extend_schema(request=AdminLoginSerializer, responses={
-        200: _success_schema("AdminLoginResponse", {
-            "access": serializers.CharField(), "refresh": serializers.CharField(),
-            "user": inline_serializer(name="AdminLoginUser", fields=_user_schema_fields()),
-        }),
-        400: _error_schema("AdminLoginError"),
-    })
     def post(self, request):
-        serializer = AdminLoginSerializer(data=request.data)
+        serializer = AdminOTPVerifySerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        email = serializer.validated_data["email"].strip()
-        matches = User.objects.filter(email__iexact=email)
-        if matches.count() != 1:
-            return Response({"detail": "Invalid email or password."}, status=status.HTTP_400_BAD_REQUEST)
-        user = matches.first()
-        if (not user.is_active or user.role not in {User.Role.SUPERADMIN, User.Role.HR}
-                or not user.check_password(serializer.validated_data["password"])):
-            return Response({"detail": "Invalid email or password."}, status=status.HTTP_400_BAD_REQUEST)
+        user = _admin_user_for_identifier(serializer.validated_data["identifier"])
+        if not user:
+            return Response({"detail": "Invalid or expired OTP"}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            verify_otp(user.phone_number, serializer.validated_data["otp"], purpose=OTPVerification.Purpose.ADMIN_LOGIN)
+        except ValueError as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
         refresh = RefreshToken.for_user(user)
         return success_response({"access": str(refresh.access_token), "refresh": str(refresh),
                                  "user": user_payload(user)}, "Login successful")
@@ -100,14 +128,14 @@ class SendOTPView(APIView):
     permission_classes = [AllowAny]
 
     @extend_schema(request=PhoneSerializer, responses={
-        200: OpenApiResponse(description="OTP accepted; in DEBUG the mock code is also returned."),
+        200: OpenApiResponse(description="OTP accepted. dev_otp is included only when DEBUG=True and SMS_PROVIDER=mock."),
         400: _error_schema("SendOtpValidationError"),
         429: OpenApiResponse(description="Resend cooldown"),
     })
     def post(self, request):
-        return self._send_otp(request, include_development_otp=True)
+        return self._send_otp(request)
 
-    def _send_otp(self, request, include_development_otp=False):
+    def _send_otp(self, request):
         serializer = PhoneSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         phone_number = serializer.validated_data["phone_number"]
@@ -118,12 +146,14 @@ class SendOTPView(APIView):
             otp_record = create_otp(phone_number)
         except ValueError as exc:
             return success_response({"phone_number": phone_number, "resend_after": settings.OTP_RESEND_COOLDOWN_SECONDS}, str(exc), status.HTTP_429_TOO_MANY_REQUESTS)
-        if include_development_otp:
-            response_data = {"success": True, "message": "OTP sent successfully"}
-            if settings.DEBUG:
-                response_data["otp"] = otp_record._plain_otp
-            return Response(response_data, status=status.HTTP_200_OK)
-        return success_response({"phone_number": phone_number, "expires_in": settings.OTP_EXPIRY_SECONDS, "resend_after": settings.OTP_RESEND_COOLDOWN_SECONDS}, "OTP sent successfully", status.HTTP_200_OK)
+        response_data = {
+            "phone_number": phone_number,
+            "expires_in": settings.OTP_EXPIRY_SECONDS,
+            "resend_after": settings.OTP_RESEND_COOLDOWN_SECONDS,
+        }
+        if settings.DEBUG and settings.SMS_PROVIDER == "mock":
+            response_data["dev_otp"] = otp_record._dev_otp
+        return success_response(response_data, "OTP sent successfully", status.HTTP_200_OK)
 
 
 class ResendOTPView(SendOTPView):
@@ -133,7 +163,7 @@ class ResendOTPView(SendOTPView):
         429: OpenApiResponse(description="Resend cooldown"),
     })
     def post(self, request):
-        return self._send_otp(request, include_development_otp=True)
+        return self._send_otp(request)
 
 
 class VerifyOTPView(APIView):

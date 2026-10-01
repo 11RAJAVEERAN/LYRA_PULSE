@@ -10,6 +10,7 @@ import {
   LayoutDashboard,
   LockKeyhole,
   NotebookPen,
+  UserCog,
   ShieldCheck,
   Users,
 } from 'lucide-react'
@@ -27,9 +28,17 @@ const navItems = [
   { label: 'Designations', path: '/designations', icon: BriefcaseBusiness },
   { label: 'Devices', path: '/devices', icon: BadgeCheck },
   { label: 'Reports', path: '/reports', icon: ClipboardList },
+  { label: 'Admin users', path: '/admin-users', icon: UserCog, superadminOnly: true },
 ]
 
 export function Sidebar({ collapsed, onToggle, onNavigate }) {
+  let user = null
+  try { user = JSON.parse(localStorage.getItem('lyrapulse_admin_user') || sessionStorage.getItem('lyrapulse_admin_user') || 'null') } catch { user = null }
+  const visibleItems = navItems.filter(({ superadminOnly, path }) => {
+    if (superadminOnly) return user?.role === 'SUPERADMIN'
+    if (path === '/employees') return user?.role === 'SUPERADMIN' || user?.permissions?.includes('employees.view_employee')
+    return user?.role === 'SUPERADMIN'
+  })
   return (
     <Box
       sx={{
@@ -67,7 +76,7 @@ export function Sidebar({ collapsed, onToggle, onNavigate }) {
       <Divider sx={{ borderColor: 'rgba(148,163,184,0.15)' }} />
 
       <List sx={{ px: 1.5, py: 2 }}>
-        {navItems.map(({ label, path, icon: Icon }) => (
+        {visibleItems.map(({ label, path, icon: Icon }) => (
           <ListItemButton
             key={path}
             component={NavLink}

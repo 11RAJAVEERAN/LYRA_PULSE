@@ -1,8 +1,4 @@
-import logging
-
 from django.conf import settings
-
-logger = logging.getLogger(__name__)
 
 
 class SMSService:
@@ -12,8 +8,8 @@ class SMSService:
 
 class MockSMSService(SMSService):
     def send_otp(self, phone_number, otp):
-        if settings.DEBUG:
-            logger.info("Development OTP generated for %s: %s", phone_number, otp)
+        # Mock provider intentionally emits neither recipient nor OTP to logs.
+        return None
 
 
 def get_sms_service():

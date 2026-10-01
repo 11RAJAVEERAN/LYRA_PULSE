@@ -14,4 +14,5 @@ export const ROUTES = {
   devices: '/devices',
   reports: '/reports',
   settings: '/settings',
+  adminUsers: '/admin-users',
 }

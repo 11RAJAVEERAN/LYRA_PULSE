@@ -6,11 +6,19 @@ export function useAuth() {
   const [currentUser, setCurrentUser] = useState(authService.getCurrentUser())
   const [isLoading, setIsLoading] = useState(false)
 
-  const login = useCallback(async (payload) => {
+  const sendOtp = useCallback(async (identifier) => {
     setIsLoading(true)
-
     try {
-      const session = await authService.login(payload)
+      return await authService.sendOtp(identifier)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
+  const verifyOtp = useCallback(async (payload) => {
+    setIsLoading(true)
+    try {
+      const session = await authService.verifyOtp(payload)
       setIsAuthenticated(true)
       setCurrentUser(session.user)
       return session
@@ -33,9 +41,10 @@ export function useAuth() {
       isAuthenticated,
       isLoading,
       currentUser,
-      login,
+      sendOtp,
+      verifyOtp,
       logout,
     }),
-    [isAuthenticated, isLoading, currentUser, login, logout],
+    [isAuthenticated, isLoading, currentUser, sendOtp, verifyOtp, logout],
   )
 }

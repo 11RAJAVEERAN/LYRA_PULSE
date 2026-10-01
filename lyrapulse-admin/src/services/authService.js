@@ -3,9 +3,17 @@ import { authApi } from '../features/auth/api/authApi'
 import apiClient from './apiClient'
 
 export const authService = {
-  async login({ email, password, rememberMe = false }) {
+  async sendOtp(identifier) {
     try {
-      const session = await authApi.login({ email: email.trim(), password })
+      return await authApi.sendOtp({ identifier: identifier.trim() })
+    } catch (error) {
+      const message = error.response?.data?.detail ?? error.response?.data?.message ?? error.message ?? 'Unable to send code.'
+      throw new Error(message)
+    }
+  },
+  async verifyOtp({ identifier, otp, rememberMe = false }) {
+    try {
+      const session = await authApi.verifyOtp({ identifier: identifier.trim(), otp })
       if (!session?.access || !session?.refresh || !session?.user) {
         throw new Error('The server returned an incomplete login response.')
       }
@@ -15,7 +23,7 @@ export const authService = {
       const message = error.response?.data?.detail
         ?? error.response?.data?.message
         ?? error.message
-        ?? 'Unable to sign in.'
+        ?? 'Unable to verify code.'
       throw new Error(message)
     }
   },

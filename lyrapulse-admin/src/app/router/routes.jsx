@@ -6,6 +6,8 @@ import { EmployeesPage } from '../../features/employees/pages/EmployeesPage'
 import { ROUTES } from '../../constants/routes'
 import { ProtectedRoute } from './ProtectedRoute'
 import { AdminLayout } from '../../components/layout/AdminLayout'
+import { AdminUsersPage } from '../../features/adminUsers/pages/AdminUsersPage'
+import { SuperAdminRoute } from './SuperAdminRoute'
 
 export const routes = [
   {
@@ -34,6 +36,10 @@ export const routes = [
           {
             path: ROUTES.attendance,
             element: <AttendancePage />,
+          },
+          {
+            path: ROUTES.adminUsers,
+            element: <SuperAdminRoute><AdminUsersPage /></SuperAdminRoute>,
           },
           ...[
             ROUTES.leaves,
