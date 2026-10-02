@@ -1,5 +1,5 @@
-import 'dart:async';
 
+import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -14,70 +14,124 @@ class FaceVerificationScreen extends StatefulWidget {
       _FaceVerificationScreenState();
 }
 
-class _FaceVerificationScreenState
-    extends State<FaceVerificationScreen>
-    with TickerProviderStateMixin {
-  late final AnimationController pulseController;
-  late final AnimationController scanController;
+class _FaceVerificationScreenState extends State<FaceVerificationScreen> {
+  CameraController? _cameraController;
 
-  bool isScanning = false;
-  bool verified = false;
+  bool _cameraReady = false;
+  bool _isCapturing = false;
+  bool _faceCaptured = false;
+  String _message = 'Look at the camera and keep your face inside the frame.';
 
   @override
   void initState() {
     super.initState();
-
-    pulseController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 2),
-    )..repeat(reverse: true);
-
-    scanController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 2),
-    );
+    _initializeCamera();
   }
 
-  @override
-  void dispose() {
-    pulseController.dispose();
-    scanController.dispose();
-    super.dispose();
+  Future<void> _initializeCamera() async {
+    try {
+      final cameras = await availableCameras();
+
+      if (cameras.isEmpty) {
+        throw Exception('No camera found on this device.');
+      }
+
+      final frontCamera = cameras.firstWhere(
+        (camera) =>
+            camera.lensDirection == CameraLensDirection.front,
+        orElse: () => cameras.first,
+      );
+
+      final controller = CameraController(
+        frontCamera,
+        ResolutionPreset.high,
+        enableAudio: false,
+      );
+
+      await controller.initialize();
+
+      if (!mounted) {
+        await controller.dispose();
+        return;
+      }
+
+      setState(() {
+        _cameraController = controller;
+        _cameraReady = true;
+        _message = 'Look at the camera and keep your face inside the frame.';
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _message = 'Unable to open camera. Please check camera permission.';
+      });
+    }
   }
 
-  // ===============================================================
-  // START FACE VERIFICATION
-  // ===============================================================
+  Future<void> _captureFace() async {
+    final controller = _cameraController;
 
-  Future<void> _startVerification() async {
-    if (isScanning || verified) return;
+    if (controller == null ||
+        !controller.value.isInitialized ||
+        _isCapturing) {
+      return;
+    }
 
     setState(() {
-      isScanning = true;
+      _isCapturing = true;
+      _message = 'Capturing your photo...';
     });
 
-    scanController.repeat();
+    try {
+      await controller.stopImageStreamIfNeeded();
 
-    await Future.delayed(
-      const Duration(seconds: 3),
-    );
+      final image = await controller.takePicture();
 
+      if (!mounted) return;
+
+      // This captures a photo only. Actual face detection and identity
+      // verification must be performed separately.
+      setState(() {
+        _faceCaptured = true;
+        _message = 'Photo captured successfully.';
+      });
+
+      Get.snackbar(
+        'Photo Captured',
+        'Your photo has been captured.',
+        backgroundColor: const Color(0xFFE8F8EF),
+        colorText: const Color(0xFF16794B),
+        margin: const EdgeInsets.all(16),
+      );
+
+      debugPrint('Captured image path: ${image.path}');
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _message = 'Could not capture photo. Please try again.';
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isCapturing = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _retakePhoto() async {
     if (!mounted) return;
 
-    scanController.stop();
-
     setState(() {
-      isScanning = false;
-      verified = true;
+      _faceCaptured = false;
+      _message = 'Look at the camera and keep your face inside the frame.';
     });
   }
 
-  // ===============================================================
-  // CONTINUE TO ATTENDANCE CONFIRMATION
-  // ===============================================================
-
   void _continue() {
-    if (!verified) return;
+    if (!_faceCaptured) return;
 
     Get.to(
       () => const AttendanceConfirmationScreen(),
@@ -86,833 +140,231 @@ class _FaceVerificationScreenState
     );
   }
 
-  // ===============================================================
-  // BUILD
-  // ===============================================================
+  @override
+  void dispose() {
+    _cameraController?.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    const navy = Color(0xFF19356C);
+    const green = Color(0xFF18A66A);
+
     return Scaffold(
-      backgroundColor: const Color(0xFF04111F),
+      backgroundColor: const Color(0xFFFDFEFF),
       body: SafeArea(
-        child: Stack(
+        child: Column(
           children: [
-            // =========================================================
-            // BACKGROUND GLOW
-            // =========================================================
-
-            Positioned(
-              top: -170,
-              right: -150,
-              child: _glow(
-                360,
-                const Color(0xFF087BFF),
-              ),
-            ),
-
-            Positioned(
-              bottom: -180,
-              left: -150,
-              child: _glow(
-                380,
-                const Color(0xFF00D9FF),
-              ),
-            ),
-
-            // =========================================================
-            // CONTENT
-            // =========================================================
-
-            SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(
-                22,
-                18,
-                22,
-                30,
-              ),
-              child: Column(
+            // HEADER
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+              child: Row(
                 children: [
-                  // =====================================================
-                  // TOP BAR
-                  // =====================================================
-
-                  Row(
-                    children: [
-                      _backButton(),
-                      const Spacer(),
-                      _secureBadge(),
-                    ],
-                  ),
-
-                  const SizedBox(height: 28),
-
-                  // =====================================================
-                  // LYRA LOGO
-                  // =====================================================
-
-                  _lyraLogo(),
-
-                  const SizedBox(height: 22),
-
-                  // =====================================================
-                  // TITLE
-                  // =====================================================
-
-                  Text(
-                    'FACE',
-                    style: GoogleFonts.poppins(
-                      color: Colors.white,
-                      fontSize: 29,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 5,
-                      height: 1,
-                    ),
-                  ),
-
-                  const SizedBox(height: 5),
-
-                  ShaderMask(
-                    shaderCallback: (bounds) {
-                      return const LinearGradient(
-                        colors: [
-                          Color(0xFF20E4FF),
-                          Color(0xFF287EFF),
-                        ],
-                      ).createShader(bounds);
-                    },
-                    child: Text(
-                      'VERIFICATION',
-                      style: GoogleFonts.poppins(
-                        color: Colors.white,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 3,
+                  InkWell(
+                    onTap: () => Get.back(),
+                    borderRadius: BorderRadius.circular(20),
+                    child: const Padding(
+                      padding: EdgeInsets.all(4),
+                      child: Icon(
+                        Icons.arrow_back_ios_new_rounded,
+                        size: 19,
+                        color: navy,
                       ),
                     ),
                   ),
-
-                  const SizedBox(height: 9),
-
-                  Text(
-                    verified
-                        ? 'Your identity has been verified'
-                        : 'Position your face inside the frame',
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.poppins(
-                      color: const Color(0xFF7F96AB),
-                      fontSize: 11,
-                      height: 1.5,
+                  Expanded(
+                    child: Text(
+                      'Verify Your Face',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.poppins(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: navy,
+                      ),
                     ),
                   ),
+                  const SizedBox(width: 24),
+                ],
+              ),
+            ),
 
-                  const SizedBox(height: 24),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 22),
+              child: Text(
+                _message,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.poppins(
+                  color: const Color(0xFF536783),
+                  fontSize: 11,
+                  height: 1.6,
+                ),
+              ),
+            ),
 
-                  // =====================================================
-                  // FACE CAMERA CARD
-                  // =====================================================
+            const SizedBox(height: 16),
 
-                  AnimatedBuilder(
-                    animation: pulseController,
-                    builder: (context, child) {
-                      return Container(
-                        width: double.infinity,
-                        height: 370,
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: const Color(0xCC071A2D),
-                          borderRadius: BorderRadius.circular(28),
-                          border: Border.all(
-                            color: verified
-                                ? const Color(0xFF24E5C0)
-                                    .withOpacity(0.5)
-                                : const Color(0xFF17415F),
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: verified
-                                  ? const Color(0xFF24E5C0)
-                                      .withOpacity(0.08)
-                                  : Colors.black.withOpacity(0.25),
-                              blurRadius: 30,
-                              offset: const Offset(0, 14),
-                            ),
-                          ],
-                        ),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(21),
-                            gradient: const LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                Color(0xFF0D3048),
-                                Color(0xFF061827),
+            // CAMERA PREVIEW
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(10, 0, 10, 12),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(9),
+                  child: Container(
+                    width: double.infinity,
+                    color: const Color(0xFFE8EDF3),
+                    child: Stack(
+                      fit: StackFit.expand,
+                      alignment: Alignment.center,
+                      children: [
+                        if (_cameraReady &&
+                            _cameraController != null)
+                          CameraPreview(_cameraController!)
+                        else
+                          Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const CircularProgressIndicator(
+                                  color: Color(0xFF3978E8),
+                                ),
+                                const SizedBox(height: 14),
+                                Text(
+                                  'Opening camera...',
+                                  style: GoogleFonts.poppins(
+                                    color: navy,
+                                    fontSize: 12,
+                                  ),
+                                ),
                               ],
                             ),
                           ),
-                          child: Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              // CAMERA CORNERS
 
-                              Positioned(
-                                top: 22,
-                                left: 22,
-                                child: _corner(
-                                  top: true,
-                                  left: true,
+                        // FACE ALIGNMENT GUIDE
+                        IgnorePointer(
+                          child: Center(
+                            child: AnimatedContainer(
+                              duration:
+                                  const Duration(milliseconds: 250),
+                              width: 218,
+                              height: 280,
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: _faceCaptured
+                                      ? green
+                                      : const Color(0xFF21AD78),
+                                  width: 2,
                                 ),
+                                borderRadius:
+                                    BorderRadius.circular(115),
                               ),
-
-                              Positioned(
-                                top: 22,
-                                right: 22,
-                                child: _corner(
-                                  top: true,
-                                  left: false,
-                                ),
-                              ),
-
-                              Positioned(
-                                bottom: 22,
-                                left: 22,
-                                child: _corner(
-                                  top: false,
-                                  left: true,
-                                ),
-                              ),
-
-                              Positioned(
-                                bottom: 22,
-                                right: 22,
-                                child: _corner(
-                                  top: false,
-                                  left: false,
-                                ),
-                              ),
-
-                              // FACE FRAME
-
-                              SizedBox(
-                                width: 205,
-                                height: 270,
-                                child: CustomPaint(
-                                  painter: _FaceFramePainter(
-                                    pulse: pulseController.value,
-                                    verified: verified,
-                                  ),
-                                  child: Center(
-                                    child: AnimatedContainer(
-                                      duration:
-                                          const Duration(
-                                        milliseconds: 300,
-                                      ),
-                                      width: 125,
-                                      height: 165,
-                                      decoration: BoxDecoration(
-                                        borderRadius:
-                                            BorderRadius.circular(
-                                          65,
-                                        ),
-                                        border: Border.all(
-                                          color: verified
-                                              ? const Color(
-                                                  0xFF24E5C0,
-                                                )
-                                              : const Color(
-                                                  0xFF2BDFFF,
-                                                ).withOpacity(
-                                                  0.45 +
-                                                      pulseController
-                                                              .value *
-                                                          0.25,
-                                                ),
-                                          width: 1.5,
-                                        ),
-                                      ),
-                                      child: Icon(
-                                        verified
-                                            ? Icons
-                                                .verified_rounded
-                                            : Icons
-                                                .person_outline_rounded,
-                                        size: 70,
-                                        color: verified
-                                            ? const Color(
-                                                0xFF24E5C0,
-                                              )
-                                            : const Color(
-                                                0xFF9CEFFF,
-                                              ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-
-                              // SCANNING LINE
-
-                              if (isScanning)
-                                AnimatedBuilder(
-                                  animation: scanController,
-                                  builder: (context, child) {
-                                    return Positioned(
-                                      top: 60 +
-                                          scanController.value *
-                                              245,
-                                      left: 45,
-                                      right: 45,
-                                      child: Container(
-                                        height: 2,
-                                        decoration: BoxDecoration(
-                                          gradient:
-                                              const LinearGradient(
-                                            colors: [
-                                              Colors.transparent,
-                                              Color(0xFF22E6FF),
-                                              Colors.transparent,
-                                            ],
-                                          ),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: const Color(
-                                                0xFF00E5FF,
-                                              ).withOpacity(0.8),
-                                              blurRadius: 12,
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-
-                              // STATUS
-
-                              Positioned(
-                                bottom: 20,
-                                child: Container(
-                                  padding:
-                                      const EdgeInsets.symmetric(
-                                    horizontal: 15,
-                                    vertical: 8,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color:
-                                        const Color(0xFF071A2D),
-                                    borderRadius:
-                                        BorderRadius.circular(20),
-                                    border: Border.all(
-                                      color: verified
-                                          ? const Color(
-                                              0xFF24E5C0,
-                                            ).withOpacity(0.35)
-                                          : const Color(
-                                              0xFF214B68,
-                                            ),
-                                    ),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize:
-                                        MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        verified
-                                            ? Icons
-                                                .check_circle_rounded
-                                            : isScanning
-                                                ? Icons
-                                                    .radar_rounded
-                                                : Icons
-                                                    .face_outlined,
-                                        size: 15,
-                                        color: verified
-                                            ? const Color(
-                                                0xFF24E5C0,
-                                              )
-                                            : const Color(
-                                                0xFF2BDFFF,
-                                              ),
-                                      ),
-                                      const SizedBox(width: 7),
-                                      Text(
-                                        verified
-                                            ? 'FACE VERIFIED'
-                                            : isScanning
-                                                ? 'SCANNING...'
-                                                : 'READY TO SCAN',
-                                        style:
-                                            GoogleFonts.poppins(
-                                          color: verified
-                                              ? const Color(
-                                                  0xFF24E5C0,
-                                                )
-                                              : const Color(
-                                                  0xFF9BB3C6,
-                                                ),
-                                          fontSize: 9,
-                                          fontWeight:
-                                              FontWeight.w700,
-                                          letterSpacing: 1.1,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
                         ),
-                      );
-                    },
-                  ),
 
-                  const SizedBox(height: 18),
-
-                  // =====================================================
-                  // LOCATION STATUS
-                  // =====================================================
-
-                  _verificationStatus(
-                    icon: Icons.location_on_outlined,
-                    title: 'Location Verified',
-                    subtitle: 'Office location confirmed',
-                    verified: true,
-                  ),
-
-                  const SizedBox(height: 10),
-
-                  // =====================================================
-                  // FACE STATUS
-                  // =====================================================
-
-                  _verificationStatus(
-                    icon: Icons.face_outlined,
-                    title: 'Face Verification',
-                    subtitle: verified
-                        ? 'Identity successfully verified'
-                        : 'Waiting for verification',
-                    verified: verified,
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // =====================================================
-                  // MAIN BUTTON
-                  // =====================================================
-
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: verified
-                              ? const [
-                                  Color(0xFF0FAF91),
-                                  Color(0xFF24E5C0),
-                                ]
-                              : const [
-                                  Color(0xFF176DFF),
-                                  Color(0xFF18D5EF),
-                                ],
-                        ),
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: (verified
-                                    ? const Color(0xFF24E5C0)
-                                    : const Color(0xFF00CFFF))
-                                .withOpacity(0.22),
-                            blurRadius: 20,
-                            offset: const Offset(0, 8),
-                          ),
-                        ],
-                      ),
-                      child: ElevatedButton(
-                        onPressed: isScanning
-                            ? null
-                            : verified
-                                ? _continue
-                                : _startVerification,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              Colors.transparent,
-                          disabledBackgroundColor:
-                              Colors.transparent,
-                          foregroundColor: Colors.white,
-                          shadowColor: Colors.transparent,
-                          shape: RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.circular(16),
-                          ),
-                        ),
-                        child: isScanning
-                            ? Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.center,
-                                children: [
-                                  const SizedBox(
-                                    width: 19,
-                                    height: 19,
-                                    child:
-                                        CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Text(
-                                    'Scanning Face...',
-                                    style:
-                                        GoogleFonts.poppins(
-                                      fontSize: 13,
-                                      fontWeight:
-                                          FontWeight.w700,
-                                    ),
-                                  ),
-                                ],
-                              )
-                            : Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    verified
-                                        ? Icons
-                                            .arrow_forward_rounded
-                                        : Icons.face_rounded,
-                                    size: 21,
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Text(
-                                    verified
-                                        ? 'Continue'
-                                        : 'Start Face Verification',
-                                    style:
-                                        GoogleFonts.poppins(
-                                      fontSize: 13,
-                                      fontWeight:
-                                          FontWeight.w700,
-                                    ),
-                                  ),
-                                ],
+                        if (_faceCaptured)
+                          const Positioned(
+                            top: 14,
+                            right: 14,
+                            child: CircleAvatar(
+                              radius: 17,
+                              backgroundColor: green,
+                              child: Icon(
+                                Icons.check_rounded,
+                                color: Colors.white,
                               ),
-                      ),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
+                ),
+              ),
+            ),
 
-                  const SizedBox(height: 22),
-
-                  // =====================================================
-                  // SECURITY
-                  // =====================================================
-
-                  Row(
-                    mainAxisAlignment:
-                        MainAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        Icons.shield_outlined,
-                        color: Color(0xFF536D83),
-                        size: 14,
-                      ),
-                      const SizedBox(width: 7),
-                      Text(
-                        'Secure identity verification',
-                        style: GoogleFonts.poppins(
-                          color: const Color(0xFF536D83),
-                          fontSize: 9,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
+            // LIGHTING STATUS
+            Padding(
+              padding: const EdgeInsets.only(
+                top: 8,
+                bottom: 16,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    _faceCaptured
+                        ? Icons.check_circle
+                        : Icons.info,
+                    color: green,
+                    size: 15,
                   ),
-
-                  const SizedBox(height: 25),
-
-                  // POWERED BY
-
-                  Row(
-                    mainAxisAlignment:
-                        MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        width: 28,
-                        height: 1.5,
-                        decoration:
-                            const BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              Color(0xFF176DFF),
-                              Color(0xFF00D9FF),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 9),
-                      Text(
-                        'POWERED BY LYRATECH',
-                        style: GoogleFonts.poppins(
-                          color: const Color(0xFF536D83),
-                          fontSize: 8,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 2.1,
-                        ),
-                      ),
-                      const SizedBox(width: 9),
-                      Container(
-                        width: 28,
-                        height: 1.5,
-                        decoration:
-                            const BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              Color(0xFF00D9FF),
-                              Color(0xFF176DFF),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
+                  const SizedBox(width: 7),
+                  Text(
+                    _faceCaptured
+                        ? 'Photo captured'
+                        : 'Keep your face clearly visible',
+                    style: GoogleFonts.poppins(
+                      color: const Color(0xFF536783),
+                      fontSize: 10,
+                    ),
                   ),
                 ],
               ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
 
-  // ===============================================================
-  // LYRA LOGO
-  // ===============================================================
-
-  Widget _lyraLogo() {
-    return Container(
-      width: 58,
-      height: 58,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: const Color(0xFF071E32),
-        border: Border.all(
-          color: const Color(0xFF20DFFF),
-          width: 1.2,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color:
-                const Color(0xFF00D9FF).withOpacity(0.18),
-            blurRadius: 22,
-            spreadRadius: 2,
-          ),
-        ],
-      ),
-      child: Center(
-        child: Text(
-          'L',
-          style: GoogleFonts.poppins(
-            color: const Color(0xFF25DFFF),
-            fontSize: 30,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ===============================================================
-  // SECURE BADGE
-  // ===============================================================
-
-  Widget _secureBadge() {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 11,
-        vertical: 7,
-      ),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0A2136),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: const Color(0xFF1D4564),
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 6,
-            height: 6,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              color: Color(0xFF24E5C0),
+            // ACTION BUTTON
+            Padding(
+              padding: const EdgeInsets.fromLTRB(22, 0, 22, 12),
+              child: SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: !_cameraReady || _isCapturing
+                      ? null
+                      : _faceCaptured
+                          ? _continue
+                          : _captureFace,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: navy,
+                    disabledBackgroundColor:
+                        const Color(0xFF9CA8BC),
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: Text(
+                    _isCapturing
+                        ? 'Capturing...'
+                        : _faceCaptured
+                            ? 'Continue'
+                            : 'Capture Face',
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
             ),
-          ),
-          const SizedBox(width: 6),
-          Text(
-            'SECURE',
-            style: GoogleFonts.poppins(
-              color: const Color(0xFF91AABD),
-              fontSize: 8,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 1,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
-  // ===============================================================
-  // BACK BUTTON
-  // ===============================================================
-
-  Widget _backButton() {
-    return Container(
-      width: 44,
-      height: 44,
-      decoration: BoxDecoration(
-        color: const Color(0xFF0A2136),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: const Color(0xFF1D4564),
-        ),
-      ),
-      child: IconButton(
-        onPressed: Get.back,
-        icon: const Icon(
-          Icons.arrow_back_rounded,
-          color: Colors.white,
-          size: 21,
-        ),
-      ),
-    );
-  }
-
-  // ===============================================================
-  // VERIFICATION STATUS
-  // ===============================================================
-
-  Widget _verificationStatus({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required bool verified,
-  }) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(
-        horizontal: 14,
-        vertical: 12,
-      ),
-      decoration: BoxDecoration(
-        color: const Color(0xFF081D31),
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(
-          color: verified
-              ? const Color(0xFF1A665A)
-              : const Color(0xFF194663),
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: verified
-                  ? const Color(0xFF0B3B36)
-                  : const Color(0xFF0B3042),
-              borderRadius:
-                  BorderRadius.circular(11),
-            ),
-            child: Icon(
-              icon,
-              color: verified
-                  ? const Color(0xFF24E5C0)
-                  : const Color(0xFF29E2F7),
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: 11),
-          Expanded(
-            child: Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
+            if (_faceCaptured)
+              TextButton(
+                onPressed: _retakePhoto,
+                child: Text(
+                  'Retake Photo',
                   style: GoogleFonts.poppins(
-                    color: Colors.white,
-                    fontSize: 11,
+                    color: navy,
+                    fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  style: GoogleFonts.poppins(
-                    color: const Color(0xFF6E879C),
-                    fontSize: 9,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Icon(
-            verified
-                ? Icons.check_circle_rounded
-                : Icons.circle_outlined,
-            color: verified
-                ? const Color(0xFF24E5C0)
-                : const Color(0xFF49677D),
-            size: 20,
-          ),
-        ],
-      ),
-    );
-  }
+              )
+            else
+              const SizedBox(height: 48),
 
-  // ===============================================================
-  // CAMERA CORNER
-  // ===============================================================
-
-  Widget _corner({
-    required bool top,
-    required bool left,
-  }) {
-    return SizedBox(
-      width: 26,
-      height: 26,
-      child: CustomPaint(
-        painter: _CornerPainter(
-          top: top,
-          left: left,
-        ),
-      ),
-    );
-  }
-
-  // ===============================================================
-  // GLOW
-  // ===============================================================
-
-  Widget _glow(
-    double size,
-    Color color,
-  ) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: RadialGradient(
-          colors: [
-            color.withOpacity(0.12),
-            color.withOpacity(0.03),
-            Colors.transparent,
+            const SizedBox(height: 12),
           ],
         ),
       ),
@@ -920,144 +372,10 @@ class _FaceVerificationScreenState
   }
 }
 
-// ===================================================================
-// FACE FRAME
-// ===================================================================
-
-class _FaceFramePainter extends CustomPainter {
-  const _FaceFramePainter({
-    required this.pulse,
-    required this.verified,
-  });
-
-  final double pulse;
-  final bool verified;
-
-  @override
-  void paint(
-    Canvas canvas,
-    Size size,
-  ) {
-    final center = Offset(
-      size.width / 2,
-      size.height / 2,
-    );
-
-    const radius = 102.0;
-
-    final paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.8
-      ..color = verified
-          ? const Color(0xFF24E5C0)
-          : const Color(0xFF20DFFF)
-              .withOpacity(
-              0.45 + (pulse * 0.35),
-            );
-
-    canvas.drawArc(
-      Rect.fromCircle(
-        center: center,
-        radius: radius,
-      ),
-      -0.8,
-      1.7,
-      false,
-      paint,
-    );
-
-    canvas.drawArc(
-      Rect.fromCircle(
-        center: center,
-        radius: radius,
-      ),
-      2.35,
-      1.7,
-      false,
-      paint,
-    );
-
-    final smallPaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1
-      ..color = verified
-          ? const Color(0xFF24E5C0)
-              .withOpacity(0.22)
-          : const Color(0xFF287EFF)
-              .withOpacity(0.25);
-
-    canvas.drawArc(
-      Rect.fromCircle(
-        center: center,
-        radius: radius - 12,
-      ),
-      0.2,
-      1.2,
-      false,
-      smallPaint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(
-    covariant _FaceFramePainter oldDelegate,
-  ) {
-    return oldDelegate.pulse != pulse ||
-        oldDelegate.verified != verified;
-  }
-}
-
-// ===================================================================
-// CAMERA CORNER PAINTER
-// ===================================================================
-
-class _CornerPainter extends CustomPainter {
-  const _CornerPainter({
-    required this.top,
-    required this.left,
-  });
-
-  final bool top;
-  final bool left;
-
-  @override
-  void paint(
-    Canvas canvas,
-    Size size,
-  ) {
-    final paint = Paint()
-      ..color = const Color(0xFF25DFFF)
-      ..strokeWidth = 2
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-
-    final path = Path();
-
-    final x = left ? 0.0 : size.width;
-    final y = top ? 0.0 : size.height;
-
-    path.moveTo(
-      x,
-      y + (top ? 12 : -12),
-    );
-
-    path.lineTo(x, y);
-
-    path.lineTo(
-      x + (left ? 12 : -12),
-      y,
-    );
-
-    canvas.drawPath(
-      path,
-      paint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(
-    covariant _CornerPainter oldDelegate,
-  ) {
-    return false;
+extension on CameraController {
+  Future<void> stopImageStreamIfNeeded() async {
+    if (value.isStreamingImages) {
+      await stopImageStream();
+    }
   }
 }
