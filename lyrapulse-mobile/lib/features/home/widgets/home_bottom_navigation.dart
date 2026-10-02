@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:get/get.dart';
 
-import '../../../app/routes/app_routes.dart';
 import '../../../app/theme/app_colors.dart';
 
 class HomeBottomNavigation extends StatelessWidget {
@@ -24,46 +22,34 @@ class HomeBottomNavigation extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.only(
             top: 8,
-            bottom: 5,
+            bottom: 6,
           ),
           child: Row(
             children: [
               Expanded(
-                child: _BottomItem(
+                child: _NavItem(
                   icon: Icons.home_rounded,
                   label: 'Home',
                   selected: true,
-                  onTap: () {},
                 ),
               ),
-
               Expanded(
-                child: _BottomItem(
-                  icon: Icons.calendar_month_rounded,
+                child: _NavItem(
+                  icon:
+                      Icons.calendar_month_rounded,
                   label: 'Attendance',
-                  onTap: () {
-                    // Attendance route later
-                  },
                 ),
               ),
-
               Expanded(
-                child: _BottomItem(
-                  icon: Icons.assignment_outlined,
+                child: _NavItem(
+                  icon: Icons.receipt_long_outlined,
                   label: 'Reports',
-                  onTap: () {
-                    // Reports route later
-                  },
                 ),
               ),
-
               Expanded(
-                child: _BottomItem(
+                child: _NavItem(
                   icon: Icons.settings_outlined,
                   label: 'Settings',
-                  onTap: () {
-                    // Settings route later
-                  },
                 ),
               ),
             ],
@@ -74,17 +60,15 @@ class HomeBottomNavigation extends StatelessWidget {
   }
 }
 
-class _BottomItem extends StatelessWidget {
+class _NavItem extends StatelessWidget {
   final IconData icon;
   final String label;
   final bool selected;
-  final VoidCallback onTap;
 
-  const _BottomItem({
+  const _NavItem({
     required this.icon,
     required this.label,
     this.selected = false,
-    required this.onTap,
   });
 
   @override
@@ -93,43 +77,40 @@ class _BottomItem extends StatelessWidget {
         ? AppColors.primary
         : AppColors.textSecondary;
 
-    return InkWell(
-      onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          icon,
+          color: color,
+          size: 24,
+        ),
+        const SizedBox(height: 3),
+        Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: GoogleFonts.inter(
             color: color,
-            size: 27,
+            fontSize: 9.5,
+            fontWeight: selected
+                ? FontWeight.w700
+                : FontWeight.w500,
           ),
-
-          const SizedBox(height: 4),
-
-          Text(
-            label,
-            style: GoogleFonts.inter(
-              color: color,
-              fontSize: 11,
-              fontWeight: selected
-                  ? FontWeight.w700
-                  : FontWeight.w500,
-            ),
+        ),
+        const SizedBox(height: 4),
+        AnimatedContainer(
+          duration:
+              const Duration(milliseconds: 200),
+          width: selected ? 22 : 0,
+          height: 3,
+          decoration: BoxDecoration(
+            color: AppColors.primary,
+            borderRadius:
+                BorderRadius.circular(10),
           ),
-
-          const SizedBox(height: 5),
-
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            width: selected ? 48 : 0,
-            height: 4,
-            decoration: BoxDecoration(
-              color: AppColors.primary,
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

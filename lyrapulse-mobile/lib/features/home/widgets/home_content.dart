@@ -17,142 +17,129 @@ class HomeHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return Padding(
       padding: const EdgeInsets.fromLTRB(
-        20,
-        18,
-        20,
-        22,
-      ),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppColors.primaryDark,
-            AppColors.primary,
-          ],
-        ),
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(30),
-          bottomRight: Radius.circular(30),
-        ),
+        16,
+        8,
+        16,
+        4,
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Profile
-          Stack(
-            children: [
-              Container(
-                width: 62,
-                height: 62,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(19),
-                  border: Border.all(
-                    color: AppColors.accent,
-                    width: 2,
-                  ),
-                ),
-                child: const Icon(
-                  Icons.person_rounded,
-                  color: AppColors.primary,
-                  size: 34,
-                ),
+          Container(
+            width: 54,
+            height: 54,
+            margin: const EdgeInsets.only(top: 32),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: AppColors.border,
               ),
-
-              // Online indicator
-              Positioned(
-                right: -1,
-                bottom: -1,
-                child: Container(
-                  width: 18,
-                  height: 18,
-                  decoration: BoxDecoration(
-                    color: AppColors.success,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: AppColors.primary,
-                      width: 2,
-                    ),
-                  ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 12,
+                  offset: const Offset(0, 5),
                 ),
-              ),
-            ],
+              ],
+            ),
+            child: const Icon(
+              Icons.person_rounded,
+              color: AppColors.primary,
+              size: 29,
+            ),
           ),
 
           const SizedBox(width: 14),
 
           // Employee details
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Good Morning,',
-                  style: GoogleFonts.inter(
-                    color: Colors.white.withValues(alpha: 0.85),
-                    fontSize: 15,
-                    fontWeight: FontWeight.w400,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    employeeName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.inter(
+                      color: AppColors.textPrimary,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
-                ),
 
-                const SizedBox(height: 2),
+                  const SizedBox(height: 5),
 
-                Text(
-                  employeeName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.inter(
-                    color: Colors.white,
-                    fontSize: 21,
-                    fontWeight: FontWeight.w700,
+                  Text(
+                    designation,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.inter(
+                      color: AppColors.textSecondary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                ),
 
-                const SizedBox(height: 5),
+                  const SizedBox(height: 3),
 
-                Text(
-                  '$designation  •  $employeeId',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.inter(
-                    color: Colors.white.withValues(alpha: 0.78),
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w400,
+                  Text(
+                    employeeId,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.inter(
+                      color: AppColors.textSecondary,
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
 
           const SizedBox(width: 10),
 
-          // Notification
+          // Notification - Top Right
           Container(
-            width: 48,
-            height: 48,
+            width: 38,
+            height: 38,
+            margin: const EdgeInsets.only(top: 8),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.14),
-              borderRadius: BorderRadius.circular(16),
+              color: AppColors.surface,
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: AppColors.border,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
             child: Stack(
               children: [
                 const Center(
                   child: Icon(
                     Icons.notifications_none_rounded,
-                    color: Colors.white,
-                    size: 28,
+                    color: AppColors.textPrimary,
+                    size: 21,
                   ),
                 ),
 
                 Positioned(
-                  top: 8,
-                  right: 8,
+                  top: 6,
+                  right: 6,
                   child: Container(
-                    width: 9,
-                    height: 9,
+                    width: 7,
+                    height: 7,
                     decoration: const BoxDecoration(
                       color: AppColors.error,
                       shape: BoxShape.circle,

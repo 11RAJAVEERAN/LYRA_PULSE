@@ -19,7 +19,8 @@ class TodayProgressCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final percentage = (progress * 100).round();
+    final percentage =
+        (progress * 100).round();
 
     return Container(
       margin: const EdgeInsets.fromLTRB(
@@ -31,7 +32,7 @@ class TodayProgressCard extends StatelessWidget {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(
           color: AppColors.border,
         ),
@@ -43,8 +44,8 @@ class TodayProgressCard extends StatelessWidget {
               Text(
                 "Today's Progress",
                 style: GoogleFonts.inter(
-                  color: AppColors.primaryDark,
-                  fontSize: 19,
+                  color: AppColors.textPrimary,
+                  fontSize: 15,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -52,67 +53,59 @@ class TodayProgressCard extends StatelessWidget {
               const Spacer(),
 
               Text(
-                workingHours,
+                '$percentage%',
                 style: GoogleFonts.inter(
                   color: AppColors.primary,
-                  fontSize: 18,
+                  fontSize: 15,
                   fontWeight: FontWeight.w800,
-                ),
-              ),
-
-              Text(
-                ' / $totalShiftHours',
-                style: GoogleFonts.inter(
-                  color: AppColors.textSecondary,
-                  fontSize: 14,
                 ),
               ),
             ],
           ),
 
-          const SizedBox(height: 14),
+          const SizedBox(height: 13),
 
           ClipRRect(
             borderRadius: BorderRadius.circular(20),
             child: LinearProgressIndicator(
               value: progress,
-              minHeight: 12,
-              backgroundColor: AppColors.accent.withValues(alpha: 0.16),
-              valueColor: const AlwaysStoppedAnimation<Color>(
+              minHeight: 9,
+              backgroundColor:
+                  AppColors.accent.withValues(
+                alpha: 0.12,
+              ),
+              valueColor:
+                  const AlwaysStoppedAnimation<Color>(
                 AppColors.primary,
               ),
             ),
           ),
 
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
 
           Row(
             children: [
-              const Icon(
-                Icons.access_time_rounded,
-                color: AppColors.primary,
-                size: 19,
+              Text(
+                workingHours,
+                style: GoogleFonts.inter(
+                  color: AppColors.textPrimary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
-
-              const SizedBox(width: 6),
-
+              Text(
+                ' / $totalShiftHours',
+                style: GoogleFonts.inter(
+                  color: AppColors.textSecondary,
+                  fontSize: 11,
+                ),
+              ),
+              const Spacer(),
               Text(
                 'Started $checkInTime',
                 style: GoogleFonts.inter(
                   color: AppColors.textSecondary,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-
-              const Spacer(),
-
-              Text(
-                '$percentage% complete',
-                style: GoogleFonts.inter(
-                  color: AppColors.primary,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 10.5,
                 ),
               ),
             ],

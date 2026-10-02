@@ -18,37 +18,32 @@ class LocationStatusCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(
-        16,
-        12,
-        16,
-        0,
-      ),
+      margin: const EdgeInsets.fromLTRB(16, 18, 16, 0),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.success.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(20),
+        color: const Color(0xFFEFFFF8),
+        borderRadius: BorderRadius.circular(22),
         border: Border.all(
-          color: AppColors.success.withValues(alpha: 0.20),
+          color: AppColors.success.withValues(alpha: 0.18),
         ),
       ),
       child: Row(
         children: [
           Container(
-            width: 54,
-            height: 54,
+            width: 52,
+            height: 52,
             decoration: BoxDecoration(
-              color: AppColors.success.withValues(alpha: 0.12),
+              color: AppColors.success.withValues(alpha: 0.10),
               shape: BoxShape.circle,
             ),
             child: const Icon(
               Icons.location_on_rounded,
               color: AppColors.success,
-              size: 29,
+              size: 27,
             ),
           ),
 
-          const SizedBox(width: 14),
+          const SizedBox(width: 13),
 
           Expanded(
             child: Column(
@@ -60,22 +55,38 @@ class LocationStatusCard extends StatelessWidget {
                       : 'Location not verified',
                   style: GoogleFonts.inter(
                     color: AppColors.success,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
-
                 const SizedBox(height: 5),
-
                 Text(
-                  '$locationName  •  $distance  •  GPS Verified',
-                  maxLines: 2,
+                  '$locationName  •  $distance',
+                  maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
                     color: AppColors.textSecondary,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w400,
+                    fontSize: 11.5,
                   ),
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.verified_rounded,
+                      color: AppColors.success,
+                      size: 14,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'GPS Verified',
+                      style: GoogleFonts.inter(
+                        color: AppColors.success,
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

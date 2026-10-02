@@ -19,13 +19,12 @@ class HomeScreen extends GetView<HomeController> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-
       body: SafeArea(
+        bottom: false,
         child: Obx(
           () => CustomScrollView(
             physics: const BouncingScrollPhysics(),
             slivers: [
-              // Header
               SliverToBoxAdapter(
                 child: HomeHeader(
                   employeeName: controller.employeeName.value,
@@ -34,7 +33,6 @@ class HomeScreen extends GetView<HomeController> {
                 ),
               ),
 
-              // Today's attendance
               SliverToBoxAdapter(
                 child: AttendanceStatusCard(
                   status: controller.attendanceStatus.value,
@@ -47,58 +45,64 @@ class HomeScreen extends GetView<HomeController> {
                 ),
               ),
 
-              // Weekly attendance
               const SliverToBoxAdapter(
                 child: WeeklyAttendance(),
               ),
 
-              // Location
               SliverToBoxAdapter(
                 child: LocationStatusCard(
-                  isVerified: controller.isLocationVerified.value,
-                  locationName: controller.locationName.value,
-                  distance: controller.locationDistance.value,
+                  isVerified:
+                      controller.isLocationVerified.value,
+                  locationName:
+                      controller.locationName.value,
+                  distance:
+                      controller.locationDistance.value,
                 ),
               ),
 
-              // Check In / Check Out
               SliverToBoxAdapter(
                 child: CheckInOutCard(
-                  isCheckedIn: controller.isCheckedIn.value,
+                  isCheckedIn:
+                      controller.isCheckedIn.value,
                   onCheckIn: controller.checkIn,
                   onCheckOut: controller.checkOut,
                 ),
               ),
 
-              // Progress
               SliverToBoxAdapter(
                 child: TodayProgressCard(
                   progress: controller.progress.value,
-                  workingHours: controller.workingHours.value,
-                  checkInTime: controller.checkInTime.value,
-                  totalShiftHours: controller.totalShiftHours.value,
+                  workingHours:
+                      controller.workingHours.value,
+                  checkInTime:
+                      controller.checkInTime.value,
+                  totalShiftHours:
+                      '${controller.totalShiftMinutes.value ~/ 60}h',
                 ),
               ),
 
-              // Monthly summary
               SliverToBoxAdapter(
                 child: AttendanceSummary(
-                  present: controller.presentDays.value,
-                  absent: controller.absentDays.value,
-                  late: controller.lateDays.value,
-                  leave: controller.leaveDays.value,
+                  present:
+                      controller.presentDays.value,
+                  absent:
+                      controller.absentDays.value,
+                  late:
+                      controller.lateDays.value,
+                  leave:
+                      controller.leaveDays.value,
                 ),
               ),
 
               const SliverToBoxAdapter(
-                child: SizedBox(height: 20),
+                child: SizedBox(height: 30),
               ),
             ],
           ),
         ),
       ),
-
-      bottomNavigationBar: const HomeBottomNavigation(),
+      bottomNavigationBar:
+          const HomeBottomNavigation(),
     );
   }
 }

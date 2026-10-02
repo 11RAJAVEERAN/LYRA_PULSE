@@ -26,18 +26,8 @@ class AttendanceStatusCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(
-        16,
-        16,
-        16,
-        0,
-      ),
-      padding: const EdgeInsets.fromLTRB(
-        20,
-        20,
-        20,
-        18,
-      ),
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      padding: const EdgeInsets.all(5),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
@@ -45,135 +35,96 @@ class AttendanceStatusCard extends StatelessWidget {
           colors: [
             AppColors.primaryDark,
             AppColors.primary,
+            Color(0xFF6366F1),
           ],
         ),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
             color: AppColors.primary.withValues(alpha: 0.20),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
+            blurRadius: 20,
+            offset: const Offset(0, 14),
           ),
         ],
       ),
       child: Column(
         children: [
-          // Top row
           Row(
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'TODAY',
-                    style: GoogleFonts.inter(
-                      color: Colors.white.withValues(alpha: 0.68),
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.8,
-                    ),
-                  ),
-
-                  const SizedBox(height: 5),
-
-                  Text(
-                    currentDate,
-                    style: GoogleFonts.inter(
-                      color: Colors.white,
-                      fontSize: 17,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
-
-              const Spacer(),
-
-              // Present badge
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 9,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.success.withValues(alpha: 0.22),
-                  borderRadius: BorderRadius.circular(30),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      width: 9,
-                      height: 9,
-                      decoration: const BoxDecoration(
-                        color: AppColors.success,
-                        shape: BoxShape.circle,
+                    Text(
+                      'TODAY',
+                      style: GoogleFonts.inter(
+                        color: Colors.white.withValues(alpha: 0.55),
+                        fontSize: 9,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.3,
                       ),
                     ),
-                    const SizedBox(width: 7),
+                    const SizedBox(height:2),
                     Text(
-                      status,
+                      currentDate,
                       style: GoogleFonts.inter(
-                        color: const Color(0xFF6FF0B2),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
                 ),
               ),
+              _StatusBadge(status: status),
             ],
           ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: 5),
 
-          // Current time
           FittedBox(
             fit: BoxFit.scaleDown,
             child: Text(
               currentTime,
               style: GoogleFonts.inter(
                 color: Colors.white,
-                fontSize: 42,
-                fontWeight: FontWeight.w700,
-                letterSpacing: -1,
+                fontSize: 24,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 2,
               ),
             ),
           ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: 5),
 
-          // Attendance details
+          Container(
+            height: 1,
+            color: Colors.white.withValues(alpha: 0.14),
+          ),
+
+          const SizedBox(height: 5),
+
           Row(
             children: [
               Expanded(
-                child: _AttendanceInfo(
+                child: _Value(
+                  icon: Icons.login_rounded,
                   title: 'CHECK IN',
                   value: checkInTime,
                 ),
               ),
-
-              Container(
-                width: 1,
-                height: 48,
-                color: Colors.white.withValues(alpha: 0.28),
-              ),
-
+              _VerticalDivider(),
               Expanded(
-                child: _AttendanceInfo(
+                child: _Value(
+                  icon: Icons.logout_rounded,
                   title: 'CHECK OUT',
                   value: checkOutTime,
                 ),
               ),
-
-              Container(
-                width: 1,
-                height: 48,
-                color: Colors.white.withValues(alpha: 0.28),
-              ),
-
+              _VerticalDivider(),
               Expanded(
-                child: _AttendanceInfo(
+                child: _Value(
+                  icon: Icons.access_time_rounded,
                   title: 'HOURS',
                   value: workingHours,
                 ),
@@ -186,11 +137,61 @@ class AttendanceStatusCard extends StatelessWidget {
   }
 }
 
-class _AttendanceInfo extends StatelessWidget {
+class _StatusBadge extends StatelessWidget {
+  final String status;
+
+  const _StatusBadge({
+    required this.status,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 8,
+        vertical: 3,
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.success.withValues(alpha: 0.18),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: AppColors.success.withValues(alpha: 0.25),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 8,
+            height: 8,
+            decoration: const BoxDecoration(
+              color: Color(0xFF4ADE80),
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 5),
+          Text(
+            status,
+            style: GoogleFonts.inter(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 1,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Value extends StatelessWidget {
+  final IconData icon;
   final String title;
   final String value;
 
-  const _AttendanceInfo({
+  const _Value({
+    required this.icon,
     required this.title,
     required this.value,
   });
@@ -199,24 +200,44 @@ class _AttendanceInfo extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
+        Icon(
+          icon,
+          color: Colors.white.withValues(alpha: 0.65),
+          size: 10,
+        ),
+        const SizedBox(height: 3),
         Text(
           title,
           style: GoogleFonts.inter(
-            color: Colors.white.withValues(alpha: 0.65),
-            fontSize: 11,
-            fontWeight: FontWeight.w500,
+            color: Colors.white.withValues(alpha: 0.55),
+            fontSize: 10,
+            fontWeight: FontWeight.w600,
           ),
         ),
-        const SizedBox(height: 6),
-        Text(
-          value,
-          style: GoogleFonts.inter(
-            color: Colors.white,
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
+        const SizedBox(height: 4),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            value,
+            style: GoogleFonts.inter(
+              color: Colors.white,
+              fontSize: 9,
+              fontWeight: FontWeight.w800,
+            ),
           ),
         ),
       ],
+    );
+  }
+}
+
+class _VerticalDivider extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 1,
+      height: 25,
+      color: Colors.white.withValues(alpha: 0.16),
     );
   }
 }
