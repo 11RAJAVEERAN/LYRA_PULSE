@@ -1,14 +1,21 @@
 from rest_framework import serializers, status
 from rest_framework.exceptions import NotFound
-from rest_framework.generics import ListCreateAPIView, RetrieveUpdateAPIView, RetrieveAPIView
+from rest_framework.generics import ListAPIView, ListCreateAPIView, RetrieveUpdateAPIView, RetrieveAPIView
 from rest_framework.permissions import IsAuthenticated
-from drf_spectacular.utils import extend_schema, OpenApiResponse, inline_serializer
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiResponse, inline_serializer
 
 from apps.accounts.permissions import CanAddEmployees, CanChangeEmployees, CanViewEmployees, IsEmployee
 from apps.common.responses import success_response
 
+from apps.branches.models import Branch
+from apps.departments.models import Department
+from apps.designations.models import Designation
+
 from .models import Employee
-from .serializers import EmployeeManagementSerializer, EmployeeSerializer
+from .serializers import (
+    BranchOptionSerializer, DepartmentOptionSerializer, DesignationOptionSerializer,
+    EmployeeManagementSerializer, EmployeeSerializer,
+)
 
 
 class EmployeeManagementListCreateView(ListCreateAPIView):
@@ -84,3 +91,48 @@ class EmployeeMeView(RetrieveAPIView):
     }), 401: OpenApiResponse(description="Authentication required"), 403: OpenApiResponse(description="Employee role required"), 404: OpenApiResponse(description="Active employee profile not found")})
     def retrieve(self, request, *args, **kwargs):
         return success_response(self.get_serializer(self.get_object()).data)
+
+
+class ReadOnlyOptionListView(ListAPIView):
+    """Read-only dropdown data for the Admin Web. Active records only unless ?include_inactive=true."""
+    permission_classes = [IsAuthenticated, CanViewEmployees]
+    pagination_class = None
+    model = None
+
+    def get_queryset(self):
+        queryset = self.model.objects.all()
+        if self.request.query_params.get("include_inactive", "").lower() != "true":
+            queryset = queryset.filter(is_active=True)
+        return queryset
+
+    def list(self, request, *args, **kwargs):
+        return success_response(self.get_serializer(self.get_queryset(), many=True).data)
+
+
+def option_list_schema(name, serializer_class):
+    return extend_schema(
+        parameters=[OpenApiParameter("include_inactive", bool, description="Set to true to also return inactive records.")],
+        responses={200: inline_serializer(name=name, fields={
+            "success": serializers.BooleanField(),
+            "message": serializers.CharField(),
+            "data": serializer_class(many=True),
+        }), 401: OpenApiResponse(description="Authentication required"), 403: OpenApiResponse(description="Employee view access required")},
+    )
+
+
+@option_list_schema("BranchListResponse", BranchOptionSerializer)
+class BranchListView(ReadOnlyOptionListView):
+    model = Branch
+    serializer_class = BranchOptionSerializer
+
+
+@option_list_schema("DepartmentListResponse", DepartmentOptionSerializer)
+class DepartmentListView(ReadOnlyOptionListView):
+    model = Department
+    serializer_class = DepartmentOptionSerializer
+
+
+@option_list_schema("DesignationListResponse", DesignationOptionSerializer)
+class DesignationListView(ReadOnlyOptionListView):
+    model = Designation
+    serializer_class = DesignationOptionSerializer

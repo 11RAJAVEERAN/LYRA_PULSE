@@ -3,6 +3,9 @@ from django.contrib.auth import get_user_model
 from django.db import transaction
 
 from apps.accounts.serializers import normalize_phone_number
+from apps.branches.models import Branch
+from apps.departments.models import Department
+from apps.designations.models import Designation
 from .models import Employee
 
 User = get_user_model()
@@ -32,7 +35,7 @@ class EmployeeManagementSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         data = super().to_representation(instance)
         data.update({"first_name": instance.user.first_name, "last_name": instance.user.last_name,
-                    "email": instance.user.email})
+                    "phone_number": instance.user.phone_number, "email": instance.user.email})
         return data
 
     def validate_phone_number(self, value):
@@ -69,3 +72,24 @@ class EmployeeManagementSerializer(serializers.ModelSerializer):
         elif any(field in self.initial_data for field in user_fields):
             instance.user.save(update_fields=["first_name", "last_name", "phone_number", "email", "updated_at"])
         return super().update(instance, validated_data)
+
+
+class BranchOptionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Branch
+        fields = ("id", "name", "code", "is_active")
+        read_only_fields = fields
+
+
+class DepartmentOptionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Department
+        fields = ("id", "name", "branch", "is_active")
+        read_only_fields = fields
+
+
+class DesignationOptionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Designation
+        fields = ("id", "name", "department", "is_active")
+        read_only_fields = fields
