@@ -8,14 +8,26 @@ class WeeklyAttendance extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final now = DateTime.now();
+
+    // Monday = 1 ... Sunday = 7
+    final currentDayIndex = now.weekday - 1;
+
+    // Monday -> M
+    // Tuesday -> T
+    // Wednesday -> W
+    // Thursday -> T
+    // Friday -> F
+    // Saturday -> S
+    // Sunday -> S
     final days = [
-      ('M', AppColors.success, false),
-      ('T', AppColors.success, false),
-      ('W', AppColors.warning, false),
-      ('T', AppColors.success, true),
-      ('F', AppColors.error, false),
-      ('S', AppColors.success, false),
-      ('S', AppColors.border, false),
+      ('M', AppColors.success),
+      ('T', AppColors.success),
+      ('W', AppColors.warning),
+      ('T', AppColors.success),
+      ('F', AppColors.error),
+      ('S', AppColors.success),
+      ('S', AppColors.border),
     ];
 
     return Padding(
@@ -23,49 +35,69 @@ class WeeklyAttendance extends StatelessWidget {
         20,
         18,
         20,
-        4,
+        6,
       ),
       child: Row(
-        mainAxisAlignment:
-            MainAxisAlignment.spaceBetween,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: List.generate(
           days.length,
           (index) {
             final day = days[index];
+
+            // Current day automatically selected
+            final isToday = index == currentDayIndex;
 
             return Column(
               children: [
                 Text(
                   day.$1,
                   style: GoogleFonts.inter(
-                    color: AppColors.textSecondary,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
+                    color: isToday
+                        ? AppColors.primary
+                        : AppColors.textSecondary,
+                    fontSize: 12,
+                    fontWeight: isToday
+                        ? FontWeight.w800
+                        : FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: 7),
+
+                const SizedBox(height: 4),
+
                 AnimatedContainer(
-                  duration:
-                      const Duration(milliseconds: 200),
-                  width: 38,
-                  height: 38,
+                  duration: const Duration(
+                    milliseconds: 250,
+                  ),
+                  width: 40,
+                  height: 40,
                   decoration: BoxDecoration(
-                    color: day.$3
+                    color: isToday
                         ? AppColors.primary
                             .withValues(alpha: 0.10)
                         : AppColors.surface,
                     borderRadius:
-                        BorderRadius.circular(12),
+                        BorderRadius.circular(13),
                     border: Border.all(
-                      color: day.$3
+                      color: isToday
                           ? AppColors.primary
                           : AppColors.border,
+                      width: isToday ? 1.5 : 1,
                     ),
+                    boxShadow: isToday
+                        ? [
+                            BoxShadow(
+                              color: AppColors.primary
+                                  .withValues(alpha: 0.12),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ]
+                        : null,
                   ),
                   child: Center(
                     child: Container(
-                      width: 11,
-                      height: 11,
+                      width: isToday ? 13 : 11,
+                      height: isToday ? 13 : 11,
                       decoration: BoxDecoration(
                         color: day.$2,
                         shape: BoxShape.circle,
@@ -73,6 +105,20 @@ class WeeklyAttendance extends StatelessWidget {
                     ),
                   ),
                 ),
+
+                // TODAY label
+                if (isToday) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    'TODAY',
+                    style: GoogleFonts.inter(
+                      color: AppColors.primary,
+                      fontSize: 7,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.4,
+                    ),
+                  ),
+                ],
               ],
             );
           },
