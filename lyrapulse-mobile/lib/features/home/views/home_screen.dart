@@ -10,6 +10,7 @@ import '../widgets/quick_action_card.dart';
 import '../widgets/today_status_card.dart';
 import '../widgets/today_summary_card.dart';
 import '../widgets/welcome_header.dart';
+import '../../profile/views/profile_view.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -25,7 +26,9 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final authController = Get.find<AuthController>();
     return Scaffold(
-      body: SafeArea(
+      body: selectedIndex == 3
+          ? const ProfileView()
+          : SafeArea(
         child: CustomScrollView(slivers: [
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(
@@ -81,7 +84,7 @@ class _HomeScreenState extends State<HomeScreen> {
           selectedIndex: selectedIndex,
           onChanged: (index) {
             setState(() => selectedIndex = index);
-            if (index != 0) _comingSoon();
+            if (index != 0 && index != 3) _comingSoon();
           }),
     );
   }

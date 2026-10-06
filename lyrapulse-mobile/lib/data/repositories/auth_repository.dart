@@ -1,3 +1,4 @@
+
 import 'package:dio/dio.dart';
 
 import '../../core/storage/secure_storage_service.dart';
@@ -14,14 +15,16 @@ class AuthRepository {
     final response = await _api.sendOtp(phoneNumber);
     final body = _asMap(response.data);
     _ensureSuccess(body);
-    return body['otp']?.toString();
+    final data = _asMap(body['data']);
+    return data['dev_otp']?.toString();
   }
 
   Future<String?> resendOtp(String phoneNumber) async {
     final response = await _api.resendOtp(phoneNumber);
     final body = _asMap(response.data);
     _ensureSuccess(body);
-    return body['otp']?.toString();
+    final data = _asMap(body['data']);
+    return data['dev_otp']?.toString();
   }
 
   Future<EmployeeModel> verifyOtp(String phoneNumber, String otp) async {
@@ -44,10 +47,29 @@ class AuthRepository {
   }
 
   Future<EmployeeModel> loadEmployeeProfile() async {
-    final response = await _api.getEmployeeProfile();
-    final body = _asMap(response.data);
-    _ensureSuccess(body);
-    return EmployeeModel.fromJson(_asMap(body['data']));
+    final responses = await Future.wait([
+      _api.getEmployeeProfile(),
+      _api.getCurrentUser(),
+    ]);
+    final profileBody = _asMap(responses[0].data);
+    final currentUserBody = _asMap(responses[1].data);
+    _ensureSuccess(profileBody);
+    _ensureSuccess(currentUserBody);
+    final profile = _asMap(profileBody['data']);
+    final currentUser = _asMap(_asMap(currentUserBody['data'])['user']);
+    return EmployeeModel.fromJson(profile, emailFallback: currentUser['email']?.toString() ?? '');
+  }
+
+  Future<void> logout() async {
+    final refreshToken = await _secureStorage.readRefreshToken();
+    try {
+      if (refreshToken != null && refreshToken.isNotEmpty) {
+        final response = await _api.logout(refreshToken);
+        _ensureSuccess(_asMap(response.data));
+      }
+    } finally {
+      await _secureStorage.clearTokens();
+    }
   }
 
   Future<void> clearSession() => _secureStorage.clearTokens();

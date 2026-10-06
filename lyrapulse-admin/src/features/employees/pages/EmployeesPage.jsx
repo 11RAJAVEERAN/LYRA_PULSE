@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Alert, Box, Button, Card, CardContent, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel, Grid, MenuItem, Paper, Snackbar, Switch, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from '@mui/material'
+import { Alert, Box, Button, Card, CardContent, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Divider, FormControlLabel, Grid, MenuItem, Paper, Snackbar, Switch, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from '@mui/material'
 import { PageHeader } from '../../../components/common/PageHeader'
 import { SearchInput } from '../../../components/common/SearchInput'
+import { EmptyState } from '../../../components/common/EmptyState'
+import { ErrorState } from '../../../components/common/ErrorState'
+import { StatusChip } from '../../../components/common/StatusChip'
 import apiClient from '../../../services/apiClient'
 
 const emptyForm = {
@@ -10,6 +13,7 @@ const emptyForm = {
 }
 
 const emptyOptions = { branches: [], departments: [], designations: [] }
+const sameId = (left, right) => left !== '' && left != null && right !== '' && right != null && String(left) === String(right)
 
 function responseData(response) {
   return response.data?.data ?? response.data
@@ -21,15 +25,17 @@ function listData(response) {
 }
 
 function errorMessage(error) {
-  const data = error.response?.data
+  const data = error?.response?.data
   if (data?.detail) return data.detail
-  if (data?.errors) return Object.values(data.errors).flat().join(' ')
-  return data?.message ?? error.message ?? 'Unable to load employees.'
+  if (data?.errors) {
+    return Object.entries(data.errors).map(([field, messages]) => `${field}: ${Array.isArray(messages) ? messages.join(' ') : messages}`).join(' ')
+  }
+  return data?.message ?? error?.message ?? 'Unable to complete this request.'
 }
 
-function SectionLabel({ children }) {
+function SectionHeading({ children }) {
   return (
-    <Typography variant="overline" color="text.secondary" sx={{ display: 'block', fontWeight: 700, letterSpacing: '0.08em', lineHeight: 1.5 }}>
+    <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1.5 }}>
       {children}
     </Typography>
   )
@@ -55,8 +61,7 @@ export function EmployeesPage() {
     setPageError('')
     try {
       const response = await apiClient.get('/employees/')
-      const data = responseData(response)
-      setRows(Array.isArray(data) ? data : [])
+      setRows(listData(response))
     } catch (error) {
       setPageError(errorMessage(error))
     } finally {
@@ -64,7 +69,7 @@ export function EmployeesPage() {
     }
   }
 
-  // Inactive records are included so an employee's current assignment can always be shown while editing.
+  // Inactive options are fetched so an employee's current assignment remains selectable while editing.
   const loadOptions = async () => {
     setOptionsLoading(true)
     setOptionsError('')
@@ -80,28 +85,30 @@ export function EmployeesPage() {
     }
   }
 
-  useEffect(() => { loadEmployees(); loadOptions() }, [])
+  useEffect(() => {
+    loadEmployees()
+    loadOptions()
+  }, [])
 
   const filteredRows = useMemo(() => rows.filter((row) =>
     [row.first_name, row.last_name, row.name, row.employee_code, row.phone_number, row.email]
-      .filter(Boolean).join(' ').toLowerCase().includes(query.toLowerCase())), [rows, query])
+      .filter(Boolean).join(' ').toLowerCase().includes(query.trim().toLowerCase())), [rows, query])
 
   const departmentNames = useMemo(
-    () => new Map(options.departments.map((department) => [department.id, department.name])),
+    () => new Map(options.departments.map((department) => [String(department.id), department.name])),
     [options.departments],
   )
 
-  // Each list shows active records that belong to the parent selection, plus the current value so it never disappears.
   const branchOptions = useMemo(
-    () => options.branches.filter((item) => item.is_active || item.id === form.branch),
+    () => options.branches.filter((item) => item.is_active || sameId(item.id, form.branch)),
     [options.branches, form.branch],
   )
   const departmentOptions = useMemo(
-    () => options.departments.filter((item) => item.id === form.department || (item.branch === form.branch && item.is_active)),
+    () => options.departments.filter((item) => sameId(item.id, form.department) || (sameId(item.branch, form.branch) && item.is_active)),
     [options.departments, form.branch, form.department],
   )
   const designationOptions = useMemo(
-    () => options.designations.filter((item) => item.id === form.designation || (item.department === form.department && item.is_active)),
+    () => options.designations.filter((item) => sameId(item.id, form.designation) || (sameId(item.department, form.department) && item.is_active)),
     [options.designations, form.department, form.designation],
   )
 
@@ -156,12 +163,13 @@ export function EmployeesPage() {
   const changeBranch = (event) => {
     const branch = event.target.value
     setForm((current) => {
-      const department = options.departments.find((item) => item.id === current.department)
-      const keepDepartment = department && department.branch === branch
-      const designation = options.designations.find((item) => item.id === current.designation)
-      const keepDesignation = keepDepartment && designation && designation.department === current.department
+      const department = options.departments.find((item) => sameId(item.id, current.department))
+      const keepDepartment = department && sameId(department.branch, branch)
+      const designation = options.designations.find((item) => sameId(item.id, current.designation))
+      const keepDesignation = keepDepartment && designation && sameId(designation.department, current.department)
       return {
-        ...current, branch,
+        ...current,
+        branch,
         department: keepDepartment ? current.department : '',
         designation: keepDesignation ? current.designation : '',
       }
@@ -171,8 +179,8 @@ export function EmployeesPage() {
   const changeDepartment = (event) => {
     const department = event.target.value
     setForm((current) => {
-      const designation = options.designations.find((item) => item.id === current.designation)
-      const keepDesignation = designation && designation.department === department
+      const designation = options.designations.find((item) => sameId(item.id, current.designation))
+      const keepDesignation = designation && sameId(designation.department, department)
       return { ...current, department, designation: keepDesignation ? current.designation : '' }
     })
   }
@@ -184,22 +192,32 @@ export function EmployeesPage() {
   )
 
   const selectField = ({ name, label, items, onChange, placeholder, parentMissing, parentLabel }) => {
-    const hasValue = form[name] !== '' && items.some((item) => item.id === form[name])
+    const hasValue = form[name] !== '' && items.some((item) => sameId(item.id, form[name]))
     return (
-      <Grid size={{ xs: 12 }}>
+      <Grid size={{ xs: 12, sm: 6 }}>
         <TextField
-          select fullWidth name={name} label={label}
+          select
+          fullWidth
+          name={name}
+          label={label}
           value={hasValue ? form[name] : ''}
           onChange={onChange}
           disabled={saving || optionsLoading || Boolean(optionsError) || parentMissing}
-          helperText={parentMissing && !optionsLoading ? `Select a ${parentLabel} first` : undefined}
-          slotProps={{ inputLabel: { shrink: true }, select: { displayEmpty: true, MenuProps: { slotProps: { paper: { sx: { maxHeight: 280 } } } } } }}
+          helperText={parentMissing ? `Select a ${parentLabel} first` : optionsError || undefined}
+          slotProps={{
+            inputLabel: { shrink: true },
+            select: { displayEmpty: true, MenuProps: { slotProps: { paper: { sx: { maxHeight: 280 } } } } },
+          }}
         >
           <MenuItem value="">
-            <Typography component="span" color="text.secondary">{optionsLoading ? 'Loading…' : placeholder}</Typography>
+            <Typography component="span" color="text.secondary">
+              {optionsLoading ? 'Loading options…' : placeholder}
+            </Typography>
           </MenuItem>
           {items.map((item) => (
-            <MenuItem key={item.id} value={item.id}>{item.is_active ? item.name : `${item.name} (inactive)`}</MenuItem>
+            <MenuItem key={item.id} value={item.id}>
+              {item.is_active ? item.name : `${item.name} (inactive)`}
+            </MenuItem>
           ))}
         </TextField>
       </Grid>
@@ -207,78 +225,109 @@ export function EmployeesPage() {
   }
 
   return (
-    <div>
-      <PageHeader title="Employees" subtitle="Manage workforce details and employee records" action={<Button variant="contained" onClick={openCreate}>Add Employee</Button>} />
-      <Card>
-        <CardContent sx={{ p: 2.5 }}>
-          <SearchInput value={query} onChange={setQuery} placeholder="Search employee" />
+    <Box>
+      <PageHeader
+        title="Employees"
+        subtitle="Manage employee profiles, assignments, and account status."
+        action={<Button variant="contained" onClick={openCreate}>Add employee</Button>}
+      />
+
+      <Card sx={{ mb: 2 }}>
+        <CardContent sx={{ p: { xs: 1.5, sm: 2 } }}>
+          <SearchInput value={query} onChange={setQuery} label="Search employees" placeholder="Search by name, code, phone, or email" />
         </CardContent>
       </Card>
-      {pageError ? <Alert severity="error" sx={{ mt: 2 }}>{pageError}</Alert> : null}
-      <Paper sx={{ mt: 3, overflow: 'hidden' }}>
-        <TableContainer>
-          <Table>
-            <TableHead><TableRow>
-              <TableCell>Employee</TableCell><TableCell>Employee Code</TableCell><TableCell>Phone</TableCell>
-              <TableCell>Email</TableCell><TableCell>Department</TableCell><TableCell>Status</TableCell><TableCell />
-            </TableRow></TableHead>
-            <TableBody>
-              {loading ? <TableRow><TableCell colSpan={7} align="center"><CircularProgress size={24} /></TableCell></TableRow>
-                : filteredRows.map((row) => <TableRow key={row.id} hover>
-                  <TableCell>{[row.first_name, row.last_name].filter(Boolean).join(' ') || row.name}</TableCell>
-                  <TableCell>{row.employee_code}</TableCell><TableCell>{row.phone_number}</TableCell>
-                  <TableCell>{row.email}</TableCell><TableCell>{departmentNames.get(row.department) ?? '—'}</TableCell>
-                  <TableCell><Typography color={row.is_active ? 'success.main' : 'text.secondary'} sx={{ fontWeight: 600 }}>{row.is_active ? 'Active' : 'Inactive'}</Typography></TableCell>
-                  <TableCell align="right"><Button size="small" onClick={() => openEdit(row)}>Edit</Button></TableCell>
-                </TableRow>)}
-              {!loading && filteredRows.length === 0 ? <TableRow><TableCell colSpan={7} align="center">No employees found.</TableCell></TableRow> : null}
-            </TableBody>
-          </Table>
-        </TableContainer>
+
+      {pageError ? <ErrorState message={pageError} onRetry={loadEmployees} retrying={loading} /> : null}
+
+      <Paper sx={{ overflow: 'hidden' }}>
+        {loading ? (
+          <Box sx={{ py: 5, display: 'flex', justifyContent: 'center' }}><CircularProgress size={26} aria-label="Loading employees" /></Box>
+        ) : pageError ? (
+          <Box sx={{ minHeight: 96 }} />
+        ) : filteredRows.length === 0 ? (
+          <EmptyState
+            title={query ? 'No matching employees' : 'No employees yet'}
+            description={query ? 'Try another search term.' : 'Add an employee to start building your workforce directory.'}
+            actionLabel={!query ? 'Add employee' : undefined}
+            onAction={!query ? openCreate : undefined}
+          />
+        ) : (
+          <TableContainer sx={{ border: 0, borderRadius: 0 }}>
+            <Table aria-label="Employees" sx={{ minWidth: 900 }}>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Employee</TableCell>
+                  <TableCell>Employee code</TableCell>
+                  <TableCell>Phone</TableCell>
+                  <TableCell>Email</TableCell>
+                  <TableCell>Department</TableCell>
+                  <TableCell>Status</TableCell>
+                  <TableCell align="right">Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {filteredRows.map((row) => (
+                  <TableRow key={row.id} hover>
+                    <TableCell sx={{ fontWeight: 600 }}>{[row.first_name, row.last_name].filter(Boolean).join(' ') || row.name}</TableCell>
+                    <TableCell>{row.employee_code}</TableCell>
+                    <TableCell>{row.phone_number}</TableCell>
+                    <TableCell>{row.email || '—'}</TableCell>
+                    <TableCell>{departmentNames.get(String(row.department)) ?? '—'}</TableCell>
+                    <TableCell><StatusChip label={row.is_active ? 'Active' : 'Inactive'} /></TableCell>
+                    <TableCell align="right"><Button size="small" onClick={() => openEdit(row)} aria-label={`Edit ${row.first_name || row.name || row.employee_code}`}>Edit</Button></TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
       </Paper>
 
-      <Dialog open={dialogOpen} onClose={() => !saving && setDialogOpen(false)} fullWidth maxWidth="sm">
-        <Box component="form" onSubmit={saveEmployee} sx={{ display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
-          <DialogTitle sx={{ pb: 0.5 }}>{editingId ? 'Edit Employee' : 'Add Employee'}</DialogTitle>
-          <Typography variant="body2" color="text.secondary" sx={{ px: 3, pb: 1.5 }}>
-            {editingId ? 'Update personal and employment details.' : 'Enter personal and employment details.'}
-          </Typography>
-          <DialogContent dividers sx={{ borderColor: 'divider' }}>
+      <Dialog open={dialogOpen} onClose={() => !saving && setDialogOpen(false)} fullWidth maxWidth="md" scroll="paper">
+        <Box component="form" onSubmit={saveEmployee} noValidate>
+          <DialogTitle>{editingId ? 'Edit employee' : 'Add employee'}</DialogTitle>
+          <DialogContent dividers>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>
+              {editingId ? 'Update the employee’s personal and employment information.' : 'Add contact details and assign the employee to an organization unit.'}
+            </Typography>
             {dialogError ? <Alert severity="error" sx={{ mb: 2 }}>{dialogError}</Alert> : null}
             {optionsError ? (
               <Alert severity="warning" sx={{ mb: 2 }} action={<Button color="inherit" size="small" onClick={loadOptions} disabled={optionsLoading}>Retry</Button>}>
-                Unable to load branches, departments and designations. {optionsError} Existing assignments will be kept.
+                Organization options could not be loaded. Existing selections are preserved. {optionsError}
               </Alert>
             ) : null}
-            <SectionLabel>Personal details</SectionLabel>
-            <Grid container spacing={2} sx={{ mt: 0.5, mb: 3 }}>
-              {textField('first_name', 'First Name', { required: true })}
-              {textField('last_name', 'Last Name', { required: true })}
-              {textField('phone_number', 'Mobile Number', { required: true, type: 'tel' })}
-              {textField('email', 'Email', { required: true, type: 'email' })}
+
+            <SectionHeading>Personal information</SectionHeading>
+            <Grid container spacing={2}>
+              {textField('first_name', 'First name', { required: true, autoComplete: 'given-name' })}
+              {textField('last_name', 'Last name', { required: true, autoComplete: 'family-name' })}
+              {textField('phone_number', 'Mobile number', { required: true, type: 'tel', autoComplete: 'tel' })}
+              {textField('email', 'Email address', { required: true, type: 'email', autoComplete: 'email' })}
             </Grid>
-            <SectionLabel>Employment details</SectionLabel>
-            <Grid container spacing={2} sx={{ mt: 0.5 }}>
-              {textField('employee_code', 'Employee Code', { required: true })}
-              {textField('joining_date', 'Joining Date', { type: 'date', slotProps: { inputLabel: { shrink: true } } })}
+
+            <Divider sx={{ my: 2.5 }} />
+            <SectionHeading>Employment information</SectionHeading>
+            <Grid container spacing={2}>
+              {textField('employee_code', 'Employee code', { required: true })}
+              {textField('joining_date', 'Joining date', { type: 'date', slotProps: { inputLabel: { shrink: true } } })}
               {selectField({ name: 'branch', label: 'Branch', items: branchOptions, onChange: changeBranch, placeholder: 'Select branch' })}
               {selectField({ name: 'department', label: 'Department', items: departmentOptions, onChange: changeDepartment, placeholder: 'Select department', parentMissing: form.branch === '', parentLabel: 'branch' })}
               {selectField({ name: 'designation', label: 'Designation', items: designationOptions, onChange: updateField, placeholder: 'Select designation', parentMissing: form.department === '', parentLabel: 'department' })}
-              <Grid size={{ xs: 12 }}>
-                <Box sx={{ border: 1, borderColor: 'divider', borderRadius: 2, bgcolor: 'background.default', px: 2, py: 0.5 }}>
-                  <FormControlLabel
-                    sx={{ width: '100%', m: 0, justifyContent: 'space-between' }}
-                    labelPlacement="start"
-                    label={<Typography sx={{ fontWeight: 600 }}>Active Employee</Typography>}
-                    control={<Switch name="is_active" checked={form.is_active} onChange={updateField} disabled={saving} />}
-                  />
-                </Box>
-              </Grid>
             </Grid>
+
+            <Divider sx={{ my: 2.5 }} />
+            <SectionHeading>Status</SectionHeading>
+            <FormControlLabel
+              control={<Switch name="is_active" checked={form.is_active} onChange={updateField} disabled={saving} />}
+              label={form.is_active ? 'Active employee' : 'Inactive employee'}
+            />
           </DialogContent>
-          <DialogActions sx={{ px: 3, py: 2 }}>
-            <Button onClick={() => setDialogOpen(false)} disabled={saving}>Cancel</Button>
-            <Button type="submit" variant="contained" disabled={saving}>{saving ? 'Saving…' : 'Save Employee'}</Button>
+          <DialogActions>
+            <Button type="button" variant="outlined" onClick={() => setDialogOpen(false)} disabled={saving}>Cancel</Button>
+            <Button type="submit" variant="contained" disabled={saving}>
+              {saving ? 'Saving…' : editingId ? 'Save changes' : 'Add employee'}
+            </Button>
           </DialogActions>
         </Box>
       </Dialog>
@@ -286,6 +335,6 @@ export function EmployeesPage() {
       <Snackbar open={Boolean(notice)} autoHideDuration={4000} onClose={() => setNotice('')} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
         <Alert severity="success" variant="filled" onClose={() => setNotice('')}>{notice}</Alert>
       </Snackbar>
-    </div>
+    </Box>
   )
 }

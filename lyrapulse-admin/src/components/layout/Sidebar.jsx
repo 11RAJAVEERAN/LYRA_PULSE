@@ -8,13 +8,12 @@ import {
   ClipboardList,
   FolderKanban,
   LayoutDashboard,
-  LockKeyhole,
   NotebookPen,
-  UserCog,
   ShieldCheck,
+  UserCog,
   Users,
 } from 'lucide-react'
-import { Box, Divider, IconButton, List, ListItemButton, ListItemIcon, ListItemText, Typography } from '@mui/material'
+import { Box, Divider, IconButton, List, ListItemButton, ListItemIcon, ListItemText, Tooltip, Typography } from '@mui/material'
 import { NavLink } from 'react-router-dom'
 
 const navItems = [
@@ -33,84 +32,94 @@ const navItems = [
 
 export function Sidebar({ collapsed, onToggle, onNavigate }) {
   let user = null
-  try { user = JSON.parse(localStorage.getItem('lyrapulse_admin_user') || sessionStorage.getItem('lyrapulse_admin_user') || 'null') } catch { user = null }
+  try {
+    user = JSON.parse(localStorage.getItem('lyrapulse_admin_user') || sessionStorage.getItem('lyrapulse_admin_user') || 'null')
+  } catch {
+    user = null
+  }
+
   const visibleItems = navItems.filter(({ superadminOnly, path }) => {
     if (superadminOnly) return user?.role === 'SUPERADMIN'
     if (path === '/employees') return user?.role === 'SUPERADMIN' || user?.permissions?.includes('employees.view_employee')
     return user?.role === 'SUPERADMIN'
   })
+
   return (
     <Box
+      component="nav"
+      aria-label="Main navigation"
       sx={{
-        width: collapsed ? 88 : 260,
-        transition: 'width 0.2s ease',
-        backgroundColor: '#0f172a',
-        color: '#e2e8f0',
-        borderRight: '1px solid rgba(148, 163, 184, 0.15)',
+        width: collapsed ? 80 : 264,
+        height: '100vh',
+        position: 'sticky',
+        top: 0,
+        overflowY: 'auto',
+        transition: 'width 160ms ease',
+        bgcolor: 'lyra.sidebarBackground',
+        color: 'lyra.sidebarText',
         display: 'flex',
         flexDirection: 'column',
       }}
     >
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 2, minHeight: 72 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 2, minHeight: 72 }}>
         {!collapsed ? (
           <Box>
-            <Typography variant="h6" sx={{ color: '#fff', fontWeight: 700 }}>
-              Lyra Pulse
+            <Typography variant="subtitle1" sx={{ color: 'common.white', fontWeight: 750, letterSpacing: '0.01em' }}>
+              LYRA PULSE
             </Typography>
-            <Typography variant="caption" sx={{ color: '#94a3b8' }}>
-              Admin Console
-            </Typography>
+            <Typography variant="caption" sx={{ color: 'lyra.sidebarMuted' }}>Admin Console</Typography>
           </Box>
         ) : (
-          <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
-            <Typography variant="h6" sx={{ color: '#fff', fontWeight: 800 }}>
-              L
-            </Typography>
-          </Box>
+          <Typography variant="h6" aria-label="LYRA PULSE" sx={{ width: '100%', textAlign: 'center', color: 'common.white' }}>
+            L
+          </Typography>
         )}
-        <IconButton onClick={onToggle} sx={{ color: '#cbd5e1', border: '1px solid rgba(148,163,184,0.2)' }} size="small">
-          {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
-        </IconButton>
+        {onToggle ? (
+          <Tooltip title={collapsed ? 'Expand navigation' : 'Collapse navigation'}>
+            <IconButton aria-label={collapsed ? 'Expand navigation' : 'Collapse navigation'} onClick={onToggle} size="small" sx={{ color: 'lyra.sidebarText', border: '1px solid', borderColor: 'lyra.sidebarDivider' }}>
+              {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+            </IconButton>
+          </Tooltip>
+        ) : null}
       </Box>
 
-      <Divider sx={{ borderColor: 'rgba(148,163,184,0.15)' }} />
+      <Divider sx={{ borderColor: 'lyra.sidebarDivider' }} />
 
-      <List sx={{ px: 1.5, py: 2 }}>
-        {visibleItems.map(({ label, path, icon: Icon }) => (
-          <ListItemButton
-            key={path}
-            component={NavLink}
-            to={path}
-            onClick={onNavigate}
-            sx={{
-              borderRadius: 2,
-              mb: 0.5,
-              color: '#cbd5e1',
-              '&.active': {
-                backgroundColor: 'rgba(59,130,246,0.18)',
-                color: '#fff',
-                '& .MuiListItemIcon-root': { color: '#fff' },
-              },
-              '&:hover': { backgroundColor: 'rgba(148,163,184,0.08)' },
-            }}
-          >
-            <ListItemIcon sx={{ color: 'inherit', minWidth: collapsed ? 28 : 36 }}>
-              <Icon size={18} />
-            </ListItemIcon>
-            {!collapsed ? <ListItemText primary={label} /> : null}
-          </ListItemButton>
-        ))}
+      <List component="div" sx={{ px: 1.25, py: 2, flex: 1 }}>
+        {visibleItems.map(({ label, path, icon: Icon }) => {
+          const link = (
+            <ListItemButton
+              key={path}
+              component={NavLink}
+              to={path}
+              onClick={onNavigate}
+              aria-label={collapsed ? label : undefined}
+              sx={{
+                minHeight: 44,
+                borderRadius: 1.5,
+                mb: 0.5,
+                px: collapsed ? 1.5 : 1.75,
+                color: 'lyra.sidebarText',
+                '&.active': {
+                  bgcolor: 'lyra.sidebarActive',
+                  color: 'common.white',
+                  '& .MuiListItemIcon-root': { color: 'common.white' },
+                  '&:before': { content: '""', position: 'absolute', left: 0, top: 8, bottom: 8, width: 3, borderRadius: 3, bgcolor: 'info.light' },
+                },
+                '&:hover': { bgcolor: 'lyra.sidebarHover', color: 'common.white' },
+                '&:focus-visible': { outline: '2px solid', outlineColor: 'info.light', outlineOffset: -2 },
+              }}
+            >
+              <ListItemIcon sx={{ color: 'inherit', minWidth: collapsed ? 0 : 36, justifyContent: 'center' }}>
+                <Icon size={18} aria-hidden="true" />
+              </ListItemIcon>
+              {!collapsed ? <ListItemText primary={label} primaryTypographyProps={{ variant: 'body2', fontWeight: 550 }} /> : null}
+            </ListItemButton>
+          )
+
+          return collapsed ? <Tooltip key={path} title={label} placement="right">{link}</Tooltip> : link
+        })}
       </List>
-
-      <Box sx={{ mt: 'auto', p: 2 }}>
-        <Divider sx={{ borderColor: 'rgba(148,163,184,0.15)', mb: 2 }} />
-        <ListItemButton sx={{ borderRadius: 2, color: '#cbd5e1' }}>
-          <ListItemIcon sx={{ color: 'inherit', minWidth: collapsed ? 28 : 36 }}>
-            <LockKeyhole size={18} />
-          </ListItemIcon>
-          {!collapsed ? <ListItemText primary="Permissions" /> : null}
-        </ListItemButton>
-      </Box>
     </Box>
   )
 }

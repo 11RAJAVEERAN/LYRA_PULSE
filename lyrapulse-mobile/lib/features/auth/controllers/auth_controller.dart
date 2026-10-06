@@ -18,6 +18,7 @@ class AuthController extends GetxController {
   final secondsRemaining = AppConstants.otpCountdownSeconds.obs;
   final isSendingOtp = false.obs;
   final isVerifying = false.obs;
+  final isLoggingOut = false.obs;
   final employee = Rxn<EmployeeModel>();
 
   Worker? _countdownWorker;
@@ -89,6 +90,24 @@ class AuthController extends GetxController {
     } catch (_) {
       await _authRepository.clearSession();
       return false;
+    }
+  }
+
+  Future<void> logout() async {
+    if (isLoggingOut.value) return;
+    isLoggingOut.value = true;
+    Object? logoutError;
+    try {
+      await _authRepository.logout();
+    } catch (error) {
+      logoutError = error;
+    } finally {
+      employee.value = null;
+      isLoggingOut.value = false;
+      Get.offAllNamed(AppRoutes.login);
+    }
+    if (logoutError != null) {
+      AppSnackbar.show('Signed out on this device. Server logout could not be confirmed.');
     }
   }
 

@@ -1,9 +1,9 @@
-import { AppBar, Avatar, Badge, Box, IconButton, Toolbar, Tooltip, Typography } from '@mui/material'
-import { Bell, LogOut, Search, Settings } from 'lucide-react'
+import { AppBar, Avatar, Box, IconButton, Toolbar, Tooltip, Typography } from '@mui/material'
+import { LogOut, Menu } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../features/auth/hooks/useAuth'
 
-export function Topbar({ title = 'Overview' }) {
+export function Topbar({ title = 'Dashboard', onMenu, showMenu = false }) {
   const navigate = useNavigate()
   const { currentUser, logout } = useAuth()
 
@@ -12,51 +12,36 @@ export function Topbar({ title = 'Overview' }) {
     navigate('/login', { replace: true })
   }
 
-  return (
-    <AppBar
-      position="sticky"
-      color="transparent"
-      elevation={0}
-      sx={{
-        backgroundColor: 'rgba(255,255,255,0.72)',
-        backdropFilter: 'blur(12px)',
-        borderBottom: '1px solid rgba(148, 163, 184, 0.12)',
-        color: '#0f172a',
-      }}
-    >
-      <Toolbar sx={{ minHeight: 76, px: { xs: 2, md: 3 } }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-          <Typography variant="h5" sx={{ fontWeight: 700 }}>
-            {title}
-          </Typography>
+  const displayName = currentUser?.name ?? 'LyraTech Admin'
+  const initials = displayName.split(' ').filter(Boolean).map((part) => part[0]).join('').slice(0, 2)
 
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <IconButton sx={{ border: '1px solid rgba(148,163,184,0.15)', backgroundColor: '#fff' }}>
-              <Search size={16} />
-            </IconButton>
-            <IconButton sx={{ border: '1px solid rgba(148,163,184,0.15)', backgroundColor: '#fff' }}>
-              <Badge color="error" variant="dot">
-                <Bell size={16} />
-              </Badge>
-            </IconButton>
-            <IconButton sx={{ border: '1px solid rgba(148,163,184,0.15)', backgroundColor: '#fff' }}>
-              <Settings size={16} />
-            </IconButton>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, ml: 1 }}>
-              <Avatar sx={{ bgcolor: '#1d4ed8', width: 36, height: 36, fontSize: 14 }}>
-                {(currentUser?.name ?? 'LyraTech Admin').split(' ').map((part) => part[0]).join('').slice(0, 2)}
-              </Avatar>
-              <Box>
-                <Typography variant="body2" sx={{ fontWeight: 700 }}>{currentUser?.name ?? 'LyraTech Admin'}</Typography>
-                <Typography variant="caption" color="text.secondary">{currentUser?.role ?? 'Administrator'}</Typography>
-              </Box>
-            </Box>
-            <Tooltip title="Log out">
-              <IconButton aria-label="Log out" onClick={handleLogout} sx={{ border: '1px solid rgba(148,163,184,0.15)', backgroundColor: '#fff' }}>
-                <LogOut size={16} />
-              </IconButton>
-            </Tooltip>
+  return (
+    <AppBar position="sticky" color="transparent" elevation={0}>
+      <Toolbar sx={{ minHeight: { xs: 64, md: 72 }, px: { xs: 2, md: 3 }, gap: 1.5 }}>
+        {showMenu ? (
+          <IconButton aria-label="Open navigation menu" onClick={onMenu} edge="start" sx={{ color: 'text.primary' }}>
+            <Menu size={20} />
+          </IconButton>
+        ) : null}
+        <Typography variant="subtitle1" component="p" sx={{ flex: 1, minWidth: 0 }} noWrap>
+          {title}
+        </Typography>
+
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 1.5 } }}>
+          <Avatar sx={{ bgcolor: 'primary.main', color: 'primary.contrastText', width: 36, height: 36 }}>
+            {initials}
+          </Avatar>
+          <Box sx={{ display: { xs: 'none', sm: 'block' }, maxWidth: 200 }}>
+            <Typography variant="body2" sx={{ fontWeight: 650 }} noWrap>{displayName}</Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'capitalize' }}>
+              {(currentUser?.role ?? 'Administrator').toLowerCase()}
+            </Typography>
           </Box>
+          <Tooltip title="Log out">
+            <IconButton aria-label="Log out" onClick={handleLogout} sx={{ color: 'text.secondary' }}>
+              <LogOut size={18} />
+            </IconButton>
+          </Tooltip>
         </Box>
       </Toolbar>
     </AppBar>

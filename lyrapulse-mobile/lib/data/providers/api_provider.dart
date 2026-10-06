@@ -24,4 +24,11 @@ class ApiProvider {
   );
 
   Future<Response<dynamic>> getEmployeeProfile() => _client.dio.get(ApiConstants.employeeMe);
+
+  Future<Response<dynamic>> getCurrentUser() => _client.dio.get(ApiConstants.currentUser);
+
+  Future<Response<dynamic>> logout(String refreshToken) => _client.dio.post(
+    ApiConstants.logout,
+    data: {'refresh': refreshToken},
+  );
 }

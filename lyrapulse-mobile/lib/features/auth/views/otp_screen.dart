@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -40,7 +41,7 @@ class _OtpScreenState extends State<OtpScreen> {
             const SizedBox(height: 62),
             Text('Verify Your Number', style: AppTextStyles.headline),
             const SizedBox(height: 10),
-            Text('Enter the OTP sent to your phone',
+            Text('If this number is registered and active, an OTP was sent.',
                 style: AppTextStyles.bodySmall),
             const SizedBox(height: 10),
             Text('+91 ${controller.phoneController.text}',

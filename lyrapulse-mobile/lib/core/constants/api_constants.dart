@@ -3,5 +3,7 @@ abstract final class ApiConstants {
   static const String sendOtp = 'auth/employee/send-otp/';
   static const String resendOtp = 'auth/employee/resend-otp/';
   static const String verifyOtp = 'auth/employee/verify-otp/';
+  static const String currentUser = 'auth/me/';
+  static const String logout = 'auth/logout/';
   static const String employeeMe = 'mobile/me/';
 }

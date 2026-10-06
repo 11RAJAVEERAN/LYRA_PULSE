@@ -6,6 +6,7 @@ import '../../data/providers/api_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../features/auth/controllers/auth_controller.dart';
 import '../../features/home/controllers/home_controller.dart';
+import '../../features/profile/controllers/profile_controller.dart';
 import '../../features/splash/controllers/splash_controller.dart';
 
 class InitialBinding extends Bindings {
@@ -18,5 +19,6 @@ class InitialBinding extends Bindings {
     Get.lazyPut<SplashController>(() => SplashController());
     Get.put<AuthController>(AuthController(), permanent: true);
     Get.lazyPut<HomeController>(() => HomeController());
+    Get.lazyPut<ProfileController>(() => ProfileController());
   }
 }

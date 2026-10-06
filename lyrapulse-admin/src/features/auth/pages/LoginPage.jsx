@@ -1,6 +1,6 @@
+
 import { useEffect, useRef, useState } from 'react'
 import { Alert, Box, Button, Checkbox, CircularProgress, Collapse, FormControlLabel, Stack, TextField, Typography } from '@mui/material'
-import { alpha } from '@mui/material/styles'
 import ArrowForwardRounded from '@mui/icons-material/ArrowForwardRounded'
 import CheckCircleRounded from '@mui/icons-material/CheckCircleRounded'
 import { useNavigate } from 'react-router-dom'
@@ -22,38 +22,9 @@ function detectIdentifierType(value) {
   return 'unknown'
 }
 
-const primaryButtonSx = {
-  minHeight: { xs: 52, md: 'clamp(46px, 6.4vh, 58px)' },
-  borderRadius: 999,
-  fontSize: 16,
-  color: colors.surface,
-  backgroundImage: `linear-gradient(135deg, ${colors.primaryBlue} 0%, ${colors.primary} 100%)`,
-  boxShadow: `0 10px 22px ${alpha(colors.primaryBlue, 0.22)}`,
-  transition: 'box-shadow 0.2s ease, transform 0.2s ease',
-  '&:hover': { boxShadow: `0 14px 28px ${alpha(colors.primaryBlue, 0.32)}`, transform: 'translateY(-1px)' },
-  '&.Mui-disabled': {
-    color: alpha(colors.textSecondary, 0.85),
-    backgroundImage: 'none',
-    backgroundColor: alpha(colors.textSecondary, 0.12),
-    boxShadow: 'none',
-  },
-}
+const primaryButtonSx = { minHeight: 48 }
 
-const makeFieldSx = (radius, height) => ({
-  '& .MuiOutlinedInput-root': {
-    borderRadius: radius,
-    minHeight: height,
-    backgroundColor: colors.surface,
-    transition: 'box-shadow 0.2s ease',
-    '& fieldset': { borderColor: alpha(colors.textSecondary, 0.45) },
-    '&:hover fieldset': { borderColor: alpha(colors.primaryBlue, 0.6) },
-    '&.Mui-focused': { boxShadow: `0 0 0 4px ${alpha(colors.primaryBlue, 0.12)}` },
-    '&.Mui-focused fieldset': { borderColor: colors.primaryBlue, borderWidth: 2 },
-    '&.Mui-error fieldset': { borderColor: colors.error },
-  },
-  '& .MuiInputLabel-root.Mui-focused': { color: colors.primaryBlue },
-  '& .MuiInputBase-input': { px: 2.5 },
-})
+const makeFieldSx = (height) => ({ '& .MuiOutlinedInput-root': { minHeight: height } })
 
 function BrandMark() {
   return (
@@ -63,23 +34,23 @@ function BrandMark() {
         sx={{
           width: { xs: 46, md: 56 },
           height: { xs: 46, md: 56 },
-          borderRadius: '16px',
+          borderRadius: 2,
           display: 'grid',
           placeItems: 'center',
           color: colors.surface,
           fontSize: { xs: 24, md: 30 },
           fontWeight: 800,
-          backgroundImage: `linear-gradient(135deg, ${colors.primaryBlue} 0%, ${colors.primary} 100%)`,
-          boxShadow: `0 10px 24px ${alpha(colors.primaryBlue, 0.3)}`,
+          backgroundColor: colors.primary,
+          boxShadow: 1,
         }}
       >
         L
       </Box>
       <Box>
-        <Typography sx={{ color: colors.primary, fontSize: { xs: 22, md: 32 }, fontWeight: 800, letterSpacing: '0.04em', lineHeight: 1.05 }}>
+        <Typography variant="h4" sx={{ color: colors.primary, letterSpacing: '0.02em', lineHeight: 1.05 }}>
           LYRA PULSE
         </Typography>
-        <Typography sx={{ mt: 0.5, color: colors.primaryBlue, fontSize: { xs: 11, md: 13 }, fontWeight: 600, letterSpacing: '0.45em' }}>
+        <Typography variant="overline" sx={{ mt: 0.5, color: 'primary.dark', letterSpacing: '0.3em' }}>
           ADMIN
         </Typography>
       </Box>
@@ -151,7 +122,7 @@ function OtpInput({ value, onChange, disabled, invalid, inputRefs, labelId }) {
     applyDigits(index, digits.slice(0, OTP_LENGTH))
   }
 
-  const boxSx = makeFieldSx('16px', { xs: 52, md: 'clamp(46px, 6.4vh, 56px)' })
+  const boxSx = makeFieldSx({ xs: 52, md: 'clamp(46px, 6.4vh, 56px)' })
 
   return (
     <Stack direction="row" role="group" aria-labelledby={labelId} spacing={{ xs: 0.75, sm: 1.25 }}>
@@ -176,7 +147,7 @@ function OtpInput({ value, onChange, disabled, invalid, inputRefs, labelId }) {
               pattern: '[0-9]*',
               autoComplete: index === 0 ? 'one-time-code' : 'off',
               'aria-label': `Verification code digit ${index + 1} of ${OTP_LENGTH}`,
-              style: { textAlign: 'center', fontSize: 22, fontWeight: 700, padding: '10px 0', color: colors.textPrimary },
+              style: { textAlign: 'center', fontSize: '1.25rem', fontWeight: 650, padding: '10px 0' },
             },
           }}
         />
@@ -224,9 +195,11 @@ export function LoginPage() {
     setOtpInvalid(false)
     setAction(isResend ? 'resend' : 'send')
     try {
-      await sendOtp(submitIdentifier)
+      const otpResponse = await sendOtp(submitIdentifier)
+      const responseData = otpResponse?.data ?? otpResponse
+      const developmentOtp = responseData?.dev_otp
       setStep('otp')
-      setOtp('')
+      setOtp(typeof developmentOtp === 'string' && /^\d{6}$/.test(developmentOtp) ? developmentOtp : '')
       setCooldown(RESEND_SECONDS)
       setTimeout(() => otpRefs.current[0]?.focus(), 380)
     } catch (err) {
@@ -286,7 +259,7 @@ export function LoginPage() {
   const verifying = isLoading && action === 'verify'
 
   const errorAlert = error ? (
-    <Alert severity="error" sx={{ mt: 1.5, borderRadius: 3, py: 0.25 }}>
+      <Alert severity="error" sx={{ mt: 1.5, py: 0.25 }}>
       {error}
     </Alert>
   ) : null
@@ -301,7 +274,7 @@ export function LoginPage() {
         display: 'grid',
         gridTemplateColumns: { xs: '1fr', md: '1.1fr 0.9fr' },
         gridTemplateRows: { xs: 'auto 1fr', md: '1fr' },
-        backgroundImage: `linear-gradient(135deg, ${colors.surface} 0%, ${alpha(colors.primaryBlue, 0.05)} 50%, ${alpha(colors.primaryBlue, 0.13)} 100%)`,
+        backgroundColor: 'background.default',
       }}
     >
       <Box sx={{ position: { md: 'absolute' }, top: { md: 'clamp(20px, 4vh, 44px)' }, left: { md: 'clamp(32px, 4.5vw, 88px)' }, px: { xs: 3, sm: 5, md: 0 }, pt: { xs: 3, md: 0 }, zIndex: 1 }}>
@@ -327,15 +300,15 @@ export function LoginPage() {
             sx={{ display: 'block', maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', objectPosition: 'left center', mixBlendMode: 'multiply' }}
           />
         </Box>
-        {/* <Box sx={{ pl: 1.5, pt: 'clamp(8px, 2vh, 24px)' }}>
-          <Typography sx={{ color: colors.primary, fontSize: 'clamp(26px, 4.6vh, 46px)', fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1.15 }}>
+        <Box sx={{ pl: 1.5, pt: 'clamp(8px, 2vh, 24px)' }}>
+          <Typography variant="h2" component="h2" sx={{ color: colors.primary }}>
             Track Today,
-            <Box component="span" sx={{ display: 'block', color: colors.primaryBlue }}>Build a Better Tomorrow</Box>
+            <Box component="span" sx={{ display: 'block', color: 'primary.dark' }}>Build a Better Tomorrow</Box>
           </Typography>
-          <Typography sx={{ mt: 1.25, maxWidth: 380, color: colors.textSecondary, fontSize: 'clamp(14px, 2.1vh, 18px)', lineHeight: 1.6 }}>
+          <Typography variant="body1" sx={{ mt: 1.25, maxWidth: 380, color: 'text.secondary' }}>
             Simple, smart and secure access for Lyra Pulse administrators.
           </Typography>
-        </Box> */}
+        </Box>
       </Box>
 
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 0, px: { xs: 2, sm: 5, md: 3, lg: 6 }, py: { xs: 3, md: 2 } }}>
@@ -346,16 +319,17 @@ export function LoginPage() {
             maxHeight: { md: 'calc(100dvh - 32px)' },
             overflowY: { md: 'auto' },
             p: { xs: 3, sm: 5, md: 'clamp(24px, 5vh, 52px) clamp(28px, 3vw, 52px)' },
-            borderRadius: { xs: '28px', md: '48px' },
+            borderRadius: 2,
             backgroundColor: colors.surface,
-            border: `1px solid ${alpha(colors.border, 0.8)}`,
-            boxShadow: `0 28px 64px ${alpha(colors.primaryBlue, 0.14)}`,
+            border: 1,
+            borderColor: 'divider',
+            boxShadow: 3,
           }}
         >
-          <Typography component="h1" sx={{ color: colors.primary, fontSize: { xs: 30, md: 'clamp(28px, 5vh, 42px)' }, fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1.15 }}>
+          <Typography component="h1" variant="h3" sx={{ color: 'text.primary' }}>
             Welcome Back
           </Typography>
-          <Typography sx={{ mt: 1, color: colors.textSecondary, fontSize: { xs: 15, md: 'clamp(14px, 2.1vh, 17px)' }, lineHeight: 1.5 }}>
+          <Typography variant="body1" sx={{ mt: 1, color: 'text.secondary' }}>
             {otpSent ? 'Enter the OTP sent to your mobile number.' : 'Enter your email or mobile number to continue.'}
           </Typography>
 
@@ -369,7 +343,7 @@ export function LoginPage() {
               onChange={(event) => handleIdentifierChange(event.target.value)}
               inputRef={identifierRef}
               autoFocus
-              sx={makeFieldSx('28px', { xs: 56, md: 'clamp(48px, 7vh, 60px)' })}
+              sx={makeFieldSx({ xs: 56, md: 'clamp(48px, 7vh, 60px)' })}
               slotProps={{
                 inputLabel: { shrink: true },
                 input: { readOnly: otpSent },
@@ -383,7 +357,7 @@ export function LoginPage() {
               }}
             />
             <Collapse in={Boolean(hint) && !otpSent} timeout={250}>
-              <Typography id="login-identifier-hint" sx={{ mt: 0.75, ml: 2, color: colors.textSecondary, fontSize: 12.5, lineHeight: 1.4 }}>
+              <Typography id="login-identifier-hint" variant="caption" sx={{ mt: 0.75, ml: 2, display: 'block', color: 'text.secondary' }}>
                 {hint}
               </Typography>
             </Collapse>
@@ -396,14 +370,7 @@ export function LoginPage() {
               variant="contained"
               disabled={!identifierValid || isLoading || otpSent}
               endIcon={otpSent ? <CheckCircleRounded /> : sending ? null : <ArrowForwardRounded />}
-              sx={{
-                ...primaryButtonSx,
-                mt: 'clamp(12px, 2.2vh, 20px)',
-                '&.Mui-disabled': {
-                  ...primaryButtonSx['&.Mui-disabled'],
-                  ...(otpSent ? { color: colors.success, backgroundColor: alpha(colors.success, 0.1) } : {}),
-                },
-              }}
+              sx={{ ...primaryButtonSx, mt: 'clamp(12px, 2.2vh, 20px)' }}
             >
               {sending ? <><CircularProgress size={18} color="inherit" sx={{ mr: 1 }} />Sending OTP...</> : otpSent ? 'OTP Sent' : 'Send OTP'}
             </Button>
@@ -419,7 +386,7 @@ export function LoginPage() {
                   placeholder="Enter your password"
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
-                  sx={makeFieldSx('28px', { xs: 56, md: 'clamp(48px, 7vh, 60px)' })}
+                  sx={makeFieldSx({ xs: 56, md: 'clamp(48px, 7vh, 60px)' })}
                   slotProps={{ inputLabel: { shrink: true }, htmlInput: { autoComplete: 'current-password' } }}
                 />
                 <Button
@@ -439,7 +406,7 @@ export function LoginPage() {
 
             <Collapse in={otpSent && !isEmail} timeout={350} unmountOnExit>
               <Box sx={{ pt: 'clamp(14px, 2.6vh, 24px)' }}>
-                <Typography id="login-otp-label" component="label" sx={{ display: 'block', mb: 1, color: colors.textPrimary, fontSize: 14, fontWeight: 700 }} role="status" aria-live="polite">
+                <Typography id="login-otp-label" component="label" variant="subtitle2" sx={{ display: 'block', mb: 1 }} role="status" aria-live="polite">
                   Verification Code
                 </Typography>
                 <OtpInput
@@ -452,17 +419,17 @@ export function LoginPage() {
                 />
 
                 <Stack direction="row" alignItems="center" justifyContent="space-between" flexWrap="wrap" sx={{ mt: 1, columnGap: 1 }}>
-                  <Button type="button" size="small" onClick={changeIdentifier} disabled={isLoading} sx={{ ml: -1, color: colors.textPrimary, fontWeight: 700 }}>
+                  <Button type="button" size="small" onClick={changeIdentifier} disabled={isLoading} sx={{ ml: -1 }}>
                     {isEmail ? 'Change email' : 'Change number'}
                   </Button>
                   <Stack direction="row" alignItems="center" spacing={0.25}>
-                    <Typography sx={{ color: colors.textSecondary, fontSize: 13 }}>Didn&apos;t receive the code?</Typography>
+                    <Typography variant="caption" color="text.secondary">Didn&apos;t receive the code?</Typography>
                     <Button
                       type="button"
                       size="small"
                       disabled={isLoading || cooldown > 0}
                       onClick={() => sendCode(true)}
-                      sx={{ mr: -1, color: colors.primaryBlue, fontWeight: 700 }}
+                      sx={{ mr: -1 }}
                     >
                       {resending ? 'Sending...' : cooldown > 0 ? `Resend in ${cooldown}s` : 'Resend OTP'}
                     </Button>
@@ -470,8 +437,8 @@ export function LoginPage() {
                 </Stack>
 
                 <FormControlLabel
-                  sx={{ mt: 0, ml: -0.5, '& .MuiFormControlLabel-label': { fontSize: 14, color: colors.textPrimary } }}
-                  control={<Checkbox size="small" checked={rememberMe} onChange={(event) => setRememberMe(event.target.checked)} sx={{ color: alpha(colors.textSecondary, 0.7), '&.Mui-checked': { color: colors.primaryBlue } }} />}
+                  sx={{ mt: 0, ml: -0.5 }}
+                  control={<Checkbox size="small" checked={rememberMe} onChange={(event) => setRememberMe(event.target.checked)} />}
                   label="Remember me"
                 />
                 {errorAlert}
@@ -492,7 +459,7 @@ export function LoginPage() {
           </Box>
 
           <Box sx={{ mt: 'clamp(14px, 3vh, 28px)', pt: 'clamp(10px, 2vh, 20px)', borderTop: `1px solid ${colors.border}` }}>
-            <Typography sx={{ textAlign: 'center', color: colors.textSecondary, fontSize: 12.5 }}>
+            <Typography variant="caption" sx={{ display: 'block', textAlign: 'center', color: 'text.secondary' }}>
               Protected access for Lyra Pulse administrators
             </Typography>
           </Box>
