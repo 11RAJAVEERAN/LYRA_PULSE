@@ -17,433 +17,448 @@ class AttendanceConfirmationScreen extends StatelessWidget {
   final String checkInTime = '09:30 AM';
   final String distance = '125 m';
 
+  // ===============================================================
+  // COLORS
+  // ===============================================================
+
+  static const Color navy = Color(0xFF19356C);
+  static const Color blue = Color(0xFF3978E8);
+  static const Color green = Color(0xFF18A66A);
+
+  static const Color background = Color(0xFFF7FAFE);
+  static const Color cardBackground = Colors.white;
+  static const Color border = Color(0xFFE3EAF3);
+
+  static const Color primaryText = Color(0xFF172B4D);
+  static const Color secondaryText = Color(0xFF65758B);
+  static const Color lightText = Color(0xFF8A99AA);
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF04111F),
+      backgroundColor: background,
 
       body: SafeArea(
-        child: Stack(
-          children: [
-            // =======================================================
-            // BACKGROUND GLOW
-            // =======================================================
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(
+            20,
+            16,
+            20,
+            30,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // =====================================================
+              // TOP BAR
+              // =====================================================
 
-            Positioned(
-              top: -170,
-              right: -150,
-              child: _glow(
-                360,
-                const Color(0xFF087BFF),
-              ),
-            ),
-
-            Positioned(
-              bottom: -180,
-              left: -150,
-              child: _glow(
-                380,
-                const Color(0xFF00D9FF),
-              ),
-            ),
-
-            // =======================================================
-            // CONTENT
-            // =======================================================
-
-            SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(
-                22,
-                18,
-                22,
-                35,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              Row(
                 children: [
-                  // ===================================================
-                  // TOP BAR
-                  // ===================================================
+                  _backButton(),
 
-                  Row(
-                    children: [
-                      _backButton(),
-                      const Spacer(),
-                      _secureBadge(),
-                    ],
+                  const Spacer(),
+
+                  _secureBadge(),
+                ],
+              ),
+
+              const SizedBox(height: 26),
+
+              // =====================================================
+              // HEADER ICON
+              // =====================================================
+
+              Center(
+                child: Container(
+                  width: 76,
+                  height: 76,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: const Color(0xFFEAF8F2),
+                    border: Border.all(
+                      color: const Color(0xFFBFE8D3),
+                      width: 1.5,
+                    ),
                   ),
+                  child: const Icon(
+                    Icons.fact_check_rounded,
+                    color: green,
+                    size: 37,
+                  ),
+                ),
+              ),
 
-                  const SizedBox(height: 30),
+              const SizedBox(height: 20),
 
-                  // ===================================================
-                  // HEADER ICON
-                  // ===================================================
+              // =====================================================
+              // TITLE
+              // =====================================================
 
-                  Center(
-                    child: Container(
-                      width: 76,
-                      height: 76,
+              Center(
+                child: Text(
+                  'CHECK IN READY',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.poppins(
+                    color: primaryText,
+                    fontSize: 25,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 7),
+
+              Center(
+                child: Text(
+                  'Your attendance verification is complete',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.poppins(
+                    color: secondaryText,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w400,
+                    height: 1.5,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 28),
+
+              // =====================================================
+              // EMPLOYEE DETAILS TITLE
+              // =====================================================
+
+              _sectionTitle('EMPLOYEE DETAILS'),
+
+              const SizedBox(height: 10),
+
+              // =====================================================
+              // EMPLOYEE CARD
+              // =====================================================
+
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: cardBackground,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(
+                    color: border,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF19356C)
+                          .withOpacity(0.05),
+                      blurRadius: 18,
+                      offset: const Offset(0, 7),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    // PROFILE ICON
+                    Container(
+                      width: 52,
+                      height: 52,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: const Color(0xFF08263D),
+                        color: const Color(0xFFEAF0FC),
                         border: Border.all(
-                          color: const Color(0xFF24E5C0),
-                          width: 1.5,
+                          color: const Color(0xFFD5E0F5),
                         ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF24E5C0)
-                                .withOpacity(0.16),
-                            blurRadius: 28,
-                            spreadRadius: 2,
-                          ),
-                        ],
                       ),
                       child: const Icon(
-                        Icons.fact_check_rounded,
-                        color: Color(0xFF24E5C0),
-                        size: 37,
+                        Icons.person_rounded,
+                        color: navy,
+                        size: 27,
                       ),
                     ),
-                  ),
 
-                  const SizedBox(height: 22),
+                    const SizedBox(width: 14),
 
-                  // ===================================================
-                  // TITLE
-                  // ===================================================
-
-                  Center(
-                    child: Text(
-                      'ATTENDANCE',
-                      style: GoogleFonts.poppins(
-                        color: Colors.white,
-                        fontSize: 27,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 4,
-                        height: 1,
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 6),
-
-                  Center(
-                    child: ShaderMask(
-                      shaderCallback: (bounds) {
-                        return const LinearGradient(
-                          colors: [
-                            Color(0xFF20E4FF),
-                            Color(0xFF287EFF),
-                          ],
-                        ).createShader(bounds);
-                      },
-                      child: Text(
-                        'CONFIRMATION',
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 3,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 10),
-
-                  Center(
-                    child: Text(
-                      'Review your attendance details before confirming',
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.poppins(
-                        color: const Color(0xFF7F96AB),
-                        fontSize: 10,
-                        height: 1.5,
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 28),
-
-                  // ===================================================
-                  // EMPLOYEE CARD
-                  // ===================================================
-
-                  _sectionTitle('EMPLOYEE DETAILS'),
-
-                  const SizedBox(height: 10),
-
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(18),
-                    decoration: BoxDecoration(
-                      color: const Color(0xCC071A2D),
-                      borderRadius: BorderRadius.circular(22),
-                      border: Border.all(
-                        color: const Color(0xFF16435F),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 52,
-                          height: 52,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: const Color(0xFF0A2941),
-                            border: Border.all(
-                              color: const Color(0xFF20DDF7),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment:
+                            CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            employeeName,
+                            style: GoogleFonts.poppins(
+                              color: primaryText,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
-                          child: const Icon(
-                            Icons.person_rounded,
-                            color: Color(0xFF25DDF7),
-                            size: 26,
-                          ),
-                        ),
 
-                        const SizedBox(width: 14),
+                          const SizedBox(height: 4),
 
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment:
-                                CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                employeeName,
-                                style: GoogleFonts.poppins(
-                                  color: Colors.white,
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-
-                              const SizedBox(height: 4),
-
-                              Text(
-                                'Employee ID: $employeeId',
-                                style: GoogleFonts.poppins(
-                                  color: const Color(0xFF718CA1),
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        const Icon(
-                          Icons.verified_rounded,
-                          color: Color(0xFF24E5C0),
-                          size: 21,
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // ===================================================
-                  // ATTENDANCE DETAILS
-                  // ===================================================
-
-                  _sectionTitle('ATTENDANCE DETAILS'),
-
-                  const SizedBox(height: 10),
-
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: const Color(0xCC071A2D),
-                      borderRadius: BorderRadius.circular(22),
-                      border: Border.all(
-                        color: const Color(0xFF16435F),
-                      ),
-                    ),
-                    child: Column(
-                      children: [
-                        _detailRow(
-                          icon: Icons.login_rounded,
-                          title: 'Check-in Time',
-                          value: checkInTime,
-                          color: const Color(0xFF25DDF7),
-                        ),
-
-                        _divider(),
-
-                        _detailRow(
-                          icon: Icons.location_on_outlined,
-                          title: 'Location',
-                          value: 'Verified',
-                          color: const Color(0xFF24E5C0),
-                          showCheck: true,
-                        ),
-
-                        _divider(),
-
-                        _detailRow(
-                          icon: Icons.face_outlined,
-                          title: 'Face Verification',
-                          value: 'Verified',
-                          color: const Color(0xFF24E5C0),
-                          showCheck: true,
-                        ),
-
-                        _divider(),
-
-                        _detailRow(
-                          icon: Icons.social_distance_outlined,
-                          title: 'Distance',
-                          value: distance,
-                          color: const Color(0xFF25DDF7),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // ===================================================
-                  // VERIFICATION STATUS
-                  // ===================================================
-
-                  _sectionTitle('VERIFICATION STATUS'),
-
-                  const SizedBox(height: 10),
-
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _verificationCard(
-                          icon: Icons.location_on_outlined,
-                          title: 'LOCATION',
-                          subtitle: 'Verified',
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: _verificationCard(
-                          icon: Icons.face_outlined,
-                          title: 'FACE',
-                          subtitle: 'Verified',
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 28),
-
-                  // ===================================================
-                  // CONFIRM BUTTON
-                  // ===================================================
-
-                  SizedBox(
-                    width: double.infinity,
-                    height: 57,
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [
-                            Color(0xFF0FAF91),
-                            Color(0xFF24E5C0),
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF24E5C0)
-                                .withOpacity(0.22),
-                            blurRadius: 22,
-                            offset: const Offset(0, 8),
+                          Text(
+                            'Employee ID: $employeeId',
+                            style: GoogleFonts.poppins(
+                              color: secondaryText,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ],
                       ),
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Get.to(
-                            () => const CheckInSuccessScreen(),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.transparent,
-                          foregroundColor: Colors.white,
-                          shadowColor: Colors.transparent,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisAlignment:
-                              MainAxisAlignment.center,
-                          children: [
-                            const Icon(
-                              Icons.check_circle_rounded,
-                              size: 21,
-                            ),
-                            const SizedBox(width: 9),
-                            Text(
-                              'Confirm Attendance',
-                              style: GoogleFonts.poppins(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ],
-                        ),
+                    ),
+
+                    // VERIFIED
+                    Container(
+                      width: 30,
+                      height: 30,
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Color(0xFFE8F8EF),
                       ),
+                      child: const Icon(
+                        Icons.check_rounded,
+                        color: green,
+                        size: 19,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
+              // =====================================================
+              // ATTENDANCE DETAILS
+              // =====================================================
+
+              _sectionTitle('ATTENDANCE DETAILS'),
+
+              const SizedBox(height: 10),
+
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: cardBackground,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(
+                    color: border,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF19356C)
+                          .withOpacity(0.04),
+                      blurRadius: 16,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    _detailRow(
+                      icon: Icons.login_rounded,
+                      title: 'Check-in Time',
+                      value: checkInTime,
+                      color: blue,
+                    ),
+
+                    _divider(),
+
+                    _detailRow(
+                      icon: Icons.location_on_outlined,
+                      title: 'Location',
+                      value: 'Verified',
+                      color: green,
+                      showCheck: true,
+                    ),
+
+                    _divider(),
+
+                    _detailRow(
+                      icon: Icons.face_outlined,
+                      title: 'Face Verification',
+                      value: 'Verified',
+                      color: green,
+                      showCheck: true,
+                    ),
+
+                    _divider(),
+
+                    _detailRow(
+                      icon: Icons.social_distance_outlined,
+                      title: 'Distance',
+                      value: distance,
+                      color: blue,
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
+              // =====================================================
+              // VERIFICATION STATUS
+              // =====================================================
+
+              _sectionTitle('VERIFICATION STATUS'),
+
+              const SizedBox(height: 10),
+
+              Row(
+                children: [
+                  Expanded(
+                    child: _verificationCard(
+                      icon: Icons.location_on_outlined,
+                      title: 'LOCATION',
+                      subtitle: 'Verified',
                     ),
                   ),
 
-                  const SizedBox(height: 18),
+                  const SizedBox(width: 10),
 
-                  // ===================================================
-                  // SECURITY MESSAGE
-                  // ===================================================
-
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        Icons.shield_outlined,
-                        color: Color(0xFF536D83),
-                        size: 14,
-                      ),
-                      const SizedBox(width: 7),
-                      Text(
-                        'Attendance details are securely verified',
-                        style: GoogleFonts.poppins(
-                          color: const Color(0xFF536D83),
-                          fontSize: 9,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 25),
-
-                  // ===================================================
-                  // POWERED BY
-                  // ===================================================
-
-                  Center(
-                    child: Text(
-                      'LYRA PULSE',
-                      style: GoogleFonts.poppins(
-                        color: const Color(0xFF38566D),
-                        fontSize: 8,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 3,
-                      ),
+                  Expanded(
+                    child: _verificationCard(
+                      icon: Icons.face_outlined,
+                      title: 'FACE',
+                      subtitle: 'Verified',
                     ),
                   ),
                 ],
               ),
-            ),
-          ],
+
+              const SizedBox(height: 28),
+
+              // =====================================================
+              // CONFIRM CHECK IN BUTTON
+              // =====================================================
+
+              SizedBox(
+                width: double.infinity,
+                height: 54,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Get.to(
+                      () => const CheckInSuccessScreen(),
+                      transition: Transition.rightToLeft,
+                      duration:
+                          const Duration(milliseconds: 350),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: navy,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment:
+                        MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.check_circle_rounded,
+                        size: 21,
+                        color: Colors.white,
+                      ),
+
+                      const SizedBox(width: 9),
+
+                      Text(
+                        'Confirm Check In',
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              // =====================================================
+              // CANCEL BUTTON
+              // =====================================================
+
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: OutlinedButton(
+                  onPressed: () {
+                    Get.back();
+                  },
+                  style: OutlinedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: navy,
+                    side: const BorderSide(
+                      color: border,
+                      width: 1.2,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: Text(
+                    'Cancel',
+                    style: GoogleFonts.poppins(
+                      color: navy,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 18),
+
+              // =====================================================
+              // SECURITY MESSAGE
+              // =====================================================
+
+              Row(
+                mainAxisAlignment:
+                    MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.shield_outlined,
+                    color: green,
+                    size: 15,
+                  ),
+
+                  const SizedBox(width: 7),
+
+                  Text(
+                    'Attendance details are securely verified',
+                    style: GoogleFonts.poppins(
+                      color: secondaryText,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 22),
+
+              // =====================================================
+              // LYRA PULSE
+              // =====================================================
+
+              Center(
+                child: Text(
+                  'LYRA PULSE',
+                  style: GoogleFonts.poppins(
+                    color: lightText,
+                    fontSize: 8,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 3,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -457,10 +472,10 @@ class AttendanceConfirmationScreen extends StatelessWidget {
     return Text(
       title,
       style: GoogleFonts.poppins(
-        color: const Color(0xFF718AA0),
+        color: secondaryText,
         fontSize: 9,
         fontWeight: FontWeight.w700,
-        letterSpacing: 2,
+        letterSpacing: 1.5,
       ),
     );
   }
@@ -482,8 +497,8 @@ class AttendanceConfirmationScreen extends StatelessWidget {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: const Color(0xFF0A2941),
-            borderRadius: BorderRadius.circular(12),
+            color: const Color(0xFFF1F5FA),
+            borderRadius: BorderRadius.circular(11),
           ),
           child: Icon(
             icon,
@@ -498,7 +513,7 @@ class AttendanceConfirmationScreen extends StatelessWidget {
           child: Text(
             title,
             style: GoogleFonts.poppins(
-              color: const Color(0xFF9CB0C0),
+              color: secondaryText,
               fontSize: 11,
               fontWeight: FontWeight.w500,
             ),
@@ -506,24 +521,24 @@ class AttendanceConfirmationScreen extends StatelessWidget {
         ),
 
         Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               value,
               style: GoogleFonts.poppins(
-                color: showCheck
-                    ? const Color(0xFF24E5C0)
-                    : Colors.white,
+                color: showCheck ? green : primaryText,
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
               ),
             ),
 
             if (showCheck) ...[
-              const SizedBox(width: 6),
+              const SizedBox(width: 5),
+
               const Icon(
                 Icons.check_circle_rounded,
-                color: Color(0xFF24E5C0),
-                size: 17,
+                color: green,
+                size: 16,
               ),
             ],
           ],
@@ -540,7 +555,7 @@ class AttendanceConfirmationScreen extends StatelessWidget {
     return const Padding(
       padding: EdgeInsets.symmetric(vertical: 12),
       child: Divider(
-        color: Color(0xFF16384F),
+        color: border,
         height: 1,
       ),
     );
@@ -558,31 +573,35 @@ class AttendanceConfirmationScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: 12,
-        vertical: 14,
+        vertical: 15,
       ),
       decoration: BoxDecoration(
-        color: const Color(0xFF071C2E),
-        borderRadius: BorderRadius.circular(17),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: const Color(0xFF1A665A),
+          color: const Color(0xFFDDE7E1),
         ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF19356C)
+                .withOpacity(0.035),
+            blurRadius: 12,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
       child: Column(
         children: [
           Container(
             width: 40,
             height: 40,
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               shape: BoxShape.circle,
-              color: const Color(0xFF0B3B36),
-              border: Border.all(
-                color: const Color(0xFF24E5C0)
-                    .withOpacity(0.35),
-              ),
+              color: Color(0xFFEAF8F2),
             ),
             child: Icon(
               icon,
-              color: const Color(0xFF24E5C0),
+              color: green,
               size: 19,
             ),
           ),
@@ -592,28 +611,30 @@ class AttendanceConfirmationScreen extends StatelessWidget {
           Text(
             title,
             style: GoogleFonts.poppins(
-              color: const Color(0xFF718CA1),
+              color: secondaryText,
               fontSize: 8,
               fontWeight: FontWeight.w700,
               letterSpacing: 1,
             ),
           ),
 
-          const SizedBox(height: 2),
+          const SizedBox(height: 3),
 
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Icon(
                 Icons.check_circle_rounded,
-                color: Color(0xFF24E5C0),
+                color: green,
                 size: 13,
               ),
+
               const SizedBox(width: 4),
+
               Text(
                 subtitle,
                 style: GoogleFonts.poppins(
-                  color: const Color(0xFF24E5C0),
+                  color: green,
                   fontSize: 9,
                   fontWeight: FontWeight.w600,
                 ),
@@ -631,21 +652,29 @@ class AttendanceConfirmationScreen extends StatelessWidget {
 
   Widget _backButton() {
     return Container(
-      width: 44,
-      height: 44,
+      width: 42,
+      height: 42,
       decoration: BoxDecoration(
-        color: const Color(0xFF0A2136),
-        borderRadius: BorderRadius.circular(14),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(13),
         border: Border.all(
-          color: const Color(0xFF1D4564),
+          color: border,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF19356C)
+                .withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: IconButton(
-        onPressed: Get.back,
+        onPressed: () => Get.back(),
         icon: const Icon(
           Icons.arrow_back_rounded,
-          color: Colors.white,
-          size: 21,
+          color: navy,
+          size: 20,
         ),
       ),
     );
@@ -662,10 +691,10 @@ class AttendanceConfirmationScreen extends StatelessWidget {
         vertical: 7,
       ),
       decoration: BoxDecoration(
-        color: const Color(0xFF0A2136),
+        color: const Color(0xFFEAF8F2),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: const Color(0xFF1D4564),
+          color: const Color(0xFFCBEBD9),
         ),
       ),
       child: Row(
@@ -675,16 +704,18 @@ class AttendanceConfirmationScreen extends StatelessWidget {
             height: 6,
             decoration: const BoxDecoration(
               shape: BoxShape.circle,
-              color: Color(0xFF24E5C0),
+              color: green,
             ),
           ),
+
           const SizedBox(width: 6),
+
           Text(
             'SECURE',
             style: GoogleFonts.poppins(
-              color: const Color(0xFF91AABD),
+              color: green,
               fontSize: 8,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w700,
               letterSpacing: 1,
             ),
           ),
@@ -692,28 +723,4 @@ class AttendanceConfirmationScreen extends StatelessWidget {
       ),
     );
   }
-
-  // ===============================================================
-  // GLOW
-  // ===============================================================
-
-  Widget _glow(
-    double size,
-    Color color,
-  ) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: RadialGradient(
-          colors: [
-            color.withOpacity(0.12),
-            color.withOpacity(0.03),
-            Colors.transparent,
-          ],
-        ),
-      ),
-    );
-  }
-} 
+}
