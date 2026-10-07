@@ -300,7 +300,7 @@ export function LoginPage() {
             sx={{ display: 'block', maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', objectPosition: 'left center', mixBlendMode: 'multiply' }}
           />
         </Box>
-        <Box sx={{ pl: 1.5, pt: 'clamp(8px, 2vh, 24px)' }}>
+        {/* <Box sx={{ pl: 1.5, pt: 'clamp(8px, 2vh, 24px)' }}>
           <Typography variant="h2" component="h2" sx={{ color: colors.primary }}>
             Track Today,
             <Box component="span" sx={{ display: 'block', color: 'primary.dark' }}>Build a Better Tomorrow</Box>
@@ -308,7 +308,7 @@ export function LoginPage() {
           <Typography variant="body1" sx={{ mt: 1.25, maxWidth: 380, color: 'text.secondary' }}>
             Simple, smart and secure access for Lyra Pulse administrators.
           </Typography>
-        </Box>
+        </Box> */}
       </Box>
 
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 0, px: { xs: 2, sm: 5, md: 3, lg: 6 }, py: { xs: 3, md: 2 } }}>

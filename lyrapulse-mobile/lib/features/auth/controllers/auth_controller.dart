@@ -1,6 +1,9 @@
+import 'dart:async';
+
+import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:dio/dio.dart';
 
 import '../../../app/routes/app_routes.dart';
 import '../../../core/constants/app_constants.dart';
@@ -17,13 +20,15 @@ class AuthController extends GetxController {
   final otpController = TextEditingController();
   final secondsRemaining = AppConstants.otpCountdownSeconds.obs;
   final isSendingOtp = false.obs;
+  final isResendingOtp = false.obs;
   final isVerifying = false.obs;
   final isLoggingOut = false.obs;
   final employee = Rxn<EmployeeModel>();
 
-  Worker? _countdownWorker;
+  Timer? _countdownTimer;
 
   Future<void> sendOtp() async {
+    if (isSendingOtp.value) return;
     final error = Validators.phone(phoneController.text);
     if (error != null) {
       AppSnackbar.show(error);
@@ -33,9 +38,8 @@ class AuthController extends GetxController {
     try {
       final devOtp = await _authRepository.sendOtp(_normalizedPhone);
       otpController.clear();
-      secondsRemaining.value = AppConstants.otpCountdownSeconds;
       Get.toNamed(AppRoutes.otp);
-      if (devOtp != null) AppSnackbar.show('Development OTP: $devOtp');
+      _showDevOtp(devOtp);
     } catch (error) {
       AppSnackbar.show(_errorMessage(error));
     } finally {
@@ -43,29 +47,48 @@ class AuthController extends GetxController {
     }
   }
 
+  /// Restarts the resend cooldown. Uses a periodic timer so the countdown
+  /// runs every time the OTP screen opens (the previous listener-based
+  /// approach never fired when the value was already at its initial value).
   void startCountdown() {
-    _countdownWorker?.dispose();
-    _countdownWorker = ever(secondsRemaining, (seconds) {
-      if (seconds > 0) {
-        Future<void>.delayed(
-            const Duration(seconds: 1), () => secondsRemaining.value--);
+    _countdownTimer?.cancel();
+    secondsRemaining.value = AppConstants.otpCountdownSeconds;
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (secondsRemaining.value <= 1) {
+        secondsRemaining.value = 0;
+        timer.cancel();
+      } else {
+        secondsRemaining.value--;
       }
     });
   }
 
+  void stopCountdown() {
+    _countdownTimer?.cancel();
+    _countdownTimer = null;
+  }
+
   Future<void> resendOtp() async {
-    if (secondsRemaining.value > 0) return;
+    if (secondsRemaining.value > 0 || isResendingOtp.value) return;
+    isResendingOtp.value = true;
     try {
       final devOtp = await _authRepository.resendOtp(_normalizedPhone);
       otpController.clear();
-      secondsRemaining.value = AppConstants.otpCountdownSeconds;
-      AppSnackbar.show(devOtp == null ? 'A new OTP has been sent' : 'Development OTP: $devOtp');
+      startCountdown();
+      if (devOtp != null && kDebugMode) {
+        _showDevOtp(devOtp);
+      } else {
+        AppSnackbar.show('A new OTP has been sent');
+      }
     } catch (error) {
       AppSnackbar.show(_errorMessage(error));
+    } finally {
+      isResendingOtp.value = false;
     }
   }
 
   Future<void> verifyOtp() async {
+    if (isVerifying.value) return;
     if (!RegExp(r'^\d{6}$').hasMatch(otpController.text)) {
       AppSnackbar.show('Enter the 6-digit OTP');
       return;
@@ -73,6 +96,8 @@ class AuthController extends GetxController {
     isVerifying.value = true;
     try {
       employee.value = await _authRepository.verifyOtp(_normalizedPhone, otpController.text);
+      stopCountdown();
+      // Removes Login/OTP from the back stack.
       Get.offAllNamed(AppRoutes.home);
     } catch (error) {
       AppSnackbar.show(_errorMessage(error));
@@ -81,14 +106,24 @@ class AuthController extends GetxController {
     }
   }
 
+  /// Checks the stored session against the backend (profile + /auth/me).
+  /// The Dio client transparently refreshes an expired access token.
+  ///
+  /// Returns true only for a valid session. Tokens are cleared when the server
+  /// rejects them; on network/server problems they are kept so the next app
+  /// start can retry instead of silently logging the employee out.
   Future<bool> restoreSession() async {
     final token = await _secureStorage.readAccessToken();
     if (token == null || token.isEmpty) return false;
     try {
       employee.value = await _authRepository.loadEmployeeProfile();
       return true;
-    } catch (_) {
-      await _authRepository.clearSession();
+    } catch (error) {
+      if (_isConnectivityProblem(error)) {
+        AppSnackbar.show(_errorMessage(error));
+      } else {
+        await _authRepository.clearSession();
+      }
       return false;
     }
   }
@@ -103,6 +138,8 @@ class AuthController extends GetxController {
       logoutError = error;
     } finally {
       employee.value = null;
+      otpController.clear();
+      stopCountdown();
       isLoggingOut.value = false;
       Get.offAllNamed(AppRoutes.login);
     }
@@ -111,10 +148,36 @@ class AuthController extends GetxController {
     }
   }
 
+  void _showDevOtp(String? devOtp) {
+    // Development convenience only; production responses carry no dev_otp.
+    if (devOtp != null && kDebugMode) {
+      AppSnackbar.show('Development OTP: $devOtp');
+    }
+  }
+
   String get _normalizedPhone => phoneController.text.replaceAll(RegExp(r'\D'), '').replaceFirst(RegExp(r'^91(?=\d{10}$)'), '');
+
+  bool _isConnectivityProblem(Object error) {
+    if (error is! DioException) return false;
+    switch (error.type) {
+      case DioExceptionType.connectionError:
+      case DioExceptionType.connectionTimeout:
+      case DioExceptionType.sendTimeout:
+      case DioExceptionType.receiveTimeout:
+        return true;
+      default:
+        final status = error.response?.statusCode;
+        return status != null && status >= 500;
+    }
+  }
 
   String _errorMessage(Object error) {
     if (error is DioException) {
+      if (_isConnectivityProblem(error)) {
+        final status = error.response?.statusCode;
+        if (status != null) return 'The server is unavailable right now. Please try again shortly.';
+        return 'Unable to reach Lyra Pulse. Check your internet connection and try again.';
+      }
       final data = error.response?.data;
       if (data is Map) {
         if (data['detail'] != null) return data['detail'].toString();
@@ -122,14 +185,16 @@ class AuthController extends GetxController {
         final errors = data['errors'];
         if (errors is Map) return errors.values.expand((value) => value is List ? value : [value]).join(' ');
       }
-      return error.message ?? 'Unable to connect to Lyra Pulse.';
+      if (error.response?.statusCode == 401) return 'Your session has expired. Please sign in again.';
+      return error.message ?? 'Something went wrong. Please try again.';
     }
-    return error.toString();
+    if (error is FormatException) return 'Unexpected response from the server. Please try again.';
+    return 'Something went wrong. Please try again.';
   }
 
   @override
   void onClose() {
-    _countdownWorker?.dispose();
+    _countdownTimer?.cancel();
     phoneController.dispose();
     otpController.dispose();
     super.onClose();

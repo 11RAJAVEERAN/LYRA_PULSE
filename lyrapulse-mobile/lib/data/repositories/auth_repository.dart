@@ -1,4 +1,3 @@
-
 import 'package:dio/dio.dart';
 
 import '../../core/storage/secure_storage_service.dart';
@@ -11,20 +10,20 @@ class AuthRepository {
   final ApiProvider _api;
   final SecureStorageService _secureStorage;
 
+  /// Returns the development OTP (`data.dev_otp`) when the backend provides a
+  /// well-formed one, otherwise null. Production responses omit it.
   Future<String?> sendOtp(String phoneNumber) async {
     final response = await _api.sendOtp(phoneNumber);
     final body = _asMap(response.data);
     _ensureSuccess(body);
-    final data = _asMap(body['data']);
-    return data['dev_otp']?.toString();
+    return _parseDevOtp(_asMap(body['data']));
   }
 
   Future<String?> resendOtp(String phoneNumber) async {
     final response = await _api.resendOtp(phoneNumber);
     final body = _asMap(response.data);
     _ensureSuccess(body);
-    final data = _asMap(body['data']);
-    return data['dev_otp']?.toString();
+    return _parseDevOtp(_asMap(body['data']));
   }
 
   Future<EmployeeModel> verifyOtp(String phoneNumber, String otp) async {
@@ -73,6 +72,12 @@ class AuthRepository {
   }
 
   Future<void> clearSession() => _secureStorage.clearTokens();
+
+  static String? _parseDevOtp(Map<String, dynamic> data) {
+    final value = data['dev_otp']?.toString().trim();
+    if (value == null || !RegExp(r'^\d{6}$').hasMatch(value)) return null;
+    return value;
+  }
 
   static Map<String, dynamic> _asMap(dynamic value) {
     if (value is Map<String, dynamic>) return value;
