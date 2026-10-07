@@ -1,79 +1,136 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-class AttendanceHistoryScreen extends StatelessWidget {
+class AttendanceHistoryScreen extends StatefulWidget {
   const AttendanceHistoryScreen({super.key});
 
   @override
+  State<AttendanceHistoryScreen> createState() =>
+      _AttendanceHistoryScreenState();
+}
+
+class _AttendanceHistoryScreenState
+    extends State<AttendanceHistoryScreen> {
+  // ==========================================================
+  // SELECTED MONTH
+  // ==========================================================
+
+  String selectedMonth = 'October 2026';
+
+  // ==========================================================
+  // MONTH LIST
+  // ==========================================================
+
+  final List<String> months = [
+    'October 2026',
+    'September 2026',
+    'August 2026',
+    'July 2026',
+    'June 2026',
+    'May 2026',
+  ];
+
+  // ==========================================================
+  // ATTENDANCE RECORDS
+  // ==========================================================
+
+  final List<_AttendanceData> records = const [
+    _AttendanceData(
+      date: '06',
+      day: 'Monday',
+      month: 'Oct',
+      yearMonth: 'October 2026',
+      checkIn: '09:12 AM',
+      checkOut: '06:04 PM',
+      status: 'Present',
+    ),
+    _AttendanceData(
+      date: '05',
+      day: 'Sunday',
+      month: 'Oct',
+      yearMonth: 'October 2026',
+      checkIn: '09:18 AM',
+      checkOut: '06:10 PM',
+      status: 'Present',
+    ),
+    _AttendanceData(
+      date: '04',
+      day: 'Saturday',
+      month: 'Oct',
+      yearMonth: 'October 2026',
+      checkIn: '09:05 AM',
+      checkOut: '05:52 PM',
+      status: 'Present',
+    ),
+    _AttendanceData(
+      date: '03',
+      day: 'Friday',
+      month: 'Oct',
+      yearMonth: 'October 2026',
+      checkIn: '—',
+      checkOut: '—',
+      status: 'Absent',
+    ),
+    _AttendanceData(
+      date: '02',
+      day: 'Thursday',
+      month: 'Oct',
+      yearMonth: 'October 2026',
+      checkIn: '09:10 AM',
+      checkOut: '06:02 PM',
+      status: 'Present',
+    ),
+    _AttendanceData(
+      date: '01',
+      day: 'Wednesday',
+      month: 'Oct',
+      yearMonth: 'October 2026',
+      checkIn: '—',
+      checkOut: '—',
+      status: 'Leave',
+    ),
+  ];
+
+  // ==========================================================
+  // GET SELECTED MONTH RECORDS
+  // ==========================================================
+
+  List<_AttendanceData> get selectedRecords {
+    return records
+        .where(
+          (record) => record.yearMonth == selectedMonth,
+        )
+        .toList();
+  }
+
+  // ==========================================================
+  // SUMMARY COUNT
+  // ==========================================================
+
+  int get presentCount {
+    return selectedRecords
+        .where((record) => record.status == 'Present')
+        .length;
+  }
+
+  int get absentCount {
+    return selectedRecords
+        .where((record) => record.status == 'Absent')
+        .length;
+  }
+
+  int get leaveCount {
+    return selectedRecords
+        .where((record) => record.status == 'Leave')
+        .length;
+  }
+
+  // ==========================================================
+  // BUILD
+  // ==========================================================
+
+  @override
   Widget build(BuildContext context) {
-    // ==========================================================
-    // ATTENDANCE RECORDS
-    // ==========================================================
-
-    final records = [
-      const _AttendanceData(
-        date: '06',
-        day: 'Monday',
-        month: 'Oct',
-        checkIn: '09:12 AM',
-        checkOut: '06:04 PM',
-        status: 'Present',
-      ),
-      const _AttendanceData(
-        date: '05',
-        day: 'Sunday',
-        month: 'Oct',
-        checkIn: '09:18 AM',
-        checkOut: '06:10 PM',
-        status: 'Present',
-      ),
-      const _AttendanceData(
-        date: '04',
-        day: 'Saturday',
-        month: 'Oct',
-        checkIn: '09:05 AM',
-        checkOut: '05:52 PM',
-        status: 'Present',
-      ),
-      const _AttendanceData(
-        date: '03',
-        day: 'Friday',
-        month: 'Oct',
-        checkIn: '—',
-        checkOut: '—',
-        status: 'Absent',
-      ),
-      const _AttendanceData(
-        date: '02',
-        day: 'Thursday',
-        month: 'Oct',
-        checkIn: '09:10 AM',
-        checkOut: '06:02 PM',
-        status: 'Present',
-      ),
-      const _AttendanceData(
-        date: '01',
-        day: 'Wednesday',
-        month: 'Oct',
-        checkIn: '—',
-        checkOut: '—',
-        status: 'Leave',
-      ),
-    ];
-
-    // ==========================================================
-    // SUMMARY CALCULATION
-    // ==========================================================
-
-    final presentCount =
-        records.where((record) => record.status == 'Present').length;
-
-    final absentCount =
-        records.where((record) => record.status == 'Absent').length;
-
-    final leaveCount =
-        records.where((record) => record.status == 'Leave').length;
-
     return Scaffold(
       backgroundColor: const Color(0xFFF7FAFE),
 
@@ -121,105 +178,169 @@ class AttendanceHistoryScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // ==================================================
-              // MONTH HEADER
+              // MONTH DROPDOWN
               // ==================================================
 
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(18),
+              PopupMenuButton<String>(
+                padding: EdgeInsets.zero,
+                offset: const Offset(0, 8),
 
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(18),
+                color: Colors.white,
 
-                  border: Border.all(
-                    color: const Color(0xFFE5EBF2),
-                    width: 1,
-                  ),
+                elevation: 8,
 
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.03),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
                 ),
 
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    // ------------------------------------------
-                    // CALENDAR ICON
-                    // ------------------------------------------
+                onSelected: (String month) {
+                  setState(() {
+                    selectedMonth = month;
+                  });
+                },
 
-                    Container(
-                      width: 48,
-                      height: 48,
+                itemBuilder: (context) {
+                  return months.map(
+                    (month) {
+                      final bool isSelected =
+                          month == selectedMonth;
 
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE8F5FF),
-                        borderRadius: BorderRadius.circular(14),
-                      ),
+                      return PopupMenuItem<String>(
+                        value: month,
 
-                      child: const Icon(
-                        Icons.calendar_month_rounded,
-                        color: Color(0xFF1687D9),
-                        size: 25,
-                      ),
-                    ),
-
-                    const SizedBox(width: 14),
-
-                    // ------------------------------------------
-                    // MONTH + SUBTITLE
-                    // ------------------------------------------
-
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment:
-                            CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: const [
-                          Text(
-                            'October 2026',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: Color(0xFF172B4D),
-                              fontSize: 16,
-                              fontWeight: FontWeight.w800,
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                month,
+                                style: TextStyle(
+                                  color: const Color(0xFF172B4D),
+                                  fontSize: 14,
+                                  fontWeight: isSelected
+                                      ? FontWeight.w800
+                                      : FontWeight.w600,
+                                ),
+                              ),
                             ),
-                          ),
 
-                          SizedBox(height: 5),
+                            if (isSelected)
+                              const Icon(
+                                Icons.check_rounded,
+                                color: Color(0xFF1687D9),
+                                size: 20,
+                              ),
+                          ],
+                        ),
+                      );
+                    },
+                  ).toList();
+                },
 
-                          Text(
-                            'Your attendance summary',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: Color(0xFF7B8798),
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
+                // ==================================================
+                // MONTH HEADER CARD
+                // ==================================================
+
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(18),
+
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(18),
+
+                    border: Border.all(
+                      color: const Color(0xFFE5EBF2),
+                      width: 1,
+                    ),
+
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.03),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
                       ),
-                    ),
+                    ],
+                  ),
 
-                    const SizedBox(width: 8),
+                  child: Row(
+                    crossAxisAlignment:
+                        CrossAxisAlignment.center,
+                    children: [
+                      // ------------------------------------------
+                      // CALENDAR ICON
+                      // ------------------------------------------
 
-                    // ------------------------------------------
-                    // DROPDOWN ICON
-                    // ------------------------------------------
+                      Container(
+                        width: 48,
+                        height: 48,
 
-                    const Icon(
-                      Icons.keyboard_arrow_down_rounded,
-                      color: Color(0xFF718096),
-                      size: 24,
-                    ),
-                  ],
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE8F5FF),
+                          borderRadius:
+                              BorderRadius.circular(14),
+                        ),
+
+                        child: const Icon(
+                          Icons.calendar_month_rounded,
+                          color: Color(0xFF1687D9),
+                          size: 25,
+                        ),
+                      ),
+
+                      const SizedBox(width: 14),
+
+                      // ------------------------------------------
+                      // MONTH + SUBTITLE
+                      // ------------------------------------------
+
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment:
+                              CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              selectedMonth,
+                              maxLines: 1,
+                              overflow:
+                                  TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Color(0xFF172B4D),
+                                fontSize: 16,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+
+                            const SizedBox(height: 5),
+
+                            const Text(
+                              'Your attendance summary',
+                              maxLines: 1,
+                              overflow:
+                                  TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: Color(0xFF7B8798),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(width: 8),
+
+                      // ------------------------------------------
+                      // DROPDOWN ICON
+                      // ------------------------------------------
+
+                      const Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        color: Color(0xFF718096),
+                        size: 24,
+                      ),
+                    ],
+                  ),
                 ),
               ),
 
@@ -252,8 +373,10 @@ class AttendanceHistoryScreen extends StatelessWidget {
                       title: 'Present',
                       value: presentCount.toString(),
                       icon: Icons.check_circle_rounded,
-                      background: const Color(0xFFEAF8F1),
-                      iconColor: const Color(0xFF22A06B),
+                      background:
+                          const Color(0xFFEAF8F1),
+                      iconColor:
+                          const Color(0xFF22A06B),
                     ),
                   ),
 
@@ -265,8 +388,10 @@ class AttendanceHistoryScreen extends StatelessWidget {
                       title: 'Absent',
                       value: absentCount.toString(),
                       icon: Icons.cancel_rounded,
-                      background: const Color(0xFFFFEEEE),
-                      iconColor: const Color(0xFFE05252),
+                      background:
+                          const Color(0xFFFFEEEE),
+                      iconColor:
+                          const Color(0xFFE05252),
                     ),
                   ),
 
@@ -278,8 +403,10 @@ class AttendanceHistoryScreen extends StatelessWidget {
                       title: 'Leave',
                       value: leaveCount.toString(),
                       icon: Icons.event_busy_rounded,
-                      background: const Color(0xFFFFF4E3),
-                      iconColor: const Color(0xFFE39A18),
+                      background:
+                          const Color(0xFFFFF4E3),
+                      iconColor:
+                          const Color(0xFFE39A18),
                     ),
                   ),
                 ],
@@ -303,30 +430,38 @@ class AttendanceHistoryScreen extends StatelessWidget {
               const SizedBox(height: 12),
 
               // ==================================================
-              // ATTENDANCE RECORDS
+              // RECORDS / EMPTY STATE
               // ==================================================
 
-              ...records.map(
-                (record) {
-                  return Padding(
-                    padding: const EdgeInsets.only(
-                      bottom: 12,
-                    ),
-                    child: _AttendanceCard(
-                      date: record.date,
-                      day: record.day,
-                      month: record.month,
-                      checkIn: record.checkIn,
-                      checkOut: record.checkOut,
-                      status: record.status,
-                      statusColor:
-                          _getStatusColor(record.status),
-                      statusBackground:
-                          _getStatusBackground(record.status),
-                    ),
-                  );
-                },
-              ),
+              if (selectedRecords.isEmpty)
+                _EmptyAttendanceState(
+                  month: selectedMonth,
+                )
+              else
+                ...selectedRecords.map(
+                  (record) {
+                    return Padding(
+                      padding:
+                          const EdgeInsets.only(bottom: 12),
+                      child: _AttendanceCard(
+                        date: record.date,
+                        day: record.day,
+                        month: record.month,
+                        checkIn: record.checkIn,
+                        checkOut: record.checkOut,
+                        status: record.status,
+                        statusColor:
+                            _getStatusColor(
+                          record.status,
+                        ),
+                        statusBackground:
+                            _getStatusBackground(
+                          record.status,
+                        ),
+                      ),
+                    );
+                  },
+                ),
             ],
           ),
         ),
@@ -383,6 +518,7 @@ class _AttendanceData {
   final String date;
   final String day;
   final String month;
+  final String yearMonth;
   final String checkIn;
   final String checkOut;
   final String status;
@@ -391,6 +527,7 @@ class _AttendanceData {
     required this.date,
     required this.day,
     required this.month,
+    required this.yearMonth,
     required this.checkIn,
     required this.checkOut,
     required this.status,
@@ -536,7 +673,8 @@ class _AttendanceCard extends StatelessWidget {
             ),
 
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisAlignment:
+                  MainAxisAlignment.center,
               children: [
                 Text(
                   date,
@@ -567,7 +705,8 @@ class _AttendanceCard extends StatelessWidget {
 
           Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment:
+                  CrossAxisAlignment.start,
               children: [
                 Text(
                   day,
@@ -593,7 +732,8 @@ class _AttendanceCard extends StatelessWidget {
                     Flexible(
                       child: Text(
                         checkIn,
-                        overflow: TextOverflow.ellipsis,
+                        overflow:
+                            TextOverflow.ellipsis,
                         style: const TextStyle(
                           color: Color(0xFF718096),
                           fontSize: 11,
@@ -614,7 +754,8 @@ class _AttendanceCard extends StatelessWidget {
                     Flexible(
                       child: Text(
                         checkOut,
-                        overflow: TextOverflow.ellipsis,
+                        overflow:
+                            TextOverflow.ellipsis,
                         style: const TextStyle(
                           color: Color(0xFF718096),
                           fontSize: 11,
@@ -651,6 +792,80 @@ class _AttendanceCard extends StatelessWidget {
                 fontSize: 10,
                 fontWeight: FontWeight.w800,
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ================================================================
+// EMPTY ATTENDANCE STATE
+// ================================================================
+
+class _EmptyAttendanceState extends StatelessWidget {
+  final String month;
+
+  const _EmptyAttendanceState({
+    required this.month,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(
+        vertical: 35,
+        horizontal: 20,
+      ),
+
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(17),
+        border: Border.all(
+          color: const Color(0xFFE5EBF2),
+        ),
+      ),
+
+      child: Column(
+        children: [
+          Container(
+            width: 52,
+            height: 52,
+
+            decoration: BoxDecoration(
+              color: const Color(0xFFE8F5FF),
+              borderRadius: BorderRadius.circular(16),
+            ),
+
+            child: const Icon(
+              Icons.calendar_month_rounded,
+              color: Color(0xFF1687D9),
+              size: 26,
+            ),
+          ),
+
+          const SizedBox(height: 14),
+
+          Text(
+            'No attendance records',
+            style: const TextStyle(
+              color: Color(0xFF172B4D),
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+
+          const SizedBox(height: 6),
+
+          Text(
+            'No attendance data available for $month.',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Color(0xFF7B8798),
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ],
