@@ -7,7 +7,10 @@ import '../controllers/home_controller.dart';
 import 'face_verification_screen.dart';
 
 class LocationVerificationScreen extends GetView<HomeController> {
-  const LocationVerificationScreen({super.key});
+    final bool isCheckOut;
+  const LocationVerificationScreen({super.key,
+    this.isCheckOut = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -396,7 +399,10 @@ class LocationVerificationScreen extends GetView<HomeController> {
                                 );
 
                                 Get.to(
-                                  () => const FaceVerificationScreen(),
+                                  () => const FaceVerificationScreen(
+                                    
+                                      
+                                  ),
                                 );
                               }
                             : null,

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 
@@ -28,54 +29,39 @@ class HomeController extends GetxController {
   // Attendance
   // --------------------------------------------------
 
-  final isCheckedIn = true.obs;
-
-  final attendanceStatus = 'PRESENT'.obs;
-
-  final checkInTime = '08:52 AM'.obs;
+  final isCheckedIn = false.obs;
+  final attendanceStatus = 'NOT CHECKED IN'.obs;
+  final checkInTime = '--'.obs;
   final checkOutTime = '--'.obs;
-  final workingHours = '4h 12m'.obs;
-  final workingMinutes = 252.obs;
+  final workingHours = '0h 00m'.obs;
+  final workingMinutes = 0.obs;
+  final progress = 0.0.obs;
 
-  final shiftStart = '09:00 AM'.obs;
-  final shiftEnd = '06:00 PM'.obs;
-  final totalShiftMinutes = 480.obs;
-
-  final progress = 0.52.obs;
+  static const int totalShiftMinutes = 8 * 60;
 
   // --------------------------------------------------
-  // LIVE LOCATION
+  // Live Location
   // --------------------------------------------------
 
   final isLocationVerified = false.obs;
-
   final locationName = 'Checking location...'.obs;
-
   final locationDistance = '--'.obs;
-
   final currentLatitude = 0.0.obs;
   final currentLongitude = 0.0.obs;
-
   final locationError = ''.obs;
-
   final isLocationLoading = true.obs;
 
   StreamSubscription<Position>? _positionSubscription;
 
   // --------------------------------------------------
-  // WORKPLACE LOCATION
+  // Workplace Location
   // --------------------------------------------------
-  //
-  // IMPORTANT:
-  // Replace these with your actual workplace
-  // latitude and longitude.
-  //
 
   static const double workplaceLatitude = 11.7364;
   static const double workplaceLongitude = 79.7627;
 
-  // Allowed attendance radius in meters.
-  static const double workplaceRadius = 50;
+  // Allowed attendance radius
+  static const double workplaceRadius = 100;
 
   // --------------------------------------------------
   // Attendance Summary
@@ -101,30 +87,72 @@ class HomeController extends GetxController {
   }.obs;
 
   // --------------------------------------------------
-  // INIT
+  // Init
   // --------------------------------------------------
 
   @override
   void onInit() {
     super.onInit();
 
-    _updateClock();
-
-    _clockTimer = Timer.periodic(
-      const Duration(seconds: 1),
-      (_) => _updateClock(),
-    );
-
-    if (isCheckedIn.value) {
-      _startWorkingTimer();
-    }
-
-    // Start live GPS tracking
+    _startLiveClock();
     startLiveLocation();
   }
 
+Future<void> _showLocationOffDialog() async {
+  if (Get.isDialogOpen == true) {
+    return;
+  }
+
+  await Get.dialog(
+    AlertDialog(
+      title: const Text(
+        'Location is Off',
+        style: TextStyle(
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      content: const Text(
+        'Please turn on your phone location to continue.',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () {
+            Get.back();
+          },
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: () async {
+            Get.back();
+            await Geolocator.openLocationSettings();
+          },
+          child: const Text('Turn On Location'),
+        ),
+      ],
+    ),
+    barrierDismissible: false,
+  );
+}
+
   // --------------------------------------------------
-  // CLOCK
+  // Start Live Clock
+  // --------------------------------------------------
+
+  void _startLiveClock() {
+    _updateClock();
+
+    _clockTimer?.cancel();
+
+    _clockTimer = Timer.periodic(
+      const Duration(seconds: 1),
+      (_) {
+        _updateClock();
+      },
+    );
+  }
+
+  // --------------------------------------------------
+  // Update Clock
   // --------------------------------------------------
 
   void _updateClock() {
@@ -138,13 +166,15 @@ class HomeController extends GetxController {
 
     final minute = now.minute.toString().padLeft(2, '0');
     final second = now.second.toString().padLeft(2, '0');
-
     final period = now.hour >= 12 ? 'pm' : 'am';
 
     currentTime.value = '$hour:$minute:$second $period';
-
     currentDate.value = _formatDate(now);
   }
+
+  // --------------------------------------------------
+  // Date Format
+  // --------------------------------------------------
 
   String _formatDate(DateTime date) {
     const weekdays = [
@@ -177,7 +207,7 @@ class HomeController extends GetxController {
   }
 
   // --------------------------------------------------
-  // LIVE LOCATION
+  // Live Location
   // --------------------------------------------------
 
   Future<void> startLiveLocation() async {
@@ -185,29 +215,40 @@ class HomeController extends GetxController {
     locationError.value = '';
 
     try {
-      // Check whether GPS is enabled.
-      final serviceEnabled =
-          await Geolocator.isLocationServiceEnabled();
 
-      if (!serviceEnabled) {
-        locationError.value =
-            'Location service is turned off';
+final serviceEnabled =
+    await Geolocator.isLocationServiceEnabled();
 
-        locationName.value = 'GPS Disabled';
-        locationDistance.value = '--';
-        isLocationVerified.value = false;
-        isLocationLoading.value = false;
+if (!serviceEnabled) {
+  locationError.value =
+      'Location service is turned off';
 
-        return;
-      }
+  locationName.value =
+      'GPS Disabled';
 
-      // Check permission.
+  locationDistance.value = '--';
+
+  isLocationVerified.value = false;
+
+  isLocationLoading.value = false;
+
+  await _showLocationOffDialog();
+
+  return;
+}
+
+
+
+
+
+
+
+
       LocationPermission permission =
           await Geolocator.checkPermission();
 
       if (permission == LocationPermission.denied) {
-        permission =
-            await Geolocator.requestPermission();
+        permission = await Geolocator.requestPermission();
       }
 
       if (permission == LocationPermission.denied) {
@@ -222,8 +263,7 @@ class HomeController extends GetxController {
         return;
       }
 
-      if (permission ==
-          LocationPermission.deniedForever) {
+      if (permission == LocationPermission.deniedForever) {
         locationError.value =
             'Location permission permanently denied';
 
@@ -235,10 +275,8 @@ class HomeController extends GetxController {
         return;
       }
 
-      // Get current location immediately.
       await _getCurrentLocation();
 
-      // Start live location stream.
       _positionSubscription?.cancel();
 
       const locationSettings = LocationSettings(
@@ -260,20 +298,29 @@ class HomeController extends GetxController {
           isLocationLoading.value = false;
         },
       );
-    } catch (e) {
-      locationError.value =
-          'Location error occurred';
 
-      locationName.value = 'Location unavailable';
-      locationDistance.value = '--';
-      isLocationVerified.value = false;
-      isLocationLoading.value = false;
-    }
+} catch (e) {
+  debugPrint('LIVE LOCATION ERROR: $e');
+
+  locationError.value =
+      'Location error occurred';
+
+  locationName.value =
+      'Location unavailable';
+
+  locationDistance.value = '--';
+
+  isLocationVerified.value = false;
+
+  isLocationLoading.value = false;
+}
+
   }
+  // --------------------------------------------------
+  // Get Current Location
+  // --------------------------------------------------
 
-  // --------------------------------------------------
-  // GET CURRENT LOCATION
-  // --------------------------------------------------
+
 
   Future<void> _getCurrentLocation() async {
     try {
@@ -285,69 +332,87 @@ class HomeController extends GetxController {
       );
 
       _updateLocation(position);
-    } catch (e) {
-      locationError.value =
-          'Unable to get current location';
+       }
+        catch (e) {
+    debugPrint('LOCATION ERROR: $e');
 
-      locationName.value = 'Location unavailable';
-      locationDistance.value = '--';
-      isLocationVerified.value = false;
-      isLocationLoading.value = false;
-    }
-  }
+    locationError.value =
+        'Unable to get current location';
 
-  // --------------------------------------------------
-  // UPDATE LOCATION
-  // --------------------------------------------------
+    locationName.value =
+        'Location unavailable';
 
-  void _updateLocation(Position position) {
-    currentLatitude.value = position.latitude;
-    currentLongitude.value = position.longitude;
+    locationDistance.value = '--';
 
-    final distanceInMeters =
-        Geolocator.distanceBetween(
-      position.latitude,
-      position.longitude,
-      workplaceLatitude,
-      workplaceLongitude,
-    );
-
-    final isInside =
-        distanceInMeters <= workplaceRadius;
-
-    isLocationVerified.value = isInside;
-
-    locationDistance.value =
-        _formatDistance(distanceInMeters);
-
-    if (isInside) {
-      locationName.value = 'Hotel Devi';
-      locationError.value = '';
-    } else {
-      locationName.value = 'Outside workplace';
-      locationError.value =
-          'Move inside the attendance area';
-    }
+    isLocationVerified.value = false;
 
     isLocationLoading.value = false;
-  }
+       }}
+
+
 
   // --------------------------------------------------
-  // DISTANCE FORMAT
+  // Update Location
+  // --------------------------------------------------
+ 
+void _updateLocation(Position position) {
+  currentLatitude.value = position.latitude;
+  currentLongitude.value = position.longitude;
+
+  final distanceInMeters = Geolocator.distanceBetween(
+    position.latitude,
+    position.longitude,
+    workplaceLatitude,
+    workplaceLongitude,
+  );
+
+  final isInside = distanceInMeters <= workplaceRadius;
+
+  debugPrint('CURRENT LAT: ${position.latitude}');
+  debugPrint('CURRENT LNG: ${position.longitude}');
+  debugPrint('OFFICE LAT: $workplaceLatitude');
+  debugPrint('OFFICE LNG: $workplaceLongitude');
+  debugPrint('DISTANCE: $distanceInMeters');
+  debugPrint('INSIDE: $isInside');
+
+  isLocationVerified.value = isInside;
+
+  locationDistance.value = _formatDistance(distanceInMeters);
+
+  if (isInside) {
+    locationName.value = 'Hotel Devi';
+    locationError.value = '';
+  } else {
+    locationName.value = 'Outside workplace';
+    locationError.value =
+        'Move inside the attendance area';
+  }
+
+  isLocationLoading.value = false;
+}
+
+
+
+
+
+
+
+  // --------------------------------------------------
+  // Distance Format
   // --------------------------------------------------
 
   String _formatDistance(double meters) {
-    if (meters < 50) {
-      return '${meters.round()}m from boundary';
+    if (meters < 1000) {
+      return '${meters.round()}m away';
     }
 
-    final kilometers = meters / 50;
+    final kilometers = meters / 1000;
 
-    return '${kilometers.toStringAsFixed(1)}km from boundary';
+    return '${kilometers.toStringAsFixed(1)}km away';
   }
 
   // --------------------------------------------------
-  // OPEN LOCATION SETTINGS
+  // Open Location Settings
   // --------------------------------------------------
 
   Future<void> openLocationSettings() async {
@@ -359,17 +424,20 @@ class HomeController extends GetxController {
   }
 
   // --------------------------------------------------
-  // CHECK IN
+  // Check In
   // --------------------------------------------------
 
   void checkIn() {
-    if (isCheckedIn.value) return;
+    if (isCheckedIn.value) {
+      return;
+    }
 
     if (!isLocationVerified.value) {
       Get.snackbar(
         'Location Required',
         'You must be inside the workplace area to check in.',
         snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(16),
       );
 
       return;
@@ -387,44 +455,58 @@ class HomeController extends GetxController {
 
     workingMinutes.value = 0;
     workingHours.value = '0h 00m';
-
     progress.value = 0;
 
     _startWorkingTimer();
   }
 
   // --------------------------------------------------
-  // CHECK OUT
+  // Check Out
   // --------------------------------------------------
+ 
+      bool checkOut() {
+  if (!isCheckedIn.value) {
+    Get.snackbar(
+      'Check Out Error',
+      'You are not currently checked in.',
+      snackPosition: SnackPosition.BOTTOM,
+      margin: const EdgeInsets.all(16),
+    );
 
-  void checkOut() {
-    if (!isCheckedIn.value) return;
-
-    if (!isLocationVerified.value) {
-      Get.snackbar(
-        'Location Required',
-        'You must be inside the workplace area to check out.',
-        snackPosition: SnackPosition.BOTTOM,
-      );
-
-      return;
-    }
-
-    final now = DateTime.now();
-
-    checkOutTime.value = _formatTime(now);
-
-    isCheckedIn.value = false;
-
-    _workingTimer?.cancel();
-
-    _calculateWorkingHours();
-
-    progress.value = 1.0;
+    return false;
   }
 
+  if (!isLocationVerified.value) {
+    Get.snackbar(
+      'Location Required',
+      'You must be inside the workplace area to check out.',
+      snackPosition: SnackPosition.BOTTOM,
+      margin: const EdgeInsets.all(16),
+    );
+
+    return false;
+  }
+
+  final now = DateTime.now();
+
+  checkOutTime.value = _formatTime(now);
+  isCheckedIn.value = false;
+  attendanceStatus.value = 'CHECKED OUT';
+
+  _workingTimer?.cancel();
+
+  _calculateWorkingHours();
+
+  progress.value = 1.0;
+
+  return true;
+}
+
+
+
+
   // --------------------------------------------------
-  // WORKING TIMER
+  // Working Timer
   // --------------------------------------------------
 
   void _startWorkingTimer() {
@@ -433,15 +515,23 @@ class HomeController extends GetxController {
     _workingTimer = Timer.periodic(
       const Duration(seconds: 1),
       (_) {
-        if (!isCheckedIn.value) return;
+        if (!isCheckedIn.value) {
+          return;
+        }
 
         _calculateWorkingHours();
       },
     );
   }
 
+  // --------------------------------------------------
+  // Calculate Working Hours
+  // --------------------------------------------------
+
   void _calculateWorkingHours() {
-    if (_checkInDateTime == null) return;
+    if (_checkInDateTime == null) {
+      return;
+    }
 
     final now = DateTime.now();
 
@@ -453,7 +543,6 @@ class HomeController extends GetxController {
     workingMinutes.value = minutes;
 
     final hours = minutes ~/ 60;
-
     final remainingMinutes = minutes % 60;
 
     workingHours.value =
@@ -461,12 +550,12 @@ class HomeController extends GetxController {
         '${remainingMinutes.toString().padLeft(2, '0')}m';
 
     progress.value =
-        (minutes / totalShiftMinutes.value)
+        (minutes / totalShiftMinutes)
             .clamp(0.0, 1.0);
   }
 
   // --------------------------------------------------
-  // FORMAT TIME
+  // Format Time
   // --------------------------------------------------
 
   String _formatTime(DateTime date) {
@@ -486,7 +575,7 @@ class HomeController extends GetxController {
   }
 
   // --------------------------------------------------
-  // API READY METHODS
+  // API Ready Methods
   // --------------------------------------------------
 
   Future<void> fetchAttendance() async {
@@ -506,7 +595,7 @@ class HomeController extends GetxController {
   }
 
   // --------------------------------------------------
-  // CLOSE
+  // Close
   // --------------------------------------------------
 
   @override

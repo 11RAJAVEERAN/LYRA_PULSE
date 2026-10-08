@@ -5,12 +5,16 @@ import '../../../app/theme/app_colors.dart';
 
 class CheckInOutCard extends StatelessWidget {
   final bool isCheckedIn;
+  final String checkInTime;
+  final String checkOutTime;
   final VoidCallback onCheckIn;
   final VoidCallback onCheckOut;
 
   const CheckInOutCard({
     super.key,
     required this.isCheckedIn,
+    required this.checkInTime,
+    required this.checkOutTime,
     required this.onCheckIn,
     required this.onCheckOut,
   });
@@ -21,22 +25,40 @@ class CheckInOutCard extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 18, 16, 0),
       child: Row(
         children: [
+          // =====================================================
+          // CHECK IN
+          // =====================================================
+
           Expanded(
             child: _ActionCard(
               title: 'CHECK IN',
-              subtitle: 'Start your shift',
+              subtitle: isCheckedIn
+                  ? 'Started at $checkInTime'
+                  : 'Start your shift',
               icon: Icons.login_rounded,
               active: !isCheckedIn,
+              time: checkInTime,
+              showTime: checkInTime != '--',
               onTap: onCheckIn,
             ),
           ),
+
           const SizedBox(width: 14),
+
+          // =====================================================
+          // CHECK OUT
+          // =====================================================
+
           Expanded(
             child: _ActionCard(
               title: 'CHECK OUT',
-              subtitle: 'End your shift',
+              subtitle: !isCheckedIn && checkOutTime != '--'
+                  ? 'Ended at $checkOutTime'
+                  : 'End your shift',
               icon: Icons.logout_rounded,
               active: isCheckedIn,
+              time: checkOutTime,
+              showTime: checkOutTime != '--',
               onTap: onCheckOut,
             ),
           ),
@@ -46,11 +68,17 @@ class CheckInOutCard extends StatelessWidget {
   }
 }
 
+// =============================================================
+// ACTION CARD
+// =============================================================
+
 class _ActionCard extends StatelessWidget {
   final String title;
   final String subtitle;
   final IconData icon;
   final bool active;
+  final String time;
+  final bool showTime;
   final VoidCallback onTap;
 
   const _ActionCard({
@@ -58,6 +86,8 @@ class _ActionCard extends StatelessWidget {
     required this.subtitle,
     required this.icon,
     required this.active,
+    required this.time,
+    required this.showTime,
     required this.onTap,
   });
 
@@ -100,6 +130,10 @@ class _ActionCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // ===================================================
+            // TOP ICON ROW
+            // ===================================================
+
             Row(
               children: [
                 Container(
@@ -119,7 +153,9 @@ class _ActionCard extends StatelessWidget {
                     size: 26,
                   ),
                 ),
+
                 const Spacer(),
+
                 Container(
                   width: 34,
                   height: 34,
@@ -142,6 +178,10 @@ class _ActionCard extends StatelessWidget {
 
             const Spacer(),
 
+            // ===================================================
+            // TITLE
+            // ===================================================
+
             Text(
               title,
               style: GoogleFonts.inter(
@@ -155,17 +195,58 @@ class _ActionCard extends StatelessWidget {
 
             const SizedBox(height: 3),
 
+            // ===================================================
+            // SUBTITLE
+            // ===================================================
+
             Text(
               subtitle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: GoogleFonts.inter(
                 color: active
                     ? Colors.white.withValues(alpha: 0.75)
                     : AppColors.textSecondary,
                 fontSize: 11.5,
+                fontWeight: FontWeight.w500,
               ),
             ),
 
+            // ===================================================
+            // TIME
+            // ===================================================
+
+            if (showTime) ...[
+              const SizedBox(height: 5),
+              Row(
+                children: [
+                  Icon(
+                    Icons.access_time_rounded,
+                    size: 13,
+                    color: active
+                        ? Colors.white.withValues(alpha: 0.80)
+                        : AppColors.success,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    time,
+                    style: GoogleFonts.inter(
+                      color: active
+                          ? Colors.white
+                          : AppColors.success,
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+
             const SizedBox(height: 8),
+
+            // ===================================================
+            // LOCATION + PHOTO
+            // ===================================================
 
             Row(
               children: [
@@ -176,7 +257,9 @@ class _ActionCard extends StatelessWidget {
                       ? Colors.white.withValues(alpha: 0.8)
                       : AppColors.textSecondary,
                 ),
+
                 const SizedBox(width: 3),
+
                 Text(
                   'Location',
                   style: GoogleFonts.inter(
@@ -186,7 +269,9 @@ class _ActionCard extends StatelessWidget {
                     fontSize: 9.5,
                   ),
                 ),
+
                 const SizedBox(width: 8),
+
                 Text(
                   '•',
                   style: GoogleFonts.inter(
@@ -195,7 +280,9 @@ class _ActionCard extends StatelessWidget {
                         : AppColors.border,
                   ),
                 ),
+
                 const SizedBox(width: 8),
+
                 Icon(
                   Icons.camera_alt_outlined,
                   size: 14,
@@ -203,7 +290,9 @@ class _ActionCard extends StatelessWidget {
                       ? Colors.white.withValues(alpha: 0.8)
                       : AppColors.textSecondary,
                 ),
+
                 const SizedBox(width: 3),
+
                 Text(
                   'Photo',
                   style: GoogleFonts.inter(

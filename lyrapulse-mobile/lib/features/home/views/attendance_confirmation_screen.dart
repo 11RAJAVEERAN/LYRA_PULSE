@@ -371,8 +371,8 @@ class AttendanceConfirmationScreen
 
   void _confirmCheckIn() {
     // Mark attendance as checked in.
-    controller.isCheckedIn.value = true;
-    controller.attendanceStatus.value = 'PRESENT';
+
+controller.checkIn();
 
     Get.off(
       () => const AttendanceSuccessScreen(),

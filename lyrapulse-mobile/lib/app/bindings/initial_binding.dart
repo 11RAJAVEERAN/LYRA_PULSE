@@ -6,7 +6,14 @@ import '../../features/home/controllers/home_controller.dart';
 class InitialBinding extends Bindings {
   @override
   void dependencies() {
-    Get.lazyPut<AuthController>(() => AuthController());
-    Get.lazyPut<HomeController>(() => HomeController());
+    Get.put<AuthController>(
+      AuthController(),
+      permanent: true,
+    );
+
+    Get.put<HomeController>(
+      HomeController(),
+      permanent: true,
+    );
   }
 }
