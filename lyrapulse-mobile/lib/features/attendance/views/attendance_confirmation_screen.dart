@@ -1,373 +1,390 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import 'check_in_success_screen.dart';
+import 'check_out_success_screen.dart';
+import '../controllers/attendance_controller.dart';
 
 class AttendanceConfirmationScreen extends StatelessWidget {
-  const AttendanceConfirmationScreen({super.key});
+  final bool isCheckOut;
 
-  // ===============================================================
-  // EMPLOYEE DETAILS
-  // Later API-la irundhu dynamic-a pass pannalam
-  // ===============================================================
+  const AttendanceConfirmationScreen({
+    super.key,
+    this.isCheckOut = false,
+  });
 
-  final String employeeName = 'Employee';
-  final String employeeId = 'LYRA001';
-  final String checkInTime = '09:30 AM';
-  final String distance = '125 m';
-
-  // ===============================================================
-  // COLORS
-  // ===============================================================
-
+  static const Color background = Color(0xFFF7FAFE);
   static const Color navy = Color(0xFF19356C);
   static const Color blue = Color(0xFF3978E8);
   static const Color green = Color(0xFF18A66A);
+  static const Color textDark = Color(0xFF172B4D);
+  static const Color textGrey = Color(0xFF718096);
 
-  static const Color background = Color(0xFFF7FAFE);
-  static const Color cardBackground = Colors.white;
-  static const Color border = Color(0xFFE3EAF3);
+  // ================================================================
+  // CONFIRM ATTENDANCE
+  // ================================================================
 
-  static const Color primaryText = Color(0xFF172B4D);
-  static const Color secondaryText = Color(0xFF65758B);
-  static const Color lightText = Color(0xFF8A99AA);
+  void _confirmAttendance() {
+    final attendanceController =
+        Get.put(AttendanceController(), permanent: true);
+
+    if (isCheckOut) {
+      // ------------------------------------------------------------
+      // CHECK OUT
+      // ------------------------------------------------------------
+
+      if (attendanceController.checkInTime.value == null) {
+        Get.snackbar(
+          'Check In Required',
+          'Please complete your check in before checking out.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: navy,
+          colorText: Colors.white,
+          margin: const EdgeInsets.all(16),
+          borderRadius: 14,
+          duration: const Duration(seconds: 3),
+        );
+        return;
+      }
+
+      attendanceController.checkOutNow();
+
+      Get.to(
+        () => const CheckOutSuccessScreen(),
+        transition: Transition.rightToLeft,
+        duration: const Duration(milliseconds: 350),
+      );
+    } else {
+      // ------------------------------------------------------------
+      // CHECK IN
+      // ------------------------------------------------------------
+
+      attendanceController.checkInNow();
+
+      Get.to(
+        () => const CheckInSuccessScreen(),
+        transition: Transition.rightToLeft,
+        duration: const Duration(milliseconds: 350),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: background,
-
       body: SafeArea(
         child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(
-            20,
-            16,
-            20,
-            30,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 22),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // =====================================================
+              const SizedBox(height: 24),
+
+              // ==========================================================
               // TOP BAR
-              // =====================================================
+              // ==========================================================
 
               Row(
                 children: [
-                  _backButton(),
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: IconButton(
+                      onPressed: () {
+                        Get.back();
+                      },
+                      icon: const Icon(
+                        Icons.arrow_back_ios_new_rounded,
+                        size: 18,
+                        color: navy,
+                      ),
+                    ),
+                  ),
 
-                  const Spacer(),
+                  Expanded(
+                    child: Center(
+                      child: Text(
+                        isCheckOut
+                            ? 'Check Out Confirmation'
+                            : 'Attendance Confirmation',
+                        style: const TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                          color: navy,
+                        ),
+                      ),
+                    ),
+                  ),
 
-                  _secureBadge(),
+                  const SizedBox(width: 44),
                 ],
               ),
 
-              const SizedBox(height: 26),
+              const SizedBox(height: 30),
 
-              // =====================================================
-              // HEADER ICON
-              // =====================================================
+              // ==========================================================
+              // STATUS ICON
+              // ==========================================================
 
-              Center(
+              Container(
+                width: 92,
+                height: 92,
+                decoration: BoxDecoration(
+                  color: blue.withOpacity(0.10),
+                  shape: BoxShape.circle,
+                ),
                 child: Container(
-                  width: 76,
-                  height: 76,
+                  margin: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
+                    color: blue.withOpacity(0.14),
                     shape: BoxShape.circle,
-                    color: const Color(0xFFEAF8F2),
-                    border: Border.all(
-                      color: const Color(0xFFBFE8D3),
-                      width: 1.5,
-                    ),
                   ),
-                  child: const Icon(
-                    Icons.fact_check_rounded,
-                    color: green,
-                    size: 37,
+                  child: Icon(
+                    isCheckOut
+                        ? Icons.logout_rounded
+                        : Icons.login_rounded,
+                    color: blue,
+                    size: 36,
                   ),
                 ),
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 22),
 
-              // =====================================================
+              // ==========================================================
               // TITLE
-              // =====================================================
+              // ==========================================================
 
-              Center(
-                child: Text(
-                  'CHECK IN READY',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.poppins(
-                    color: primaryText,
-                    fontSize: 25,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 1.2,
-                  ),
+              Text(
+                isCheckOut ? 'CHECK OUT READY' : 'CHECK IN READY',
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.4,
+                  color: textDark,
                 ),
               ),
 
-              const SizedBox(height: 7),
+              const SizedBox(height: 8),
 
-              Center(
-                child: Text(
-                  'Your attendance verification is complete',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.poppins(
-                    color: secondaryText,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w400,
-                    height: 1.5,
-                  ),
+              Text(
+                isCheckOut
+                    ? 'Please review your details before\nconfirming your check out.'
+                    : 'Please review your details before\nconfirming your attendance.',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 13,
+                  height: 1.5,
+                  color: textGrey,
                 ),
               ),
 
               const SizedBox(height: 28),
 
-              // =====================================================
-              // EMPLOYEE DETAILS TITLE
-              // =====================================================
-
-              _sectionTitle('EMPLOYEE DETAILS'),
-
-              const SizedBox(height: 10),
-
-              // =====================================================
-              // EMPLOYEE CARD
-              // =====================================================
+              // ==========================================================
+              // EMPLOYEE DETAILS
+              // ==========================================================
 
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(18),
+                padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: cardBackground,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(
-                    color: border,
-                  ),
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(22),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF19356C)
-                          .withOpacity(0.05),
-                      blurRadius: 18,
-                      offset: const Offset(0, 7),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    // PROFILE ICON
-                    Container(
-                      width: 52,
-                      height: 52,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: const Color(0xFFEAF0FC),
-                        border: Border.all(
-                          color: const Color(0xFFD5E0F5),
-                        ),
-                      ),
-                      child: const Icon(
-                        Icons.person_rounded,
-                        color: navy,
-                        size: 27,
-                      ),
-                    ),
-
-                    const SizedBox(width: 14),
-
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment:
-                            CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            employeeName,
-                            style: GoogleFonts.poppins(
-                              color: primaryText,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-
-                          const SizedBox(height: 4),
-
-                          Text(
-                            'Employee ID: $employeeId',
-                            style: GoogleFonts.poppins(
-                              color: secondaryText,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    // VERIFIED
-                    Container(
-                      width: 30,
-                      height: 30,
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Color(0xFFE8F8EF),
-                      ),
-                      child: const Icon(
-                        Icons.check_rounded,
-                        color: green,
-                        size: 19,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
-              // =====================================================
-              // ATTENDANCE DETAILS
-              // =====================================================
-
-              _sectionTitle('ATTENDANCE DETAILS'),
-
-              const SizedBox(height: 10),
-
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: cardBackground,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(
-                    color: border,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF19356C)
-                          .withOpacity(0.04),
-                      blurRadius: 16,
-                      offset: const Offset(0, 6),
+                      color: Colors.black.withOpacity(0.045),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
                     ),
                   ],
                 ),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _detailRow(
-                      icon: Icons.login_rounded,
-                      title: 'Check-in Time',
-                      value: checkInTime,
-                      color: blue,
+                    const Text(
+                      'Employee Details',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: navy,
+                      ),
                     ),
 
-                    _divider(),
+                    const SizedBox(height: 18),
 
-                    _detailRow(
-                      icon: Icons.location_on_outlined,
-                      title: 'Location',
-                      value: 'Verified',
-                      color: green,
-                      showCheck: true,
+                    const _DetailRow(
+                      icon: Icons.person_rounded,
+                      title: 'Employee Name',
+                      value: 'Employee',
                     ),
 
-                    _divider(),
+                    const SizedBox(height: 16),
 
-                    _detailRow(
-                      icon: Icons.face_outlined,
-                      title: 'Face Verification',
-                      value: 'Verified',
-                      color: green,
-                      showCheck: true,
-                    ),
-
-                    _divider(),
-
-                    _detailRow(
-                      icon: Icons.social_distance_outlined,
-                      title: 'Distance',
-                      value: distance,
-                      color: blue,
+                    const _DetailRow(
+                      icon: Icons.badge_rounded,
+                      title: 'Employee ID',
+                      value: 'LYRA001',
                     ),
                   ],
                 ),
               ),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
 
-              // =====================================================
-              // VERIFICATION STATUS
-              // =====================================================
+              // ==========================================================
+              // ATTENDANCE DETAILS
+              // ==========================================================
 
-              _sectionTitle('VERIFICATION STATUS'),
-
-              const SizedBox(height: 10),
-
-              Row(
-                children: [
-                  Expanded(
-                    child: _verificationCard(
-                      icon: Icons.location_on_outlined,
-                      title: 'LOCATION',
-                      subtitle: 'Verified',
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(22),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.045),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
                     ),
-                  ),
-
-                  const SizedBox(width: 10),
-
-                  Expanded(
-                    child: _verificationCard(
-                      icon: Icons.face_outlined,
-                      title: 'FACE',
-                      subtitle: 'Verified',
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      isCheckOut
+                          ? 'Check Out Details'
+                          : 'Attendance Details',
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: navy,
+                      ),
                     ),
-                  ),
-                ],
+
+                    const SizedBox(height: 18),
+
+                    _DetailRow(
+                      icon: isCheckOut
+                          ? Icons.logout_rounded
+                          : Icons.login_rounded,
+                      title: isCheckOut
+                          ? 'Check Out Time'
+                          : 'Check In Time',
+                      value: 'Current time',
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    const _DetailRow(
+                      icon: Icons.location_on_rounded,
+                      title: 'Location',
+                      value: '125 m',
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    const _DetailRow(
+                      icon: Icons.calendar_today_rounded,
+                      title: 'Date',
+                      value: 'Today',
+                    ),
+                  ],
+                ),
               ),
 
-              const SizedBox(height: 28),
+              const SizedBox(height: 16),
 
-              // =====================================================
-              // CONFIRM CHECK IN BUTTON
-              // =====================================================
+              // ==========================================================
+              // VERIFICATION STATUS
+              // ==========================================================
+
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: green.withOpacity(0.06),
+                  borderRadius: BorderRadius.circular(22),
+                  border: Border.all(
+                    color: green.withOpacity(0.14),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Verification Status',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: navy,
+                      ),
+                    ),
+
+                    const SizedBox(height: 17),
+
+                    const _VerificationRow(
+                      title: 'Location Verified',
+                    ),
+
+                    const SizedBox(height: 13),
+
+                    const _VerificationRow(
+                      title: 'Face Verified',
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 26),
+
+              // ==========================================================
+              // CONFIRM BUTTON
+              // ==========================================================
 
               SizedBox(
                 width: double.infinity,
                 height: 54,
                 child: ElevatedButton(
-                  onPressed: () {
-                    Get.to(
-                      () => const CheckInSuccessScreen(),
-                      transition: Transition.rightToLeft,
-                      duration:
-                          const Duration(milliseconds: 350),
-                    );
-                  },
+                  onPressed: _confirmAttendance,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: navy,
                     foregroundColor: Colors.white,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(16),
                     ),
                   ),
                   child: Row(
-                    mainAxisAlignment:
-                        MainAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(
-                        Icons.check_circle_rounded,
-                        size: 21,
+                      Icon(
+                        isCheckOut
+                            ? Icons.logout_rounded
+                            : Icons.login_rounded,
+                        size: 19,
                         color: Colors.white,
                       ),
-
                       const SizedBox(width: 9),
-
                       Text(
-                        'Confirm Check In',
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontSize: 13,
+                        isCheckOut
+                            ? 'Confirm Check Out'
+                            : 'Confirm Check In',
+                        style: const TextStyle(
+                          fontSize: 15,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -378,132 +395,108 @@ class AttendanceConfirmationScreen extends StatelessWidget {
 
               const SizedBox(height: 12),
 
-              // =====================================================
-              // CANCEL BUTTON
-              // =====================================================
+              // ==========================================================
+              // CANCEL
+              // ==========================================================
 
               SizedBox(
                 width: double.infinity,
                 height: 50,
-                child: OutlinedButton(
+                child: TextButton(
                   onPressed: () {
                     Get.back();
                   },
-                  style: OutlinedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: navy,
-                    side: const BorderSide(
-                      color: border,
-                      width: 1.2,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                  child: Text(
+                  child: const Text(
                     'Cancel',
-                    style: GoogleFonts.poppins(
-                      color: navy,
-                      fontSize: 13,
+                    style: TextStyle(
+                      fontSize: 14,
                       fontWeight: FontWeight.w600,
+                      color: textGrey,
                     ),
                   ),
                 ),
               ),
 
-              const SizedBox(height: 18),
+              const SizedBox(height: 12),
 
-              // =====================================================
+              // ==========================================================
               // SECURITY MESSAGE
-              // =====================================================
+              // ==========================================================
 
               Row(
-                mainAxisAlignment:
-                    MainAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(
-                    Icons.shield_outlined,
-                    color: green,
+                  Icon(
+                    Icons.lock_outline_rounded,
                     size: 15,
+                    color: Colors.grey.shade500,
                   ),
-
-                  const SizedBox(width: 7),
-
+                  const SizedBox(width: 6),
                   Text(
-                    'Attendance details are securely verified',
-                    style: GoogleFonts.poppins(
-                      color: secondaryText,
-                      fontSize: 9,
-                      fontWeight: FontWeight.w500,
+                    'Your attendance data is securely verified',
+                    style: TextStyle(
+                      fontSize: 10.5,
+                      color: Colors.grey.shade500,
                     ),
                   ),
                 ],
               ),
 
-              const SizedBox(height: 22),
+              const SizedBox(height: 20),
 
-              // =====================================================
-              // LYRA PULSE
-              // =====================================================
+              // ==========================================================
+              // FOOTER
+              // ==========================================================
 
-              Center(
-                child: Text(
-                  'LYRA PULSE',
-                  style: GoogleFonts.poppins(
-                    color: lightText,
-                    fontSize: 8,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 3,
-                  ),
+              const Text(
+                'LYRA PULSE',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 2,
+                  color: navy,
                 ),
               ),
+
+              const SizedBox(height: 25),
             ],
           ),
         ),
       ),
     );
   }
+}
 
-  // ===============================================================
-  // SECTION TITLE
-  // ===============================================================
+// ==========================================================================
+// DETAIL ROW
+// ==========================================================================
 
-  Widget _sectionTitle(String title) {
-    return Text(
-      title,
-      style: GoogleFonts.poppins(
-        color: secondaryText,
-        fontSize: 9,
-        fontWeight: FontWeight.w700,
-        letterSpacing: 1.5,
-      ),
-    );
-  }
+class _DetailRow extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String value;
 
-  // ===============================================================
-  // DETAIL ROW
-  // ===============================================================
+  const _DetailRow({
+    required this.icon,
+    required this.title,
+    required this.value,
+  });
 
-  Widget _detailRow({
-    required IconData icon,
-    required String title,
-    required String value,
-    required Color color,
-    bool showCheck = false,
-  }) {
+  @override
+  Widget build(BuildContext context) {
     return Row(
       children: [
         Container(
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: const Color(0xFFF1F5FA),
-            borderRadius: BorderRadius.circular(11),
+            color: const Color(0xFFF1F5FB),
+            borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(
             icon,
-            color: color,
             size: 19,
+            color: const Color(0xFF3978E8),
           ),
         ),
 
@@ -512,215 +505,66 @@ class AttendanceConfirmationScreen extends StatelessWidget {
         Expanded(
           child: Text(
             title,
-            style: GoogleFonts.poppins(
-              color: secondaryText,
-              fontSize: 11,
+            style: const TextStyle(
+              fontSize: 12.5,
+              color: Color(0xFF718096),
               fontWeight: FontWeight.w500,
             ),
           ),
         ),
 
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              value,
-              style: GoogleFonts.poppins(
-                color: showCheck ? green : primaryText,
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-
-            if (showCheck) ...[
-              const SizedBox(width: 5),
-
-              const Icon(
-                Icons.check_circle_rounded,
-                color: green,
-                size: 16,
-              ),
-            ],
-          ],
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 13,
+            color: Color(0xFF19356C),
+            fontWeight: FontWeight.w700,
+          ),
         ),
       ],
     );
   }
+}
 
-  // ===============================================================
-  // DIVIDER
-  // ===============================================================
+// ==========================================================================
+// VERIFICATION ROW
+// ==========================================================================
 
-  Widget _divider() {
-    return const Padding(
-      padding: EdgeInsets.symmetric(vertical: 12),
-      child: Divider(
-        color: border,
-        height: 1,
-      ),
-    );
-  }
+class _VerificationRow extends StatelessWidget {
+  final String title;
 
-  // ===============================================================
-  // VERIFICATION CARD
-  // ===============================================================
+  const _VerificationRow({
+    required this.title,
+  });
 
-  Widget _verificationCard({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 12,
-        vertical: 15,
-      ),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFFDDE7E1),
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        const Icon(
+          Icons.check_circle_rounded,
+          color: Color(0xFF18A66A),
+          size: 21,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF19356C)
-                .withOpacity(0.035),
-            blurRadius: 12,
-            offset: const Offset(0, 5),
+        const SizedBox(width: 10),
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF19356C),
           ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              color: Color(0xFFEAF8F2),
-            ),
-            child: Icon(
-              icon,
-              color: green,
-              size: 19,
-            ),
-          ),
-
-          const SizedBox(height: 8),
-
-          Text(
-            title,
-            style: GoogleFonts.poppins(
-              color: secondaryText,
-              fontSize: 8,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1,
-            ),
-          ),
-
-          const SizedBox(height: 3),
-
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(
-                Icons.check_circle_rounded,
-                color: green,
-                size: 13,
-              ),
-
-              const SizedBox(width: 4),
-
-              Text(
-                subtitle,
-                style: GoogleFonts.poppins(
-                  color: green,
-                  fontSize: 9,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ===============================================================
-  // BACK BUTTON
-  // ===============================================================
-
-  Widget _backButton() {
-    return Container(
-      width: 42,
-      height: 42,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(13),
-        border: Border.all(
-          color: border,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF19356C)
-                .withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+        const Spacer(),
+        const Text(
+          'Verified',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF18A66A),
           ),
-        ],
-      ),
-      child: IconButton(
-        onPressed: () => Get.back(),
-        icon: const Icon(
-          Icons.arrow_back_rounded,
-          color: navy,
-          size: 20,
         ),
-      ),
-    );
-  }
-
-  // ===============================================================
-  // SECURE BADGE
-  // ===============================================================
-
-  Widget _secureBadge() {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 11,
-        vertical: 7,
-      ),
-      decoration: BoxDecoration(
-        color: const Color(0xFFEAF8F2),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: const Color(0xFFCBEBD9),
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 6,
-            height: 6,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              color: green,
-            ),
-          ),
-
-          const SizedBox(width: 6),
-
-          Text(
-            'SECURE',
-            style: GoogleFonts.poppins(
-              color: green,
-              fontSize: 8,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1,
-            ),
-          ),
-        ],
-      ),
+      ],
     );
   }
 }
