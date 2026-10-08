@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from 'react'
 import { Alert, Box, Button, Checkbox, CircularProgress, Collapse, FormControlLabel, Stack, TextField, Typography } from '@mui/material'
 import ArrowForwardRounded from '@mui/icons-material/ArrowForwardRounded'
@@ -41,7 +40,6 @@ function BrandMark() {
           fontSize: { xs: 24, md: 30 },
           fontWeight: 800,
           backgroundColor: colors.primary,
-          boxShadow: 1,
         }}
       >
         L
@@ -274,7 +272,7 @@ export function LoginPage() {
         display: 'grid',
         gridTemplateColumns: { xs: '1fr', md: '1.1fr 0.9fr' },
         gridTemplateRows: { xs: 'auto 1fr', md: '1fr' },
-        backgroundColor: 'background.default',
+        backgroundColor: colors.surface,
       }}
     >
       <Box sx={{ position: { md: 'absolute' }, top: { md: 'clamp(20px, 4vh, 44px)' }, left: { md: 'clamp(32px, 4.5vw, 88px)' }, px: { xs: 3, sm: 5, md: 0 }, pt: { xs: 3, md: 0 }, zIndex: 1 }}>
@@ -297,7 +295,7 @@ export function LoginPage() {
             component="img"
             src={loginIllustration}
             alt="Administrator signing in securely to Lyra Pulse from a phone and laptop"
-            sx={{ display: 'block', maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', objectPosition: 'left center', mixBlendMode: 'multiply' }}
+            sx={{ display: 'block', maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', objectPosition: 'left center' }}
           />
         </Box>
         {/* <Box sx={{ pl: 1.5, pt: 'clamp(8px, 2vh, 24px)' }}>
@@ -323,7 +321,7 @@ export function LoginPage() {
             backgroundColor: colors.surface,
             border: 1,
             borderColor: 'divider',
-            boxShadow: 3,
+            boxShadow: 2,
           }}
         >
           <Typography component="h1" variant="h3" sx={{ color: 'text.primary' }}>
