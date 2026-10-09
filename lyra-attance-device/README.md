@@ -85,6 +85,8 @@ Set `ENROLLMENT_TEMPLATE_ID` in `esp32/config.py` to choose the starting sensor 
 - No fingerprint images are transmitted.
 - No Wi-Fi passwords or tokens are printed to logs.
 - LEDs use the existing active-high convention; the blue ready LED is GPIO 26.
+- The current R307 driver exposes no supported illumination-LED control command or GPIO. Whether the sensor's blue illumination LED stays lit continuously is determined by the sensor/module hardware; firmware keeps the sensor powered but cannot force the LED state.
+- Attendance scanning waits for confirmed finger removal, settles for one second, and then immediately returns to the scan loop.
 - Attendance requests are not automatically retried after a timeout because each accepted scan changes attendance state.
 - Production API traffic should use HTTPS.
 

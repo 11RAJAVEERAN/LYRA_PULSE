@@ -70,6 +70,7 @@ class FakeAttendanceFingerprintService:
 
     def wait_for_finger_removed(self):
         self.events.append(("remove",))
+        return True
 
 
 class FakeOled:
@@ -215,6 +216,68 @@ class DevicePollingTests(unittest.TestCase):
         self.assertEqual(events.count(("buzzer", "beep_twice")), 1)
         self.assertNotIn(("buzzer", "beep_once"), events)
         self.assertIn(("led", "match_failed"), events)
+
+    def test_scan_waits_for_removal_then_one_second_before_ready(self):
+        import main
+
+        events = []
+        api = FakeAttendanceAPI()
+        fingerprint = FakeAttendanceFingerprintService(137, events)
+        original_sleep = main.time.sleep
+        main.time.sleep = lambda seconds: events.append(("sleep", seconds))
+        try:
+            run_attendance_scan(
+                "LYRA-DEVICE-001",
+                api,
+                fingerprint,
+                FakeOled(events),
+                FakeOutput(events, "buzzer"),
+                FakeOutput(events, "led"),
+            )
+        finally:
+            main.time.sleep = original_sleep
+
+        remove_index = events.index(("remove",))
+        settle_index = events.index(("sleep", 1))
+        ready_index = events.index(("led", "ready_status"), settle_index)
+        self.assertLess(remove_index, settle_index)
+        self.assertLess(settle_index, ready_index)
+        self.assertEqual(api.events, [("api", "LYRA-DEVICE-001", 137)])
+
+    def test_following_scan_starts_only_after_previous_scan_removed_finger(self):
+        events = []
+        api = FakeAttendanceAPI()
+        fingerprint = FakeAttendanceFingerprintService(137, events)
+        original_send_attendance = api.send_attendance
+
+        def send_attendance(device_id, fingerprint_slot):
+            events.append(("api", device_id, fingerprint_slot))
+            return original_send_attendance(device_id, fingerprint_slot)
+
+        api.send_attendance = send_attendance
+
+        self.run_scan(api, fingerprint, events)
+        first_finger = events.index(("finger",))
+        first_api = events.index(("api", "LYRA-DEVICE-001", 137))
+        first_remove = events.index(("remove",))
+        self.run_scan(api, fingerprint, events)
+
+        finger_indices = [index for index, event in enumerate(events) if event == ("finger",)]
+        api_indices = [
+            index
+            for index, event in enumerate(events)
+            if event == ("api", "LYRA-DEVICE-001", 137)
+        ]
+        removal_indices = [index for index, event in enumerate(events) if event == ("remove",)]
+
+        self.assertEqual(first_finger, finger_indices[0])
+        self.assertEqual(len(api_indices), 2)
+        self.assertEqual(len(removal_indices), 2)
+        self.assertLess(first_api, first_remove)
+        self.assertLess(removal_indices[0], finger_indices[1])
+        self.assertLess(finger_indices[1], api_indices[1])
+        self.assertLess(api_indices[1], removal_indices[1])
+        self.assertEqual(len(api.events), 2)
 
     def test_oled_failure_does_not_suppress_confirmed_success_feedback(self):
         events = []
