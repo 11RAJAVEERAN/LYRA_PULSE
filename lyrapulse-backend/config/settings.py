@@ -9,7 +9,11 @@ load_dotenv(BASE_DIR / ".env")
 
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-only-change-this-secret-key-before-production-lyra-pulse")
 DEBUG = os.getenv("DEBUG", "True").lower() == "true"
-ALLOWED_HOSTS = [host.strip() for host in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if host.strip()]
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1,192.168.1.8").split(",")
+    if host.strip()
+]
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -28,6 +32,9 @@ INSTALLED_APPS = [
     "apps.designations",
     "apps.accounts",
     "apps.employees",
+    "apps.attendance.apps.AttendanceConfig",
+    "apps.devices.apps.DevicesConfig",
+    "apps.fingerprints.apps.FingerprintsConfig",
 ]
 
 MIDDLEWARE = [
@@ -85,8 +92,8 @@ REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=30),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=265),
     "ROTATE_REFRESH_TOKENS": False,
     "BLACKLIST_AFTER_ROTATION": True,
     "AUTH_HEADER_TYPES": ("Bearer",),
@@ -107,6 +114,11 @@ SMS_PROVIDER = os.getenv("SMS_PROVIDER", "mock")
 OTP_EXPIRY_SECONDS = 300
 OTP_RESEND_COOLDOWN_SECONDS = 30
 OTP_MAX_ATTEMPTS = 5
+FINGERPRINT_ENROLLMENT_TTL_SECONDS = int(os.getenv("FINGERPRINT_ENROLLMENT_TTL_SECONDS", "300"))
+R307_MAX_TEMPLATE_COUNT = int(os.getenv("R307_MAX_TEMPLATE_COUNT", "1000"))
+ATTENDANCE_FINGERPRINT_SCAN_COOLDOWN_SECONDS = int(
+    os.getenv("ATTENDANCE_FINGERPRINT_SCAN_COOLDOWN_SECONDS", "5")
+)
 
 LOGGING = {
     "version": 1,
