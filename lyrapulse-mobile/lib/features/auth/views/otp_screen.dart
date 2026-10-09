@@ -97,16 +97,26 @@ class _OtpScreenState extends State<OtpScreen> {
                             style: AppTextStyles.headline),
                         const SizedBox(height: 8),
                         Text(
-                            'If this number is registered and active, an OTP was sent.',
+                            'Enter or paste the six-digit code for this login request.',
                             textAlign: TextAlign.center,
                             style: AppTextStyles.bodySmall),
                         const SizedBox(height: 18),
                         _buildPhoneChip(),
-                        const SizedBox(height: 28),
-                        OtpInput(
-                          controller: controller.otpController,
-                          hasError: _hasError,
-                          onChanged: _clearError,
+                        const SizedBox(height: 26),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Padding(
+                            padding: const EdgeInsets.only(bottom: 10),
+                            child: Text('Verification code',
+                                style: AppTextStyles.label),
+                          ),
+                        ),
+                        AutofillGroup(
+                          child: OtpInput(
+                            controller: controller.otpController,
+                            hasError: _hasError,
+                            onChanged: _clearError,
+                          ),
                         ),
                         const SizedBox(height: 24),
                         Obx(() => AppButton(
@@ -256,7 +266,7 @@ class _OtpScreenState extends State<OtpScreen> {
             size: 15, color: AppColors.textSecondary),
         const SizedBox(width: 8),
         Flexible(
-          child: Text('Your verification helps keep your account secure.',
+          child: Text('Your code is private and used only to verify your account.',
               style: AppTextStyles.bodySmall.copyWith(fontSize: 12)),
         ),
       ],

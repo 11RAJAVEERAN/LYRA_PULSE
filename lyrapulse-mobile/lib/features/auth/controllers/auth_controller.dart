@@ -38,6 +38,7 @@ class AuthController extends GetxController {
     try {
       final devOtp = await _authRepository.sendOtp(_normalizedPhone);
       otpController.clear();
+      _populateDevOtp(devOtp);
       Get.toNamed(AppRoutes.otp);
       _showDevOtp(devOtp);
     } catch (error) {
@@ -74,6 +75,7 @@ class AuthController extends GetxController {
     try {
       final devOtp = await _authRepository.resendOtp(_normalizedPhone);
       otpController.clear();
+      _populateDevOtp(devOtp);
       startCountdown();
       if (devOtp != null && kDebugMode) {
         _showDevOtp(devOtp);
@@ -153,6 +155,18 @@ class AuthController extends GetxController {
     if (devOtp != null && kDebugMode) {
       AppSnackbar.show('Development OTP: $devOtp');
     }
+  }
+
+  void _populateDevOtp(String? devOtp) {
+    if (!kDebugMode ||
+        devOtp == null ||
+        !RegExp(r'^\d{6}$').hasMatch(devOtp)) {
+      return;
+    }
+    otpController.value = TextEditingValue(
+      text: devOtp,
+      selection: TextSelection.collapsed(offset: devOtp.length),
+    );
   }
 
   String get _normalizedPhone => phoneController.text.replaceAll(RegExp(r'\D'), '').replaceFirst(RegExp(r'^91(?=\d{10}$)'), '');

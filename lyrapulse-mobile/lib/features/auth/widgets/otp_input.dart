@@ -77,7 +77,6 @@ class _OtpInputState extends State<OtpInput> {
                     keyboardType: TextInputType.number,
                     autofillHints: const [AutofillHints.oneTimeCode],
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    enableInteractiveSelection: false,
                     showCursor: false,
                     cursorColor: Colors.transparent,
                     style: const TextStyle(color: Colors.transparent),
