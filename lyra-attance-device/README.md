@@ -10,29 +10,27 @@ This repository contains the ESP32 MicroPython firmware for the Lyra Pulse finge
 - Wi-Fi connectivity to the existing Lyra Pulse Django backend
 - Attendance event transmission using the device fingerprint ID
 
-This project intentionally does not duplicate or modify:
+This project integrates with the existing:
 
 - lyrapulse-backend
 - lyrapulse-admin
 - lyrapulse-mobile
 
-## Current backend status
+## Attendance backend
 
-The existing Django backend currently exposes authentication endpoints under `/api/v1/auth/` and employee mobile profile routes, but there is no attendance/fingerprint endpoint implemented yet in the checked-in project.
-
-The ESP32 firmware therefore uses a configuration placeholder at:
-
-- `/api/v1/attendance/fingerprint/`
-
-This should be updated to the actual backend route when the backend team exposes the real attendance device endpoint.
+The ESP32 uses the existing Django endpoint `POST /api/v1/attendance/fingerprint/`.
+After the R307 search returns a real match, it sends the configured device ID and
+the matched `fingerprint_slot` using the existing device-token authentication.
+The backend resolves the registered employee and chooses check-in or check-out.
 
 ## Hardware
 
 - ESP32-WROOM
 - R307 / R307S fingerprint sensor
 - 128x64 SSD1306 OLED (I2C)
-- Green LED
-- Red LED
+- Green LED (GPIO 25)
+- Blue LED (GPIO 26)
+- Red LED (GPIO 27)
 - Buzzer
 
 ## Serial port
@@ -64,15 +62,13 @@ The project is configured for the user's Mac serial port:
 ## Device flow
 
 1. Power on
-2. Connect to Wi-Fi
-3. Show ready screen
-4. Wait for finger
-5. Capture fingerprint
-6. Search template store
-7. Send fingerprint ID to Django
-8. Show success or not found
-9. Wait for finger removal
-10. Return to ready
+2. Initialize the R307, OLED, buzzer, LEDs, and Wi-Fi services
+3. Show `PLACE FINGER` with the blue ready LED once the sensor initializes
+4. Wait for Wi-Fi before processing attendance requests
+5. Capture fingerprint and search the sensor template store
+6. Send only the matched slot returned by the R307 to Django
+7. Show success or no match, with the corresponding LED and buzzer feedback
+8. Wait for finger removal and return to the blue ready state
 
 ## Fingerprint enrollment
 
@@ -88,6 +84,8 @@ Set `ENROLLMENT_TEMPLATE_ID` in `esp32/config.py` to choose the starting sensor 
 
 - No fingerprint images are transmitted.
 - No Wi-Fi passwords or tokens are printed to logs.
+- LEDs use the existing active-high convention; the blue ready LED is GPIO 26.
+- Attendance requests are not automatically retried after a timeout because each accepted scan changes attendance state.
 - Production API traffic should use HTTPS.
 
 ## Wi-Fi troubleshooting

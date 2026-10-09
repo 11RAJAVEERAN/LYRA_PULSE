@@ -72,46 +72,13 @@ class AttendanceAPIClient:
             "device_id": device_id,
             "fingerprint_slot": fingerprint_slot,
         }
-        headers = {"Content-Type": "application/json"}
-        if DEVICE_TOKEN:
-            headers["Authorization"] = "Bearer %s" % DEVICE_TOKEN
-
-        headers = self._device_headers()
-        last_error = None
-        for attempt in range(self.retry_count + 1):
-            try:
-                log("API", "Submitting attendance event (attempt %s)" % (attempt + 1))
-                response = requests.post(
-                    self._endpoint(),
-                    data=json.dumps(payload).encode("utf-8"),
-                    headers=headers,
-                    timeout=self.timeout,
-                )
-                status_code = getattr(response, "status_code", getattr(response, "status", 500))
-
-                if status_code in (200, 201):
-                    data = response.json() if hasattr(response, "json") else {}
-                    if isinstance(data, dict):
-                        return data
-                    return {"success": True, "data": data}
-
-                body = response.json() if hasattr(response, "json") else {}
-                err = {"success": False, "status_code": status_code, "response": body}
-                last_error = err
-                log("API", "Server returned status %s" % status_code)
-
-                if status_code in (400, 401, 403, 404, 409, 429):
-                    break
-
-            except Exception as exc:  # pragma: no cover - runtime dependent
-                last_error = {"success": False, "error": str(exc)}
-                log("API", "Request failed: %s" % exc)
-
-            time.sleep(1)
-
-        if last_error is not None:
-            return last_error
-        return {"success": False, "message": "Unknown API failure"}
+        return self._device_request(
+            "POST",
+            API_FINGERPRINT_ENDPOINT,
+            payload,
+            retry_count=0,
+            headers=self._device_headers(),
+        )
 
     def _device_headers(self):
         headers = {"Content-Type": "application/json"}
@@ -127,24 +94,30 @@ class AttendanceAPIClient:
             return {"success": False, "message": "Invalid JSON response: %s" % exc}
         return body if isinstance(body, dict) else {"success": False, "data": body}
 
-    def _device_request(self, method, endpoint, payload=None):
+    def _device_request(self, method, endpoint, payload=None, retry_count=None, headers=None):
         url = self.base_url + endpoint
         last_error = None
-        for attempt in range(self.retry_count + 1):
+        attempts = self.retry_count if retry_count is None else retry_count
+        for attempt in range(attempts + 1):
             response = None
             try:
                 if method == "GET":
-                    response = requests.get(url, headers=self._device_headers(), timeout=self.timeout)
+                    response = requests.get(
+                        url,
+                        headers=headers or self._device_headers(),
+                        timeout=self.timeout,
+                    )
                 else:
                     response = requests.post(
                         url,
                         data=json.dumps(payload).encode("utf-8"),
-                        headers=self._device_headers(),
+                        headers=headers or self._device_headers(),
                         timeout=self.timeout,
                     )
                 status_code = getattr(response, "status_code", getattr(response, "status", 500))
                 body = self._response_body(response)
                 if 200 <= status_code < 300 and body.get("success", True):
+                    body.setdefault("http_status", status_code)
                     return body
                 last_error = {
                     "success": False,
@@ -160,7 +133,7 @@ class AttendanceAPIClient:
             finally:
                 if response is not None and hasattr(response, "close"):
                     response.close()
-            if attempt < self.retry_count:
+            if attempt < attempts:
                 time.sleep(1)
         return last_error or {"success": False, "message": "Unknown device API failure"}
 

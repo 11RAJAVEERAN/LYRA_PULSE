@@ -21,26 +21,33 @@ _SET_DISP_CLK_DIV = const(0xD5)
 _SET_PRECHARGE = const(0xD9)
 _SET_VCOM_DESEL = const(0xDB)
 _SET_CHARGE_PUMP = const(0x8D)
+_I2C_DATA_CHUNK_SIZE = const(128)
+FONT_WIDTH = const(5)
+FONT_HEIGHT = const(8)
+FONT_CHAR_SPACING = const(1)
 
 
 class SSD1306:
-    def __init__(self, width, height, external_vcc=False):
+    def __init__(self, width, height, external_vcc=False, rotate_180=False):
         self.width = width
         self.height = height
         self.external_vcc = external_vcc
+        self.rotate_180 = rotate_180
         self.pages = self.height // 8
         self.buffer = bytearray(self.pages * self.width)
 
     def init_display(self):
+        segment_remap = 0x00 if self.rotate_180 else 0x01
+        com_scan_direction = 0x00 if self.rotate_180 else 0x08
         for cmd in (
             _SET_DISP | 0x00,
             _SET_MEM_ADDR,
             0x00,
             _SET_START_LINE | 0x00,
-            _SET_SEG_REMAP | 0x01,
+            _SET_SEG_REMAP | segment_remap,
             _SET_MUX_RATIO,
             self.height - 1,
-            _SET_COM_OUTDIR | 0x08,
+            _SET_COM_OUTDIR | com_scan_direction,
             _SET_DISP_OFFSET,
             0x00,
             _SET_COM_PIN_CFG,
@@ -80,8 +87,16 @@ class SSD1306:
 
 
 class SSD1306_I2C(SSD1306):
-    def __init__(self, width, height, i2c, addr=0x3C, external_vcc=False):
-        super().__init__(width, height, external_vcc)
+    def __init__(
+        self,
+        width,
+        height,
+        i2c,
+        addr=0x3C,
+        external_vcc=False,
+        rotate_180=False,
+    ):
+        super().__init__(width, height, external_vcc, rotate_180)
         self.i2c = i2c
         self.addr = addr
         self.temp = bytearray(2)
@@ -93,9 +108,7 @@ class SSD1306_I2C(SSD1306):
         self.i2c.writeto(self.addr, self.temp)
 
     def write_data(self, buf):
-        self.temp[0] = 0x40
-        self.temp[1:] = b""  # placeholder to keep bytearray structure
-        self.i2c.writeto(self.addr, b"\x40" + buf)
+        self.i2c.writeto(self.addr, b"\x40" + bytes(buf))
 
     def show(self):
         self.write_cmd(_SET_COL_ADDR)
@@ -104,7 +117,10 @@ class SSD1306_I2C(SSD1306):
         self.write_cmd(_SET_PAGE_ADDR)
         self.write_cmd(0)
         self.write_cmd(self.pages - 1)
-        self.i2c.writeto(self.addr, b"\x40" + self.buffer)
+        for offset in range(0, len(self.buffer), _I2C_DATA_CHUNK_SIZE):
+            self.write_data(
+                self.buffer[offset : offset + _I2C_DATA_CHUNK_SIZE]
+            )
 
     def text(self, text, x, y):
         # 5x8 font by default; this is intentionally compact and compatible.
@@ -116,9 +132,9 @@ class SSD1306_I2C(SSD1306):
         cursor_x = x
         for char in text:
             glyph = FONT.get(ord(char), FONT[32])
-            for glyph_col, byte in enumerate(glyph):
-                for bit_index in range(8):
-                    if byte & (1 << (7 - bit_index)):
+            for glyph_col, byte in enumerate(glyph[:FONT_WIDTH]):
+                for bit_index in range(FONT_HEIGHT):
+                    if byte & (1 << bit_index):
                         pixel_x = cursor_x + glyph_col
                         pixel_y = y + bit_index
                         if 0 <= pixel_x < self.width and 0 <= pixel_y < self.height:
@@ -126,4 +142,4 @@ class SSD1306_I2C(SSD1306):
                             offset = pixel_y % 8
                             index = page * self.width + pixel_x
                             self.buffer[index] |= 1 << offset
-            cursor_x += 6
+            cursor_x += FONT_WIDTH + FONT_CHAR_SPACING

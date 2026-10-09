@@ -144,6 +144,34 @@ class FingerprintAttendanceAPITests(TestCase):
         self.assertEqual(Attendance.objects.count(), 2)
         self.assertTrue(all(record.check_out_at is not None for record in Attendance.objects.all()))
 
+    def test_multiple_sensor_slots_for_same_employee_finger_resolve_attendance(self):
+        slot_one_mapping = EmployeeFingerprint.objects.create(
+            employee=self.employee,
+            device=self.device,
+            fingerprint_slot=1,
+            finger=self.mapping.finger,
+        )
+        self.mapping.fingerprint_slot = 256
+        self.mapping.save(update_fields=("fingerprint_slot",))
+
+        first_scan = self.scan({
+            "device_id": self.device.device_id,
+            "fingerprint_slot": slot_one_mapping.fingerprint_slot,
+        })
+        self.assertEqual(first_scan.status_code, 200)
+        self.assertEqual(first_scan.data["data"]["employee"]["id"], self.employee.id)
+        self.assertEqual(first_scan.data["data"]["status"], "CHECKED_IN")
+
+        attendance = Attendance.objects.get()
+        self.advance_last_action(attendance, 6)
+        second_scan = self.scan({
+            "device_id": self.device.device_id,
+            "fingerprint_slot": 256,
+        })
+        self.assertEqual(second_scan.status_code, 200)
+        self.assertEqual(second_scan.data["data"]["employee"]["id"], self.employee.id)
+        self.assertEqual(second_scan.data["data"]["status"], "CHECKED_OUT")
+
     def test_employee_can_start_new_session_after_checkout(self):
         self.scan()
         session = Attendance.objects.get()
@@ -181,6 +209,16 @@ class FingerprintAttendanceAPITests(TestCase):
         response = self.scan({"device_id": self.device.device_id, "fingerprint_slot": 999})
 
         self.assertEqual(response.status_code, 404)
+        self.assertFalse(Attendance.objects.exists())
+
+    def test_unmapped_sensor_slots_one_and_256_are_rejected(self):
+        for fingerprint_slot in (1, 256):
+            with self.subTest(fingerprint_slot=fingerprint_slot):
+                response = self.scan({
+                    "device_id": self.device.device_id,
+                    "fingerprint_slot": fingerprint_slot,
+                })
+                self.assertEqual(response.status_code, 404)
         self.assertFalse(Attendance.objects.exists())
 
     def test_inactive_fingerprint_mapping_is_rejected(self):

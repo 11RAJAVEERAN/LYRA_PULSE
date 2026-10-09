@@ -24,8 +24,10 @@ class FakeResponse:
 class FakeRequests:
     def __init__(self):
         self.post_arguments = None
+        self.post_count = 0
 
     def post(self, url, data=None, headers=None, timeout=None):
+        self.post_count += 1
         self.post_arguments = {
             "url": url,
             "data": data,
@@ -72,7 +74,9 @@ class DeviceResultRequestTests(unittest.TestCase):
     def test_attendance_posts_the_sensor_matched_slot_with_device_auth(self):
         fake_requests = FakeRequests()
         previous_requests = api_service.requests
+        previous_token = api_service.DEVICE_TOKEN
         api_service.requests = fake_requests
+        api_service.DEVICE_TOKEN = "test-device-token"
         try:
             client = AttendanceAPIClient(
                 base_url="http://backend",
@@ -82,6 +86,7 @@ class DeviceResultRequestTests(unittest.TestCase):
             result = client.send_attendance("LYRA-DEVICE-001", 137)
         finally:
             api_service.requests = previous_requests
+            api_service.DEVICE_TOKEN = previous_token
 
         self.assertTrue(result["success"])
         self.assertEqual(
@@ -92,9 +97,37 @@ class DeviceResultRequestTests(unittest.TestCase):
             json.loads(fake_requests.post_arguments["data"].decode("utf-8")),
             {"device_id": "LYRA-DEVICE-001", "fingerprint_slot": 137},
         )
-        self.assertTrue(
-            fake_requests.post_arguments["headers"]["Authorization"].startswith("Device ")
+        self.assertEqual(
+            fake_requests.post_arguments["headers"]["Authorization"],
+            "Device test-device-token",
         )
+        self.assertEqual(fake_requests.post_count, 1)
+
+    def test_attendance_timeout_is_not_retried(self):
+        class TimeoutRequests:
+            def __init__(self):
+                self.post_count = 0
+
+            def post(self, *args, **kwargs):
+                self.post_count += 1
+                raise OSError("request timed out")
+
+        fake_requests = TimeoutRequests()
+        previous_requests = api_service.requests
+        api_service.requests = fake_requests
+        try:
+            client = AttendanceAPIClient(
+                base_url="http://backend",
+                timeout=4,
+                retry_count=3,
+            )
+            result = client.send_attendance("LYRA-DEVICE-001", 137)
+        finally:
+            api_service.requests = previous_requests
+
+        self.assertFalse(result["success"])
+        self.assertEqual(fake_requests.post_count, 1)
+        self.assertIn("timed out", result["error"])
 
 
 if __name__ == "__main__":

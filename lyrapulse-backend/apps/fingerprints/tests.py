@@ -2,6 +2,7 @@ from datetime import timedelta
 from unittest.mock import patch
 import uuid
 
+from django.contrib import admin
 from django.contrib.auth.hashers import make_password
 from django.db import IntegrityError
 from django.test import TestCase
@@ -14,6 +15,7 @@ from apps.devices.models import Device
 from apps.departments.models import Department
 from apps.employees.models import Employee
 
+from .admin import FingerprintEnrollmentAdmin
 from .models import EmployeeFingerprint, FingerprintEnrollment
 
 
@@ -383,12 +385,38 @@ class FingerprintEnrollmentAPITests(TestCase):
         enrollment.refresh_from_db()
         self.assertEqual(enrollment.status, FingerprintEnrollment.Status.FAILED)
         self.assertEqual(enrollment.failure_reason, "DUPLICATE_FINGERPRINT")
+        self.client.force_authenticate(self.admin)
+        status_response = self.client.get(
+            "/api/v1/employees/%s/fingerprints/enrollments/%s/"
+            % (self.employee.id, enrollment.id)
+        )
+        self.assertEqual(status_response.status_code, 200)
+        self.assertEqual(status_response.data["data"]["status"], "FAILED")
+        self.assertEqual(
+            status_response.data["data"]["failure_reason"],
+            "DUPLICATE_FINGERPRINT",
+        )
+        model_admin = FingerprintEnrollmentAdmin(FingerprintEnrollment, admin.site)
+        self.assertEqual(
+            model_admin.failure_summary(enrollment),
+            "Duplicate fingerprint: this template is already stored; choose a different finger.",
+        )
+        pending = self.device_client().get(self.poll_url())
+        self.assertEqual(pending.status_code, 200)
+        self.assertEqual(pending.data["data"], {})
+
         response = self.device_client().post(
             self.result_url(enrollment),
             {"status": "FAILED", "error_code": "UNKNOWN"},
             format="json",
         )
         self.assertEqual(response.status_code, 409)
+        next_enrollment = self.enroll(finger="left_index")
+        self.assertEqual(next_enrollment.status_code, 201)
+        self.assertEqual(
+            next_enrollment.data["data"]["status"],
+            FingerprintEnrollment.Status.PENDING,
+        )
 
     def test_sensor_template_read_failure_is_recorded(self):
         response = self.enroll()

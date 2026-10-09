@@ -49,8 +49,9 @@ OLED_I2C_ADDRESS = 0x3C
 # GPIO outputs
 # ------------------------------------------------------------
 BUZZER_PIN = 4
-GREEN_LED_PIN = 18
-RED_LED_PIN = 19
+GREEN_LED_PIN = 25
+BLUE_LED_PIN = 26
+RED_LED_PIN = 27
 
 # ------------------------------------------------------------
 # Behavior and safety

@@ -64,7 +64,11 @@ class FingerprintService:
         return self.sensor.image_to_template(buffer_id=1)
 
     def search_fingerprint(self):
-        result = self.sensor.search(buffer_id=1, start_page=0, page_num=100)
+        result = self.sensor.search(
+            buffer_id=1,
+            start_page=0,
+            page_num=MAX_TEMPLATE_COUNT,
+        )
         if result is None:
             log("FINGER", "No match found")
             return None
