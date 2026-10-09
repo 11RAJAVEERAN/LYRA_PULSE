@@ -1,6 +1,8 @@
 import unittest
+from unittest.mock import patch
 
 from config import MAX_TEMPLATE_COUNT
+from drivers.r307 import R307FingerError
 from services.fingerprint_service import FingerprintService
 
 
@@ -12,6 +14,18 @@ class SearchSensor:
     def search(self, **kwargs):
         self.search_arguments = kwargs
         return self.result
+
+
+class FingerRemovalSensor:
+    def __init__(self, present_polls):
+        self.present_polls = present_polls
+        self.calls = 0
+
+    def get_image(self):
+        self.calls += 1
+        if self.calls > self.present_polls:
+            raise R307FingerError("No finger placed on sensor")
+        return True
 
 
 class FingerprintAttendanceSearchTests(unittest.TestCase):
@@ -36,6 +50,16 @@ class FingerprintAttendanceSearchTests(unittest.TestCase):
         service = FingerprintService(sensor)
 
         self.assertIsNone(service.search_fingerprint())
+
+    def test_wait_for_removal_does_not_return_while_finger_is_detected(self):
+        sensor = FingerRemovalSensor(present_polls=3)
+        service = FingerprintService(sensor)
+
+        with patch("services.fingerprint_service.time.sleep") as sleep:
+            self.assertTrue(service.wait_for_finger_removed())
+
+        self.assertEqual(sensor.calls, 4)
+        self.assertEqual([call.args for call in sleep.call_args_list], [(0.2,)] * 3)
 
 
 if __name__ == "__main__":

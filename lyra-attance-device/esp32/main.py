@@ -2,7 +2,7 @@
 
 import time
 
-from config import FINGERPRINT_COOLDOWN
+from config import FINGERPRINT_COOLDOWN, FINGER_REMOVAL_SETTLE_SECONDS
 from drivers.oled import OledDisplay
 from drivers.r307 import R307, R307PacketError
 from hardware.buzzer import Buzzer
@@ -153,6 +153,7 @@ def run_attendance_scan(device_id, api_client, fingerprint_service, oled, buzzer
         if finger_detected:
             try:
                 fingerprint_service.wait_for_finger_removed()
+                time.sleep(FINGER_REMOVAL_SETTLE_SECONDS)
             except R307PacketError as exc:
                 log("SENSOR ERROR", "Finger-removal check failed: %s" % exc)
         buzzer.off()
@@ -245,7 +246,6 @@ def main():
                 buzzer,
                 led,
             )
-            time.sleep(FINGERPRINT_COOLDOWN)
 
         except R307PacketError as exc:
             log("SENSOR ERROR", str(exc))

@@ -57,6 +57,7 @@ RED_LED_PIN = 27
 # Behavior and safety
 # ------------------------------------------------------------
 FINGERPRINT_COOLDOWN = 5
+FINGER_REMOVAL_SETTLE_SECONDS = 1
 MAX_TEMPLATE_COUNT = 1000
 ENROLLMENT_STEP_TIMEOUT_SECONDS = 30
 
