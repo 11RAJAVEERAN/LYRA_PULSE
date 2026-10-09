@@ -12,10 +12,23 @@ class Buzzer:
         self.pin = Pin(BUZZER_PIN, Pin.OUT)
         self.pin.off()
 
-    def _beep(self, duration=0.15):
-        self.pin.on()
-        time.sleep(duration)
+    def _beep(self, duration=0.18):
+        try:
+            self.pin.on()
+            time.sleep(duration)
+        finally:
+            self.pin.off()
+
+    def off(self):
         self.pin.off()
+
+    def beep_once(self):
+        self._beep()
+
+    def beep_twice(self):
+        self._beep()
+        time.sleep(0.15)
+        self._beep()
 
     def startup_beep(self):
         self._beep(0.08)

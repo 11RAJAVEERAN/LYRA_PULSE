@@ -23,8 +23,9 @@ This is a safe hardware test flow for the ESP32 fingerprint attendance terminal.
 ### GPIO outputs
 
 - Buzzer -> GPIO4
-- Green LED -> GPIO18
-- Red LED -> GPIO19
+- Green LED -> GPIO25
+- Blue LED -> GPIO26
+- Red LED -> GPIO27
 
 ## Configuration
 

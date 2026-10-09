@@ -89,11 +89,6 @@ class EmployeeFingerprint(models.Model):
                 condition=Q(is_active=True),
                 name="unique_active_device_fingerprint_slot",
             ),
-            models.UniqueConstraint(
-                fields=("employee", "device", "finger"),
-                condition=Q(is_active=True),
-                name="unique_active_employee_device_finger",
-            ),
         ]
 
     def __str__(self):

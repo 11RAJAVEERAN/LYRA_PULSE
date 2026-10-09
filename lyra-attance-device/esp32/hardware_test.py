@@ -28,7 +28,7 @@ def test_oled():
         from drivers.oled import OledDisplay
 
         display = OledDisplay()
-        display._show_lines(["LYRA PULSE", "HARDWARE TEST", "OLED: OK"], title="")
+        display.show_orientation_test_pattern()
         report("OLED", True)
         return display
     except Exception as exc:
@@ -172,11 +172,9 @@ def show_final_summary(display, oled_ok, led_ok, buzzer_ok, r307_ok, wifi_ok, ap
 
     if display is not None:
         try:
-            screen = display.oled
-            screen.fill(0)
             for row, text in enumerate(rows):
-                screen.text(text, 0, row * 8)
-            screen.show()
+                display.draw_centered_text(text, row * 8)
+            display.oled.show()
         except Exception as exc:
             print("OLED SUMMARY: FAIL - %s" % exc)
 
@@ -216,4 +214,5 @@ def main():
     )
 
 
-main()
+if __name__ == "__main__":
+    main()

@@ -2,9 +2,9 @@
 
 import time
 
-from config import DEVICE_ID, FINGERPRINT_COOLDOWN, TEST_MODE
+from config import FINGERPRINT_COOLDOWN
 from drivers.oled import OledDisplay
-from drivers.r307 import R307, R307TimeoutError, R307FingerError
+from drivers.r307 import R307, R307PacketError
 from hardware.buzzer import Buzzer
 from hardware.status_led import StatusLed
 from services.api_service import AttendanceAPIClient
@@ -56,31 +56,47 @@ def run_enrollment(command, device_id, api_client, fingerprint_service, oled, bu
         led.green_on()
 
 
-def run_attendance_scan(device_id, api_client, fingerprint_service, oled, buzzer, led):
-    oled.show_ready()
-    fingerprint_service.wait_for_finger()
+def show_feedback(oled, method_name, *args):
     try:
+        getattr(oled, method_name)(*args)
+    except Exception as exc:
+        log("OLED ERROR", "%s failed: %s" % (method_name, exc))
+
+
+def run_attendance_scan(device_id, api_client, fingerprint_service, oled, buzzer, led):
+    finger_detected = False
+    led.ready_status()
+    oled.show_ready()
+    try:
+        fingerprint_service.wait_for_finger()
+        finger_detected = True
         oled.show_finger_detected()
         oled.show_processing()
         fingerprint_service.capture_fingerprint()
         oled.show_searching()
         fingerprint_slot = fingerprint_service.search_fingerprint()
         if fingerprint_slot is None:
-            oled.show_not_found()
-            buzzer.error_beep()
-            led.red_on()
-            time.sleep(1)
-            led.red_off()
+            led.match_failed()
+            buzzer.beep_twice()
+            show_feedback(oled, "show_not_found")
+            time.sleep(0.5)
             return
 
         response = api_client.send_attendance(device_id, fingerprint_slot)
         if not response.get("success"):
-            log("ATTENDANCE", "Attendance request failed")
-            oled.show_network_error()
-            buzzer.error_beep()
-            led.red_on()
-            time.sleep(1)
-            led.red_off()
+            details = response.get("error")
+            if details is None:
+                api_response = response.get("response")
+                if isinstance(api_response, dict):
+                    details = api_response.get("message") or api_response.get("errors")
+            log(
+                "API ERROR",
+                "HTTP %s: %s"
+                % (response.get("status_code", "unknown"), details or "request failed"),
+            )
+            led.api_error()
+            oled.show_api_error()
+            time.sleep(0.5)
             return
 
         data = response.get("data")
@@ -88,27 +104,60 @@ def run_attendance_scan(device_id, api_client, fingerprint_service, oled, buzzer
             "CHECKED_IN",
             "CHECKED_OUT",
         ):
-            log("ATTENDANCE", "Server returned an invalid attendance response")
-            oled.show_network_error()
-            buzzer.error_beep()
-            led.red_on()
-            time.sleep(1)
-            led.red_off()
+            log("API ERROR", "Server returned an invalid attendance response")
+            led.api_error()
+            oled.show_api_error()
+            time.sleep(0.5)
             return
 
         employee = data.get("employee")
-        name = employee.get("name", "Employee") if isinstance(employee, dict) else "Employee"
+        name = employee.get("name") if isinstance(employee, dict) else None
+        if not isinstance(name, str) or not name.strip():
+            log("API ERROR", "Attendance response did not include an employee name")
+            led.api_error()
+            oled.show_api_error()
+            time.sleep(0.5)
+            return
+        name = name.strip()
+        attendance_status = data["status"]
         log(
-            "ATTENDANCE",
-            "%s recorded for matched slot %s"
-            % (data["status"], fingerprint_slot),
+            "API",
+            "HTTP %s resolved slot %s to %s: %s"
+            % (
+                response.get("http_status", "success"),
+                fingerprint_slot,
+                name,
+                attendance_status,
+            ),
         )
-        oled.show_attendance_success(name)
-        buzzer.success_beep()
-        led.green_on()
-        time.sleep(1)
+        led.match_success()
+        buzzer.beep_once()
+        show_feedback(
+            oled,
+            "show_attendance_success",
+            name,
+            attendance_status,
+        )
+        time.sleep(0.75)
+    except R307PacketError as exc:
+        log("SENSOR ERROR", str(exc))
+        led.sensor_error()
+        oled.show_sensor_error()
+        time.sleep(0.5)
+    except Exception as exc:
+        log("API ERROR", str(exc))
+        led.api_error()
+        oled.show_api_error()
+        time.sleep(0.5)
     finally:
-        fingerprint_service.wait_for_finger_removed()
+        if finger_detected:
+            try:
+                fingerprint_service.wait_for_finger_removed()
+            except R307PacketError as exc:
+                log("SENSOR ERROR", "Finger-removal check failed: %s" % exc)
+        buzzer.off()
+        led.ready_status()
+        oled.show_ready()
 
 
 def main():
@@ -124,26 +173,26 @@ def main():
     fingerprint_service = FingerprintService(r307)
 
     oled.show_startup()
-    buzzer.startup_beep()
-    led.green_off()
-    led.red_off()
+    buzzer.off()
+    led.ready_status()
 
+    sensor_ready = False
     try:
         r307.begin()
+        sensor_ready = True
         log("R307", "Sensor initialized")
-    except Exception as exc:  # pragma: no cover - hardware may not be attached during test
-        log("ERROR", "R307 init failed: %s" % exc)
-        oled.show_device_error()
-        buzzer.error_beep()
-        time.sleep(2)
+        led.ready_status()
+        oled.show_ready()
+    except R307PacketError as exc:  # pragma: no cover - hardware may not be attached during test
+        log("SENSOR ERROR", "R307 init failed: %s" % exc)
+        led.sensor_error()
+        oled.show_sensor_error()
+        time.sleep(1)
 
     if not wifi.ensure_connected():
-        oled.show_network_error()
-        buzzer.error_beep()
-        log("WIFI", "Connection failed; device continuing in offline monitoring mode")
-
-    oled.show_ready()
-    led.green_on()
+        oled.show_api_error()
+        led.ready_status()
+        log("WIFI ERROR", "Connection failed; device will retry")
 
     while True:
         try:
@@ -154,10 +203,25 @@ def main():
                     oled.show_wifi_connected()
                     time.sleep(1)
                 else:
-                    oled.show_network_error()
-                    buzzer.error_beep()
+                    oled.show_api_error()
+                    led.ready_status()
                     time.sleep(1)
                     continue
+
+            if not sensor_ready:
+                try:
+                    r307.begin()
+                    sensor_ready = True
+                    log("R307", "Sensor initialized")
+                except R307PacketError as exc:
+                    log("SENSOR ERROR", "R307 initialization retry failed: %s" % exc)
+                    led.sensor_error()
+                    oled.show_sensor_error()
+                    time.sleep(1)
+                    continue
+
+            led.ready_status()
+            oled.show_ready()
 
             enrollment_command = poll_enrollment_command(api_client, device_id)
             if isinstance(enrollment_command, dict):
@@ -183,24 +247,23 @@ def main():
             )
             time.sleep(FINGERPRINT_COOLDOWN)
 
-        except (R307TimeoutError, R307FingerError) as exc:
-            log("ERROR", "Fingerprint flow error: %s" % exc)
-            oled.show_device_error()
-            buzzer.error_beep()
-            led.red_on()
-            time.sleep(1.5)
-            led.red_off()
-            led.green_on()
-            fingerprint_service.wait_for_finger_removed()
+        except R307PacketError as exc:
+            log("SENSOR ERROR", str(exc))
+            led.sensor_error()
+            oled.show_sensor_error()
+            buzzer.off()
+            time.sleep(1)
+            led.ready_status()
+            oled.show_ready()
 
         except Exception as exc:  # pragma: no cover
             log("ERROR", "Main loop exception: %s" % exc)
-            oled.show_device_error()
-            buzzer.error_beep()
-            led.red_on()
-            time.sleep(2)
-            led.red_off()
-            led.green_on()
+            oled.show_api_error()
+            led.api_error()
+            buzzer.off()
+            time.sleep(1)
+            led.ready_status()
+            oled.show_ready()
 
 
 if __name__ == "__main__":
