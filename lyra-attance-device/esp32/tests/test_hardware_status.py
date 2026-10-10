@@ -179,6 +179,18 @@ class DeviceHardwareStatusTests(unittest.TestCase):
         self.assertNotIn(0xA0, commands)
         self.assertNotIn(0xC0, commands)
 
+    def test_oled_initialization_enables_internal_charge_pump(self):
+        with patch.object(oled_module, "I2C", fakes.FakeI2C):
+            display = OledDisplay()
+
+        commands = [
+            data[1]
+            for _address, data in display.i2c.writes
+            if data[0] == 0x80
+        ]
+        charge_pump_index = commands.index(0x8D)
+        self.assertEqual(commands[charge_pump_index + 1], 0x14)
+
     def test_oled_displays_requested_startup_and_dynamic_attendance_messages(self):
         display = OledDisplay.__new__(OledDisplay)
         display.width = 128
