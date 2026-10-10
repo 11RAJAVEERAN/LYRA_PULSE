@@ -54,6 +54,8 @@ class SSD1306:
             0x02 if self.width > 2 * self.height else 0x12,
             _SET_CONTRAST,
             0xFF,
+            _SET_CHARGE_PUMP,
+            0x14 if not self.external_vcc else 0x10,
             _SET_PRECHARGE,
             0x22 if self.external_vcc else 0xF1,
             _SET_VCOM_DESEL,
