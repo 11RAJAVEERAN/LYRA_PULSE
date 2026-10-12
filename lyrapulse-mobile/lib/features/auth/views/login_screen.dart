@@ -36,8 +36,8 @@ class LoginScreen extends GetView<AuthController> {
                 child: ConstrainedBox(
                   constraints:
                       BoxConstraints(minHeight: constraints.maxHeight),
-                  // IntrinsicHeight lets the Spacer below absorb spare height
-                  // on tall screens while still scrolling on short ones.
+                  // IntrinsicHeight distributes spare height across the
+                  // section gaps while still scrolling on short screens.
                   child: IntrinsicHeight(
                     child: Column(
                       children: [
@@ -58,18 +58,22 @@ class LoginScreen extends GetView<AuthController> {
                             textAlign: TextAlign.center,
                             style: AppTextStyles.bodySmall
                                 .copyWith(fontSize: 14)),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 12),
+                        const Spacer(),
                         _ContentWidth(
                             maxWidth: _maxContentWidth,
+                            horizontalPadding: 20,
                             child: _LoginForm(controller: controller)),
-                        const SizedBox(height: 14),
+                        const SizedBox(height: 8),
+                        const Spacer(),
                         const _ContentWidth(
                             maxWidth: _maxContentWidth,
                             horizontalInset: 16,
                             child: _OrDivider()),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 8),
+                        const Spacer(),
                         const _SecurityBadge(),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 12),
                         const Spacer(),
                         Text('POWERED BY LYRATECH',
                             style: AppTextStyles.bodySmall.copyWith(
@@ -96,10 +100,12 @@ class _ContentWidth extends StatelessWidget {
     required this.maxWidth,
     required this.child,
     this.horizontalInset = 0,
+    this.horizontalPadding = AppDimensions.pagePadding,
   });
 
   final double maxWidth;
   final double horizontalInset;
+  final double horizontalPadding;
   final Widget child;
 
   @override
@@ -109,7 +115,7 @@ class _ContentWidth extends StatelessWidget {
         constraints: BoxConstraints(maxWidth: maxWidth),
         child: Padding(
           padding: EdgeInsets.symmetric(
-              horizontal: AppDimensions.pagePadding + horizontalInset),
+              horizontal: horizontalPadding + horizontalInset),
           child: child,
         ),
       ),
@@ -126,7 +132,7 @@ class _LoginForm extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppDimensions.cardRadius + 6),
@@ -168,14 +174,14 @@ class _LoginForm extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
           PhoneInput(
             controller: controller.phoneController,
             // Same send-OTP flow as the Login button (it guards against
             // repeated submissions and runs the existing validation).
             onSubmitted: (_) => controller.sendOtp(),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
           Obx(() {
             final sending = controller.isSendingOtp.value;
             return _LoginButton(
