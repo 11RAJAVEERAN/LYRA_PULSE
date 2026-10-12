@@ -37,7 +37,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
         titleSpacing: 0,
         title: Text(
           'Attendance Records',
-          style: GoogleFonts.poppins(
+          style: GoogleFonts.inter(
             color: navy,
             fontSize: 18,
             fontWeight: FontWeight.w700,
@@ -146,7 +146,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
   Widget _buildSubtitle() {
     return Text(
       'View your complete attendance history',
-      style: GoogleFonts.poppins(
+      style: GoogleFonts.inter(
         color: secondaryText,
         fontSize: 11,
         fontWeight: FontWeight.w400,
@@ -202,7 +202,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
                   children: [
                     Text(
                       'October 2026',
-                      style: GoogleFonts.poppins(
+                      style: GoogleFonts.inter(
                         color: primaryText,
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
@@ -210,7 +210,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
                     ),
                     Text(
                       'Monthly attendance summary',
-                      style: GoogleFonts.poppins(
+                      style: GoogleFonts.inter(
                         color: lightText,
                         fontSize: 9,
                       ),
@@ -230,7 +230,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
                 ),
                 child: Text(
                   '88%',
-                  style: GoogleFonts.poppins(
+                  style: GoogleFonts.inter(
                     color: purple,
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
@@ -308,7 +308,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
       children: [
         Text(
           value,
-          style: GoogleFonts.poppins(
+          style: GoogleFonts.inter(
             color: color,
             fontSize: 18,
             fontWeight: FontWeight.w700,
@@ -317,7 +317,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
         const SizedBox(height: 3),
         Text(
           label,
-          style: GoogleFonts.poppins(
+          style: GoogleFonts.inter(
             color: secondaryText,
             fontSize: 8,
             fontWeight: FontWeight.w500,
@@ -352,7 +352,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
             children: [
               Text(
                 'Attendance History',
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.inter(
                   color: navy,
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
@@ -361,7 +361,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
               const SizedBox(height: 3),
               Text(
                 'Your daily attendance records',
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.inter(
                   color: lightText,
                   fontSize: 9,
                 ),
@@ -392,7 +392,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
               const SizedBox(width: 5),
               Text(
                 'Filter',
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.inter(
                   color: navy,
                   fontSize: 9,
                   fontWeight: FontWeight.w600,
@@ -474,7 +474,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
                       children: [
                         Text(
                           date,
-                          style: GoogleFonts.poppins(
+                          style: GoogleFonts.inter(
                             color: navy,
                             fontSize: 19,
                             height: 1,
@@ -484,7 +484,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
                         const SizedBox(height: 4),
                         Text(
                           'OCT',
-                          style: GoogleFonts.poppins(
+                          style: GoogleFonts.inter(
                             color: lightText,
                             fontSize: 7,
                             fontWeight: FontWeight.w600,
@@ -503,7 +503,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
                       children: [
                         Text(
                           day,
-                          style: GoogleFonts.poppins(
+                          style: GoogleFonts.inter(
                             color: primaryText,
                             fontSize: 13,
                             fontWeight: FontWeight.w700,
@@ -514,7 +514,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
 
                         Text(
                           month,
-                          style: GoogleFonts.poppins(
+                          style: GoogleFonts.inter(
                             color: lightText,
                             fontSize: 9,
                           ),
@@ -545,7 +545,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
                         const SizedBox(width: 5),
                         Text(
                           status,
-                          style: GoogleFonts.poppins(
+                          style: GoogleFonts.inter(
                             color: statusColor,
                             fontSize: 9,
                             fontWeight: FontWeight.w700,
@@ -613,7 +613,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
 
                   Text(
                     'Working Hours',
-                    style: GoogleFonts.poppins(
+                    style: GoogleFonts.inter(
                       color: secondaryText,
                       fontSize: 9,
                     ),
@@ -623,7 +623,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
 
                   Text(
                     workingHours,
-                    style: GoogleFonts.poppins(
+                    style: GoogleFonts.inter(
                       color: primaryText,
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
@@ -705,7 +705,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
             children: [
               Text(
                 label,
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.inter(
                   color: lightText,
                   fontSize: 8,
                 ),
@@ -713,7 +713,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
               const SizedBox(height: 2),
               Text(
                 value,
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.inter(
                   color: primaryText,
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
@@ -755,7 +755,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             label,
-            style: GoogleFonts.poppins(
+            style: GoogleFonts.inter(
               color: color,
               fontSize: 7,
               fontWeight: FontWeight.w600,
@@ -824,7 +824,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
                     child: Center(
                       child: Text(
                         date,
-                        style: GoogleFonts.poppins(
+                        style: GoogleFonts.inter(
                           color: navy,
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
@@ -841,7 +841,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
                       children: [
                         Text(
                           day,
-                          style: GoogleFonts.poppins(
+                          style: GoogleFonts.inter(
                             color: navy,
                             fontSize: 15,
                             fontWeight: FontWeight.w700,
@@ -849,7 +849,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
                         ),
                         Text(
                           month,
-                          style: GoogleFonts.poppins(
+                          style: GoogleFonts.inter(
                             color: secondaryText,
                             fontSize: 9,
                           ),
@@ -869,7 +869,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
                     ),
                     child: Text(
                       status,
-                      style: GoogleFonts.poppins(
+                      style: GoogleFonts.inter(
                         color: statusColor,
                         fontSize: 9,
                         fontWeight: FontWeight.w700,
@@ -945,7 +945,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
                   ),
                   child: Text(
                     'Close',
-                    style: GoogleFonts.poppins(
+                    style: GoogleFonts.inter(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                     ),
@@ -997,7 +997,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
           Expanded(
             child: Text(
               title,
-              style: GoogleFonts.poppins(
+              style: GoogleFonts.inter(
                 color: secondaryText,
                 fontSize: 10,
               ),
@@ -1006,7 +1006,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
 
           Text(
             value,
-            style: GoogleFonts.poppins(
+            style: GoogleFonts.inter(
               color: primaryText,
               fontSize: 10,
               fontWeight: FontWeight.w700,
@@ -1052,7 +1052,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
           Expanded(
             child: Text(
               'Attendance records are securely maintained and can be verified using location and face verification.',
-              style: GoogleFonts.poppins(
+              style: GoogleFonts.inter(
                 color: secondaryText,
                 fontSize: 9,
                 height: 1.5,
@@ -1073,7 +1073,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
       child: Text(
         'LYRA PULSE  •  CONNECT · TRACK · GROW',
         textAlign: TextAlign.center,
-        style: GoogleFonts.poppins(
+        style: GoogleFonts.inter(
           color: lightText,
           fontSize: 8,
           letterSpacing: 1.1,

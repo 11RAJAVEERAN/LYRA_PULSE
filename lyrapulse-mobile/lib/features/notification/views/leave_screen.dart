@@ -93,7 +93,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                       Expanded(
                         child: Text(
                           'Leave',
-                          style: GoogleFonts.poppins(
+                          style: GoogleFonts.inter(
                             color: Colors.white,
                             fontSize: 22,
                             fontWeight: FontWeight.w700,
@@ -128,7 +128,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
 
                   Text(
                     'LEAVE BALANCE',
-                    style: GoogleFonts.poppins(
+                    style: GoogleFonts.inter(
                       color: const Color(0xFF718AA0),
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
@@ -142,7 +142,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
+                      gradient: LinearGradient(
                         colors: [
                           Color(0xFF0A2941),
                           Color(0xFF071A2D),
@@ -190,7 +190,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                             children: [
                               Text(
                                 'Available Leave',
-                                style: GoogleFonts.poppins(
+                                style: GoogleFonts.inter(
                                   color: const Color(0xFF8CA4B7),
                                   fontSize: 11,
                                 ),
@@ -198,7 +198,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                               const SizedBox(height: 2),
                               Text(
                                 '12 Days',
-                                style: GoogleFonts.poppins(
+                                style: GoogleFonts.inter(
                                   color: Colors.white,
                                   fontSize: 23,
                                   fontWeight: FontWeight.w700,
@@ -222,7 +222,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                           ),
                           child: Text(
                             '2026',
-                            style: GoogleFonts.poppins(
+                            style: GoogleFonts.inter(
                               color: const Color(0xFF25DDF7),
                               fontSize: 10,
                               fontWeight: FontWeight.w600,
@@ -278,7 +278,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                     height: 56,
                     child: DecoratedBox(
                       decoration: BoxDecoration(
-                        gradient: const LinearGradient(
+                        gradient: LinearGradient(
                           colors: [
                             Color(0xFF176DFF),
                             Color(0xFF18D5EF),
@@ -316,7 +316,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                             const SizedBox(width: 8),
                             Text(
                               'Apply Leave',
-                              style: GoogleFonts.poppins(
+                              style: GoogleFonts.inter(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w700,
                               ),
@@ -338,7 +338,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                       Expanded(
                         child: Text(
                           'LEAVE REQUESTS',
-                          style: GoogleFonts.poppins(
+                          style: GoogleFonts.inter(
                             color: const Color(0xFF718AA0),
                             fontSize: 10,
                             fontWeight: FontWeight.w700,
@@ -349,7 +349,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
 
                       Text(
                         '${leaveRequests.length} Requests',
-                        style: GoogleFonts.poppins(
+                        style: GoogleFonts.inter(
                           color: const Color(0xFF25DDF7),
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
@@ -416,7 +416,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                   Center(
                     child: Text(
                       'LYRA PULSE',
-                      style: GoogleFonts.poppins(
+                      style: GoogleFonts.inter(
                         color: const Color(0xFF38566D),
                         fontSize: 8,
                         fontWeight: FontWeight.w600,
@@ -481,7 +481,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
           ),
           child: Text(
             title,
-            style: GoogleFonts.poppins(
+            style: GoogleFonts.inter(
               color: selected
                   ? const Color(0xFF25DDF7)
                   : const Color(0xFF718AA0),
@@ -546,7 +546,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                   children: [
                     Text(
                       request['type'],
-                      style: GoogleFonts.poppins(
+                      style: GoogleFonts.inter(
                         color: Colors.white,
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
@@ -555,7 +555,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                     const SizedBox(height: 3),
                     Text(
                       request['date'],
-                      style: GoogleFonts.poppins(
+                      style: GoogleFonts.inter(
                         color: const Color(0xFF7892A7),
                         fontSize: 9,
                       ),
@@ -578,7 +578,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                 ),
                 child: Text(
                   status,
-                  style: GoogleFonts.poppins(
+                  style: GoogleFonts.inter(
                     color: statusColor,
                     fontSize: 8,
                     fontWeight: FontWeight.w700,
@@ -644,7 +644,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
             children: [
               Text(
                 title,
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.inter(
                   color: const Color(0xFF718AA0),
                   fontSize: 8,
                 ),
@@ -654,7 +654,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                 value,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.inter(
                   color: const Color(0xFFC4D1DC),
                   fontSize: 9,
                   fontWeight: FontWeight.w600,
@@ -696,7 +696,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
           const SizedBox(height: 6),
           Text(
             value,
-            style: GoogleFonts.poppins(
+            style: GoogleFonts.inter(
               color: Colors.white,
               fontSize: 17,
               fontWeight: FontWeight.w700,
@@ -704,7 +704,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
           ),
           Text(
             title,
-            style: GoogleFonts.poppins(
+            style: GoogleFonts.inter(
               color: const Color(0xFF718AA0),
               fontSize: 8,
             ),
@@ -793,7 +793,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
 
                 Text(
                   'Apply Leave',
-                  style: GoogleFonts.poppins(
+                  style: GoogleFonts.inter(
                     color: Colors.white,
                     fontSize: 20,
                     fontWeight: FontWeight.w700,
@@ -804,7 +804,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
 
                 Text(
                   'Submit your leave request',
-                  style: GoogleFonts.poppins(
+                  style: GoogleFonts.inter(
                     color: const Color(0xFF7892A7),
                     fontSize: 10,
                   ),
@@ -814,7 +814,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
 
                 Text(
                   'LEAVE TYPE',
-                  style: GoogleFonts.poppins(
+                  style: GoogleFonts.inter(
                     color: const Color(0xFF718AA0),
                     fontSize: 9,
                     fontWeight: FontWeight.w700,
@@ -845,7 +845,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                         Icons.keyboard_arrow_down_rounded,
                         color: Color(0xFF25DDF7),
                       ),
-                      style: GoogleFonts.poppins(
+                      style: GoogleFonts.inter(
                         color: Colors.white,
                         fontSize: 11,
                       ),
@@ -912,7 +912,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                     ),
                     child: Text(
                       'Submit Request',
-                      style: GoogleFonts.poppins(
+                      style: GoogleFonts.inter(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
                       ),

@@ -83,7 +83,7 @@ class PermissionReturnScreen extends StatelessWidget {
                     child: Text(
                       'WELCOME BACK',
                       textAlign: TextAlign.center,
-                      style: GoogleFonts.poppins(
+                      style: GoogleFonts.inter(
                         color: Colors.white,
                         fontSize: 27,
                         fontWeight: FontWeight.w800,
@@ -107,7 +107,7 @@ class PermissionReturnScreen extends StatelessWidget {
                       child: Text(
                         'RETURN TO OFFICE',
                         textAlign: TextAlign.center,
-                        style: GoogleFonts.poppins(
+                        style: GoogleFonts.inter(
                           color: Colors.white,
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
@@ -123,7 +123,7 @@ class PermissionReturnScreen extends StatelessWidget {
                     child: Text(
                       'Welcome back. Please verify your current location and face before continuing.',
                       textAlign: TextAlign.center,
-                      style: GoogleFonts.poppins(
+                      style: GoogleFonts.inter(
                         color: const Color(0xFF7F96AB),
                         fontSize: 11,
                         height: 1.6,
@@ -147,7 +147,7 @@ class PermissionReturnScreen extends StatelessWidget {
 
                   Text(
                     'VERIFICATION REQUIRED',
-                    style: GoogleFonts.poppins(
+                    style: GoogleFonts.inter(
                       color: const Color(0xFF718AA0),
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
@@ -233,7 +233,7 @@ class PermissionReturnScreen extends StatelessWidget {
                             const SizedBox(width: 9),
                             Text(
                               'Return to Office',
-                              style: GoogleFonts.poppins(
+                              style: GoogleFonts.inter(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w700,
                               ),
@@ -267,7 +267,7 @@ class PermissionReturnScreen extends StatelessWidget {
                         const SizedBox(width: 7),
                         Text(
                           'Secure attendance verification',
-                          style: GoogleFonts.poppins(
+                          style: GoogleFonts.inter(
                             color: const Color(0xFF536D83),
                             fontSize: 9,
                             fontWeight: FontWeight.w500,
@@ -302,7 +302,7 @@ class PermissionReturnScreen extends StatelessWidget {
                         const SizedBox(width: 9),
                         Text(
                           'LYRA PULSE',
-                          style: GoogleFonts.poppins(
+                          style: GoogleFonts.inter(
                             color: const Color(0xFF38566D),
                             fontSize: 8,
                             fontWeight: FontWeight.w600,
@@ -425,7 +425,7 @@ class PermissionReturnScreen extends StatelessWidget {
               Expanded(
                 child: Text(
                   'Verification Required',
-                  style: GoogleFonts.poppins(
+                  style: GoogleFonts.inter(
                     color: Colors.white,
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
@@ -446,7 +446,7 @@ class PermissionReturnScreen extends StatelessWidget {
                 ),
                 child: Text(
                   'REQUIRED',
-                  style: GoogleFonts.poppins(
+                  style: GoogleFonts.inter(
                     color: const Color(0xFF20DFFF),
                     fontSize: 7,
                     fontWeight: FontWeight.w700,
@@ -461,7 +461,7 @@ class PermissionReturnScreen extends StatelessWidget {
 
           Text(
             'Before you continue your attendance, LYRA Pulse needs to verify that you have returned to the office.',
-            style: GoogleFonts.poppins(
+            style: GoogleFonts.inter(
               color: const Color(0xFF8EA5B7),
               fontSize: 10,
               height: 1.65,
@@ -504,7 +504,7 @@ class PermissionReturnScreen extends StatelessWidget {
             ),
             child: Text(
               number,
-              style: GoogleFonts.poppins(
+              style: GoogleFonts.inter(
                 color: const Color(0xFF20DFFF),
                 fontSize: 9,
                 fontWeight: FontWeight.w700,
@@ -536,7 +536,7 @@ class PermissionReturnScreen extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: GoogleFonts.poppins(
+                  style: GoogleFonts.inter(
                     color: Colors.white,
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
@@ -545,7 +545,7 @@ class PermissionReturnScreen extends StatelessWidget {
                 const SizedBox(height: 3),
                 Text(
                   subtitle,
-                  style: GoogleFonts.poppins(
+                  style: GoogleFonts.inter(
                     color: const Color(0xFF718CA1),
                     fontSize: 9,
                     height: 1.4,
@@ -615,7 +615,7 @@ class PermissionReturnScreen extends StatelessWidget {
           const SizedBox(width: 6),
           Text(
             'SECURE',
-            style: GoogleFonts.poppins(
+            style: GoogleFonts.inter(
               color: const Color(0xFF91AABD),
               fontSize: 8,
               fontWeight: FontWeight.w600,

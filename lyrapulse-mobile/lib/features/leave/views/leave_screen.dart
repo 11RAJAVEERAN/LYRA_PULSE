@@ -131,7 +131,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
         Expanded(
           child: Text(
             'Leave',
-            style: GoogleFonts.poppins(
+            style: GoogleFonts.inter(
               color: Colors.white,
               fontSize: 22,
               fontWeight: FontWeight.w700,
@@ -161,7 +161,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
   Widget _buildBalanceTitle() {
     return Text(
       'LEAVE BALANCE',
-      style: GoogleFonts.poppins(
+      style: GoogleFonts.inter(
         color: const Color(0xFF718AA0),
         fontSize: 10,
         fontWeight: FontWeight.w700,
@@ -230,7 +230,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
           const SizedBox(height: 6),
           Text(
             value,
-            style: GoogleFonts.poppins(
+            style: GoogleFonts.inter(
               color: Colors.white,
               fontSize: 18,
               fontWeight: FontWeight.w700,
@@ -238,7 +238,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
           ),
           Text(
             title,
-            style: GoogleFonts.poppins(
+            style: GoogleFonts.inter(
               color: const Color(0xFFC1D0DC),
               fontSize: 9,
               fontWeight: FontWeight.w600,
@@ -246,7 +246,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
           ),
           Text(
             subtitle,
-            style: GoogleFonts.poppins(
+            style: GoogleFonts.inter(
               color: const Color(0xFF718AA0),
               fontSize: 7,
             ),
@@ -298,7 +298,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
               const SizedBox(width: 8),
               Text(
                 'Apply Leave',
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.inter(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
                 ),
@@ -313,7 +313,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
   Widget _buildMyLeaveTitle() {
     return Text(
       'MY LEAVE',
-      style: GoogleFonts.poppins(
+      style: GoogleFonts.inter(
         color: const Color(0xFF718AA0),
         fontSize: 10,
         fontWeight: FontWeight.w700,
@@ -381,7 +381,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
         ),
         child: Text(
           title,
-          style: GoogleFonts.poppins(
+          style: GoogleFonts.inter(
             color: selected
                 ? const Color(0xFF25DDF7)
                 : const Color(0xFF718AA0),
@@ -469,7 +469,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                   children: [
                     Text(
                       leave['type'] ?? '',
-                      style: GoogleFonts.poppins(
+                      style: GoogleFonts.inter(
                         color: Colors.white,
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
@@ -478,7 +478,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                     const SizedBox(height: 3),
                     Text(
                       leave['days'] ?? '',
-                      style: GoogleFonts.poppins(
+                      style: GoogleFonts.inter(
                         color: const Color(0xFF7892A7),
                         fontSize: 9,
                       ),
@@ -548,7 +548,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
             children: [
               Text(
                 title,
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.inter(
                   color: const Color(0xFF718AA0),
                   fontSize: 8,
                 ),
@@ -558,7 +558,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                 value,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.inter(
                   color: const Color(0xFFC4D1DC),
                   fontSize: 9,
                   fontWeight: FontWeight.w600,
@@ -589,7 +589,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
       ),
       child: Text(
         text,
-        style: GoogleFonts.poppins(
+        style: GoogleFonts.inter(
           color: color,
           fontSize: 8,
           fontWeight: FontWeight.w700,
@@ -621,7 +621,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
           const SizedBox(height: 12),
           Text(
             'No Leave Requests',
-            style: GoogleFonts.poppins(
+            style: GoogleFonts.inter(
               color: Colors.white,
               fontSize: 15,
               fontWeight: FontWeight.w700,
@@ -631,7 +631,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
           Text(
             'Your leave requests will appear here.',
             textAlign: TextAlign.center,
-            style: GoogleFonts.poppins(
+            style: GoogleFonts.inter(
               color: const Color(0xFF718AA0),
               fontSize: 10,
             ),
@@ -645,7 +645,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
     return Center(
       child: Text(
         'LYRA PULSE',
-        style: GoogleFonts.poppins(
+        style: GoogleFonts.inter(
           color: const Color(0xFF38566D),
           fontSize: 8,
           fontWeight: FontWeight.w600,
@@ -916,7 +916,7 @@ class _ApplyLeaveDialogState
                   Expanded(
                     child: Text(
                       'Apply Leave',
-                      style: GoogleFonts.poppins(
+                      style: GoogleFonts.inter(
                         color: Colors.white,
                         fontSize: 19,
                         fontWeight: FontWeight.w700,
@@ -948,7 +948,7 @@ class _ApplyLeaveDialogState
                 value: selectedLeave,
                 dropdownColor:
                     const Color(0xFF0A2941),
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.inter(
                   color: Colors.white,
                   fontSize: 11,
                 ),
@@ -1036,7 +1036,7 @@ class _ApplyLeaveDialogState
                       const SizedBox(width: 9),
                       Text(
                         'Total Leave',
-                        style: GoogleFonts.poppins(
+                        style: GoogleFonts.inter(
                           color:
                               const Color(0xFF9CB0C0),
                           fontSize: 10,
@@ -1046,7 +1046,7 @@ class _ApplyLeaveDialogState
                       Text(
                         '$totalDays '
                         '${totalDays == 1 ? 'Day' : 'Days'}',
-                        style: GoogleFonts.poppins(
+                        style: GoogleFonts.inter(
                           color:
                               const Color(0xFF25DDF7),
                           fontSize: 11,
@@ -1067,7 +1067,7 @@ class _ApplyLeaveDialogState
               TextField(
                 controller: reasonController,
                 maxLines: 3,
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.inter(
                   color: Colors.white,
                   fontSize: 11,
                 ),
@@ -1098,7 +1098,7 @@ class _ApplyLeaveDialogState
                   ),
                   child: Text(
                     'Submit Request',
-                    style: GoogleFonts.poppins(
+                    style: GoogleFonts.inter(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
                     ),
@@ -1115,7 +1115,7 @@ class _ApplyLeaveDialogState
   Widget _fieldLabel(String text) {
     return Text(
       text,
-      style: GoogleFonts.poppins(
+      style: GoogleFonts.inter(
         color: const Color(0xFF9CB0C0),
         fontSize: 10,
         fontWeight: FontWeight.w600,
@@ -1159,7 +1159,7 @@ class _ApplyLeaveDialogState
             Expanded(
               child: Text(
                 text,
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.inter(
                   color: selected
                       ? Colors.white
                       : const Color(0xFF58758A),
@@ -1184,7 +1184,7 @@ class _ApplyLeaveDialogState
   }) {
     return InputDecoration(
       hintText: hintText,
-      hintStyle: GoogleFonts.poppins(
+      hintStyle: GoogleFonts.inter(
         color: const Color(0xFF58758A),
         fontSize: 10,
       ),

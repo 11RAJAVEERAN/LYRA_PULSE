@@ -94,7 +94,7 @@ class CheckInSuccessScreen extends StatelessWidget {
               Text(
                 'CHECK IN SUCCESSFUL',
                 textAlign: TextAlign.center,
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.inter(
                   color: primaryText,
                   fontSize: 24,
                   fontWeight: FontWeight.w800,
@@ -107,7 +107,7 @@ class CheckInSuccessScreen extends StatelessWidget {
               Text(
                 'Your attendance has been recorded successfully.',
                 textAlign: TextAlign.center,
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.inter(
                   color: secondaryText,
                   fontSize: 11,
                   fontWeight: FontWeight.w400,
@@ -165,7 +165,7 @@ class CheckInSuccessScreen extends StatelessWidget {
                           Expanded(
                             child: Text(
                               'Attendance Verified',
-                              style: GoogleFonts.poppins(
+                              style: GoogleFonts.inter(
                                 color: green,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
@@ -285,7 +285,7 @@ class CheckInSuccessScreen extends StatelessWidget {
                     children: [
                       Text(
                         'Done',
-                        style: GoogleFonts.poppins(
+                        style: GoogleFonts.inter(
                           color: Colors.white,
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
@@ -321,7 +321,7 @@ class CheckInSuccessScreen extends StatelessWidget {
                     child: Text(
                       'Attendance details are securely verified',
                       textAlign: TextAlign.center,
-                      style: GoogleFonts.poppins(
+                      style: GoogleFonts.inter(
                         color: secondaryText,
                         fontSize: 9,
                         fontWeight: FontWeight.w500,
@@ -339,7 +339,7 @@ class CheckInSuccessScreen extends StatelessWidget {
 
               Text(
                 'LYRA PULSE',
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.inter(
                   color: lightText,
                   fontSize: 8,
                   fontWeight: FontWeight.w600,
@@ -351,7 +351,7 @@ class CheckInSuccessScreen extends StatelessWidget {
 
               Text(
                 'SECURE ATTENDANCE',
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.inter(
                   color: lightText,
                   fontSize: 7,
                   fontWeight: FontWeight.w500,
@@ -397,7 +397,7 @@ class CheckInSuccessScreen extends StatelessWidget {
         Expanded(
           child: Text(
             title,
-            style: GoogleFonts.poppins(
+            style: GoogleFonts.inter(
               color: secondaryText,
               fontSize: 10.5,
               fontWeight: FontWeight.w500,
@@ -410,7 +410,7 @@ class CheckInSuccessScreen extends StatelessWidget {
           children: [
             Text(
               value,
-              style: GoogleFonts.poppins(
+              style: GoogleFonts.inter(
                 color: valueColor,
                 fontSize: 10.5,
                 fontWeight: FontWeight.w700,
@@ -493,7 +493,7 @@ class CheckInSuccessScreen extends StatelessWidget {
 
           Text(
             title,
-            style: GoogleFonts.poppins(
+            style: GoogleFonts.inter(
               color: secondaryText,
               fontSize: 8,
               fontWeight: FontWeight.w700,
@@ -514,7 +514,7 @@ class CheckInSuccessScreen extends StatelessWidget {
               const SizedBox(width: 4),
               Text(
                 subtitle,
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.inter(
                   color: green,
                   fontSize: 9,
                   fontWeight: FontWeight.w600,
@@ -590,7 +590,7 @@ class CheckInSuccessScreen extends StatelessWidget {
           const SizedBox(width: 6),
           Text(
             'SECURE',
-            style: GoogleFonts.poppins(
+            style: GoogleFonts.inter(
               color: green,
               fontSize: 8,
               fontWeight: FontWeight.w700,

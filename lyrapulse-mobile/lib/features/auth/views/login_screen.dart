@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../controllers/auth_controller.dart';
+import '../../auth/controllers/auth_controller.dart';
 
 class LoginScreen extends GetView<AuthController> {
   const LoginScreen({super.key});
@@ -93,7 +93,7 @@ class LoginScreen extends GetView<AuthController> {
                       child: Text(
                         'Lyra Pulse',
                         textAlign: TextAlign.center,
-                        style: GoogleFonts.poppins(
+                        style: GoogleFonts.inter(
                           color: const Color(0xFF11295E),
                           fontSize: 28 * ((sx + sy) / 2),
                           fontWeight: FontWeight.w700,
@@ -111,7 +111,7 @@ class LoginScreen extends GetView<AuthController> {
                       child: Text(
                         'Employee Login',
                         textAlign: TextAlign.center,
-                        style: GoogleFonts.poppins(
+                        style: GoogleFonts.inter(
                           color: const Color(0xFF29436F),
                           fontSize: 12 * ((sx + sy) / 2),
                           fontWeight: FontWeight.w400,
@@ -125,7 +125,7 @@ class LoginScreen extends GetView<AuthController> {
                       left: 28 * sx,
                       child: Text(
                         'Phone Number',
-                        style: GoogleFonts.poppins(
+                        style: GoogleFonts.inter(
                           color: const Color(0xFF29477B),
                           fontSize: 12 * ((sx + sy) / 2),
                           fontWeight: FontWeight.w600,
@@ -162,7 +162,7 @@ class LoginScreen extends GetView<AuthController> {
                                 children: [
                                   Text(
                                     '+91',
-                                    style: GoogleFonts.poppins(
+                                    style: GoogleFonts.inter(
                                       color: const Color(0xFF34517E),
                                       fontSize: 11 * ((sx + sy) / 2),
                                       fontWeight: FontWeight.w500,
@@ -195,7 +195,7 @@ class LoginScreen extends GetView<AuthController> {
                                 inputFormatters: [
                                   FilteringTextInputFormatter.digitsOnly,
                                 ],
-                                style: GoogleFonts.poppins(
+                                style: GoogleFonts.inter(
                                   color: const Color(0xFF1C3764),
                                   fontSize: 14 * ((sx + sy) / 2),
                                   fontWeight: FontWeight.w600,
@@ -204,7 +204,7 @@ class LoginScreen extends GetView<AuthController> {
                                   counterText: '',
                                   border: InputBorder.none,
                                   hintText: 'Enter your phone number',
-                                  hintStyle: GoogleFonts.poppins(
+                                  hintStyle: GoogleFonts.inter(
                                     color: const Color(0xFFA0B0C7),
                                     fontSize: 10.5 * ((sx + sy) / 2),
                                     fontWeight: FontWeight.w400,
@@ -262,7 +262,7 @@ class LoginScreen extends GetView<AuthController> {
                             child: Center(
                               child: Text(
                                 'Login',
-                                style: GoogleFonts.poppins(
+                                style: GoogleFonts.inter(
                                   color: Colors.white,
                                   fontSize: 12 * ((sx + sy) / 2),
                                   fontWeight: FontWeight.w600,
@@ -283,7 +283,7 @@ class LoginScreen extends GetView<AuthController> {
                         child: Text(
                           'POWERED BY LYRATECH',
                           textAlign: TextAlign.center,
-                          style: GoogleFonts.poppins(
+                          style: GoogleFonts.inter(
                             color: const Color(0xFF94A7C0),
                             fontSize: 8 * ((sx + sy) / 2),
                             fontWeight: FontWeight.w500,

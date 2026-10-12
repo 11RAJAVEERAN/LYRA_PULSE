@@ -63,7 +63,7 @@ class CheckOutCard extends StatelessWidget {
                   children: [
                     Text(
                       'CHECK OUT',
-                      style: GoogleFonts.poppins(
+                      style: GoogleFonts.inter(
                         color: Colors.white,
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
@@ -77,7 +77,7 @@ class CheckOutCard extends StatelessWidget {
                       isCheckedOut
                           ? 'Attendance completed'
                           : 'Complete your attendance',
-                      style: GoogleFonts.poppins(
+                      style: GoogleFonts.inter(
                         color: const Color(0xFF718CA1),
                         fontSize: 10,
                       ),
@@ -115,7 +115,7 @@ class CheckOutCard extends StatelessWidget {
 
                     Text(
                       isCheckedOut ? 'DONE' : 'PENDING',
-                      style: GoogleFonts.poppins(
+                      style: GoogleFonts.inter(
                         color: isCheckedOut
                             ? const Color(0xFF24E5C0)
                             : const Color(0xFF25DDF7),
@@ -158,7 +158,7 @@ class CheckOutCard extends StatelessWidget {
 
                 Text(
                   'Check-out Time',
-                  style: GoogleFonts.poppins(
+                  style: GoogleFonts.inter(
                     color: const Color(0xFF718CA1),
                     fontSize: 9,
                   ),
@@ -168,7 +168,7 @@ class CheckOutCard extends StatelessWidget {
 
                 Text(
                   checkOutTime,
-                  style: GoogleFonts.poppins(
+                  style: GoogleFonts.inter(
                     color: Colors.white,
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
@@ -214,7 +214,7 @@ class CheckOutCard extends StatelessWidget {
                     isCheckedOut
                         ? 'Checked Out'
                         : 'Start Check Out',
-                    style: GoogleFonts.poppins(
+                    style: GoogleFonts.inter(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
                     ),

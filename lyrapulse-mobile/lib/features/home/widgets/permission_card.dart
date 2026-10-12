@@ -61,7 +61,7 @@ class PermissionCard extends StatelessWidget {
                   children: [
                     Text(
                       'PERMISSION',
-                      style: GoogleFonts.poppins(
+                      style: GoogleFonts.inter(
                         color: Colors.white,
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
@@ -75,7 +75,7 @@ class PermissionCard extends StatelessWidget {
                       isRequested
                           ? 'Permission request submitted'
                           : 'Request attendance permission',
-                      style: GoogleFonts.poppins(
+                      style: GoogleFonts.inter(
                         color: const Color(0xFF718CA1),
                         fontSize: 10,
                       ),
@@ -113,7 +113,7 @@ class PermissionCard extends StatelessWidget {
 
                     Text(
                       isRequested ? 'SENT' : 'AVAILABLE',
-                      style: GoogleFonts.poppins(
+                      style: GoogleFonts.inter(
                         color: isRequested
                             ? const Color(0xFF24E5C0)
                             : const Color(0xFF25DDF7),
@@ -159,7 +159,7 @@ class PermissionCard extends StatelessWidget {
                     isRequested
                         ? 'Your permission request is waiting for approval.'
                         : 'Need permission? Submit a request to your manager.',
-                    style: GoogleFonts.poppins(
+                    style: GoogleFonts.inter(
                       color: const Color(0xFF8EA6B8),
                       fontSize: 9,
                       height: 1.45,
@@ -206,7 +206,7 @@ class PermissionCard extends StatelessWidget {
                     isRequested
                         ? 'Request Submitted'
                         : 'Request Permission',
-                    style: GoogleFonts.poppins(
+                    style: GoogleFonts.inter(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
                     ),

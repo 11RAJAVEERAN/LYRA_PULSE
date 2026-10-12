@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lyrapulse_mobile/features/home/controllers/home_controller.dart';
 
 import 'package:lyrapulse_mobile/features/attendance/views/location_verification_screen.dart';
 import 'package:lyrapulse_mobile/features/attendance/views/attendance_history_screen.dart';
@@ -19,8 +20,8 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _selectedIndex = 0;
 
+final HomeController controller = Get.put(HomeController());
   void _openCheckIn() {
     Get.to(
       () => const LocationVerificationScreen(
@@ -42,8 +43,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _openNotification() {
-    Get.to(() => const NotificationScreen());
-  }
+Get.to(() => const NotificationsView());  }
 
   void _openAttendanceHistory() {
     Get.to(() => const AttendanceHistoryScreen());
@@ -161,7 +161,7 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               Text(
                 'Good Morning 👋',
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.inter(
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
                   color: const Color(0xFF7A899B),
@@ -170,7 +170,7 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 2),
               Text(
                 'Angel',
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.inter(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
                   color: const Color(0xFF172B4D),
@@ -229,7 +229,7 @@ class _HomeScreenState extends State<HomeScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
@@ -299,7 +299,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         const SizedBox(width: 7),
                         Text(
                           'ATTENDANCE',
-                          style: GoogleFonts.poppins(
+                          style: GoogleFonts.inter(
                             color: Colors.white,
                             fontSize: 9,
                             fontWeight: FontWeight.w700,
@@ -312,7 +312,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   const Spacer(),
                   Text(
                     _getToday(),
-                    style: GoogleFonts.poppins(
+                    style: GoogleFonts.inter(
                       color: Colors.white.withOpacity(0.75),
                       fontSize: 10,
                       fontWeight: FontWeight.w500,
@@ -323,7 +323,7 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 22),
               Text(
                 'Make today count.',
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.inter(
                   color: Colors.white,
                   fontSize: 24,
                   fontWeight: FontWeight.w700,
@@ -332,7 +332,7 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 5),
               Text(
                 'Your attendance journey starts here.',
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.inter(
                   color: Colors.white.withOpacity(0.72),
                   fontSize: 12,
                 ),
@@ -360,7 +360,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             const SizedBox(width: 8),
                             Text(
                               'Check In',
-                              style: GoogleFonts.poppins(
+                              style: GoogleFonts.inter(
                                 color: const Color(0xFF1268D5),
                                 fontSize: 13,
                                 fontWeight: FontWeight.w700,
@@ -395,7 +395,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             const SizedBox(width: 8),
                             Text(
                               'Check Out',
-                              style: GoogleFonts.poppins(
+                              style: GoogleFonts.inter(
                                 color: Colors.white,
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
@@ -517,7 +517,7 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               Text(
                 title,
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.inter(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
                   color: const Color(0xFF253858),
@@ -526,7 +526,7 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 2),
               Text(
                 subtitle,
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.inter(
                   fontSize: 10,
                   color: const Color(0xFF98A5B5),
                 ),
@@ -536,7 +536,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         Text(
           time,
-          style: GoogleFonts.poppins(
+          style: GoogleFonts.inter(
             fontSize: 13,
             fontWeight: FontWeight.w700,
             color: active
@@ -633,7 +633,7 @@ class _HomeScreenState extends State<HomeScreen> {
               title,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.poppins(
+              style: GoogleFonts.inter(
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
                 color: const Color(0xFF253858),
@@ -644,7 +644,7 @@ class _HomeScreenState extends State<HomeScreen> {
               subtitle,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.poppins(
+              style: GoogleFonts.inter(
                 fontSize: 9,
                 color: const Color(0xFF98A5B5),
               ),
@@ -760,7 +760,7 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 13),
           Text(
             title,
-            style: GoogleFonts.poppins(
+            style: GoogleFonts.inter(
               fontSize: 10,
               color: const Color(0xFF8C99A9),
               fontWeight: FontWeight.w500,
@@ -775,7 +775,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   value,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.poppins(
+                  style: GoogleFonts.inter(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
                     color: const Color(0xFF253858),
@@ -788,7 +788,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   padding: const EdgeInsets.only(bottom: 2),
                   child: Text(
                     suffix,
-                    style: GoogleFonts.poppins(
+                    style: GoogleFonts.inter(
                       fontSize: 9,
                       fontWeight: FontWeight.w600,
                       color: const Color(0xFF8C99A9),
@@ -841,7 +841,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     children: [
                       Text(
                         '72%',
-                        style: GoogleFonts.poppins(
+                        style: GoogleFonts.inter(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
                           color: const Color(0xFF253858),
@@ -849,7 +849,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       Text(
                         'month',
-                        style: GoogleFonts.poppins(
+                        style: GoogleFonts.inter(
                           fontSize: 7,
                           color: const Color(0xFF9AA6B5),
                         ),
@@ -866,7 +866,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   Text(
                     'Attendance Overview',
-                    style: GoogleFonts.poppins(
+                    style: GoogleFonts.inter(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
                       color: const Color(0xFF253858),
@@ -877,7 +877,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     'View your attendance records and monthly progress.',
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.poppins(
+                    style: GoogleFonts.inter(
                       fontSize: 10,
                       height: 1.45,
                       color: const Color(0xFF8D9AAA),
@@ -888,7 +888,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     children: [
                       Text(
                         'View Details',
-                        style: GoogleFonts.poppins(
+                        style: GoogleFonts.inter(
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
                           color: const Color(0xFF1769D2),
@@ -926,7 +926,7 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               Text(
                 title,
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.inter(
                   fontSize: 17,
                   fontWeight: FontWeight.w700,
                   color: const Color(0xFF172B4D),
@@ -935,7 +935,7 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 2),
               Text(
                 subtitle,
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.inter(
                   fontSize: 10,
                   color: const Color(0xFF98A5B5),
                 ),
@@ -948,7 +948,7 @@ class _HomeScreenState extends State<HomeScreen> {
             onTap: onTap,
             child: Text(
               action,
-              style: GoogleFonts.poppins(
+              style: GoogleFonts.inter(
                 fontSize: 10,
                 fontWeight: FontWeight.w600,
                 color: const Color(0xFF1769D2),
@@ -1019,13 +1019,12 @@ class _HomeScreenState extends State<HomeScreen> {
     required String label,
     required VoidCallback onTap,
   }) {
-    final selected = _selectedIndex == index;
-
+final selected = controller.selectedIndex.value == index;
     return GestureDetector(
+      
       onTap: () {
-        setState(() {
-          _selectedIndex = index;
-        });
+        controller.changeTab(index);
+         setState(() {});
         onTap();
       },
       child: AnimatedContainer(
@@ -1053,7 +1052,7 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(width: 6),
               Text(
                 label,
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.inter(
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
                   color: const Color(0xFF1769D2),

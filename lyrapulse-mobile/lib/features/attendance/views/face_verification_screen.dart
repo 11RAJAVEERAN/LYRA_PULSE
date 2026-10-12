@@ -1,4 +1,4 @@
-import 'dart:async';
+import 'dart:io';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
@@ -20,12 +20,18 @@ class FaceVerificationScreen extends StatefulWidget {
       _FaceVerificationScreenState();
 }
 
-class _FaceVerificationScreenState
-    extends State<FaceVerificationScreen> {
+class _FaceVerificationScreenState extends State<FaceVerificationScreen> {
   CameraController? _cameraController;
+  XFile? _capturedPhoto;
 
   bool _isCameraReady = false;
   bool _isCapturing = false;
+
+  static const Color _background = Color(0xFFF7FAFE);
+  static const Color _navy = Color(0xFF19356C);
+  static const Color _blue = Color(0xFF3978E8);
+  static const Color _green = Color(0xFF18A66A);
+  static const Color _grey = Color(0xFF7B879B);
 
   @override
   void initState() {
@@ -38,6 +44,12 @@ class _FaceVerificationScreenState
       final cameras = await availableCameras();
 
       if (cameras.isEmpty) {
+        if (mounted) {
+          _showMessage(
+            'Camera Unavailable',
+            'No camera was found on this device.',
+          );
+        }
         return;
       }
 
@@ -70,21 +82,22 @@ class _FaceVerificationScreenState
     } catch (e) {
       if (!mounted) return;
 
-      Get.snackbar(
+      _showMessage(
         'Camera Error',
-        'Unable to open camera.',
-        snackPosition: SnackPosition.BOTTOM,
-        margin: const EdgeInsets.all(16),
-        backgroundColor: Colors.white,
-        colorText: const Color(0xFF19356C),
+        'Unable to open camera. Please check camera permission.',
       );
     }
   }
 
+  // Capture photo and show its preview.
+  // Do not navigate to the next screen here.
   Future<void> _capturePhoto() async {
-    if (_cameraController == null ||
-        !_cameraController!.value.isInitialized ||
-        _isCapturing) {
+    final controller = _cameraController;
+
+    if (controller == null ||
+        !controller.value.isInitialized ||
+        _isCapturing ||
+        _capturedPhoto != null) {
       return;
     }
 
@@ -93,23 +106,14 @@ class _FaceVerificationScreenState
     });
 
     try {
-      await _cameraController!.takePicture();
+      final photo = await controller.takePicture();
 
       if (!mounted) return;
 
-      await Future.delayed(
-        const Duration(milliseconds: 700),
-      );
-
-      if (!mounted) return;
-
-      Get.off(
-        () => AttendanceConfirmationScreen(
-          isCheckOut: widget.isCheckOut,
-        ),
-        transition: Transition.rightToLeft,
-        duration: const Duration(milliseconds: 350),
-      );
+      setState(() {
+        _capturedPhoto = photo;
+        _isCapturing = false;
+      });
     } catch (e) {
       if (!mounted) return;
 
@@ -117,15 +121,56 @@ class _FaceVerificationScreenState
         _isCapturing = false;
       });
 
-      Get.snackbar(
+      _showMessage(
         'Capture Failed',
         'Unable to capture your photo. Please try again.',
-        snackPosition: SnackPosition.BOTTOM,
-        margin: const EdgeInsets.all(16),
-        backgroundColor: Colors.white,
-        colorText: const Color(0xFF19356C),
       );
     }
+  }
+
+  // Clear the captured photo so the user can take another one.
+  Future<void> _retakePhoto() async {
+    setState(() {
+      _capturedPhoto = null;
+    });
+
+    final controller = _cameraController;
+
+    if (controller == null || !controller.value.isInitialized) {
+      return;
+    }
+
+    try {
+      if (controller.value.isPreviewPaused) {
+        await controller.resumePreview();
+      }
+    } catch (_) {
+      // Keep the screen available if the preview is already running.
+    }
+  }
+
+  // Navigate only after the user taps Confirm.
+  void _confirmPhoto() {
+    if (_capturedPhoto == null) return;
+
+    Get.off(
+      () => AttendanceConfirmationScreen(
+        isCheckOut: widget.isCheckOut,
+      ),
+      transition: Transition.rightToLeft,
+      duration: const Duration(milliseconds: 350),
+    );
+  }
+
+  void _showMessage(String title, String message) {
+    Get.snackbar(
+      title,
+      message,
+      snackPosition: SnackPosition.BOTTOM,
+      margin: const EdgeInsets.all(16),
+      backgroundColor: Colors.white,
+      colorText: _navy,
+    );
   }
 
   @override
@@ -136,24 +181,16 @@ class _FaceVerificationScreenState
 
   @override
   Widget build(BuildContext context) {
-    const background = Color(0xFFF7FAFE);
-    const navy = Color(0xFF19356C);
-    const blue = Color(0xFF3978E8);
-    const green = Color(0xFF18A66A);
-    const grey = Color(0xFF7B879B);
+    final hasCapturedPhoto = _capturedPhoto != null;
 
     return Scaffold(
-      backgroundColor: background,
+      backgroundColor: _background,
       body: SafeArea(
         child: Column(
           children: [
+            // Top navigation bar
             Padding(
-              padding: const EdgeInsets.fromLTRB(
-                20,
-                18,
-                20,
-                10,
-              ),
+              padding: const EdgeInsets.fromLTRB(20, 18, 20, 10),
               child: Row(
                 children: [
                   GestureDetector(
@@ -175,7 +212,7 @@ class _FaceVerificationScreenState
                       child: const Icon(
                         Icons.arrow_back_ios_new_rounded,
                         size: 18,
-                        color: navy,
+                        color: _navy,
                       ),
                     ),
                   ),
@@ -185,10 +222,10 @@ class _FaceVerificationScreenState
                       widget.isCheckOut
                           ? 'CHECK-OUT FACE VERIFICATION'
                           : 'FACE VERIFICATION',
-                      style: GoogleFonts.poppins(
+                      style: GoogleFonts.inter(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
-                        color: navy,
+                        color: _navy,
                         letterSpacing: 0.5,
                       ),
                     ),
@@ -199,29 +236,34 @@ class _FaceVerificationScreenState
 
             const SizedBox(height: 8),
 
+            // Heading and instruction
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Column(
                 children: [
                   Text(
-                    widget.isCheckOut
-                        ? 'Verify your face to check out'
-                        : 'Verify your face',
+                    hasCapturedPhoto
+                        ? 'Is this photo clear?'
+                        : widget.isCheckOut
+                            ? 'Verify your face to check out'
+                            : 'Verify your face',
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.poppins(
+                    style: GoogleFonts.inter(
                       fontSize: 22,
                       fontWeight: FontWeight.w700,
-                      color: navy,
+                      color: _navy,
                     ),
                   ),
                   const SizedBox(height: 7),
                   Text(
-                    'Position your face inside the frame and capture a clear photo.',
+                    hasCapturedPhoto
+                        ? 'Retake the photo if needed, or confirm to continue.'
+                        : 'Position your face inside the frame and capture a clear photo.',
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.poppins(
+                    style: GoogleFonts.inter(
                       fontSize: 11,
                       height: 1.5,
-                      color: grey,
+                      color: _grey,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -231,11 +273,10 @@ class _FaceVerificationScreenState
 
             const SizedBox(height: 22),
 
+            // Camera preview or captured photo preview
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Container(
                   width: double.infinity,
                   decoration: BoxDecoration(
@@ -250,20 +291,16 @@ class _FaceVerificationScreenState
                     ],
                   ),
                   clipBehavior: Clip.antiAlias,
-                  child: _buildCameraPreview(),
+                  child: _buildCameraPreview(hasCapturedPhoto),
                 ),
               ),
             ),
 
             const SizedBox(height: 18),
 
+            // Camera status and action buttons
             Padding(
-              padding: const EdgeInsets.fromLTRB(
-                20,
-                0,
-                20,
-                24,
-              ),
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
               child: Column(
                 children: [
                   Row(
@@ -272,19 +309,25 @@ class _FaceVerificationScreenState
                       Container(
                         width: 9,
                         height: 9,
-                        decoration: const BoxDecoration(
+                        decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: green,
+                          color: hasCapturedPhoto
+                              ? _green
+                              : _isCameraReady
+                                  ? _green
+                                  : _blue,
                         ),
                       ),
                       const SizedBox(width: 7),
                       Text(
-                        _isCameraReady
-                            ? 'Camera ready'
-                            : 'Opening camera...',
-                        style: GoogleFonts.poppins(
+                        hasCapturedPhoto
+                            ? 'Photo captured successfully'
+                            : _isCameraReady
+                                ? 'Camera ready'
+                                : 'Opening camera...',
+                        style: GoogleFonts.inter(
                           fontSize: 11,
-                          color: grey,
+                          color: _grey,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -293,70 +336,129 @@ class _FaceVerificationScreenState
 
                   const SizedBox(height: 15),
 
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: ElevatedButton(
-                      onPressed:
-                          _isCameraReady && !_isCapturing
-                              ? _capturePhoto
-                              : null,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: navy,
-                        disabledBackgroundColor:
-                            Colors.grey.shade300,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.circular(17),
-                        ),
-                      ),
-                      child: _isCapturing
-                          ? const SizedBox(
-                              width: 22,
-                              height: 22,
-                              child:
-                                  CircularProgressIndicator(
-                                strokeWidth: 2.5,
-                                valueColor:
-                                    AlwaysStoppedAnimation<
-                                        Color>(
-                                  Colors.white,
+                  // Show Retake and Confirm only after capturing.
+                  if (hasCapturedPhoto)
+                    Row(
+                      children: [
+                        Expanded(
+                          child: SizedBox(
+                            height: 56,
+                            child: OutlinedButton.icon(
+                              onPressed: _retakePhoto,
+                              icon: const Icon(
+                                Icons.refresh_rounded,
+                              ),
+                              label: Text(
+                                'Retake',
+                                style: GoogleFonts.inter(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
                                 ),
                               ),
-                            )
-                          : Row(
-                              mainAxisAlignment:
-                                  MainAxisAlignment.center,
-                              children: [
-                                const Icon(
-                                  Icons.camera_alt_rounded,
-                                  color: Colors.white,
-                                  size: 20,
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: _navy,
+                                side: const BorderSide(
+                                  color: _navy,
+                                  width: 1.3,
                                 ),
-                                const SizedBox(width: 10),
-                                Text(
-                                  'Capture & Continue',
-                                  style:
-                                      GoogleFonts.poppins(
-                                    fontSize: 13,
-                                    fontWeight:
-                                        FontWeight.w700,
-                                    color: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(17),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(width: 12),
+
+                        Expanded(
+                          child: SizedBox(
+                            height: 56,
+                            child: ElevatedButton.icon(
+                              onPressed: _confirmPhoto,
+                              icon: const Icon(
+                                Icons.check_circle_outline_rounded,
+                              ),
+                              label: Text(
+                                'Confirm',
+                                style: GoogleFonts.inter(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: _navy,
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(17),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
+                  else
+                    SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child: ElevatedButton(
+                        onPressed: _isCameraReady && !_isCapturing
+                            ? _capturePhoto
+                            : null,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _navy,
+                          disabledBackgroundColor: Colors.grey.shade300,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(17),
+                          ),
+                        ),
+                        child: _isCapturing
+                            ? const SizedBox(
+                                width: 22,
+                                height: 22,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.5,
+                                  valueColor:
+                                      AlwaysStoppedAnimation<Color>(
+                                    Colors.white,
                                   ),
                                 ),
-                              ],
-                            ),
+                              )
+                            : Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(
+                                    Icons.camera_alt_rounded,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Text(
+                                    'Capture Photo',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                      ),
                     ),
-                  ),
 
                   const SizedBox(height: 9),
 
                   Text(
-                    'Make sure your face is clearly visible.',
-                    style: GoogleFonts.poppins(
+                    hasCapturedPhoto
+                        ? 'Your photo will be submitted after you confirm.'
+                        : 'Make sure your face is clearly visible.',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inter(
                       fontSize: 10,
-                      color: grey,
+                      color: _grey,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -369,7 +471,69 @@ class _FaceVerificationScreenState
     );
   }
 
-  Widget _buildCameraPreview() {
+  Widget _buildCameraPreview(bool hasCapturedPhoto) {
+    // Display the photo after Capture Photo is tapped.
+    if (hasCapturedPhoto) {
+      return Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.file(
+            File(_capturedPhoto!.path),
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              return const Center(
+                child: Icon(
+                  Icons.broken_image_outlined,
+                  color: Colors.white,
+                  size: 48,
+                ),
+              );
+            },
+          ),
+
+          Center(
+            child: Container(
+              width: 220,
+              height: 290,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(120),
+                border: Border.all(
+                  color: Colors.white,
+                  width: 3,
+                ),
+              ),
+            ),
+          ),
+
+          Positioned(
+            top: 18,
+            left: 18,
+            right: 18,
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: 9,
+              ),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.50),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Text(
+                'Photo preview',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    // Show the live camera preview before capturing.
     if (!_isCameraReady || _cameraController == null) {
       return const Center(
         child: CircularProgressIndicator(
@@ -416,7 +580,7 @@ class _FaceVerificationScreenState
                   ? 'Check-out verification'
                   : 'Check-in verification',
               textAlign: TextAlign.center,
-              style: GoogleFonts.poppins(
+              style: GoogleFonts.inter(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
                 color: Colors.white,
@@ -427,4 +591,4 @@ class _FaceVerificationScreenState
       ],
     );
   }
-}
+} 
