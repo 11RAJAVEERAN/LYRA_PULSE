@@ -10,6 +10,7 @@ import 'package:lyrapulse_mobile/features/permission/permission_screen.dart';
 import 'package:lyrapulse_mobile/features/profile/views/profile_screen.dart';
 import 'package:lyrapulse_mobile/features/leave/views/leave_screen.dart';
 import 'package:lyrapulse_mobile/features/notification/views/notification_screen.dart';
+import 'package:lyrapulse_mobile/features/calendar/views/calendar_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -101,32 +102,39 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF7FAFD),
       body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(20, 18, 20, 110),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildHeader(),
-                    const SizedBox(height: 24),
-                    _buildHeroSection(),
-                    const SizedBox(height: 24),
-                    _buildAttendanceTimeline(),
-                    const SizedBox(height: 24),
-                    _buildQuickActions(),
-                    const SizedBox(height: 24),
-                    _buildStatsSection(),
-                    const SizedBox(height: 24),
-                    _buildOverviewSection(),
-                  ],
-                ),
+        child: _selectedIndex == 2
+            ? CalendarScreen()
+            : Column(
+                children: [
+                  Expanded(
+                    child: SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      padding: const EdgeInsets.fromLTRB(
+                        20,
+                        18,
+                        20,
+                        110,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildHeader(),
+                          const SizedBox(height: 24),
+                          _buildHeroSection(),
+                          const SizedBox(height: 24),
+                          _buildAttendanceTimeline(),
+                          const SizedBox(height: 24),
+                          _buildQuickActions(),
+                          const SizedBox(height: 24),
+                          _buildStatsSection(),
+                          const SizedBox(height: 24),
+                          _buildOverviewSection(),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
-        ),
       ),
       bottomNavigationBar: _buildBottomNavigation(),
     );
@@ -962,10 +970,10 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildBottomNavigation() {
     return Container(
       color: const Color(0xFFF7FAFD),
-      padding: const EdgeInsets.fromLTRB(18, 8, 18, 14),
+      padding: const EdgeInsets.fromLTRB(10, 8, 10, 14),
       child: Container(
         height: 66,
-        padding: const EdgeInsets.symmetric(horizontal: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 4),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(24),
@@ -995,14 +1003,20 @@ class _HomeScreenState extends State<HomeScreen> {
               label: 'Attendance',
               onTap: _openAttendanceRecords,
             ),
+           _bottomNavItem(
+  index: 2,
+  icon: Icons.calendar_month_rounded,
+  label: 'Calendar',
+  onTap: () {},
+),
             _bottomNavItem(
-              index: 2,
-              icon: Icons.event_note_rounded,
+              index: 3,
+              icon: Icons.beach_access_rounded,
               label: 'Leave',
               onTap: _openLeave,
             ),
             _bottomNavItem(
-              index: 3,
+              index: 4,
               icon: Icons.person_rounded,
               label: 'Profile',
               onTap: _openProfile,
@@ -1021,46 +1035,56 @@ class _HomeScreenState extends State<HomeScreen> {
   }) {
     final selected = _selectedIndex == index;
 
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedIndex = index;
-        });
-        onTap();
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 220),
-        padding: EdgeInsets.symmetric(
-          horizontal: selected ? 14 : 10,
-          vertical: 8,
-        ),
-        decoration: BoxDecoration(
-          color: selected
-              ? const Color(0xFFEAF3FF)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Row(
-          children: [
-            Icon(
-              icon,
-              size: 21,
-              color: selected
-                  ? const Color(0xFF1769D2)
-                  : const Color(0xFF9AA6B5),
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            _selectedIndex = index;
+          });
+
+          onTap();
+        },
+        behavior: HitTestBehavior.opaque,
+        child: Center(
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 220),
+            padding: EdgeInsets.symmetric(
+              horizontal: selected ? 8 : 4,
+              vertical: 8,
             ),
-            if (selected) ...[
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: GoogleFonts.poppins(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  color: const Color(0xFF1769D2),
+            decoration: BoxDecoration(
+              color: selected
+                  ? const Color(0xFFEAF3FF)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  icon,
+                  size: 21,
+                  color: selected
+                      ? const Color(0xFF1769D2)
+                      : const Color(0xFF9AA6B5),
                 ),
-              ),
-            ],
-          ],
+                if (selected) ...[
+                  const SizedBox(height: 3),
+                  Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.poppins(
+                      fontSize: 8,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF1769D2),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
         ),
       ),
     );
