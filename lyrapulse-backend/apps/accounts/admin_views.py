@@ -1,12 +1,15 @@
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Permission
+from django.contrib.auth.models import Group, Permission
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from rest_framework import serializers, status
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateAPIView
 from rest_framework.permissions import IsAuthenticated
 
+from apps.branches.models import Branch
 from apps.common.responses import success_response
 from .permissions import IsSuperAdmin
+from .scope import validate_scope
 from .services.role_permissions import ensure_role_group
 
 User = get_user_model()
@@ -17,11 +20,16 @@ class AdminUserSerializer(serializers.ModelSerializer):
     permissions = serializers.ListField(child=serializers.CharField(), required=False, write_only=True)
     permission_codenames = serializers.SerializerMethodField()
     is_active = serializers.BooleanField(required=False, default=True)
+    # Business scope: `organization` (id) and `branch_ids` (list of branch ids) are optional so the current
+    # React form keeps working; users without a scope are fail-closed and see no organization data.
+    branch_ids = serializers.PrimaryKeyRelatedField(
+        many=True, queryset=Branch.objects.all(), source="allowed_branches", required=False,
+    )
 
     class Meta:
         model = User
         fields = ("id", "phone_number", "email", "first_name", "last_name", "role", "is_active",
-                  "permissions", "permission_codenames")
+                  "organization", "branch_ids", "permissions", "permission_codenames")
         read_only_fields = ("id", "permission_codenames")
 
     def validate_role(self, value):
@@ -48,6 +56,26 @@ class AdminUserSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("This email is already in use.")
         return value
 
+    def validate_organization(self, value):
+        current = self.instance.organization if self.instance else None
+        if value is not None and not value.is_active and value != current:
+            raise serializers.ValidationError("This organization is inactive.")
+        return value
+
+    def validate(self, attrs):
+        # Resolve the final role/organization/branches (request values, else the stored ones) and check they agree.
+        role = attrs.get("role", self.instance.role if self.instance else None)
+        organization = attrs["organization"] if "organization" in attrs else (self.instance.organization if self.instance else None)
+        if "allowed_branches" in attrs:
+            branches = attrs["allowed_branches"]
+        else:
+            branches = list(self.instance.allowed_branches.all()) if self.instance else []
+        try:
+            validate_scope(role, organization, branches, require_organization=False)
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError(exc.message_dict)
+        return attrs
+
     def validate_permissions(self, values):
         parsed = [value.split(".", 1) for value in values]
         allowed_apps = {"accounts", "employees", "branches", "departments", "designations"}
@@ -67,15 +95,19 @@ class AdminUserSerializer(serializers.ModelSerializer):
     @transaction.atomic
     def create(self, validated_data):
         permission_codes = validated_data.pop("permissions", [])
+        branches = validated_data.pop("allowed_branches", [])
         validated_data.setdefault("is_active", True)
         user = User.objects.create_user(password=None, **validated_data)
         user.groups.add(ensure_role_group(user.role))
+        if branches:
+            user.allowed_branches.set(branches)
         self._set_permissions(user, permission_codes)
         return user
 
     @transaction.atomic
     def update(self, instance, validated_data):
         permission_codes = validated_data.pop("permissions", None)
+        branches = validated_data.pop("allowed_branches", None)
         previous_role = instance.role
         for key, value in validated_data.items():
             setattr(instance, key, value)
@@ -85,6 +117,8 @@ class AdminUserSerializer(serializers.ModelSerializer):
             if previous_group:
                 instance.groups.remove(previous_group)
         instance.groups.add(ensure_role_group(instance.role))
+        if branches is not None:
+            instance.allowed_branches.set(branches)
         if permission_codes is not None:
             self._set_permissions(instance, permission_codes)
         return instance
@@ -123,11 +157,12 @@ class AdminUserListCreateView(SuperAdminOnlyMixin, ListCreateAPIView):
     serializer_class = AdminUserSerializer
 
     def get_queryset(self):
-        return User.objects.filter(role__in=MANAGED_ROLES).order_by("role", "phone_number")
+        return (User.objects.filter(role__in=MANAGED_ROLES).select_related("organization")
+                .prefetch_related("allowed_branches").order_by("role", "phone_number"))
 
 
 class AdminUserDetailView(SuperAdminOnlyMixin, RetrieveUpdateAPIView):
     serializer_class = AdminUserSerializer
 
     def get_queryset(self):
-        return User.objects.filter(role__in=MANAGED_ROLES)
+        return User.objects.filter(role__in=MANAGED_ROLES).select_related("organization").prefetch_related("allowed_branches")

@@ -37,6 +37,9 @@ def _user_schema_fields():
         "last_name": serializers.CharField(allow_blank=True),
         "name": serializers.CharField(), "role": serializers.CharField(),
         "permissions": serializers.ListField(child=serializers.CharField()),
+        "organization": serializers.JSONField(allow_null=True),
+        "branches": serializers.JSONField(),
+        "is_global": serializers.BooleanField(),
     }
 
 
@@ -54,7 +57,11 @@ def user_payload(user):
     return {"id": user.id, "phone_number": user.phone_number, "email": user.email,
             "first_name": user.first_name, "last_name": user.last_name,
             "name": user.full_name, "role": user.role,
-            "permissions": ["*"] if user.role == User.Role.SUPERADMIN else sorted(user.get_all_permissions())}
+            "permissions": ["*"] if user.role == User.Role.SUPERADMIN else sorted(user.get_all_permissions()),
+            # Business scope. SUPERADMIN is global: organization null, is_global true, no branch restriction.
+            "organization": {"id": user.organization_id, "name": user.organization.name} if user.organization_id else None,
+            "branches": [{"id": b.id, "name": b.name} for b in user.allowed_branches.all()],
+            "is_global": user.has_global_scope}
 
 
 def employee_payload(user):

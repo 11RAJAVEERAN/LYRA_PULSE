@@ -23,6 +23,7 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt.token_blacklist",
     "drf_spectacular",
     "apps.common",
+    "apps.organizations",
     "apps.branches",
     "apps.departments",
     "apps.designations",

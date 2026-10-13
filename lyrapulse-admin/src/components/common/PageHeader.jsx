@@ -14,7 +14,7 @@ export function PageHeader({ title, subtitle, action }) {
       }}
     >
       <Box sx={{ minWidth: 0 }}>
-        <Typography variant="h4" component="h1" sx={{ color: 'text.primary' }}>
+        <Typography variant="h4" component="h1" sx={{ color: 'primary.main' }}>
           {title}
         </Typography>
         {subtitle ? (

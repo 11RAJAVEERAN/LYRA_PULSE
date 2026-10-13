@@ -140,11 +140,135 @@ class OTPAuthenticationTests(TestCase):
         self.assertTrue(manager.has_perm("employees.view_employee"))
 
     def test_ensure_superadmin_is_idempotent_and_preserves_existing_user(self):
-        existing = User.objects.create_user("+91 91501 81669", first_name="Existing", role=User.Role.HR)
-        call_command("ensure_superadmin", stdout=None)
-        call_command("ensure_superadmin", stdout=None)
+        existing = User.objects.create_user("+91 90000 00001", first_name="Existing", role=User.Role.HR)
+        call_command("ensure_superadmin", "--phone", "9000000001", stdout=None)
+        call_command("ensure_superadmin", "--phone", "9000000001", stdout=None)
         existing.refresh_from_db()
         self.assertEqual(User.objects.filter(phone_number=existing.phone_number).count(), 1)
         self.assertEqual(existing.role, User.Role.SUPERADMIN)
         self.assertEqual(existing.first_name, "Existing")
         self.assertTrue(existing.is_superuser)
+
+    def test_ensure_superadmin_requires_a_phone(self):
+        from django.core.management.base import CommandError
+        with patch.dict("os.environ"):
+            import os
+            os.environ.pop("LYRA_SUPERADMIN_PHONE", None)
+            with self.assertRaises(CommandError):
+                call_command("ensure_superadmin", stdout=None)
+
+
+@override_settings(ROOT_URLCONF="config.urls")
+class OrganizationScopeTests(TestCase):
+    def setUp(self):
+        from apps.accounts.services.role_permissions import ensure_role_group
+        from apps.organizations.models import Organization
+        self.client = APIClient()
+        self.devi = Organization.objects.create(name="Devi Hotel", code="DEVI")
+        self.lyra = Organization.objects.create(name="LyraTech", code="LYRA")
+        self.chennai = Branch.objects.create(organization=self.devi, name="Chennai", code="DEVI-CHN")
+        self.madurai = Branch.objects.create(organization=self.devi, name="Madurai", code="DEVI-MDU")
+        self.bangalore = Branch.objects.create(organization=self.lyra, name="Bangalore", code="LYRA-BLR")
+        self.superadmin = User.objects.create_user("9000000000", role=User.Role.SUPERADMIN, is_superuser=True)
+        self.murugan = User.objects.create_user("9999999999", first_name="Murugan", role=User.Role.ADMIN, organization=self.devi)
+        self.murugan.allowed_branches.add(self.chennai)
+        self.murugan.groups.add(ensure_role_group(User.Role.ADMIN))
+        self.emp_chennai = self._employee("E1", "9100000001", self.chennai)
+        self.emp_madurai = self._employee("E2", "9100000002", self.madurai)
+        self.emp_other_org = self._employee("E3", "9100000003", self.bangalore)
+
+    def _employee(self, code, phone, branch):
+        user = User.objects.create_user(phone, first_name=code)
+        return Employee.objects.create(employee_code=code, user=user, branch=branch)
+
+    def _codes(self, response):
+        return {item["employee_code"] for item in response.data["data"]}
+
+    def test_scoped_admin_sees_only_allowed_branch_employees(self):
+        self.client.force_authenticate(user=self.murugan)
+        self.assertEqual(self._codes(self.client.get("/api/v1/employees/")), {"E1"})
+        self.assertEqual(self.client.get(f"/api/v1/employees/{self.emp_madurai.pk}/").status_code, 404)
+        self.assertEqual(self.client.get(f"/api/v1/employees/{self.emp_other_org.pk}/").status_code, 404)
+
+    def test_superadmin_sees_all_employees(self):
+        self.client.force_authenticate(user=self.superadmin)
+        self.assertEqual(self._codes(self.client.get("/api/v1/employees/")), {"E1", "E2", "E3"})
+
+    def test_admin_without_scope_sees_nothing(self):
+        from apps.accounts.services.role_permissions import ensure_role_group
+        legacy = User.objects.create_user("9111111111", role=User.Role.ADMIN)
+        legacy.groups.add(ensure_role_group(User.Role.ADMIN))
+        self.client.force_authenticate(user=legacy)
+        self.assertEqual(self._codes(self.client.get("/api/v1/employees/")), set())
+
+    def test_scoped_admin_cannot_create_employee_outside_scope(self):
+        self.client.force_authenticate(user=self.murugan)
+        payload = {"employee_code": "E9", "first_name": "A", "last_name": "B", "phone_number": "9222222222", "email": "a@example.test"}
+        for branch in (self.madurai, self.bangalore):
+            response = self.client.post("/api/v1/employees/", {**payload, "branch": branch.pk})
+            self.assertEqual(response.status_code, 400)
+        response = self.client.post("/api/v1/employees/", payload)  # no branch
+        self.assertEqual(response.status_code, 400)
+        response = self.client.post("/api/v1/employees/", {**payload, "branch": self.chennai.pk})
+        self.assertEqual(response.status_code, 201)
+
+    def test_branch_dropdown_is_scoped(self):
+        self.client.force_authenticate(user=self.murugan)
+        names = {item["name"] for item in self.client.get("/api/v1/branches/").data["data"]}
+        self.assertEqual(names, {"Chennai"})
+        self.client.force_authenticate(user=self.superadmin)
+        names = {item["name"] for item in self.client.get("/api/v1/branches/").data["data"]}
+        self.assertEqual(names, {"Chennai", "Madurai", "Bangalore"})
+
+    def test_create_admin_user_with_organization_and_branches(self):
+        self.client.force_authenticate(user=self.superadmin)
+        response = self.client.post("/api/v1/auth/admin/users/", {
+            "phone_number": "9333333333", "first_name": "Ravi", "role": "HR",
+            "organization": self.devi.pk, "branch_ids": [self.chennai.pk, self.madurai.pk],
+        }, format="json")
+        self.assertEqual(response.status_code, 201)
+        user = User.objects.get(phone_number="9333333333")
+        self.assertEqual(user.organization, self.devi)
+        self.assertEqual(set(user.allowed_branches.all()), {self.chennai, self.madurai})
+        self.assertTrue(user.groups.filter(name="HR").exists())
+
+    def test_create_admin_user_rejects_cross_organization_branch(self):
+        self.client.force_authenticate(user=self.superadmin)
+        response = self.client.post("/api/v1/auth/admin/users/", {
+            "phone_number": "9333333333", "first_name": "Ravi", "role": "ADMIN",
+            "organization": self.devi.pk, "branch_ids": [self.bangalore.pk],
+        }, format="json")
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(User.objects.filter(phone_number="9333333333").exists())
+
+    def test_role_change_via_api_swaps_group(self):
+        self.client.force_authenticate(user=self.superadmin)
+        response = self.client.patch(f"/api/v1/auth/admin/users/{self.murugan.pk}/", {"role": "HR"}, format="json")
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(self.murugan.groups.filter(name="ADMIN").exists())
+        self.assertTrue(self.murugan.groups.filter(name="HR").exists())
+
+    def test_model_level_guard_rejects_cross_organization_branch(self):
+        from django.core.exceptions import ValidationError
+        from django.db import transaction
+        with self.assertRaises(ValidationError), transaction.atomic():
+            self.murugan.allowed_branches.add(self.bangalore)
+        with self.assertRaises(ValidationError), transaction.atomic():
+            self.bangalore.admin_users.add(self.murugan)
+        self.assertEqual(set(self.murugan.allowed_branches.all()), {self.chennai})
+
+    def test_branch_cannot_change_organization_while_admins_are_scoped_to_it(self):
+        from django.core.exceptions import ValidationError
+        self.chennai.organization = self.lyra
+        with self.assertRaises(ValidationError):
+            self.chennai.save()
+
+    def test_login_payload_includes_scope(self):
+        with self.settings(DEBUG=True, SMS_PROVIDER="mock"):
+            send = self.client.post("/api/v1/auth/admin/send-otp/", {"identifier": "9999999999"})
+            verify = self.client.post("/api/v1/auth/admin/verify-otp/", {"identifier": "9999999999", "otp": send.data["data"]["dev_otp"]})
+        user = verify.data["data"]["user"]
+        self.assertEqual(user["role"], "ADMIN")
+        self.assertEqual(user["organization"], {"id": self.devi.pk, "name": "Devi Hotel"})
+        self.assertEqual(user["branches"], [{"id": self.chennai.pk, "name": "Chennai"}])
+        self.assertFalse(user["is_global"])

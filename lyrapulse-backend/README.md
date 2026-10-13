@@ -26,6 +26,17 @@ python manage.py check
 python manage.py test
 ```
 
+## Organizations, branches and admin scope
+
+`Organization -> Branch -> Department / Employee`. ADMIN/HR/MANAGER users belong to one `Organization` and may manage only their `allowed_branches` (all of which must belong to that organization). SUPERADMIN is global. Set these up in Django Admin: Organizations -> Branches -> Users. Existing branches/admins are left unassigned by the migration; until a scope is assigned, a non-SUPERADMIN admin sees no employee data.
+
+First SUPERADMIN (no mobile is hardcoded):
+
+```bash
+python manage.py ensure_superadmin --phone <10-digit mobile>   # or set LYRA_SUPERADMIN_PHONE
+# or: python manage.py createsuperuser
+```
+
 ## Phase 1 API
 
 - `POST /api/v1/auth/send-otp/`

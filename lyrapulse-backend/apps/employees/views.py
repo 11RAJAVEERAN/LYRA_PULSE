@@ -5,6 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiResponse, inline_serializer
 
 from apps.accounts.permissions import CanAddEmployees, CanChangeEmployees, CanViewEmployees, IsEmployee
+from apps.accounts.scope import scope_queryset
 from apps.common.responses import success_response
 
 from apps.branches.models import Branch
@@ -25,7 +26,8 @@ class EmployeeManagementListCreateView(ListCreateAPIView):
     serializer_class = EmployeeManagementSerializer
 
     def get_queryset(self):
-        return Employee.objects.select_related("user", "branch", "department", "designation").order_by("employee_code")
+        queryset = Employee.objects.select_related("user", "branch", "department", "designation").order_by("employee_code")
+        return scope_queryset(queryset, self.request.user, "branch")
 
     @extend_schema(responses={200: inline_serializer(name="EmployeeListResponse", fields={
         "success": serializers.BooleanField(),
@@ -52,7 +54,10 @@ class EmployeeManagementDetailView(RetrieveUpdateAPIView):
         permission = CanChangeEmployees if self.request.method in {"PUT", "PATCH"} else CanViewEmployees
         return [IsAuthenticated(), permission()]
     serializer_class = EmployeeManagementSerializer
-    queryset = Employee.objects.select_related("user", "branch", "department", "designation")
+
+    def get_queryset(self):
+        queryset = Employee.objects.select_related("user", "branch", "department", "designation")
+        return scope_queryset(queryset, self.request.user, "branch")
 
     @extend_schema(responses={200: inline_serializer(name="EmployeeDetailResponse", fields={
         "success": serializers.BooleanField(),
@@ -98,9 +103,10 @@ class ReadOnlyOptionListView(ListAPIView):
     permission_classes = [IsAuthenticated, CanViewEmployees]
     pagination_class = None
     model = None
+    branch_lookup = None  # ORM path to the owning branch, used for organization/branch scoping
 
     def get_queryset(self):
-        queryset = self.model.objects.all()
+        queryset = scope_queryset(self.model.objects.all(), self.request.user, self.branch_lookup)
         if self.request.query_params.get("include_inactive", "").lower() != "true":
             queryset = queryset.filter(is_active=True)
         return queryset
@@ -123,16 +129,19 @@ def option_list_schema(name, serializer_class):
 @option_list_schema("BranchListResponse", BranchOptionSerializer)
 class BranchListView(ReadOnlyOptionListView):
     model = Branch
+    branch_lookup = "id"
     serializer_class = BranchOptionSerializer
 
 
 @option_list_schema("DepartmentListResponse", DepartmentOptionSerializer)
 class DepartmentListView(ReadOnlyOptionListView):
     model = Department
+    branch_lookup = "branch"
     serializer_class = DepartmentOptionSerializer
 
 
 @option_list_schema("DesignationListResponse", DesignationOptionSerializer)
 class DesignationListView(ReadOnlyOptionListView):
     model = Designation
+    branch_lookup = "department__branch"
     serializer_class = DesignationOptionSerializer

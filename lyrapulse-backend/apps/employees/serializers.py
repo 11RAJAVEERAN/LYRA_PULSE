@@ -38,6 +38,29 @@ class EmployeeManagementSerializer(serializers.ModelSerializer):
                     "phone_number": instance.user.phone_number, "email": instance.user.email})
         return data
 
+    def validate(self, attrs):
+        # Never trust client-supplied branch/department/designation ids: for scoped admins they must all
+        # resolve to a branch the admin is allowed to manage (SUPERADMIN is unrestricted).
+        request = self.context.get("request")
+        user = getattr(request, "user", None)
+        if user is None or user.has_global_scope:
+            return attrs
+        allowed = set(user.scoped_branch_ids())
+        errors = {}
+        if "branch" in attrs or not self.instance:
+            branch = attrs.get("branch")
+            if branch is None or branch.pk not in allowed:
+                errors["branch"] = "Select a branch you are allowed to manage."
+        department = attrs.get("department")
+        if department is not None and department.branch_id not in allowed:
+            errors["department"] = "This department belongs to a branch outside your scope."
+        designation = attrs.get("designation")
+        if designation is not None and designation.department.branch_id not in allowed:
+            errors["designation"] = "This designation belongs to a branch outside your scope."
+        if errors:
+            raise serializers.ValidationError(errors)
+        return attrs
+
     def validate_phone_number(self, value):
         phone = normalize_phone_number(value)
         users = User.objects.filter(phone_number=phone)
