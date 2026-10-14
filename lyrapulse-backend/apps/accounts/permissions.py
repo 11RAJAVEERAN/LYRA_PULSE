@@ -47,3 +47,24 @@ class CanAddEmployees(HasModelPermission):
 
 class CanChangeEmployees(HasModelPermission):
     permission_code = "employees.change_employee"
+
+
+def can_view_sensitive_employee_data(user):
+    """Salary, bank details and legal documents: SUPERADMIN or an explicit group/user permission."""
+    return bool(user and user.is_authenticated and user.is_active and (
+        user.role == User.Role.SUPERADMIN or user.has_perm("employees.view_employee_sensitive")))
+
+
+def can_change_sensitive_employee_data(user):
+    return bool(user and user.is_authenticated and user.is_active and (
+        user.role == User.Role.SUPERADMIN or user.has_perm("employees.change_employee_sensitive")))
+
+
+class CanViewSensitiveEmployeeData(BasePermission):
+    def has_permission(self, request, view):
+        return can_view_sensitive_employee_data(request.user)
+
+
+class CanChangeSensitiveEmployeeData(BasePermission):
+    def has_permission(self, request, view):
+        return can_change_sensitive_employee_data(request.user)

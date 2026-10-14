@@ -107,6 +107,9 @@ X_FRAME_OPTIONS = "DENY"
 SESSION_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_SECURE = not DEBUG
 
+# Private (non-public) storage for employee legal documents; served only via the authenticated download API.
+PRIVATE_MEDIA_ROOT = Path(os.getenv("PRIVATE_MEDIA_ROOT", str(BASE_DIR / "private_media")))
+
 SMS_PROVIDER = os.getenv("SMS_PROVIDER", "mock")
 OTP_EXPIRY_SECONDS = 300
 OTP_RESEND_COOLDOWN_SECONDS = 30
