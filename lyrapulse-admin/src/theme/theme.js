@@ -83,13 +83,7 @@ const theme = createTheme({
         sizeSmall: { minHeight: 32, paddingInline: 10 },
         sizeLarge: { minHeight: 48, paddingInline: 20 },
         containedPrimary: {
-          background: `linear-gradient(90deg, ${colors.primary}, ${colors.secondary})`,
-          boxShadow: `0 8px 18px ${colors.selection}`,
-          '&:hover': {
-            background: `linear-gradient(90deg, ${colors.primary}, ${colors.secondary})`,
-            boxShadow: `0 8px 18px ${colors.selection}`,
-          },
-          '&.Mui-disabled': { color: colors.surface, background: colors.disabled, boxShadow: 'none' },
+          '&:hover': { boxShadow: 'none' },
         },
         outlined: { borderColor: colors.border, '&:hover': { borderColor: colors.textSecondary } },
       },
@@ -162,7 +156,7 @@ const theme = createTheme({
         paper: { borderRadius: radius.lg, border: `1px solid ${colors.border}`, boxShadow: shadows[4], margin: 16 },
       },
     },
-    MuiDialogTitle: { styleOverrides: { root: { padding: '24px 24px 8px', fontWeight: 700, color: colors.primary } } },
+    MuiDialogTitle: { styleOverrides: { root: { padding: '24px 24px 8px', fontWeight: 700 } } },
     MuiDialogContent: { styleOverrides: { root: { padding: '16px 24px' } } },
     MuiDialogActions: { styleOverrides: { root: { padding: '16px 24px 24px', gap: 8 } } },
     MuiAlert: { styleOverrides: { root: { borderRadius: radius.sm }, message: { minWidth: 0 } } },
