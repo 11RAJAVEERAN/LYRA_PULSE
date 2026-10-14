@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -66,6 +67,10 @@ class _HomeScreenState extends State<HomeScreen> {
     Get.to(() => const ProfileScreen());
   }
 
+  void _openCalendar() {
+    Get.to(() => CalendarScreen());
+  }
+
   String _getToday() {
     final now = DateTime.now();
 
@@ -102,39 +107,37 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF7FAFD),
       body: SafeArea(
-        child: _selectedIndex == 2
-            ? CalendarScreen()
-            : Column(
-                children: [
-                  Expanded(
-                    child: SingleChildScrollView(
-                      physics: const BouncingScrollPhysics(),
-                      padding: const EdgeInsets.fromLTRB(
-                        20,
-                        18,
-                        20,
-                        110,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildHeader(),
-                          const SizedBox(height: 24),
-                          _buildHeroSection(),
-                          const SizedBox(height: 24),
-                          _buildAttendanceTimeline(),
-                          const SizedBox(height: 24),
-                          _buildQuickActions(),
-                          const SizedBox(height: 24),
-                          _buildStatsSection(),
-                          const SizedBox(height: 24),
-                          _buildOverviewSection(),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
+        child: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(
+                  20,
+                  18,
+                  20,
+                  110,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildHeader(),
+                    const SizedBox(height: 24),
+                    _buildHeroSection(),
+                    const SizedBox(height: 24),
+                    _buildAttendanceTimeline(),
+                    const SizedBox(height: 24),
+                    _buildQuickActions(),
+                    const SizedBox(height: 24),
+                    _buildStatsSection(),
+                    const SizedBox(height: 24),
+                    _buildOverviewSection(),
+                  ],
+                ),
               ),
+            ),
+          ],
+        ),
       ),
       bottomNavigationBar: _buildBottomNavigation(),
     );
@@ -576,7 +579,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 onTap: _openPermission,
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 8),
             Expanded(
               child: _actionItem(
                 icon: Icons.history_rounded,
@@ -586,7 +589,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 onTap: _openAttendanceHistory,
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 8),
             Expanded(
               child: _actionItem(
                 icon: Icons.beach_access_rounded,
@@ -594,6 +597,16 @@ class _HomeScreenState extends State<HomeScreen> {
                 subtitle: 'Apply',
                 iconColor: const Color(0xFFF39A3D),
                 onTap: _openLeave,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _actionItem(
+                icon: Icons.calendar_month_rounded,
+                title: 'Calendar',
+                subtitle: 'View',
+                iconColor: const Color(0xFF1769D2),
+                onTap: _openCalendar,
               ),
             ),
           ],
@@ -612,7 +625,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.fromLTRB(12, 14, 12, 13),
+        padding: const EdgeInsets.fromLTRB(10, 14, 10, 13),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
@@ -967,6 +980,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // Bottom navigation: Home is positioned in the center.
   Widget _buildBottomNavigation() {
     return Container(
       color: const Color(0xFFF7FAFD),
@@ -989,37 +1003,38 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _bottomNavItem(
-              index: 0,
-              icon: Icons.home_rounded,
-              label: 'Home',
-              onTap: () {},
+            Expanded(
+              child: _bottomNavItem(
+                index: 1,
+                icon: Icons.calendar_month_rounded,
+                label: 'Attendance',
+                onTap: _openAttendanceRecords,
+              ),
             ),
-            _bottomNavItem(
-              index: 1,
-              icon: Icons.calendar_month_rounded,
-              label: 'Attendance',
-              onTap: _openAttendanceRecords,
+            Expanded(
+              child: _bottomNavItem(
+                index: 2,
+                icon: Icons.beach_access_rounded,
+                label: 'Leave',
+                onTap: _openLeave,
+              ),
             ),
-           _bottomNavItem(
-  index: 2,
-  icon: Icons.calendar_month_rounded,
-  label: 'Calendar',
-  onTap: () {},
-),
-            _bottomNavItem(
-              index: 3,
-              icon: Icons.beach_access_rounded,
-              label: 'Leave',
-              onTap: _openLeave,
+            Expanded(
+              child: _bottomNavItem(
+                index: 0,
+                icon: Icons.home_rounded,
+                label: 'Home',
+                onTap: () {},
+              ),
             ),
-            _bottomNavItem(
-              index: 4,
-              icon: Icons.person_rounded,
-              label: 'Profile',
-              onTap: _openProfile,
+            Expanded(
+              child: _bottomNavItem(
+                index: 3,
+                icon: Icons.person_rounded,
+                label: 'Profile',
+                onTap: _openProfile,
+              ),
             ),
           ],
         ),
@@ -1035,55 +1050,53 @@ class _HomeScreenState extends State<HomeScreen> {
   }) {
     final selected = _selectedIndex == index;
 
-    return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          setState(() {
-            _selectedIndex = index;
-          });
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedIndex = index;
+        });
 
-          onTap();
-        },
-        behavior: HitTestBehavior.opaque,
-        child: Center(
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 220),
-            padding: EdgeInsets.symmetric(
-              horizontal: selected ? 8 : 4,
-              vertical: 8,
-            ),
-            decoration: BoxDecoration(
-              color: selected
-                  ? const Color(0xFFEAF3FF)
-                  : Colors.transparent,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  icon,
-                  size: 21,
-                  color: selected
-                      ? const Color(0xFF1769D2)
-                      : const Color(0xFF9AA6B5),
-                ),
-                if (selected) ...[
-                  const SizedBox(height: 3),
-                  Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.poppins(
-                      fontSize: 8,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF1769D2),
-                    ),
+        onTap();
+      },
+      behavior: HitTestBehavior.opaque,
+      child: Center(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 220),
+          padding: EdgeInsets.symmetric(
+            horizontal: selected ? 8 : 4,
+            vertical: 8,
+          ),
+          decoration: BoxDecoration(
+            color: selected
+                ? const Color(0xFFEAF3FF)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                size: 21,
+                color: selected
+                    ? const Color(0xFF1769D2)
+                    : const Color(0xFF9AA6B5),
+              ),
+              if (selected) ...[
+                const SizedBox(height: 3),
+                Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.poppins(
+                    fontSize: 8,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF1769D2),
                   ),
-                ],
+                ),
               ],
-            ),
+            ],
           ),
         ),
       ),
