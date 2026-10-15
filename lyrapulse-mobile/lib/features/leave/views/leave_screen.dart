@@ -49,60 +49,60 @@ class _LeaveScreenState extends State<LeaveScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF04111F),
+      // PURE WHITE BACKGROUND
+      backgroundColor: Colors.white,
+
       body: SafeArea(
-        child: Stack(
-          children: [
-            Positioned(
-              top: -180,
-              right: -160,
-              child: _glow(
-                400,
-                const Color(0xFF087BFF),
-              ),
-            ),
-            Positioned(
-              bottom: -220,
-              left: -170,
-              child: _glow(
-                430,
-                const Color(0xFF00D9FF),
-              ),
-            ),
-            SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(
-                20,
-                18,
-                20,
-                35,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildHeader(),
-                  const SizedBox(height: 28),
-                  _buildBalanceTitle(),
-                  const SizedBox(height: 10),
-                  _buildBalanceCards(),
-                  const SizedBox(height: 28),
-                  _buildApplyButton(),
-                  const SizedBox(height: 28),
-                  _buildMyLeaveTitle(),
-                  const SizedBox(height: 10),
-                  _buildTabs(),
-                  const SizedBox(height: 16),
-                  ..._buildFilteredLeaves(),
-                  const SizedBox(height: 30),
-                  _buildFooter(),
-                ],
-              ),
-            ),
-          ],
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(
+            20,
+            18,
+            20,
+            35,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildHeader(),
+
+              const SizedBox(height: 28),
+
+              _buildBalanceTitle(),
+
+              const SizedBox(height: 10),
+
+              _buildBalanceCards(),
+
+              const SizedBox(height: 28),
+
+              _buildApplyButton(),
+
+              const SizedBox(height: 28),
+
+              _buildMyLeaveTitle(),
+
+              const SizedBox(height: 10),
+
+              _buildTabs(),
+
+              const SizedBox(height: 16),
+
+              ..._buildFilteredLeaves(),
+
+              const SizedBox(height: 30),
+
+              _buildFooter(),
+            ],
+          ),
         ),
       ),
     );
   }
+
+  // ==========================================================
+  // HEADER
+  // ==========================================================
 
   Widget _buildHeader() {
     return Row(
@@ -114,43 +114,53 @@ class _LeaveScreenState extends State<LeaveScreen> {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: const Color(0xFF0A2136),
+              color: Colors.white,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: const Color(0xFF194663),
+                color: const Color(0xFFE2EAF2),
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF183B56).withOpacity(0.06),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
             child: const Icon(
               Icons.arrow_back_rounded,
-              color: Colors.white,
+              color: Color(0xFF183B56),
               size: 21,
             ),
           ),
         ),
+
         const SizedBox(width: 14),
+
         Expanded(
           child: Text(
             'Leave',
             style: GoogleFonts.poppins(
-              color: Colors.white,
+              color: const Color(0xFF132B3F),
               fontSize: 22,
               fontWeight: FontWeight.w700,
             ),
           ),
         ),
+
         Container(
           width: 44,
           height: 44,
           decoration: BoxDecoration(
-            color: const Color(0xFF0A2136),
+            color: const Color(0xFFEAF8FF),
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: const Color(0xFF194663),
+              color: const Color(0xFFD5EEF9),
             ),
           ),
           child: const Icon(
             Icons.event_available_rounded,
-            color: Color(0xFF25DDF7),
+            color: Color(0xFF087BFF),
             size: 21,
           ),
         ),
@@ -158,17 +168,25 @@ class _LeaveScreenState extends State<LeaveScreen> {
     );
   }
 
+  // ==========================================================
+  // LEAVE BALANCE TITLE
+  // ==========================================================
+
   Widget _buildBalanceTitle() {
     return Text(
       'LEAVE BALANCE',
       style: GoogleFonts.poppins(
-        color: const Color(0xFF718AA0),
+        color: const Color(0xFF7A8D9E),
         fontSize: 10,
         fontWeight: FontWeight.w700,
         letterSpacing: 2,
       ),
     );
   }
+
+  // ==========================================================
+  // BALANCE CARDS
+  // ==========================================================
 
   Widget _buildBalanceCards() {
     return Row(
@@ -181,7 +199,9 @@ class _LeaveScreenState extends State<LeaveScreen> {
             subtitle: 'Days Left',
           ),
         ),
+
         const SizedBox(width: 10),
+
         Expanded(
           child: _balanceCard(
             icon: Icons.medical_services_outlined,
@@ -190,7 +210,9 @@ class _LeaveScreenState extends State<LeaveScreen> {
             subtitle: 'Days Left',
           ),
         ),
+
         const SizedBox(width: 10),
+
         Expanded(
           child: _balanceCard(
             icon: Icons.event_available_rounded,
@@ -213,41 +235,60 @@ class _LeaveScreenState extends State<LeaveScreen> {
       height: 116,
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: const Color(0xFF071C2E),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(17),
         border: Border.all(
-          color: const Color(0xFF16435F),
+          color: const Color(0xFFE2EAF2),
         ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF183B56).withOpacity(0.05),
+            blurRadius: 14,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            icon,
-            color: const Color(0xFF25DDF7),
-            size: 21,
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: const Color(0xFFEAF8FF),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              icon,
+              color: const Color(0xFF087BFF),
+              size: 19,
+            ),
           ),
+
           const SizedBox(height: 6),
+
           Text(
             value,
             style: GoogleFonts.poppins(
-              color: Colors.white,
+              color: const Color(0xFF132B3F),
               fontSize: 18,
               fontWeight: FontWeight.w700,
             ),
           ),
+
           Text(
             title,
             style: GoogleFonts.poppins(
-              color: const Color(0xFFC1D0DC),
+              color: const Color(0xFF526A7C),
               fontSize: 9,
               fontWeight: FontWeight.w600,
             ),
           ),
+
           Text(
             subtitle,
             style: GoogleFonts.poppins(
-              color: const Color(0xFF718AA0),
+              color: const Color(0xFF91A1AE),
               fontSize: 7,
             ),
           ),
@@ -255,6 +296,10 @@ class _LeaveScreenState extends State<LeaveScreen> {
       ),
     );
   }
+
+  // ==========================================================
+  // APPLY LEAVE BUTTON
+  // ==========================================================
 
   Widget _buildApplyButton() {
     return SizedBox(
@@ -265,14 +310,14 @@ class _LeaveScreenState extends State<LeaveScreen> {
           gradient: const LinearGradient(
             colors: [
               Color(0xFF176DFF),
-              Color(0xFF18D5EF),
+              Color(0xFF18BFEF),
             ],
           ),
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF00CFFF).withOpacity(0.20),
-              blurRadius: 22,
+              color: const Color(0xFF087BFF).withOpacity(0.20),
+              blurRadius: 20,
               offset: const Offset(0, 8),
             ),
           ],
@@ -310,11 +355,15 @@ class _LeaveScreenState extends State<LeaveScreen> {
     );
   }
 
+  // ==========================================================
+  // MY LEAVE TITLE
+  // ==========================================================
+
   Widget _buildMyLeaveTitle() {
     return Text(
       'MY LEAVE',
       style: GoogleFonts.poppins(
-        color: const Color(0xFF718AA0),
+        color: const Color(0xFF7A8D9E),
         fontSize: 10,
         fontWeight: FontWeight.w700,
         letterSpacing: 2,
@@ -322,16 +371,27 @@ class _LeaveScreenState extends State<LeaveScreen> {
     );
   }
 
+  // ==========================================================
+  // TABS
+  // ==========================================================
+
   Widget _buildTabs() {
     return Container(
       height: 46,
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: const Color(0xFF071C2E),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: const Color(0xFF16435F),
+          color: const Color(0xFFE2EAF2),
         ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF183B56).withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
       child: Row(
         children: [
@@ -375,7 +435,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: selected
-              ? const Color(0xFF0C3855)
+              ? const Color(0xFFEAF4FF)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(10),
         ),
@@ -383,8 +443,8 @@ class _LeaveScreenState extends State<LeaveScreen> {
           title,
           style: GoogleFonts.poppins(
             color: selected
-                ? const Color(0xFF25DDF7)
-                : const Color(0xFF718AA0),
+                ? const Color(0xFF087BFF)
+                : const Color(0xFF7A8D9E),
             fontSize: 9,
             fontWeight: selected
                 ? FontWeight.w700
@@ -394,6 +454,10 @@ class _LeaveScreenState extends State<LeaveScreen> {
       ),
     );
   }
+
+  // ==========================================================
+  // FILTER LEAVES
+  // ==========================================================
 
   List<Widget> _buildFilteredLeaves() {
     List<Map<String, String>> filteredLeaves;
@@ -430,6 +494,10 @@ class _LeaveScreenState extends State<LeaveScreen> {
     ).toList();
   }
 
+  // ==========================================================
+  // LEAVE CARD
+  // ==========================================================
+
   Widget _leaveCard(Map<String, String> leave) {
     final bool approved = leave['status'] == 'Approved';
 
@@ -437,11 +505,18 @@ class _LeaveScreenState extends State<LeaveScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xCC071A2D),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: const Color(0xFF16435F),
+          color: const Color(0xFFE2EAF2),
         ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF183B56).withOpacity(0.045),
+            blurRadius: 14,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
       child: Column(
         children: [
@@ -451,55 +526,65 @@ class _LeaveScreenState extends State<LeaveScreen> {
                 width: 46,
                 height: 46,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF0A2941),
+                  color: const Color(0xFFEAF8FF),
                   borderRadius: BorderRadius.circular(13),
                 ),
                 child: Icon(
                   leave['type'] == 'Sick Leave'
                       ? Icons.medical_services_outlined
                       : Icons.beach_access_rounded,
-                  color: const Color(0xFF25DDF7),
+                  color: const Color(0xFF087BFF),
                   size: 22,
                 ),
               ),
+
               const SizedBox(width: 12),
+
               Expanded(
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment:
+                      CrossAxisAlignment.start,
                   children: [
                     Text(
                       leave['type'] ?? '',
                       style: GoogleFonts.poppins(
-                        color: Colors.white,
+                        color: const Color(0xFF132B3F),
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
+
                     const SizedBox(height: 3),
+
                     Text(
                       leave['days'] ?? '',
                       style: GoogleFonts.poppins(
-                        color: const Color(0xFF7892A7),
+                        color: const Color(0xFF8295A4),
                         fontSize: 9,
                       ),
                     ),
                   ],
                 ),
               ),
+
               _statusBadge(
                 leave['status'] ?? '',
                 approved
-                    ? const Color(0xFF25DDF7)
-                    : const Color(0xFFFFC857),
+                    ? const Color(0xFF13A67A)
+                    : const Color(0xFFE39A00),
               ),
             ],
           ),
+
           const SizedBox(height: 16),
+
           const Divider(
-            color: Color(0xFF16384F),
+            color: Color(0xFFE7EDF2),
             height: 1,
           ),
+
           const SizedBox(height: 14),
+
           Row(
             children: [
               Expanded(
@@ -518,7 +603,9 @@ class _LeaveScreenState extends State<LeaveScreen> {
               ),
             ],
           ),
+
           const SizedBox(height: 12),
+
           _detailItem(
             icon: Icons.notes_rounded,
             title: 'Reason',
@@ -529,6 +616,10 @@ class _LeaveScreenState extends State<LeaveScreen> {
     );
   }
 
+  // ==========================================================
+  // DETAIL ITEM
+  // ==========================================================
+
   Widget _detailItem({
     required IconData icon,
     required String title,
@@ -538,28 +629,33 @@ class _LeaveScreenState extends State<LeaveScreen> {
       children: [
         Icon(
           icon,
-          color: const Color(0xFF25DDF7),
+          color: const Color(0xFF087BFF),
           size: 16,
         ),
+
         const SizedBox(width: 8),
+
         Expanded(
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment:
+                CrossAxisAlignment.start,
             children: [
               Text(
                 title,
                 style: GoogleFonts.poppins(
-                  color: const Color(0xFF718AA0),
+                  color: const Color(0xFF8A9BA8),
                   fontSize: 8,
                 ),
               ),
+
               const SizedBox(height: 2),
+
               Text(
                 value,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.poppins(
-                  color: const Color(0xFFC4D1DC),
+                  color: const Color(0xFF40576A),
                   fontSize: 9,
                   fontWeight: FontWeight.w600,
                 ),
@@ -571,6 +667,10 @@ class _LeaveScreenState extends State<LeaveScreen> {
     );
   }
 
+  // ==========================================================
+  // STATUS BADGE
+  // ==========================================================
+
   Widget _statusBadge(
     String text,
     Color color,
@@ -581,10 +681,10 @@ class _LeaveScreenState extends State<LeaveScreen> {
         vertical: 6,
       ),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.10),
+        color: color.withOpacity(0.08),
         borderRadius: BorderRadius.circular(9),
         border: Border.all(
-          color: color.withOpacity(0.30),
+          color: color.withOpacity(0.25),
         ),
       ),
       child: Text(
@@ -598,6 +698,10 @@ class _LeaveScreenState extends State<LeaveScreen> {
     );
   }
 
+  // ==========================================================
+  // EMPTY STATE
+  // ==========================================================
+
   Widget _emptyState() {
     return Container(
       width: double.infinity,
@@ -605,34 +709,38 @@ class _LeaveScreenState extends State<LeaveScreen> {
         vertical: 45,
       ),
       decoration: BoxDecoration(
-        color: const Color(0xCC071A2D),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: const Color(0xFF16435F),
+          color: const Color(0xFFE2EAF2),
         ),
       ),
       child: Column(
         children: [
           const Icon(
             Icons.event_busy_rounded,
-            color: Color(0xFF25DDF7),
+            color: Color(0xFF087BFF),
             size: 35,
           ),
+
           const SizedBox(height: 12),
+
           Text(
             'No Leave Requests',
             style: GoogleFonts.poppins(
-              color: Colors.white,
+              color: const Color(0xFF132B3F),
               fontSize: 15,
               fontWeight: FontWeight.w700,
             ),
           ),
+
           const SizedBox(height: 5),
+
           Text(
             'Your leave requests will appear here.',
             textAlign: TextAlign.center,
             style: GoogleFonts.poppins(
-              color: const Color(0xFF718AA0),
+              color: const Color(0xFF8295A4),
               fontSize: 10,
             ),
           ),
@@ -641,12 +749,16 @@ class _LeaveScreenState extends State<LeaveScreen> {
     );
   }
 
+  // ==========================================================
+  // FOOTER
+  // ==========================================================
+
   Widget _buildFooter() {
     return Center(
       child: Text(
         'LYRA PULSE',
         style: GoogleFonts.poppins(
-          color: const Color(0xFF38566D),
+          color: const Color(0xFFB0BDC7),
           fontSize: 8,
           fontWeight: FontWeight.w600,
           letterSpacing: 3,
@@ -654,28 +766,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
       ),
     );
   }
-
-  Widget _glow(
-    double size,
-    Color color,
-  ) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: RadialGradient(
-          colors: [
-            color.withOpacity(0.11),
-            color.withOpacity(0.025),
-            Colors.transparent,
-          ],
-        ),
-      ),
-    );
-  }
 }
-
 
 // ============================================================
 // APPLY LEAVE DIALOG
@@ -704,11 +795,12 @@ class _ApplyLeaveDialogState
       return 0;
     }
 
-    return toDate!
-            .difference(fromDate!)
-            .inDays +
-        1;
+    return toDate!.difference(fromDate!).inDays + 1;
   }
+
+  // ==========================================================
+  // DATE FORMAT
+  // ==========================================================
 
   String _formatDate(DateTime date) {
     const List<String> months = [
@@ -731,6 +823,10 @@ class _ApplyLeaveDialogState
         '${date.year}';
   }
 
+  // ==========================================================
+  // SELECT FROM DATE
+  // ==========================================================
+
   Future<void> _selectFromDate() async {
     final DateTime today = DateTime.now();
 
@@ -746,11 +842,14 @@ class _ApplyLeaveDialogState
       ) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.dark(
-              primary: Color(0xFF18D5EF),
+            colorScheme: const ColorScheme.light(
+              primary: Color(0xFF087BFF),
               onPrimary: Colors.white,
-              surface: Color(0xFF071C2E),
-              onSurface: Colors.white,
+              surface: Colors.white,
+              onSurface: Color(0xFF132B3F),
+            ),
+            dialogTheme: const DialogThemeData(
+              backgroundColor: Colors.white,
             ),
           ),
           child: child!,
@@ -772,17 +871,22 @@ class _ApplyLeaveDialogState
     });
   }
 
+  // ==========================================================
+  // SELECT TO DATE
+  // ==========================================================
+
   Future<void> _selectToDate() async {
     if (fromDate == null) {
       Get.snackbar(
         'Select From Date',
         'Please select From Date first.',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: const Color(0xFF102A40),
+        backgroundColor: const Color(0xFF132B3F),
         colorText: Colors.white,
         margin: const EdgeInsets.all(16),
         borderRadius: 14,
       );
+
       return;
     }
 
@@ -798,11 +902,14 @@ class _ApplyLeaveDialogState
       ) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.dark(
-              primary: Color(0xFF18D5EF),
+            colorScheme: const ColorScheme.light(
+              primary: Color(0xFF087BFF),
               onPrimary: Colors.white,
-              surface: Color(0xFF071C2E),
-              onSurface: Colors.white,
+              surface: Colors.white,
+              onSurface: Color(0xFF132B3F),
+            ),
+            dialogTheme: const DialogThemeData(
+              backgroundColor: Colors.white,
             ),
           ),
           child: child!,
@@ -819,17 +926,22 @@ class _ApplyLeaveDialogState
     });
   }
 
+  // ==========================================================
+  // SUBMIT LEAVE
+  // ==========================================================
+
   void _submitLeave() {
     if (fromDate == null) {
       Get.snackbar(
         'From Date Required',
         'Please select From Date.',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: const Color(0xFF102A40),
+        backgroundColor: const Color(0xFF132B3F),
         colorText: Colors.white,
         margin: const EdgeInsets.all(16),
         borderRadius: 14,
       );
+
       return;
     }
 
@@ -838,11 +950,12 @@ class _ApplyLeaveDialogState
         'To Date Required',
         'Please select To Date.',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: const Color(0xFF102A40),
+        backgroundColor: const Color(0xFF132B3F),
         colorText: Colors.white,
         margin: const EdgeInsets.all(16),
         borderRadius: 14,
       );
+
       return;
     }
 
@@ -851,11 +964,12 @@ class _ApplyLeaveDialogState
         'Reason Required',
         'Please enter your leave reason.',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: const Color(0xFF102A40),
+        backgroundColor: const Color(0xFF132B3F),
         colorText: Colors.white,
         margin: const EdgeInsets.all(16),
         borderRadius: 14,
       );
+
       return;
     }
 
@@ -868,7 +982,7 @@ class _ApplyLeaveDialogState
       '$selectedLeave • $days '
           '${days == 1 ? 'Day' : 'Days'}',
       snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: const Color(0xFF102A40),
+      backgroundColor: const Color(0xFF132B3F),
       colorText: Colors.white,
       margin: const EdgeInsets.all(16),
       borderRadius: 14,
@@ -879,11 +993,19 @@ class _ApplyLeaveDialogState
     );
   }
 
+  // ==========================================================
+  // DISPOSE
+  // ==========================================================
+
   @override
   void dispose() {
     reasonController.dispose();
     super.dispose();
   }
+
+  // ==========================================================
+  // DIALOG UI
+  // ==========================================================
 
   @override
   Widget build(BuildContext context) {
@@ -899,11 +1021,18 @@ class _ApplyLeaveDialogState
         ),
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: const Color(0xFF071C2E),
+          color: Colors.white,
           borderRadius: BorderRadius.circular(22),
           border: Border.all(
-            color: const Color(0xFF16435F),
+            color: const Color(0xFFE0E8EF),
           ),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF183B56).withOpacity(0.12),
+              blurRadius: 30,
+              offset: const Offset(0, 12),
+            ),
+          ],
         ),
         child: SingleChildScrollView(
           child: Column(
@@ -911,18 +1040,23 @@ class _ApplyLeaveDialogState
             crossAxisAlignment:
                 CrossAxisAlignment.start,
             children: [
+              // ==================================================
+              // DIALOG HEADER
+              // ==================================================
+
               Row(
                 children: [
                   Expanded(
                     child: Text(
                       'Apply Leave',
                       style: GoogleFonts.poppins(
-                        color: Colors.white,
+                        color: const Color(0xFF132B3F),
                         fontSize: 19,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
+
                   InkWell(
                     onTap: () => Get.back(),
                     borderRadius:
@@ -931,7 +1065,7 @@ class _ApplyLeaveDialogState
                       padding: EdgeInsets.all(5),
                       child: Icon(
                         Icons.close_rounded,
-                        color: Color(0xFF7892A7),
+                        color: Color(0xFF7D909E),
                         size: 22,
                       ),
                     ),
@@ -941,23 +1075,26 @@ class _ApplyLeaveDialogState
 
               const SizedBox(height: 20),
 
+              // ==================================================
+              // LEAVE TYPE
+              // ==================================================
+
               _fieldLabel('Leave Type'),
+
               const SizedBox(height: 7),
 
               DropdownButtonFormField<String>(
                 value: selectedLeave,
-                dropdownColor:
-                    const Color(0xFF0A2941),
+                dropdownColor: Colors.white,
                 style: GoogleFonts.poppins(
-                  color: Colors.white,
+                  color: const Color(0xFF132B3F),
                   fontSize: 11,
                 ),
                 icon: const Icon(
                   Icons.keyboard_arrow_down_rounded,
-                  color: Color(0xFF718AA0),
+                  color: Color(0xFF7D909E),
                 ),
-                decoration:
-                    _inputDecoration(),
+                decoration: _inputDecoration(),
                 items: const [
                   DropdownMenuItem(
                     value: 'Casual Leave',
@@ -985,7 +1122,12 @@ class _ApplyLeaveDialogState
 
               const SizedBox(height: 15),
 
+              // ==================================================
+              // FROM DATE
+              // ==================================================
+
               _fieldLabel('From Date'),
+
               const SizedBox(height: 7),
 
               _dateSelector(
@@ -998,7 +1140,12 @@ class _ApplyLeaveDialogState
 
               const SizedBox(height: 15),
 
+              // ==================================================
+              // TO DATE
+              // ==================================================
+
               _fieldLabel('To Date'),
+
               const SizedBox(height: 7),
 
               _dateSelector(
@@ -1009,46 +1156,54 @@ class _ApplyLeaveDialogState
                 selected: toDate != null,
               ),
 
+              // ==================================================
+              // TOTAL DAYS
+              // ==================================================
+
               if (totalDays > 0) ...[
                 const SizedBox(height: 15),
+
                 Container(
                   width: double.infinity,
-                  padding:
-                      const EdgeInsets.symmetric(
+                  padding: const EdgeInsets.symmetric(
                     horizontal: 14,
                     vertical: 12,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF0A2941),
+                    color: const Color(0xFFF0F8FF),
                     borderRadius:
                         BorderRadius.circular(13),
                     border: Border.all(
-                      color: const Color(0xFF16435F),
+                      color: const Color(0xFFD8ECFA),
                     ),
                   ),
                   child: Row(
                     children: [
                       const Icon(
                         Icons.timelapse_rounded,
-                        color: Color(0xFF25DDF7),
+                        color: Color(0xFF087BFF),
                         size: 18,
                       ),
+
                       const SizedBox(width: 9),
+
                       Text(
                         'Total Leave',
                         style: GoogleFonts.poppins(
                           color:
-                              const Color(0xFF9CB0C0),
+                              const Color(0xFF6D8190),
                           fontSize: 10,
                         ),
                       ),
+
                       const Spacer(),
+
                       Text(
                         '$totalDays '
                         '${totalDays == 1 ? 'Day' : 'Days'}',
                         style: GoogleFonts.poppins(
                           color:
-                              const Color(0xFF25DDF7),
+                              const Color(0xFF087BFF),
                           fontSize: 11,
                           fontWeight:
                               FontWeight.w700,
@@ -1061,14 +1216,19 @@ class _ApplyLeaveDialogState
 
               const SizedBox(height: 15),
 
+              // ==================================================
+              // REASON
+              // ==================================================
+
               _fieldLabel('Reason'),
+
               const SizedBox(height: 7),
 
               TextField(
                 controller: reasonController,
                 maxLines: 3,
                 style: GoogleFonts.poppins(
-                  color: Colors.white,
+                  color: const Color(0xFF132B3F),
                   fontSize: 11,
                 ),
                 decoration: _inputDecoration(
@@ -1078,6 +1238,10 @@ class _ApplyLeaveDialogState
               ),
 
               const SizedBox(height: 20),
+
+              // ==================================================
+              // SUBMIT BUTTON
+              // ==================================================
 
               SizedBox(
                 width: double.infinity,
@@ -1112,16 +1276,24 @@ class _ApplyLeaveDialogState
     );
   }
 
+  // ==========================================================
+  // FIELD LABEL
+  // ==========================================================
+
   Widget _fieldLabel(String text) {
     return Text(
       text,
       style: GoogleFonts.poppins(
-        color: const Color(0xFF9CB0C0),
+        color: const Color(0xFF60788A),
         fontSize: 10,
         fontWeight: FontWeight.w600,
       ),
     );
   }
+
+  // ==========================================================
+  // DATE SELECTOR
+  // ==========================================================
 
   Widget _dateSelector({
     required String text,
@@ -1133,44 +1305,46 @@ class _ApplyLeaveDialogState
       borderRadius: BorderRadius.circular(13),
       child: Container(
         width: double.infinity,
-        padding:
-            const EdgeInsets.symmetric(
+        padding: const EdgeInsets.symmetric(
           horizontal: 14,
           vertical: 14,
         ),
         decoration: BoxDecoration(
-          color: const Color(0xFF0A2136),
+          color: const Color(0xFFF8FAFC),
           borderRadius:
               BorderRadius.circular(13),
           border: Border.all(
             color: selected
-                ? const Color(0xFF25DDF7)
-                : const Color(0xFF16435F),
+                ? const Color(0xFF087BFF)
+                : const Color(0xFFDCE5EC),
           ),
         ),
         child: Row(
           children: [
             const Icon(
               Icons.calendar_month_rounded,
-              color: Color(0xFF25DDF7),
+              color: Color(0xFF087BFF),
               size: 19,
             ),
+
             const SizedBox(width: 10),
+
             Expanded(
               child: Text(
                 text,
                 style: GoogleFonts.poppins(
                   color: selected
-                      ? Colors.white
-                      : const Color(0xFF58758A),
+                      ? const Color(0xFF132B3F)
+                      : const Color(0xFF8A9BA8),
                   fontSize: 10,
                   fontWeight: FontWeight.w500,
                 ),
               ),
             ),
+
             const Icon(
               Icons.keyboard_arrow_down_rounded,
-              color: Color(0xFF718AA0),
+              color: Color(0xFF7D909E),
               size: 19,
             ),
           ],
@@ -1179,17 +1353,21 @@ class _ApplyLeaveDialogState
     );
   }
 
+  // ==========================================================
+  // INPUT DECORATION
+  // ==========================================================
+
   InputDecoration _inputDecoration({
     String? hintText,
   }) {
     return InputDecoration(
       hintText: hintText,
       hintStyle: GoogleFonts.poppins(
-        color: const Color(0xFF58758A),
+        color: const Color(0xFF91A1AE),
         fontSize: 10,
       ),
       filled: true,
-      fillColor: const Color(0xFF0A2136),
+      fillColor: const Color(0xFFF8FAFC),
       contentPadding:
           const EdgeInsets.symmetric(
         horizontal: 14,
@@ -1199,21 +1377,21 @@ class _ApplyLeaveDialogState
         borderRadius:
             BorderRadius.circular(13),
         borderSide: const BorderSide(
-          color: Color(0xFF16435F),
+          color: Color(0xFFDCE5EC),
         ),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius:
             BorderRadius.circular(13),
         borderSide: const BorderSide(
-          color: Color(0xFF16435F),
+          color: Color(0xFFDCE5EC),
         ),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius:
             BorderRadius.circular(13),
         borderSide: const BorderSide(
-          color: Color(0xFF25DDF7),
+          color: Color(0xFF087BFF),
         ),
       ),
     );

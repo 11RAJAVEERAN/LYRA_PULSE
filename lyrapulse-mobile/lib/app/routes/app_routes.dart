@@ -26,19 +26,16 @@ abstract final class AppRoutes {
 
   // Step 1:
   // Home → Permission Start
-
   static const String permissionStart =
       '/permission-start';
 
   // Step 2:
   // Permission Start → Permission Submitted
-
   static const String permissionSubmitted =
       '/permission-submitted';
 
   // Step 3:
   // Permission Submitted → Permission Return
-
   static const String permissionReturn =
       '/permission-return';
 

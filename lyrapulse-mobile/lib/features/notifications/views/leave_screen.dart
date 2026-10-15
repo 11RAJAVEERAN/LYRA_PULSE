@@ -12,416 +12,913 @@ class LeaveScreen extends StatefulWidget {
 class _LeaveScreenState extends State<LeaveScreen> {
   int selectedTab = 0;
 
-  final List<Map<String, dynamic>> leaveRequests = [
+  static const Color navy = Color(0xFF102B63);
+  static const Color background = Color(0xFFF5F7FD);
+  static const Color cardColor = Colors.white;
+  static const Color borderColor = Color(0xFFE5EAF2);
+  static const Color mutedText = Color(0xFF7B8497);
+  static const Color textColor = Color(0xFF18243A);
+  static const Color green = Color(0xFF0BA875);
+  static const Color orange = Color(0xFFF59E0B);
+  static const Color red = Color(0xFFEF4444);
+
+  final List<Map<String, String>> leaveRequests = [
     {
       'type': 'Casual Leave',
-      'date': '05 Oct 2026',
-      'days': '1 Day',
-      'reason': 'Personal work',
+      'date': '12 Sep - 13 Sep',
+      'days': '2 Days',
       'status': 'Approved',
+      'reason': 'Personal work',
     },
     {
       'type': 'Sick Leave',
-      'date': '18 Sep 2026',
-      'days': '2 Days',
-      'reason': 'Not feeling well',
+      'date': '05 Sep',
+      'days': '1 Day',
       'status': 'Approved',
+      'reason': 'Health issue',
     },
     {
       'type': 'Casual Leave',
-      'date': '12 Sep 2026',
+      'date': '28 Aug',
       'days': '1 Day',
-      'reason': 'Family function',
       'status': 'Pending',
+      'reason': 'Family function',
     },
   ];
+
+  TextStyle textStyle({
+    double size = 14,
+    FontWeight weight = FontWeight.w500,
+    Color color = textColor,
+  }) {
+    return GoogleFonts.poppins(
+      fontSize: size,
+      fontWeight: weight,
+      color: color,
+    );
+  }
+
+  List<Map<String, String>> get filteredRequests {
+    if (selectedTab == 1) {
+      return leaveRequests
+          .where((item) => item['status'] == 'Pending')
+          .toList();
+    }
+
+    if (selectedTab == 2) {
+      return leaveRequests
+          .where((item) => item['status'] == 'Approved')
+          .toList();
+    }
+
+    return leaveRequests;
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF04111F),
+      backgroundColor: background,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          onPressed: () => Get.back(),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: navy,
+            size: 20,
+          ),
+        ),
+        title: Text(
+          'Leave Management',
+          style: textStyle(
+            size: 19,
+            weight: FontWeight.w700,
+            color: navy,
+          ),
+        ),
+      ),
       body: SafeArea(
-        child: Stack(
-          children: [
-            // =========================================================
-            // BACKGROUND GLOW
-            // =========================================================
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 30),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildBalanceCard(),
+              const SizedBox(height: 26),
+              _buildHistoryHeader(),
+              const SizedBox(height: 18),
+              _buildFilterTabs(),
+              const SizedBox(height: 18),
+              if (filteredRequests.isEmpty)
+                _buildEmptyState()
+              else
+                ...filteredRequests.map(_buildLeaveCard),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
-            Positioned(
-              top: -180,
-              right: -150,
-              child: _glow(
-                390,
-                const Color(0xFF087BFF),
+  Widget _buildBalanceCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [
+            Color(0xFF102B63),
+            Color(0xFF244985),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [
+          BoxShadow(
+            color: navy.withValues(alpha: 0.15),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Leave Balance',
+                  style: textStyle(
+                    size: 14,
+                    weight: FontWeight.w500,
+                    color: Colors.white70,
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.event_available_rounded,
+                  color: Colors.white,
+                  size: 23,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                '12',
+                style: textStyle(
+                  size: 42,
+                  weight: FontWeight.w700,
+                  color: Colors.white,
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(left: 9, bottom: 10),
+                child: Text(
+                  'days remaining',
+                  style: textStyle(
+                    size: 12,
+                    color: Colors.white70,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: const LinearProgressIndicator(
+              value: 0.6,
+              minHeight: 7,
+              backgroundColor: Color(0xFF536A96),
+              valueColor: AlwaysStoppedAnimation<Color>(
+                Colors.white,
               ),
             ),
+          ),
+          const SizedBox(height: 11),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Used: 8 days',
+                style: textStyle(
+                  size: 11,
+                  color: Colors.white70,
+                ),
+              ),
+              Text(
+                'Total: 20 days',
+                style: textStyle(
+                  size: 11,
+                  color: Colors.white70,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 
-            Positioned(
-              bottom: -220,
-              left: -170,
-              child: _glow(
-                420,
-                const Color(0xFF00D9FF),
+  Widget _buildHistoryHeader() {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            'Leave History',
+            style: textStyle(
+              size: 18,
+              weight: FontWeight.w700,
+              color: navy,
+            ),
+          ),
+        ),
+        ElevatedButton.icon(
+          onPressed: _showApplyLeaveSheet,
+          icon: const Icon(
+            Icons.add_rounded,
+            size: 19,
+            color: Colors.white,
+          ),
+          label: Text(
+            'Apply Leave',
+            style: textStyle(
+              size: 12,
+              weight: FontWeight.w600,
+              color: Colors.white,
+            ),
+          ),
+          style: ButtonStyle(
+            backgroundColor:
+                const WidgetStatePropertyAll<Color>(Color(0xFF102B63)),
+            foregroundColor:
+                const WidgetStatePropertyAll<Color>(Colors.white),
+            overlayColor:
+                const WidgetStatePropertyAll<Color>(Color(0xFF243F78)),
+            elevation: const WidgetStatePropertyAll<double>(0),
+            shadowColor:
+                const WidgetStatePropertyAll<Color>(Colors.transparent),
+            padding:
+                const WidgetStatePropertyAll<EdgeInsetsGeometry>(
+              EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            ),
+            shape: WidgetStatePropertyAll<OutlinedBorder>(
+              RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
               ),
             ),
+          ),
+        ),
+      ],
+    );
+  }
 
-            // =========================================================
-            // CONTENT
-            // =========================================================
+  Widget _buildFilterTabs() {
+    const tabs = ['All', 'Pending', 'Approved'];
 
-            SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(
-                20,
-                18,
-                20,
-                35,
+    return Container(
+      padding: const EdgeInsets.all(5),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEDF1F8),
+        borderRadius: BorderRadius.circular(13),
+      ),
+      child: Row(
+        children: List.generate(tabs.length, (index) {
+          final isSelected = selectedTab == index;
+
+          return Expanded(
+            child: GestureDetector(
+              onTap: () {
+                setState(() {
+                  selectedTab = index;
+                });
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(vertical: 11),
+                decoration: BoxDecoration(
+                  color: isSelected ? Colors.white : Colors.transparent,
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.05),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ]
+                      : [],
+                ),
+                child: Center(
+                  child: Text(
+                    tabs[index],
+                    style: textStyle(
+                      size: 12,
+                      weight:
+                          isSelected ? FontWeight.w700 : FontWeight.w500,
+                      color: isSelected ? navy : mutedText,
+                    ),
+                  ),
+                ),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // =====================================================
-                  // HEADER
-                  // =====================================================
+            ),
+          );
+        }),
+      ),
+    );
+  }
 
-                  Row(
+  Widget _buildLeaveCard(Map<String, String> leave) {
+    final status = leave['status'] ?? 'Pending';
+    final isApproved = status == 'Approved';
+    final statusColor = isApproved ? green : orange;
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(17),
+        border: Border.all(color: borderColor),
+        boxShadow: [
+          BoxShadow(
+            color: navy.withValues(alpha: 0.025),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(11),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEEF2FF),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.event_note_rounded,
+                  color: navy,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      leave['type'] ?? '',
+                      style: textStyle(
+                        size: 14,
+                        weight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      leave['date'] ?? '',
+                      style: textStyle(
+                        size: 12,
+                        color: mutedText,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: statusColor.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  status,
+                  style: textStyle(
+                    size: 10,
+                    weight: FontWeight.w600,
+                    color: statusColor,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 15),
+          const Divider(color: borderColor, height: 1),
+          const SizedBox(height: 13),
+          Row(
+            children: [
+              const Icon(
+                Icons.schedule_rounded,
+                size: 16,
+                color: mutedText,
+              ),
+              const SizedBox(width: 7),
+              Text(
+                leave['days'] ?? '',
+                style: textStyle(
+                  size: 12,
+                  color: mutedText,
+                ),
+              ),
+              const SizedBox(width: 16),
+              const Icon(
+                Icons.notes_rounded,
+                size: 16,
+                color: mutedText,
+              ),
+              const SizedBox(width: 7),
+              Expanded(
+                child: Text(
+                  leave['reason'] ?? '',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: textStyle(
+                    size: 12,
+                    color: mutedText,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(
+        vertical: 40,
+        horizontal: 20,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: borderColor),
+      ),
+      child: Column(
+        children: [
+          const Icon(
+            Icons.event_busy_rounded,
+            size: 42,
+            color: mutedText,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'No leave requests found',
+            style: textStyle(
+              size: 14,
+              weight: FontWeight.w600,
+              color: navy,
+            ),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            'Your leave requests will appear here.',
+            textAlign: TextAlign.center,
+            style: textStyle(
+              size: 12,
+              color: mutedText,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showApplyLeaveSheet() {
+    final formKey = GlobalKey<FormState>();
+    final reasonController = TextEditingController();
+
+    String selectedLeaveType = 'Casual Leave';
+    DateTime? fromDate;
+    DateTime? toDate;
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            final totalDays = fromDate != null && toDate != null
+                ? toDate!.difference(fromDate!).inDays + 1
+                : 0;
+
+            Future<void> chooseDate({required bool isFromDate}) async {
+              final picked = await showDatePicker(
+                context: context,
+                initialDate: isFromDate
+                    ? fromDate ?? DateTime.now()
+                    : toDate ?? fromDate ?? DateTime.now(),
+                firstDate: DateTime.now(),
+                lastDate: DateTime.now().add(
+                  const Duration(days: 365),
+                ),
+                builder: (context, child) {
+                  return Theme(
+                    data: Theme.of(context).copyWith(
+                      colorScheme: const ColorScheme.light(
+                        primary: navy,
+                        onPrimary: Colors.white,
+                        surface: Colors.white,
+                        onSurface: textColor,
+                      ),
+                    ),
+                    child: child!,
+                  );
+                },
+              );
+
+              if (picked == null) return;
+
+              setSheetState(() {
+                if (isFromDate) {
+                  fromDate = picked;
+
+                  if (toDate != null && toDate!.isBefore(picked)) {
+                    toDate = picked;
+                  }
+                } else {
+                  toDate = picked;
+                }
+              });
+            }
+
+            return Container(
+              padding: EdgeInsets.fromLTRB(
+                22,
+                12,
+                22,
+                MediaQuery.of(context).viewInsets.bottom + 24,
+              ),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(
+                  top: Radius.circular(26),
+                ),
+              ),
+              child: SingleChildScrollView(
+                child: Form(
+                  key: formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _backButton(),
-
-                      const SizedBox(width: 14),
-
-                      Expanded(
-                        child: Text(
-                          'Leave',
-                          style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontSize: 22,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-
-                      Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF0A2136),
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(
-                            color: const Color(0xFF194663),
-                          ),
-                        ),
-                        child: const Icon(
-                          Icons.calendar_month_rounded,
-                          color: Color(0xFF25DDF7),
-                          size: 21,
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 28),
-
-                  // =====================================================
-                  // LEAVE BALANCE
-                  // =====================================================
-
-                  Text(
-                    'LEAVE BALANCE',
-                    style: GoogleFonts.poppins(
-                      color: const Color(0xFF718AA0),
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 2,
-                    ),
-                  ),
-
-                  const SizedBox(height: 10),
-
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [
-                          Color(0xFF0A2941),
-                          Color(0xFF071A2D),
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(22),
-                      border: Border.all(
-                        color: const Color(0xFF16435F),
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF00D9FF)
-                              .withOpacity(0.06),
-                          blurRadius: 25,
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 58,
-                          height: 58,
+                      Center(
+                        child: Container(
+                          width: 42,
+                          height: 5,
                           decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: const Color(0xFF0A3550),
-                            border: Border.all(
-                              color: const Color(0xFF20DDF7),
+                            color: const Color(0xFFDCE2EC),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 22),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'Apply for Leave',
+                              style: textStyle(
+                                size: 20,
+                                weight: FontWeight.w700,
+                                color: navy,
+                              ),
                             ),
                           ),
-                          child: const Icon(
-                            Icons.event_available_rounded,
-                            color: Color(0xFF25DDF7),
-                            size: 28,
+                          IconButton(
+                            onPressed: () => Navigator.pop(context),
+                            icon: const Icon(
+                              Icons.close_rounded,
+                              color: mutedText,
+                            ),
                           ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      _fieldLabel('Leave Type'),
+                      const SizedBox(height: 8),
+                      DropdownButtonFormField<String>(
+                        value: selectedLeaveType,
+                        decoration: _inputDecoration(
+                          hint: 'Select leave type',
+                          icon: Icons.event_note_rounded,
                         ),
-
-                        const SizedBox(width: 15),
-
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment:
-                                CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Available Leave',
-                                style: GoogleFonts.poppins(
-                                  color: const Color(0xFF8CA4B7),
-                                  fontSize: 11,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                '12 Days',
-                                style: GoogleFonts.poppins(
-                                  color: Colors.white,
-                                  fontSize: 23,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ],
+                        items: const [
+                          DropdownMenuItem(
+                            value: 'Casual Leave',
+                            child: Text('Casual Leave'),
                           ),
-                        ),
-
+                          DropdownMenuItem(
+                            value: 'Sick Leave',
+                            child: Text('Sick Leave'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'Personal Leave',
+                            child: Text('Personal Leave'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'Emergency Leave',
+                            child: Text('Emergency Leave'),
+                          ),
+                        ],
+                        onChanged: (value) {
+                          if (value != null) {
+                            setSheetState(() {
+                              selectedLeaveType = value;
+                            });
+                          }
+                        },
+                      ),
+                      const SizedBox(height: 18),
+                      _fieldLabel('Leave Dates'),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _dateButton(
+                              label: 'From Date',
+                              date: fromDate,
+                              onTap: () => chooseDate(isFromDate: true),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _dateButton(
+                              label: 'To Date',
+                              date: toDate,
+                              onTap: () => chooseDate(isFromDate: false),
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (totalDays > 0) ...[
+                        const SizedBox(height: 12),
                         Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 8,
-                          ),
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF0A2136),
+                            color: const Color(0xFFEEF2FF),
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: const Color(0xFF16435F),
+                          ),
+                          child: Text(
+                            'Total leave: $totalDays day${totalDays > 1 ? 's' : ''}',
+                            style: textStyle(
+                              size: 12,
+                              weight: FontWeight.w600,
+                              color: navy,
+                            ),
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 18),
+                      _fieldLabel('Reason'),
+                      const SizedBox(height: 8),
+                      TextFormField(
+                        controller: reasonController,
+                        maxLines: 3,
+                        style: textStyle(size: 13),
+                        decoration: _inputDecoration(
+                          hint: 'Enter your reason for leave',
+                          icon: Icons.edit_note_rounded,
+                        ),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Please enter a reason';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 24),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 52,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            if (!formKey.currentState!.validate()) return;
+
+                            if (fromDate == null || toDate == null) {
+                              Get.snackbar(
+                                'Select Dates',
+                                'Please select both leave dates.',
+                                snackPosition: SnackPosition.BOTTOM,
+                                backgroundColor: navy,
+                                colorText: Colors.white,
+                                margin: const EdgeInsets.all(16),
+                              );
+                              return;
+                            }
+
+                            if (toDate!.isBefore(fromDate!)) {
+                              Get.snackbar(
+                                'Invalid Dates',
+                                'To date cannot be before from date.',
+                                snackPosition: SnackPosition.BOTTOM,
+                              );
+                              return;
+                            }
+
+                            final newRequest = <String, String>{
+                              'type': selectedLeaveType,
+                              'date':
+                                  '${_formatDate(fromDate!)} - ${_formatDate(toDate!)}',
+                              'days':
+                                  '$totalDays Day${totalDays > 1 ? 's' : ''}',
+                              'status': 'Pending',
+                              'reason': reasonController.text.trim(),
+                            };
+
+                            setState(() {
+                              leaveRequests.insert(0, newRequest);
+                              selectedTab = 0;
+                            });
+
+                            Navigator.pop(context);
+
+                            Get.snackbar(
+                              'Request Submitted',
+                              'Your leave request has been submitted successfully.',
+                              snackPosition: SnackPosition.BOTTOM,
+                              backgroundColor: navy,
+                              colorText: Colors.white,
+                              margin: const EdgeInsets.all(16),
+                              duration: const Duration(seconds: 3),
+                            );
+                          },
+                          style: ButtonStyle(
+                            backgroundColor:
+                                const WidgetStatePropertyAll<Color>(
+                              Color(0xFF102B63),
+                            ),
+                            foregroundColor:
+                                const WidgetStatePropertyAll<Color>(
+                              Colors.white,
+                            ),
+                            overlayColor:
+                                const WidgetStatePropertyAll<Color>(
+                              Color(0xFF243F78),
+                            ),
+                            elevation:
+                                const WidgetStatePropertyAll<double>(0),
+                            shadowColor:
+                                const WidgetStatePropertyAll<Color>(
+                              Colors.transparent,
+                            ),
+                            shape: WidgetStatePropertyAll<OutlinedBorder>(
+                              RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
                             ),
                           ),
                           child: Text(
-                            '2026',
-                            style: GoogleFonts.poppins(
-                              color: const Color(0xFF25DDF7),
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
+                            'Submit Request',
+                            style: textStyle(
+                              size: 14,
+                              weight: FontWeight.w600,
+                              color: Colors.white,
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 14),
-
-                  // =====================================================
-                  // SMALL BALANCE CARDS
-                  // =====================================================
-
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _balanceCard(
-                          title: 'Casual',
-                          value: '06',
-                          icon: Icons.beach_access_rounded,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: _balanceCard(
-                          title: 'Sick',
-                          value: '04',
-                          icon: Icons.local_hospital_outlined,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: _balanceCard(
-                          title: 'Other',
-                          value: '02',
-                          icon: Icons.more_horiz_rounded,
                         ),
                       ),
                     ],
                   ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
 
-                  const SizedBox(height: 28),
+  Widget _fieldLabel(String label) {
+    return Text(
+      label,
+      style: textStyle(
+        size: 13,
+        weight: FontWeight.w600,
+        color: textColor,
+      ),
+    );
+  }
 
-                  // =====================================================
-                  // APPLY LEAVE BUTTON
-                  // =====================================================
+  InputDecoration _inputDecoration({
+    required String hint,
+    required IconData icon,
+  }) {
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: textStyle(
+        size: 12,
+        color: mutedText,
+      ),
+      prefixIcon: Icon(
+        icon,
+        color: navy,
+        size: 20,
+      ),
+      filled: true,
+      fillColor: const Color(0xFFF8FAFD),
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: 14,
+        vertical: 14,
+      ),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(13),
+        borderSide: const BorderSide(color: borderColor),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(13),
+        borderSide: const BorderSide(color: borderColor),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(13),
+        borderSide: const BorderSide(
+          color: navy,
+          width: 1.5,
+        ),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(13),
+        borderSide: const BorderSide(color: red),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(13),
+        borderSide: const BorderSide(color: red),
+      ),
+    );
+  }
 
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [
-                            Color(0xFF176DFF),
-                            Color(0xFF18D5EF),
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF00CFFF)
-                                .withOpacity(0.20),
-                            blurRadius: 22,
-                            offset: const Offset(0, 8),
-                          ),
-                        ],
-                      ),
-                      child: ElevatedButton(
-                        onPressed: _showApplyLeaveSheet,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.transparent,
-                          foregroundColor: Colors.white,
-                          shadowColor: Colors.transparent,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisAlignment:
-                              MainAxisAlignment.center,
-                          children: [
-                            const Icon(
-                              Icons.add_rounded,
-                              size: 22,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Apply Leave',
-                              style: GoogleFonts.poppins(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+  Widget _dateButton({
+    required String label,
+    required DateTime? date,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(13),
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 10,
+          vertical: 14,
+        ),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF8FAFD),
+          borderRadius: BorderRadius.circular(13),
+          border: Border.all(color: borderColor),
+        ),
+        child: Row(
+          children: [
+            const Icon(
+              Icons.calendar_today_rounded,
+              size: 17,
+              color: navy,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: textStyle(
+                      size: 10,
+                      color: mutedText,
                     ),
                   ),
-
-                  const SizedBox(height: 28),
-
-                  // =====================================================
-                  // LEAVE REQUESTS
-                  // =====================================================
-
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          'LEAVE REQUESTS',
-                          style: GoogleFonts.poppins(
-                            color: const Color(0xFF718AA0),
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 2,
-                          ),
-                        ),
-                      ),
-
-                      Text(
-                        '${leaveRequests.length} Requests',
-                        style: GoogleFonts.poppins(
-                          color: const Color(0xFF25DDF7),
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  // =====================================================
-                  // FILTER TABS
-                  // =====================================================
-
-                  Container(
-                    height: 42,
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF071C2E),
-                      borderRadius: BorderRadius.circular(13),
-                      border: Border.all(
-                        color: const Color(0xFF16435F),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        _filterTab(
-                          title: 'All',
-                          index: 0,
-                        ),
-                        _filterTab(
-                          title: 'Pending',
-                          index: 1,
-                        ),
-                        _filterTab(
-                          title: 'Approved',
-                          index: 2,
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  // =====================================================
-                  // REQUEST LIST
-                  // =====================================================
-
-                  ..._filteredRequests().map(
-                    (request) => Padding(
-                      padding: const EdgeInsets.only(
-                        bottom: 10,
-                      ),
-                      child: _leaveRequestCard(request),
-                    ),
-                  ),
-
-                  const SizedBox(height: 25),
-
-                  // =====================================================
-                  // FOOTER
-                  // =====================================================
-
-                  Center(
-                    child: Text(
-                      'LYRA PULSE',
-                      style: GoogleFonts.poppins(
-                        color: const Color(0xFF38566D),
-                        fontSize: 8,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 3,
-                      ),
+                  const SizedBox(height: 4),
+                  Text(
+                    date == null ? 'Select date' : _formatDate(date),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: textStyle(
+                      size: 11,
+                      weight: FontWeight.w600,
+                      color: date == null ? mutedText : navy,
                     ),
                   ),
                 ],
@@ -433,522 +930,22 @@ class _LeaveScreenState extends State<LeaveScreen> {
     );
   }
 
-  // ===============================================================
-  // FILTERED REQUESTS
-  // ===============================================================
+  String _formatDate(DateTime date) {
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
 
-  List<Map<String, dynamic>> _filteredRequests() {
-    if (selectedTab == 0) {
-      return leaveRequests;
-    }
-
-    if (selectedTab == 1) {
-      return leaveRequests
-          .where((item) => item['status'] == 'Pending')
-          .toList();
-    }
-
-    return leaveRequests
-        .where((item) => item['status'] == 'Approved')
-        .toList();
-  }
-
-  // ===============================================================
-  // FILTER TAB
-  // ===============================================================
-
-  Widget _filterTab({
-    required String title,
-    required int index,
-  }) {
-    final selected = selectedTab == index;
-
-    return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          setState(() {
-            selectedTab = index;
-          });
-        },
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: selected
-                ? const Color(0xFF0A3855)
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(9),
-          ),
-          child: Text(
-            title,
-            style: GoogleFonts.poppins(
-              color: selected
-                  ? const Color(0xFF25DDF7)
-                  : const Color(0xFF718AA0),
-              fontSize: 9,
-              fontWeight: selected
-                  ? FontWeight.w700
-                  : FontWeight.w500,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ===============================================================
-  // LEAVE REQUEST CARD
-  // ===============================================================
-
-  Widget _leaveRequestCard(
-    Map<String, dynamic> request,
-  ) {
-    final status = request['status'] as String;
-
-    final Color statusColor = status == 'Approved'
-        ? const Color(0xFF25DDF7)
-        : const Color(0xFFFFC857);
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xCC071A2D),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: const Color(0xFF16435F),
-        ),
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF0A2941),
-                  borderRadius: BorderRadius.circular(13),
-                ),
-                child: const Icon(
-                  Icons.event_note_rounded,
-                  color: Color(0xFF25DDF7),
-                  size: 21,
-                ),
-              ),
-
-              const SizedBox(width: 12),
-
-              Expanded(
-                child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      request['type'],
-                      style: GoogleFonts.poppins(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      request['date'],
-                      style: GoogleFonts.poppins(
-                        color: const Color(0xFF7892A7),
-                        fontSize: 9,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 9,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: statusColor.withOpacity(0.08),
-                  borderRadius: BorderRadius.circular(9),
-                  border: Border.all(
-                    color: statusColor.withOpacity(0.28),
-                  ),
-                ),
-                child: Text(
-                  status,
-                  style: GoogleFonts.poppins(
-                    color: statusColor,
-                    fontSize: 8,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 14),
-
-          const Divider(
-            color: Color(0xFF16384F),
-            height: 1,
-          ),
-
-          const SizedBox(height: 12),
-
-          Row(
-            children: [
-              Expanded(
-                child: _requestInfo(
-                  icon: Icons.timelapse_rounded,
-                  title: 'Duration',
-                  value: request['days'],
-                ),
-              ),
-              Expanded(
-                child: _requestInfo(
-                  icon: Icons.description_outlined,
-                  title: 'Reason',
-                  value: request['reason'],
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ===============================================================
-  // REQUEST INFO
-  // ===============================================================
-
-  Widget _requestInfo({
-    required IconData icon,
-    required String title,
-    required String value,
-  }) {
-    return Row(
-      children: [
-        Icon(
-          icon,
-          color: const Color(0xFF25DDF7),
-          size: 17,
-        ),
-        const SizedBox(width: 7),
-        Expanded(
-          child: Column(
-            crossAxisAlignment:
-                CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: GoogleFonts.poppins(
-                  color: const Color(0xFF718AA0),
-                  fontSize: 8,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                value,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.poppins(
-                  color: const Color(0xFFC4D1DC),
-                  fontSize: 9,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  // ===============================================================
-  // BALANCE CARD
-  // ===============================================================
-
-  Widget _balanceCard({
-    required String title,
-    required String value,
-    required IconData icon,
-  }) {
-    return Container(
-      height: 100,
-      decoration: BoxDecoration(
-        color: const Color(0xFF071C2E),
-        borderRadius: BorderRadius.circular(17),
-        border: Border.all(
-          color: const Color(0xFF16435F),
-        ),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            icon,
-            color: const Color(0xFF25DDF7),
-            size: 20,
-          ),
-          const SizedBox(height: 6),
-          Text(
-            value,
-            style: GoogleFonts.poppins(
-              color: Colors.white,
-              fontSize: 17,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          Text(
-            title,
-            style: GoogleFonts.poppins(
-              color: const Color(0xFF718AA0),
-              fontSize: 8,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ===============================================================
-  // BACK BUTTON
-  // ===============================================================
-
-  Widget _backButton() {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: Get.back,
-        borderRadius: BorderRadius.circular(14),
-        child: Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: const Color(0xFF0A2136),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: const Color(0xFF194663),
-            ),
-          ),
-          child: const Icon(
-            Icons.arrow_back_rounded,
-            color: Colors.white,
-            size: 21,
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ===============================================================
-  // APPLY LEAVE BOTTOM SHEET
-  // ===============================================================
-
-  void _showApplyLeaveSheet() {
-    String selectedLeave = 'Casual Leave';
-
-    Get.bottomSheet(
-      StatefulBuilder(
-        builder: (context, setSheetState) {
-          return Container(
-            padding: const EdgeInsets.fromLTRB(
-              20,
-              18,
-              20,
-              30,
-            ),
-            decoration: const BoxDecoration(
-              color: Color(0xFF071A2D),
-              borderRadius: BorderRadius.vertical(
-                top: Radius.circular(28),
-              ),
-              border: Border(
-                top: BorderSide(
-                  color: Color(0xFF16435F),
-                ),
-              ),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment:
-                  CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 42,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF35566D),
-                      borderRadius:
-                          BorderRadius.circular(10),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
-                Text(
-                  'Apply Leave',
-                  style: GoogleFonts.poppins(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-
-                const SizedBox(height: 5),
-
-                Text(
-                  'Submit your leave request',
-                  style: GoogleFonts.poppins(
-                    color: const Color(0xFF7892A7),
-                    fontSize: 10,
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
-                Text(
-                  'LEAVE TYPE',
-                  style: GoogleFonts.poppins(
-                    color: const Color(0xFF718AA0),
-                    fontSize: 9,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1.5,
-                  ),
-                ),
-
-                const SizedBox(height: 8),
-
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF0A2136),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: const Color(0xFF16435F),
-                    ),
-                  ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: selectedLeave,
-                      dropdownColor:
-                          const Color(0xFF0A2136),
-                      isExpanded: true,
-                      icon: const Icon(
-                        Icons.keyboard_arrow_down_rounded,
-                        color: Color(0xFF25DDF7),
-                      ),
-                      style: GoogleFonts.poppins(
-                        color: Colors.white,
-                        fontSize: 11,
-                      ),
-                      items: const [
-                        DropdownMenuItem(
-                          value: 'Casual Leave',
-                          child: Text('Casual Leave'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'Sick Leave',
-                          child: Text('Sick Leave'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'Other Leave',
-                          child: Text('Other Leave'),
-                        ),
-                      ],
-                      onChanged: (value) {
-                        if (value == null) return;
-
-                        setSheetState(() {
-                          selectedLeave = value;
-                        });
-                      },
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 18),
-
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Get.back();
-
-                      Get.snackbar(
-                        'Leave Request',
-                        'Your leave request has been submitted.',
-                        snackPosition:
-                            SnackPosition.BOTTOM,
-                        backgroundColor:
-                            const Color(0xFF102A40),
-                        colorText: Colors.white,
-                        margin:
-                            const EdgeInsets.all(16),
-                        borderRadius: 14,
-                        icon: const Icon(
-                          Icons.check_circle_outline_rounded,
-                          color: Color(0xFF25DDF7),
-                        ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          const Color(0xFF087BFF),
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius:
-                            BorderRadius.circular(15),
-                      ),
-                    ),
-                    child: Text(
-                      'Submit Request',
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
-      isScrollControlled: true,
-    );
-  }
-
-  // ===============================================================
-  // GLOW
-  // ===============================================================
-
-  Widget _glow(
-    double size,
-    Color color,
-  ) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: RadialGradient(
-          colors: [
-            color.withOpacity(0.11),
-            color.withOpacity(0.025),
-            Colors.transparent,
-          ],
-        ),
-      ),
-    );
+    return '${date.day} ${months[date.month - 1]} ${date.year}';
   }
 }

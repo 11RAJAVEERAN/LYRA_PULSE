@@ -7,27 +7,35 @@ import '../../features/auth/views/otp_screen.dart';
 import '../../features/home/views/home_screen.dart';
 import '../../features/splash/views/splash_screen.dart';
 import '../../features/attendance/views/location_verification_screen.dart';
-import '../../features/permission/views/permission_start_screen.dart';
+
+// Permission
+import '../../features/permission/permission_screen.dart';
 import '../../features/permission/views/permission_submitted_screen.dart';
 import '../../features/permission/views/permission_return_screen.dart';
+
+// Leave
+import '../../features/leave/views/leave_screen.dart';
 
 import 'app_routes.dart';
 
 abstract final class AppPages {
   static final List<GetPage<dynamic>> pages = [
-    // INITIAL
+    // --------------------------------------------------
+    // SPLASH
+    // --------------------------------------------------
     GetPage(
       name: AppRoutes.initial,
       page: () => const SplashScreen(),
     ),
 
-    // SPLASH
     GetPage(
       name: AppRoutes.splash,
       page: () => const SplashScreen(),
     ),
 
+    // --------------------------------------------------
     // LOGIN
+    // --------------------------------------------------
     GetPage(
       name: AppRoutes.login,
       page: () => const LoginScreen(),
@@ -38,7 +46,9 @@ abstract final class AppPages {
       }),
     ),
 
+    // --------------------------------------------------
     // OTP
+    // --------------------------------------------------
     GetPage(
       name: AppRoutes.otp,
       page: () => const OtpScreen(),
@@ -49,37 +59,49 @@ abstract final class AppPages {
       }),
     ),
 
+    // --------------------------------------------------
     // HOME
+    // --------------------------------------------------
     GetPage(
       name: AppRoutes.home,
-      page: () => const HomeScreen(),
+      page: () => HomeScreen(),
     ),
 
-    // ATTENDANCE
+    // --------------------------------------------------
+    // LOCATION VERIFICATION
+    // --------------------------------------------------
     GetPage(
       name: AppRoutes.locationVerification,
       page: () => const LocationVerificationScreen(),
     ),
 
-    // PERMISSION START
+    // --------------------------------------------------
+    // PERMISSION
+    // --------------------------------------------------
     GetPage(
       name: AppRoutes.permissionStart,
-      page: () => const PermissionStartScreen(),
+      page: () => const PermissionScreen(),
     ),
 
+    // --------------------------------------------------
     // PERMISSION SUBMITTED
+    // --------------------------------------------------
     GetPage(
       name: AppRoutes.permissionSubmitted,
       page: () => const PermissionSubmittedScreen(),
     ),
 
+    // --------------------------------------------------
     // PERMISSION RETURN
+    // --------------------------------------------------
     GetPage(
       name: AppRoutes.permissionReturn,
       page: () => const PermissionReturnScreen(),
     ),
 
-    // BOTTOM NAVIGATION
+    // --------------------------------------------------
+    // ATTENDANCE
+    // --------------------------------------------------
     GetPage(
       name: AppRoutes.attendance,
       page: () => const _PlaceholderPage(
@@ -88,14 +110,17 @@ abstract final class AppPages {
       ),
     ),
 
+    // --------------------------------------------------
+    // LEAVE
+    // --------------------------------------------------
     GetPage(
       name: AppRoutes.leave,
-      page: () => const _PlaceholderPage(
-        title: 'Leave',
-        icon: Icons.event_available_rounded,
-      ),
+      page: () => const LeaveScreen(),
     ),
 
+    // --------------------------------------------------
+    // PROFILE
+    // --------------------------------------------------
     GetPage(
       name: AppRoutes.profile,
       page: () => const _PlaceholderPage(
@@ -106,7 +131,9 @@ abstract final class AppPages {
   ];
 }
 
+// ======================================================
 // PLACEHOLDER PAGE
+// ======================================================
 
 class _PlaceholderPage extends StatelessWidget {
   const _PlaceholderPage({

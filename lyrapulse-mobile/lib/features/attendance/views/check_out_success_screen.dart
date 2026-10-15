@@ -7,6 +7,7 @@ class CheckOutSuccessScreen extends StatelessWidget {
   static const Color background = Color(0xFFF7FAFE);
   static const Color navy = Color(0xFF19356C);
   static const Color blue = Color(0xFF3978E8);
+  static const Color skyBlue = Color(0xFF38BDF8);
   static const Color green = Color(0xFF18A66A);
   static const Color textDark = Color(0xFF172B4D);
   static const Color textGrey = Color(0xFF718096);
@@ -25,10 +26,7 @@ class CheckOutSuccessScreen extends StatelessWidget {
               children: [
                 const SizedBox(height: 28),
 
-                // ==========================================================
                 // TOP BAR
-                // ==========================================================
-
                 Row(
                   children: [
                     Container(
@@ -56,7 +54,6 @@ class CheckOutSuccessScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-
                     const Expanded(
                       child: Center(
                         child: Text(
@@ -69,17 +66,13 @@ class CheckOutSuccessScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-
                     const SizedBox(width: 44),
                   ],
                 ),
 
                 const SizedBox(height: 42),
 
-                // ==========================================================
                 // SUCCESS ICON
-                // ==========================================================
-
                 Container(
                   width: 118,
                   height: 118,
@@ -110,10 +103,7 @@ class CheckOutSuccessScreen extends StatelessWidget {
 
                 const SizedBox(height: 28),
 
-                // ==========================================================
                 // TITLE
-                // ==========================================================
-
                 const Text(
                   'CHECK OUT SUCCESSFUL',
                   textAlign: TextAlign.center,
@@ -139,10 +129,7 @@ class CheckOutSuccessScreen extends StatelessWidget {
 
                 const SizedBox(height: 30),
 
-                // ==========================================================
                 // EMPLOYEE CARD
-                // ==========================================================
-
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(20),
@@ -174,9 +161,7 @@ class CheckOutSuccessScreen extends StatelessWidget {
                               size: 25,
                             ),
                           ),
-
                           const SizedBox(width: 14),
-
                           const Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -200,7 +185,6 @@ class CheckOutSuccessScreen extends StatelessWidget {
                               ],
                             ),
                           ),
-
                           Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 10,
@@ -231,8 +215,8 @@ class CheckOutSuccessScreen extends StatelessWidget {
 
                       const SizedBox(height: 20),
 
-                      // Check Out Time
-                      _InfoRow(
+                      // CHECK OUT TIME
+                      const _InfoRow(
                         icon: Icons.logout_rounded,
                         title: 'Check Out Time',
                         value: '06:15 PM',
@@ -240,8 +224,8 @@ class CheckOutSuccessScreen extends StatelessWidget {
 
                       const SizedBox(height: 16),
 
-                      // Working Hours
-                      _InfoRow(
+                      // WORKING HOURS
+                      const _InfoRow(
                         icon: Icons.access_time_rounded,
                         title: 'Working Hours',
                         value: '08h 45m',
@@ -249,18 +233,21 @@ class CheckOutSuccessScreen extends StatelessWidget {
 
                       const SizedBox(height: 16),
 
-                      // Location
-                      _InfoRow(
+                      // LOCATION - SKY BLUE
+                      const _InfoRow(
                         icon: Icons.location_on_rounded,
                         title: 'Location',
                         value: 'Verified',
+                        iconColor: skyBlue,
+                        titleColor: skyBlue,
+                        iconBackgroundColor: Color(0x1F38BDF8),
                         valueColor: green,
                       ),
 
                       const SizedBox(height: 16),
 
-                      // Face
-                      _InfoRow(
+                      // FACE VERIFICATION
+                      const _InfoRow(
                         icon: Icons.face_rounded,
                         title: 'Face Verification',
                         value: 'Verified',
@@ -272,10 +259,7 @@ class CheckOutSuccessScreen extends StatelessWidget {
 
                 const SizedBox(height: 22),
 
-                // ==========================================================
                 // SECURITY MESSAGE
-                // ==========================================================
-
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(
@@ -314,10 +298,7 @@ class CheckOutSuccessScreen extends StatelessWidget {
 
                 const SizedBox(height: 30),
 
-                // ==========================================================
                 // DONE BUTTON
-                // ==========================================================
-
                 SizedBox(
                   width: double.infinity,
                   height: 54,
@@ -345,10 +326,7 @@ class CheckOutSuccessScreen extends StatelessWidget {
 
                 const SizedBox(height: 28),
 
-                // ==========================================================
                 // FOOTER
-                // ==========================================================
-
                 const Text(
                   'LYRA PULSE',
                   style: TextStyle(
@@ -379,21 +357,24 @@ class CheckOutSuccessScreen extends StatelessWidget {
   }
 }
 
-// ==========================================================================
 // INFO ROW
-// ==========================================================================
-
 class _InfoRow extends StatelessWidget {
   final IconData icon;
   final String title;
   final String value;
   final Color? valueColor;
+  final Color iconColor;
+  final Color titleColor;
+  final Color iconBackgroundColor;
 
   const _InfoRow({
     required this.icon,
     required this.title,
     required this.value,
     this.valueColor,
+    this.iconColor = const Color(0xFF3978E8),
+    this.titleColor = const Color(0xFF718096),
+    this.iconBackgroundColor = const Color(0xFFF1F5FB),
   });
 
   @override
@@ -404,13 +385,13 @@ class _InfoRow extends StatelessWidget {
           width: 38,
           height: 38,
           decoration: BoxDecoration(
-            color: const Color(0xFFF1F5FB),
+            color: iconBackgroundColor,
             borderRadius: BorderRadius.circular(11),
           ),
           child: Icon(
             icon,
             size: 19,
-            color: const Color(0xFF3978E8),
+            color: iconColor,
           ),
         ),
 
@@ -419,10 +400,10 @@ class _InfoRow extends StatelessWidget {
         Expanded(
           child: Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w500,
-              color: Color(0xFF718096),
+              color: titleColor,
             ),
           ),
         ),

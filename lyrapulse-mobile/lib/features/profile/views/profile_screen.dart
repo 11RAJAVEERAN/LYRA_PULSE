@@ -37,6 +37,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: background,
+
+      // ==========================================================
+      // APP BAR
+      // ==========================================================
+
       appBar: AppBar(
         backgroundColor: background,
         elevation: 0,
@@ -62,9 +67,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ],
       ),
+
+      // ==========================================================
+      // BODY
+      // ==========================================================
+
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 30),
+          padding: const EdgeInsets.fromLTRB(
+            20,
+            8,
+            20,
+            30,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -529,7 +544,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         builder: (context, setDialogState) {
           return Dialog(
             backgroundColor: Colors.white,
-            insetPadding: const EdgeInsets.symmetric(horizontal: 20),
+            insetPadding: const EdgeInsets.symmetric(
+              horizontal: 20,
+            ),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(24),
             ),
@@ -539,9 +556,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // ------------------------------------------------
+                  // ==================================================
                   // TITLE
-                  // ------------------------------------------------
+                  // ==================================================
 
                   Row(
                     children: [
@@ -550,7 +567,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         height: 44,
                         decoration: BoxDecoration(
                           color: const Color(0xFFF0F4FF),
-                          borderRadius: BorderRadius.circular(13),
+                          borderRadius:
+                              BorderRadius.circular(13),
                         ),
                         child: const Icon(
                           Icons.edit_outlined,
@@ -583,9 +601,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                   const SizedBox(height: 20),
 
-                  // ------------------------------------------------
+                  // ==================================================
                   // PROFILE PICTURE
-                  // ------------------------------------------------
+                  // ==================================================
 
                   Center(
                     child: Column(
@@ -597,9 +615,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               height: 92,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: const Color(0xFFF0F4FF),
+                                color:
+                                    const Color(0xFFF0F4FF),
                                 border: Border.all(
-                                  color: const Color(0xFFE0E7F5),
+                                  color:
+                                      const Color(0xFFE0E7F5),
                                   width: 2,
                                 ),
                               ),
@@ -626,7 +646,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 onTap: () async {
                                   final XFile? pickedFile =
                                       await _imagePicker.pickImage(
-                                    source: ImageSource.gallery,
+                                    source:
+                                        ImageSource.gallery,
                                     imageQuality: 80,
                                   );
 
@@ -691,9 +712,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                   const SizedBox(height: 10),
 
-                  // ------------------------------------------------
+                  // ==================================================
                   // EMPLOYEE ID
-                  // ------------------------------------------------
+                  // ==================================================
 
                   _editField(
                     controller: employeeIdController,
@@ -703,9 +724,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                   const SizedBox(height: 14),
 
-                  // ------------------------------------------------
+                  // ==================================================
                   // NAME
-                  // ------------------------------------------------
+                  // ==================================================
 
                   _editField(
                     controller: nameController,
@@ -715,9 +736,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                   const SizedBox(height: 14),
 
-                  // ------------------------------------------------
+                  // ==================================================
                   // PHONE
-                  // ------------------------------------------------
+                  // ==================================================
 
                   _editField(
                     controller: phoneController,
@@ -728,22 +749,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                   const SizedBox(height: 14),
 
-                  // ------------------------------------------------
+                  // ==================================================
                   // EMAIL
-                  // ------------------------------------------------
+                  // ==================================================
 
                   _editField(
                     controller: emailController,
                     label: 'Email Address',
                     icon: Icons.email_outlined,
-                    keyboardType: TextInputType.emailAddress,
+                    keyboardType:
+                        TextInputType.emailAddress,
                   ),
 
                   const SizedBox(height: 14),
 
-                  // ------------------------------------------------
+                  // ==================================================
                   // OFFICE LOCATION
-                  // ------------------------------------------------
+                  // ==================================================
 
                   _editField(
                     controller: locationController,
@@ -753,9 +775,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                   const SizedBox(height: 14),
 
-                  // ------------------------------------------------
+                  // ==================================================
                   // DESIGNATION
-                  // ------------------------------------------------
+                  // ==================================================
 
                   _editField(
                     controller: designationController,
@@ -765,9 +787,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                   const SizedBox(height: 14),
 
-                  // ------------------------------------------------
+                  // ==================================================
                   // DEPARTMENT
-                  // ------------------------------------------------
+                  // ==================================================
 
                   _editField(
                     controller: departmentController,
@@ -777,22 +799,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                   const SizedBox(height: 22),
 
-                  // ------------------------------------------------
-                  // SAVE
-                  // ------------------------------------------------
+                  // ==================================================
+                  // SAVE CHANGES
+                  // ==================================================
 
                   SizedBox(
                     width: double.infinity,
                     height: 52,
                     child: ElevatedButton(
                       onPressed: () {
+                        // ------------------------------------------------
+                        // VALIDATION
+                        // ------------------------------------------------
+
                         if (employeeIdController.text
                                 .trim()
                                 .isEmpty ||
-                            nameController.text.trim().isEmpty ||
-                            phoneController.text.trim().isEmpty ||
-                            emailController.text.trim().isEmpty ||
-                            locationController.text.trim().isEmpty ||
+                            nameController.text
+                                .trim()
+                                .isEmpty ||
+                            phoneController.text
+                                .trim()
+                                .isEmpty ||
+                            emailController.text
+                                .trim()
+                                .isEmpty ||
+                            locationController.text
+                                .trim()
+                                .isEmpty ||
                             designationController.text
                                 .trim()
                                 .isEmpty ||
@@ -802,20 +836,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           Get.snackbar(
                             'Required Fields',
                             'Please fill all fields',
-                            snackPosition: SnackPosition.BOTTOM,
+                            snackPosition:
+                                SnackPosition.BOTTOM,
                             backgroundColor: navy,
                             colorText: Colors.white,
-                            margin: const EdgeInsets.all(16),
+                            margin:
+                                const EdgeInsets.all(16),
                             borderRadius: 12,
                           );
                           return;
                         }
 
+                        // ------------------------------------------------
+                        // SAVE PROFILE DATA
+                        // ------------------------------------------------
+
                         setState(() {
                           profileImage = selectedImage;
 
                           employeeId =
-                              employeeIdController.text.trim();
+                              employeeIdController.text
+                                  .trim();
 
                           employeeName =
                               nameController.text.trim();
@@ -827,26 +868,53 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               emailController.text.trim();
 
                           officeLocation =
-                              locationController.text.trim();
+                              locationController.text
+                                  .trim();
 
                           designation =
-                              designationController.text.trim();
+                              designationController.text
+                                  .trim();
 
                           department =
-                              departmentController.text.trim();
+                              departmentController.text
+                                  .trim();
                         });
 
+                        // ------------------------------------------------
+                        // CLOSE EDIT PROFILE DIALOG
+                        // ------------------------------------------------
+
                         Get.back();
+
+                        // ------------------------------------------------
+                        // SUCCESS MESSAGE
+                        // ------------------------------------------------
 
                         Get.snackbar(
                           'Profile Updated',
                           'Your profile has been updated successfully.',
-                          snackPosition: SnackPosition.BOTTOM,
+                          snackPosition:
+                              SnackPosition.BOTTOM,
                           backgroundColor: green,
                           colorText: Colors.white,
-                          margin: const EdgeInsets.all(16),
+                          margin:
+                              const EdgeInsets.all(16),
                           borderRadius: 12,
-                          duration: const Duration(seconds: 2),
+                          duration:
+                              const Duration(seconds: 2),
+                        );
+
+                        // ------------------------------------------------
+                        // GO TO HOME SCREEN
+                        // ------------------------------------------------
+
+                        Future.delayed(
+                          const Duration(seconds: 2),
+                          () {
+                            if (mounted) {
+                              Get.offAllNamed('/home');
+                            }
+                          },
                         );
                       },
                       style: ElevatedButton.styleFrom(
@@ -854,7 +922,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         foregroundColor: Colors.white,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius:
+                              BorderRadius.circular(14),
                         ),
                       ),
                       child: const Text(
@@ -938,14 +1007,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // ============================================================
 
   void _showChangePasswordDialog() {
-    final currentPasswordController = TextEditingController();
-    final newPasswordController = TextEditingController();
-    final confirmPasswordController = TextEditingController();
+    final currentPasswordController =
+        TextEditingController();
+
+    final newPasswordController =
+        TextEditingController();
+
+    final confirmPasswordController =
+        TextEditingController();
 
     Get.dialog(
       Dialog(
         backgroundColor: Colors.white,
-        insetPadding: const EdgeInsets.symmetric(horizontal: 20),
+        insetPadding:
+            const EdgeInsets.symmetric(horizontal: 20),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),
         ),
@@ -1014,10 +1089,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       Get.snackbar(
                         'Password Error',
                         'New password and confirm password do not match.',
-                        snackPosition: SnackPosition.BOTTOM,
-                        backgroundColor: Colors.redAccent,
+                        snackPosition:
+                            SnackPosition.BOTTOM,
+                        backgroundColor:
+                            Colors.redAccent,
                         colorText: Colors.white,
-                        margin: const EdgeInsets.all(16),
+                        margin:
+                            const EdgeInsets.all(16),
                       );
                       return;
                     }
@@ -1027,17 +1105,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     Get.snackbar(
                       'Success',
                       'Password updated successfully.',
-                      snackPosition: SnackPosition.BOTTOM,
+                      snackPosition:
+                          SnackPosition.BOTTOM,
                       backgroundColor: green,
                       colorText: Colors.white,
-                      margin: const EdgeInsets.all(16),
+                      margin:
+                          const EdgeInsets.all(16),
                     );
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: navy,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius:
+                          BorderRadius.circular(12),
                     ),
                   ),
                   child: const Text(
@@ -1151,6 +1232,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ElevatedButton(
             onPressed: () {
               Get.back();
+
               Get.offAllNamed('/login');
             },
             style: ElevatedButton.styleFrom(
