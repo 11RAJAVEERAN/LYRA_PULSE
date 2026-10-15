@@ -30,7 +30,18 @@ const DOCUMENT_GROUPS = [
   { title: 'Passport Size Photo', docType: 'PHOTO', sides: [['SINGLE', '']] },
 ]
 
-const sectionBlock = { display: 'grid', gap: 2, px: 3, py: 2.5 }
+// Two columns on wider screens, single column on narrow ones; `fullRow` spans both columns.
+const sectionBlock = { display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' }, columnGap: 2, rowGap: 1.75, px: 3, py: 2 }
+const fullRow = { gridColumn: '1 / -1' }
+
+// Scoped to this drawer only: compact, consistent inputs that follow the Login screen's field look
+// (the border/hover/focus/error states and selection controls now come from theme.js).
+const formFieldStyles = {
+  '& .MuiInputBase-root:not(.MuiInputBase-multiline)': { minHeight: 44 },
+  '& .MuiOutlinedInput-input::placeholder': { color: colors.textSecondary, opacity: 0.75 },
+  '& .MuiInputLabel-root': { fontWeight: 500 },
+  '& .MuiFormHelperText-root': { marginTop: 0.5, lineHeight: 1.35 },
+}
 
 export function EmployeeDetailsPanel({ open, employeeId, rows, options, optionsLoading, optionsError, onRetryOptions, onClose, onSaved }) {
   const isEdit = Boolean(employeeId)
@@ -152,9 +163,9 @@ export function EmployeeDetailsPanel({ open, employeeId, rows, options, optionsL
     })
   }
 
-  const selectField = ({ name, label, items, onChange, placeholder, required, disabled, helper }) => (
+  const selectField = ({ name, label, items, onChange, placeholder, required, disabled, helper, sx }) => (
     <TextField
-      select size="small" fullWidth name={name} label={label} required={required}
+      select size="small" fullWidth name={name} label={label} required={required} sx={sx}
       value={form[name] !== '' && items.some((item) => sameId(item.id, form[name])) ? form[name] : ''}
       onChange={onChange ?? ((event) => setValue(name, event.target.value))}
       onBlur={() => touch(name)}
@@ -175,8 +186,8 @@ export function EmployeeDetailsPanel({ open, employeeId, rows, options, optionsL
   )
 
   const radioGroup = (name, label, choices, required, disabled) => (
-    <FormControl error={Boolean(visibleError(name))} disabled={saving || disabled}>
-      <FormLabel id={`${name}-label`} required={required} sx={{ fontSize: 13 }}>{label}</FormLabel>
+    <FormControl error={Boolean(visibleError(name))} disabled={saving || disabled} sx={fullRow}>
+      <FormLabel id={`${name}-label`} required={required} sx={{ fontSize: 13, fontWeight: 500 }}>{label}</FormLabel>
       <RadioGroup row aria-labelledby={`${name}-label`} name={name} value={form[name]} onChange={(event) => setValue(name, event.target.value)}>
         {choices.map(([value, text]) => <FormControlLabel key={value} value={value} control={<Radio size="small" />} label={text} />)}
       </RadioGroup>
@@ -278,42 +289,47 @@ export function EmployeeDetailsPanel({ open, employeeId, rows, options, optionsL
   const handleClose = () => { if (!saving) onClose() }
 
   const sensitiveNote = (
-    <Alert severity="info" sx={{ mx: 3, my: 2 }}>You do not have permission to view or change this information.</Alert>
+    <Alert severity="info" sx={{ mx: 3, my: 2, ...fullRow }}>You do not have permission to view or change this information.</Alert>
   )
 
   return (
-    <Drawer anchor="right" open={open} onClose={handleClose} slotProps={{ paper: { sx: { width: { xs: '100%', sm: 560 }, maxWidth: '100%' } } }}>
-      <Box component="form" onSubmit={save} noValidate sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-        <Box sx={{ bgcolor: colors.infoBackground, px: 3, py: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${colors.border}` }}>
-          <Typography variant="h6" component="h2" sx={{ fontWeight: 600 }}>{isEdit ? 'Edit Details' : 'Add Details'}</Typography>
-          <IconButton aria-label="Close" onClick={handleClose} disabled={saving} size="small"><X size={20} /></IconButton>
+    <Drawer anchor="right" open={open} onClose={handleClose} slotProps={{ paper: { sx: { width: { xs: '100%', sm: 600, lg: 680 }, maxWidth: '100%' } }, backdrop: { sx: { backgroundColor: 'rgba(15, 23, 42, 0.32)' } } }}>
+      <Box component="form" onSubmit={save} noValidate sx={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, color: colors.textPrimary, ...formFieldStyles }}>
+        <Box sx={{ bgcolor: colors.surface, px: 3, py: 1.75, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, borderBottom: `1px solid ${colors.border}` }}>
+          <Box sx={{ minWidth: 0 }}>
+            <Typography variant="h6" component="h2" sx={{ fontWeight: 650, lineHeight: 1.3 }}>{isEdit ? 'Edit Details' : 'Add Employee'}</Typography>
+            <Typography variant="caption" sx={{ display: 'block', color: colors.textSecondary }}>
+              {isEdit ? 'Update this employee’s profile and documents.' : 'Enter the employee’s profile, payroll and documents.'}
+            </Typography>
+          </Box>
+          <IconButton aria-label="Close" onClick={handleClose} disabled={saving} size="small" sx={{ color: colors.textSecondary }}><X size={20} /></IconButton>
         </Box>
 
-        <Box sx={{ flex: 1, overflowY: 'auto' }}>
+        <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto', overflowX: 'hidden', bgcolor: colors.surface }}>
           {loading ? (
             <Box sx={{ py: 6, display: 'flex', justifyContent: 'center' }}><CircularProgress size={26} aria-label="Loading" /></Box>
           ) : loadError ? (
             <Alert severity="error" sx={{ m: 3 }} action={<Button color="inherit" size="small" onClick={loadPanelData}>Retry</Button>}>{loadError}</Alert>
           ) : (
             <>
-              {formError ? <Alert severity={activeEmployeeId && !isEdit ? 'warning' : 'error'} sx={{ mx: 3, mt: 2 }}>{formError}</Alert> : null}
+              {formError ? <Alert severity={activeEmployeeId && !isEdit ? 'warning' : 'error'} sx={{ mx: 3, mt: 1.5 }}>{formError}</Alert> : null}
               {optionsError ? (
-                <Alert severity="warning" sx={{ mx: 3, mt: 2 }} action={<Button color="inherit" size="small" onClick={onRetryOptions}>Retry</Button>}>
+                <Alert severity="warning" sx={{ mx: 3, mt: 1.5 }} action={<Button color="inherit" size="small" onClick={onRetryOptions}>Retry</Button>}>
                   Branch, department and designation options could not be loaded. {optionsError}
                 </Alert>
               ) : null}
               {mastersError ? (
-                <Alert severity="warning" sx={{ mx: 3, mt: 2 }} action={<Button color="inherit" size="small" onClick={loadPanelData}>Retry</Button>}>
+                <Alert severity="warning" sx={{ mx: 3, mt: 1.5 }} action={<Button color="inherit" size="small" onClick={loadPanelData}>Retry</Button>}>
                   Some dropdown options could not be loaded. {mastersError}
                 </Alert>
               ) : null}
 
               {SECTIONS.map((section) => (
                 <Accordion key={section.id} expanded={expanded.includes(section.id)} onChange={() => toggleSection(section.id)} disableGutters square elevation={0}
-                  sx={{ borderBottom: `1px solid ${colors.border}`, '&::before': { display: 'none' } }}>
+                  sx={{ borderBottom: `1px solid ${colors.border}`, '&::before': { display: 'none' }, '&.Mui-expanded': { margin: 0 } }}>
                   <AccordionSummary expandIcon={<ChevronDown size={18} />} aria-controls={`${section.id}-content`} id={`${section.id}-header`}
-                    sx={{ px: 3, '& .MuiAccordionSummary-content': { my: 1.75 } }}>
-                    <Typography sx={{ fontWeight: 500 }}>{section.title}</Typography>
+                    sx={{ px: 3, minHeight: 48, '&.Mui-expanded': { minHeight: 48 }, '&:hover': { bgcolor: colors.hover }, '&.Mui-focusVisible': { bgcolor: colors.selected }, '& .MuiAccordionSummary-content': { my: 1.25 }, '& .MuiAccordionSummary-expandIconWrapper': { color: colors.textSecondary } }}>
+                    <Typography sx={{ fontWeight: 600, fontSize: '0.9375rem' }}>{section.title}</Typography>
                   </AccordionSummary>
                   <AccordionDetails sx={{ p: 0 }} id={`${section.id}-content`}>
                     {section.id === 'basic' ? (
@@ -322,7 +338,7 @@ export function EmployeeDetailsPanel({ open, employeeId, rows, options, optionsL
                         <TextField {...inputProps('name')} label="Employee Name" required placeholder="Enter Employee Name" autoComplete="name" />
                         <TextField {...inputProps('display_name')} label="Display Name" placeholder="Enter Display Name" />
                         {mobileField('phone_number', 'Mobile Number', true)}
-                        <TextField {...inputProps('email')} label="Email" type="email" placeholder="Enter Employee Email" />
+                        <TextField {...inputProps('email')} label="Email" type="email" placeholder="Enter Employee Email" sx={fullRow} />
                         {selectField({ name: 'branch', label: 'Master Branch', items: branchItems, onChange: changeBranch, placeholder: 'Select Master Branches' })}
                         {selectField({ name: 'department', label: 'Department', required: true, items: departmentItems, onChange: changeDepartment, placeholder: 'Select Department', disabled: form.branch === '', helper: form.branch === '' ? 'Select a branch first' : undefined })}
                         {selectField({ name: 'designation', label: 'Designation', required: true, items: designationItems, placeholder: 'Select Designation', disabled: form.department === '', helper: form.department === '' ? 'Select a department first' : undefined })}
@@ -330,10 +346,10 @@ export function EmployeeDetailsPanel({ open, employeeId, rows, options, optionsL
                         {radioGroup('door_lock_permission', 'Door Lock Permission', [['yes', 'Yes'], ['no', 'No']], true)}
                         <TextField {...inputProps('pf_number')} label="Provident Fund (PF)" placeholder="Enter PF Account Number" />
                         <TextField {...inputProps('uan_number', { digits: 12 })} label="Universal Account Number (UAN)" placeholder="Enter 12-Digit UAN Number" slotProps={{ htmlInput: { inputMode: 'numeric', maxLength: 12 } }} />
-                        <TextField {...inputProps('esic_number', { digits: 10 })} label="Employee State Insurance Corporation (ESIC)" placeholder="Enter 10-Digit ESIC IP Number" slotProps={{ htmlInput: { inputMode: 'numeric', maxLength: 10 } }} />
-                        <TextField {...inputProps('address')} label="Address" multiline minRows={3} />
+                        <TextField sx={fullRow} {...inputProps('esic_number', { digits: 10 })} label="Employee State Insurance Corporation (ESIC)" placeholder="Enter 10-Digit ESIC IP Number" slotProps={{ htmlInput: { inputMode: 'numeric', maxLength: 10 } }} />
+                        <TextField {...inputProps('address')} label="Address" multiline minRows={2} sx={fullRow} />
                         {isEdit ? (
-                          <FormControlLabel control={<Switch checked={form.is_active} onChange={(event) => setValue('is_active', event.target.checked)} disabled={saving} />}
+                          <FormControlLabel sx={fullRow} control={<Switch checked={form.is_active} onChange={(event) => setValue('is_active', event.target.checked)} disabled={saving} />}
                             label={form.is_active ? 'Active employee' : 'Inactive employee'} />
                         ) : null}
                       </Box>
@@ -341,7 +357,7 @@ export function EmployeeDetailsPanel({ open, employeeId, rows, options, optionsL
 
                     {section.id === 'salary' ? (
                       <Box sx={sectionBlock}>
-                        <TextField {...inputProps('joining_date')} label="Date of Joining" type="date" slotProps={{ inputLabel: { shrink: true } }} sx={{ maxWidth: 240 }} />
+                        <TextField {...inputProps('joining_date')} label="Date of Joining" type="date" slotProps={{ inputLabel: { shrink: true } }} />
                         {sensitiveVisible ? (
                           <>
                             {radioGroup('salary_type', 'Salary Type', [['MONTHLY', 'Monthly'], ['HOURLY', 'Hourly'], ['COMPLIANCE', 'Compliance']], true, !sensitiveEditable)}
@@ -371,11 +387,11 @@ export function EmployeeDetailsPanel({ open, employeeId, rows, options, optionsL
                     {section.id === 'legal' ? (
                       sensitiveVisible ? (
                         <Box sx={sectionBlock}>
-                          <Alert severity="info" icon={false} sx={{ py: 0.5 }}>Supported: PNG, JPG, JPEG, and PDF | Max size: 10 MB (Img) and 1 MB (PDFs)</Alert>
+                          <Alert severity="info" icon={false} sx={{ py: 0.5, ...fullRow }}>Supported: PNG, JPG, JPEG, and PDF | Max size: 10 MB (Img) and 1 MB (PDFs)</Alert>
                           {DOCUMENT_GROUPS.map((group) => (
-                            <Box key={group.docType} sx={{ border: `1px solid ${colors.border}`, borderRadius: 1.5, p: 2, display: 'grid', gap: 1.5 }}>
-                              <Typography sx={{ fontWeight: 600 }}>{group.title}</Typography>
-                              <Box sx={{ display: 'grid', gridTemplateColumns: group.sides.length > 1 ? { xs: '1fr', sm: '1fr 1fr' } : '1fr', gap: 2 }}>
+                            <Box key={group.docType} sx={{ ...fullRow, minWidth: 0, border: `1px solid ${colors.border}`, bgcolor: colors.surface, borderRadius: 1.5, p: 1.5, display: 'grid', gap: 1 }}>
+                              <Typography sx={{ fontWeight: 600, fontSize: '0.875rem' }}>{group.title}</Typography>
+                              <Box sx={{ display: 'grid', gridTemplateColumns: group.sides.length > 1 ? { xs: '1fr', sm: '1fr 1fr' } : '1fr', gap: 1.5 }}>
                                 {group.sides.map(([side, label]) => {
                                   const key = `${group.docType}:${side}`
                                   const stored = slotStored(group.docType, side)
@@ -388,7 +404,7 @@ export function EmployeeDetailsPanel({ open, employeeId, rows, options, optionsL
                               </Box>
                             </Box>
                           ))}
-                          {!isEdit && !activeEmployeeId ? <Typography variant="caption" color="text.secondary">Selected files are uploaded when you press Save Details.</Typography> : null}
+                          {!isEdit && !activeEmployeeId ? <Typography variant="caption" color="text.secondary" sx={fullRow}>Selected files are uploaded when you press Save Details.</Typography> : null}
                         </Box>
                       ) : sensitiveNote
                     ) : null}
@@ -398,14 +414,14 @@ export function EmployeeDetailsPanel({ open, employeeId, rows, options, optionsL
                         {mobileField('emergency_contact_number', 'Contact Number', false)}
                         <TextField {...inputProps('emergency_contact_name')} label="Contact Person Name" placeholder="Enter Person Name" />
                         <TextField {...inputProps('emergency_contact_relation')} label="Relation with the Contact" placeholder="Enter Relation" />
-                        <TextField {...inputProps('emergency_contact_address')} label="Address" multiline minRows={3} />
+                        <TextField {...inputProps('emergency_contact_address')} label="Address" multiline minRows={2} sx={fullRow} />
                       </Box>
                     ) : null}
 
                     {section.id === 'personal' ? (
                       <Box sx={sectionBlock}>
                         <TextField {...inputProps('date_of_birth', { props: { slotProps: { inputLabel: { shrink: true }, htmlInput: { max: new Date().toISOString().slice(0, 10) } } } })}
-                          label="Date of Birth" type="date" sx={{ maxWidth: 240 }} />
+                          label="Date of Birth" type="date" />
                       </Box>
                     ) : null}
                   </AccordionDetails>
@@ -415,7 +431,7 @@ export function EmployeeDetailsPanel({ open, employeeId, rows, options, optionsL
           )}
         </Box>
 
-        <Box sx={{ bgcolor: colors.infoBackground, px: 3, py: 2, display: 'flex', justifyContent: 'flex-end', gap: 1.5, borderTop: `1px solid ${colors.border}` }}>
+        <Box sx={{ flexShrink: 0, bgcolor: colors.surface, px: 3, py: 1.5, display: 'flex', justifyContent: 'flex-end', gap: 1.5, borderTop: `1px solid ${colors.border}`, boxShadow: '0 -2px 8px rgba(15, 23, 42, 0.04)' }}>
           <Button type="button" variant="outlined" color="inherit" onClick={handleClose} disabled={saving} sx={{ bgcolor: colors.surface }}>Close</Button>
           <Button type="submit" variant="contained" disabled={saving || loading || Boolean(loadError) || !isValid}>
             {saving ? 'Saving…' : 'Save Details'}

@@ -27,13 +27,13 @@ export function DocumentSlot({ label, stored, staged, error, busy, disabled, onP
         sx={{
           border: `1px dashed ${dragging ? colors.focus : error ? colors.error : colors.borderStrong}`,
           bgcolor: dragging ? colors.selected : colors.surfaceMuted,
-          borderRadius: 1.5, minHeight: 112, p: 1.5, display: 'flex', flexDirection: 'column',
+          borderRadius: 1.5, minHeight: 96, p: 1.25, minWidth: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column',
           alignItems: 'center', justifyContent: 'center', textAlign: 'center', gap: 0.5,
         }}
       >
         {busy ? <CircularProgress size={22} aria-label="Uploading" /> : hasFile ? (
           <>
-            <Typography variant="body2" sx={{ fontWeight: 600, wordBreak: 'break-all' }}>{staged ? staged.name : stored.original_name}</Typography>
+            <Typography variant="body2" sx={{ fontWeight: 600, wordBreak: 'break-all', maxWidth: '100%' }}>{staged ? staged.name : stored.original_name}</Typography>
             <Typography variant="caption" color="text.secondary">{staged ? 'Ready to upload on save' : 'Uploaded'}</Typography>
             <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', justifyContent: 'center' }}>
               {!staged && stored ? <Button size="small" onClick={onView}>View</Button> : null}

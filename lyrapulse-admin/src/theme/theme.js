@@ -12,6 +12,15 @@ const shadows = [
   ...Array.from({ length: 20 }, (_, index) => `0 16px 40px rgba(15, 23, 42, ${0.13 + index * 0.005})`),
 ]
 
+const selectionControl = {
+  color: colors.borderStrong,
+  '&:hover': { backgroundColor: colors.selected },
+  '&.Mui-checked, &.MuiCheckbox-indeterminate': { color: colors.primaryBlue },
+  '&.Mui-focusVisible': { backgroundColor: colors.focusSubtle, outline: `2px solid ${colors.primaryBlue}`, outlineOffset: -2 },
+  '&.Mui-disabled': { color: colors.disabled, opacity: 0.55 },
+  '&.Mui-checked.Mui-disabled': { color: colors.primaryBlue, opacity: 0.45 },
+}
+
 const theme = createTheme({
   palette: {
     primary: {
@@ -82,11 +91,22 @@ const theme = createTheme({
         },
         sizeSmall: { minHeight: 32, paddingInline: 10 },
         sizeLarge: { minHeight: 48, paddingInline: 20 },
-        containedPrimary: {
-          '&:hover': { boxShadow: 'none' },
-        },
         outlined: { borderColor: colors.border, '&:hover': { borderColor: colors.textSecondary } },
       },
+      // Primary action: the same primary -> secondary gradient used by the Login and Save Details buttons.
+      variants: [
+        {
+          props: { variant: 'contained', color: 'primary' },
+          style: {
+            color: colors.surface,
+            background: palette.lyra.primaryGradient,
+            boxShadow: palette.lyra.actionShadow,
+            fontWeight: 600,
+            '&:hover': { background: palette.lyra.primaryGradient, boxShadow: palette.lyra.actionShadow },
+            '&.Mui-disabled': { color: colors.surface, background: colors.disabled, boxShadow: 'none' },
+          },
+        },
+      ],
     },
     MuiIconButton: {
       styleOverrides: {
@@ -120,7 +140,34 @@ const theme = createTheme({
     MuiFormHelperText: {
       styleOverrides: { root: { marginInline: 2, fontSize: '0.75rem' } },
     },
-    MuiFormControlLabel: { styleOverrides: { label: { fontSize: '0.875rem' } } },
+    MuiFormControlLabel: { styleOverrides: { label: { fontSize: '0.875rem', '&.Mui-disabled': { color: colors.disabled } } } },
+    // Selection controls share one rule: borderStrong when off, primaryBlue when on (same as the Login "Remember me" checkbox).
+    MuiCheckbox: { styleOverrides: { root: selectionControl } },
+    MuiRadio: { styleOverrides: { root: selectionControl } },
+    MuiSwitch: {
+      styleOverrides: {
+        switchBase: {
+          '&:hover': { backgroundColor: colors.selected },
+          '&.Mui-checked': { color: colors.surface, '&:hover': { backgroundColor: colors.selected } },
+          '&.Mui-checked + .MuiSwitch-track': { backgroundColor: colors.primaryBlue, opacity: 1 },
+          '&.Mui-focusVisible': { outline: `2px solid ${colors.primaryBlue}`, outlineOffset: 1 },
+          '&.Mui-disabled': { color: colors.surface },
+          '&.Mui-disabled + .MuiSwitch-track': { opacity: 0.45 },
+        },
+        thumb: { color: colors.surface },
+        track: { backgroundColor: colors.borderStrong, opacity: 1 },
+      },
+    },
+    MuiMenuItem: {
+      styleOverrides: {
+        root: {
+          '&.Mui-selected': { backgroundColor: colors.selected, '&:hover': { backgroundColor: colors.focusSubtle } },
+          '&.Mui-focusVisible': { backgroundColor: colors.focusSubtle },
+        },
+      },
+    },
+    MuiLink: { styleOverrides: { root: { color: colors.primaryBlue } } },
+    MuiCircularProgress: { styleOverrides: { colorPrimary: { color: colors.primaryBlue } } },
     MuiTableContainer: {
       styleOverrides: { root: { borderRadius: radius.lg, border: `1px solid ${colors.border}` } },
     },

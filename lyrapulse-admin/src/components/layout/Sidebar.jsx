@@ -55,7 +55,7 @@ export function Sidebar({ collapsed, onToggle, onNavigate }) {
         top: 0,
         overflowY: 'auto',
         transition: 'width 160ms ease',
-        bgcolor: 'lyra.sidebarBackground',
+        background: (theme) => theme.palette.lyra.primaryGradient,
         color: 'lyra.sidebarText',
         display: 'flex',
         flexDirection: 'column',
@@ -100,14 +100,16 @@ export function Sidebar({ collapsed, onToggle, onNavigate }) {
                 mb: 0.5,
                 px: collapsed ? 1.5 : 1.75,
                 color: 'lyra.sidebarText',
+                // The sidebar itself is the brand gradient, so the selected item inverts to a surface-colored pill.
                 '&.active': {
-                  bgcolor: 'lyra.sidebarActive',
-                  color: 'common.white',
-                  '& .MuiListItemIcon-root': { color: 'common.white' },
-                  '&:before': { content: '""', position: 'absolute', left: 0, top: 8, bottom: 8, width: 3, borderRadius: 3, bgcolor: 'info.light' },
+                  bgcolor: 'background.paper',
+                  color: 'primary.main',
+                  '& .MuiListItemIcon-root': { color: 'primary.main' },
+                  '&:before': { content: '""', position: 'absolute', left: 0, top: 8, bottom: 8, width: 3, borderRadius: 3, bgcolor: 'secondary.main' },
                 },
+                '&.active:hover': { bgcolor: 'background.paper', color: 'primary.main' },
                 '&:hover': { bgcolor: 'lyra.sidebarHover', color: 'common.white' },
-                '&:focus-visible': { outline: '2px solid', outlineColor: 'info.light', outlineOffset: -2 },
+                '&:focus-visible': { outline: '2px solid', outlineColor: 'secondary.light', outlineOffset: -2 },
               }}
             >
               <ListItemIcon sx={{ color: 'inherit', minWidth: collapsed ? 0 : 36, justifyContent: 'center' }}>

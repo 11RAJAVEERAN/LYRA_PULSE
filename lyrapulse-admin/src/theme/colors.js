@@ -69,5 +69,8 @@ export const palette = {
     sidebarActive: colors.sidebarActive,
     sidebarHover: colors.sidebarHover,
     sidebarDivider: colors.sidebarDivider,
+    // Shared brand action style: primary buttons and the active sidebar item.
+    primaryGradient: `linear-gradient(90deg, ${colors.primary}, ${colors.secondary})`,
+    actionShadow: `0 8px 18px ${colors.selection}`,
   },
 }
