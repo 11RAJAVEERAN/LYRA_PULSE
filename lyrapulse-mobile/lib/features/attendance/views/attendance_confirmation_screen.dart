@@ -1,11 +1,14 @@
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 
 import 'check_in_success_screen.dart';
 import 'check_out_success_screen.dart';
 import '../controllers/attendance_controller.dart';
 
-class AttendanceConfirmationScreen extends StatelessWidget {
+class AttendanceConfirmationScreen extends StatefulWidget {
   final bool isCheckOut;
 
   const AttendanceConfirmationScreen({
@@ -13,6 +16,13 @@ class AttendanceConfirmationScreen extends StatelessWidget {
     this.isCheckOut = false,
   });
 
+  @override
+  State<AttendanceConfirmationScreen> createState() =>
+      _AttendanceConfirmationScreenState();
+}
+
+class _AttendanceConfirmationScreenState
+    extends State<AttendanceConfirmationScreen> {
   static const Color background = Color(0xFFF7FAFE);
   static const Color navy = Color(0xFF19356C);
   static const Color blue = Color(0xFF3978E8);
@@ -20,57 +30,210 @@ class AttendanceConfirmationScreen extends StatelessWidget {
   static const Color textDark = Color(0xFF172B4D);
   static const Color textGrey = Color(0xFF718096);
 
-  // ================================================================
-  // CONFIRM ATTENDANCE
-  // ================================================================
+  late final AttendanceController attendanceController;
 
-  void _confirmAttendance() {
-    final attendanceController =
-        Get.put(AttendanceController(), permanent: true);
+  bool _isSaving = false;
+  bool _isLoadingLocation = true;
+  String _locationText = 'Getting current location...';
+  String _dateText = '';
+  Position? _position;
 
-    if (isCheckOut) {
-      // ------------------------------------------------------------
-      // CHECK OUT
-      // ------------------------------------------------------------
+  @override
+  void initState() {
+    super.initState();
 
-      if (attendanceController.checkInTime.value == null) {
-        Get.snackbar(
-          'Check In Required',
-          'Please complete your check in before checking out.',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: navy,
-          colorText: Colors.white,
-          margin: const EdgeInsets.all(16),
-          borderRadius: 14,
-          duration: const Duration(seconds: 3),
-        );
-        return;
+    attendanceController =
+        Get.isRegistered<AttendanceController>()
+            ? Get.find<AttendanceController>()
+            : Get.put(AttendanceController(), permanent: true);
+
+    final now = DateTime.now();
+    _dateText = _formatDate(now);
+
+    _loadLocation();
+  }
+
+  String _formatDate(DateTime date) {
+    final day = date.day.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    return '$day/$month/${date.year}';
+  }
+
+  Future<void> _loadLocation() async {
+    try {
+      final serviceEnabled =
+          await Geolocator.isLocationServiceEnabled();
+
+      if (!serviceEnabled) {
+        throw Exception('Please enable location services.');
       }
 
-      attendanceController.checkOutNow();
+      LocationPermission permission =
+          await Geolocator.checkPermission();
 
-      Get.to(
-        () => const CheckOutSuccessScreen(),
-        transition: Transition.rightToLeft,
-        duration: const Duration(milliseconds: 350),
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        throw Exception('Location permission is not available.');
+      }
+
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
       );
-    } else {
-      // ------------------------------------------------------------
-      // CHECK IN
-      // ------------------------------------------------------------
 
-      attendanceController.checkInNow();
+      String address =
+          '${position.latitude.toStringAsFixed(5)}, '
+          '${position.longitude.toStringAsFixed(5)}';
 
-      Get.to(
-        () => const CheckInSuccessScreen(),
-        transition: Transition.rightToLeft,
-        duration: const Duration(milliseconds: 350),
+      try {
+        final placemarks = await placemarkFromCoordinates(
+          position.latitude,
+          position.longitude,
+        );
+
+        if (placemarks.isNotEmpty) {
+          final place = placemarks.first;
+          final parts = <String?>[
+            place.subLocality,
+            place.locality,
+            place.administrativeArea,
+          ].where((part) => part != null && part.trim().isNotEmpty);
+
+          final formatted = parts.join(', ');
+          if (formatted.isNotEmpty) {
+            address = formatted;
+          }
+        }
+      } catch (_) {
+        // Keep coordinates if reverse geocoding is unavailable.
+      }
+
+      if (!mounted) return;
+
+      setState(() {
+        _position = position;
+        _locationText = address;
+        _isLoadingLocation = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+
+      setState(() {
+        _locationText = 'Location unavailable';
+        _isLoadingLocation = false;
+      });
+    }
+  }
+
+  Future<void> _confirmAttendance() async {
+    if (_isSaving) return;
+
+    if (_isLoadingLocation || _position == null) {
+      Get.snackbar(
+        'Location Required',
+        'Please wait until your current location is verified.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: navy,
+        colorText: Colors.white,
+        margin: const EdgeInsets.all(16),
       );
+      return;
+    }
+
+    setState(() => _isSaving = true);
+
+    try {
+      if (widget.isCheckOut) {
+        // Make sure the saved check-in is loaded before checkout.
+        if (attendanceController.checkInTime.value == null) {
+          Get.snackbar(
+            'Check In Required',
+            'Please complete your check in before checking out.',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: navy,
+            colorText: Colors.white,
+            margin: const EdgeInsets.all(16),
+          );
+          return;
+        }
+
+        if (attendanceController.checkOutTime.value != null) {
+          Get.snackbar(
+            'Already Checked Out',
+            'Your check out has already been recorded.',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: navy,
+            colorText: Colors.white,
+            margin: const EdgeInsets.all(16),
+          );
+          return;
+        }
+
+        await attendanceController.checkOutNow();
+
+        if (attendanceController.checkOutTime.value == null) {
+          throw Exception('Check out time was not saved.');
+        }
+
+        if (!mounted) return;
+
+        Get.off(
+          () => const CheckOutSuccessScreen(),
+          transition: Transition.rightToLeft,
+          duration: const Duration(milliseconds: 350),
+        );
+      } else {
+        if (attendanceController.isCheckedIn) {
+          Get.snackbar(
+            'Already Checked In',
+            'You have already checked in today.',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: navy,
+            colorText: Colors.white,
+            margin: const EdgeInsets.all(16),
+          );
+          return;
+        }
+
+        await attendanceController.checkInNow();
+
+        if (attendanceController.checkInTime.value == null) {
+          throw Exception('Check in time was not saved.');
+        }
+
+        if (!mounted) return;
+
+        Get.off(
+          () => const CheckInSuccessScreen(),
+          transition: Transition.rightToLeft,
+          duration: const Duration(milliseconds: 350),
+        );
+      }
+    } catch (e) {
+      Get.snackbar(
+        'Attendance Error',
+        'Unable to save attendance. Please try again.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.shade700,
+        colorText: Colors.white,
+        margin: const EdgeInsets.all(16),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final isCheckOut = widget.isCheckOut;
+
     return Scaffold(
       backgroundColor: background,
       body: SafeArea(
@@ -80,38 +243,13 @@ class AttendanceConfirmationScreen extends StatelessWidget {
             children: [
               const SizedBox(height: 24),
 
-              // ==========================================================
               // TOP BAR
-              // ==========================================================
-
               Row(
                 children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: IconButton(
-                      onPressed: () {
-                        Get.back();
-                      },
-                      icon: const Icon(
-                        Icons.arrow_back_ios_new_rounded,
-                        size: 18,
-                        color: navy,
-                      ),
-                    ),
+                  _iconButton(
+                    icon: Icons.arrow_back_ios_new_rounded,
+                    onTap: () => Get.back(),
                   ),
-
                   Expanded(
                     child: Center(
                       child: Text(
@@ -126,17 +264,13 @@ class AttendanceConfirmationScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-
                   const SizedBox(width: 44),
                 ],
               ),
 
               const SizedBox(height: 30),
 
-              // ==========================================================
               // STATUS ICON
-              // ==========================================================
-
               Container(
                 width: 92,
                 height: 92,
@@ -161,10 +295,6 @@ class AttendanceConfirmationScreen extends StatelessWidget {
               ),
 
               const SizedBox(height: 22),
-
-              // ==========================================================
-              // TITLE
-              // ==========================================================
 
               Text(
                 isCheckOut ? 'CHECK OUT READY' : 'CHECK IN READY',
@@ -192,24 +322,11 @@ class AttendanceConfirmationScreen extends StatelessWidget {
 
               const SizedBox(height: 28),
 
-              // ==========================================================
               // EMPLOYEE DETAILS
-              // ==========================================================
-
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(22),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.045),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
+                decoration: _cardDecoration(),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -221,17 +338,13 @@ class AttendanceConfirmationScreen extends StatelessWidget {
                         color: navy,
                       ),
                     ),
-
                     const SizedBox(height: 18),
-
                     const _DetailRow(
                       icon: Icons.person_rounded,
                       title: 'Employee Name',
                       value: 'Employee',
                     ),
-
                     const SizedBox(height: 16),
-
                     const _DetailRow(
                       icon: Icons.badge_rounded,
                       title: 'Employee ID',
@@ -243,24 +356,11 @@ class AttendanceConfirmationScreen extends StatelessWidget {
 
               const SizedBox(height: 16),
 
-              // ==========================================================
               // ATTENDANCE DETAILS
-              // ==========================================================
-
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(22),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.045),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
+                decoration: _cardDecoration(),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -274,33 +374,42 @@ class AttendanceConfirmationScreen extends StatelessWidget {
                         color: navy,
                       ),
                     ),
-
                     const SizedBox(height: 18),
 
-                    _DetailRow(
-                      icon: isCheckOut
-                          ? Icons.logout_rounded
-                          : Icons.login_rounded,
-                      title: isCheckOut
-                          ? 'Check Out Time'
-                          : 'Check In Time',
-                      value: 'Current time',
-                    ),
+                    Obx(() {
+                      final savedTime = isCheckOut
+                          ? attendanceController.checkOutTime.value
+                          : attendanceController.checkInTime.value;
+
+                      final displayTime = savedTime ?? DateTime.now();
+
+                      return _DetailRow(
+                        icon: isCheckOut
+                            ? Icons.logout_rounded
+                            : Icons.login_rounded,
+                        title: isCheckOut
+                            ? 'Check Out Time'
+                            : 'Check In Time',
+                        value: attendanceController.formatTime(
+                          displayTime,
+                        ),
+                      );
+                    }),
 
                     const SizedBox(height: 16),
 
-                    const _DetailRow(
+                    _DetailRow(
                       icon: Icons.location_on_rounded,
                       title: 'Location',
-                      value: '125 m',
+                      value: _locationText,
                     ),
 
                     const SizedBox(height: 16),
 
-                    const _DetailRow(
+                    _DetailRow(
                       icon: Icons.calendar_today_rounded,
                       title: 'Date',
-                      value: 'Today',
+                      value: _dateText,
                     ),
                   ],
                 ),
@@ -308,10 +417,7 @@ class AttendanceConfirmationScreen extends StatelessWidget {
 
               const SizedBox(height: 16),
 
-              // ==========================================================
               // VERIFICATION STATUS
-              // ==========================================================
-
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(20),
@@ -333,17 +439,15 @@ class AttendanceConfirmationScreen extends StatelessWidget {
                         color: navy,
                       ),
                     ),
-
                     const SizedBox(height: 17),
-
-                    const _VerificationRow(
+                    _VerificationRow(
                       title: 'Location Verified',
+                      verified: _position != null,
                     ),
-
                     const SizedBox(height: 13),
-
                     const _VerificationRow(
                       title: 'Face Verified',
+                      verified: true,
                     ),
                   ],
                 ),
@@ -351,61 +455,61 @@ class AttendanceConfirmationScreen extends StatelessWidget {
 
               const SizedBox(height: 26),
 
-              // ==========================================================
               // CONFIRM BUTTON
-              // ==========================================================
-
               SizedBox(
                 width: double.infinity,
                 height: 54,
                 child: ElevatedButton(
-                  onPressed: _confirmAttendance,
+                  onPressed: _isSaving ? null : _confirmAttendance,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: navy,
                     foregroundColor: Colors.white,
+                    disabledBackgroundColor: navy.withOpacity(0.6),
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        isCheckOut
-                            ? Icons.logout_rounded
-                            : Icons.login_rounded,
-                        size: 19,
-                        color: Colors.white,
-                      ),
-                      const SizedBox(width: 9),
-                      Text(
-                        isCheckOut
-                            ? 'Confirm Check Out'
-                            : 'Confirm Check In',
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
+                  child: _isSaving
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              isCheckOut
+                                  ? Icons.logout_rounded
+                                  : Icons.login_rounded,
+                              size: 19,
+                            ),
+                            const SizedBox(width: 9),
+                            Text(
+                              isCheckOut
+                                  ? 'Confirm Check Out'
+                                  : 'Confirm Check In',
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                    ],
-                  ),
                 ),
               ),
 
               const SizedBox(height: 12),
 
-              // ==========================================================
-              // CANCEL
-              // ==========================================================
-
               SizedBox(
                 width: double.infinity,
                 height: 50,
                 child: TextButton(
-                  onPressed: () {
-                    Get.back();
-                  },
+                  onPressed: _isSaving ? null : () => Get.back(),
                   child: const Text(
                     'Cancel',
                     style: TextStyle(
@@ -418,10 +522,6 @@ class AttendanceConfirmationScreen extends StatelessWidget {
               ),
 
               const SizedBox(height: 12),
-
-              // ==========================================================
-              // SECURITY MESSAGE
-              // ==========================================================
 
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -444,10 +544,6 @@ class AttendanceConfirmationScreen extends StatelessWidget {
 
               const SizedBox(height: 20),
 
-              // ==========================================================
-              // FOOTER
-              // ==========================================================
-
               const Text(
                 'LYRA PULSE',
                 style: TextStyle(
@@ -465,11 +561,46 @@ class AttendanceConfirmationScreen extends StatelessWidget {
       ),
     );
   }
-}
 
-// ==========================================================================
-// DETAIL ROW
-// ==========================================================================
+  Widget _iconButton({
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      width: 44,
+      height: 44,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: IconButton(
+        onPressed: onTap,
+        icon: Icon(icon, size: 18, color: navy),
+      ),
+    );
+  }
+
+  BoxDecoration _cardDecoration() {
+    return BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(22),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.045),
+          blurRadius: 20,
+          offset: const Offset(0, 8),
+        ),
+      ],
+    );
+  }
+}
 
 class _DetailRow extends StatelessWidget {
   final IconData icon;
@@ -499,9 +630,7 @@ class _DetailRow extends StatelessWidget {
             color: const Color(0xFF3978E8),
           ),
         ),
-
         const SizedBox(width: 12),
-
         Expanded(
           child: Text(
             title,
@@ -512,13 +641,15 @@ class _DetailRow extends StatelessWidget {
             ),
           ),
         ),
-
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 13,
-            color: Color(0xFF19356C),
-            fontWeight: FontWeight.w700,
+        Flexible(
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            style: const TextStyle(
+              fontSize: 13,
+              color: Color(0xFF19356C),
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ),
       ],
@@ -526,42 +657,47 @@ class _DetailRow extends StatelessWidget {
   }
 }
 
-// ==========================================================================
-// VERIFICATION ROW
-// ==========================================================================
-
 class _VerificationRow extends StatelessWidget {
   final String title;
+  final bool verified;
 
   const _VerificationRow({
     required this.title,
+    this.verified = true,
   });
 
   @override
   Widget build(BuildContext context) {
+    final color = verified
+        ? const Color(0xFF18A66A)
+        : const Color(0xFFB8C3D0);
+
     return Row(
       children: [
-        const Icon(
-          Icons.check_circle_rounded,
-          color: Color(0xFF18A66A),
+        Icon(
+          verified
+              ? Icons.check_circle_rounded
+              : Icons.radio_button_unchecked_rounded,
+          color: color,
           size: 21,
         ),
         const SizedBox(width: 10),
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF19356C),
+        Expanded(
+          child: Text(
+            title,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF19356C),
+            ),
           ),
         ),
-        const Spacer(),
-        const Text(
-          'Verified',
+        Text(
+          verified ? 'Verified' : 'Pending',
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w700,
-            color: Color(0xFF18A66A),
+            color: color,
           ),
         ),
       ],
