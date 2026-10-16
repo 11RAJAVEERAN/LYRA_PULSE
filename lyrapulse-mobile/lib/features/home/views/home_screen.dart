@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'package:lyrapulse_mobile/features/attendance/controllers/attendance_controller.dart';
 import 'package:lyrapulse_mobile/features/attendance/views/location_verification_screen.dart';
 import 'package:lyrapulse_mobile/features/attendance/views/attendance_history_screen.dart';
 import 'package:lyrapulse_mobile/features/attendance/views/attendance_overview_screen.dart';
@@ -23,83 +24,101 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
 
+  late final AttendanceController attendanceController;
+
+  @override
+  void initState() {
+    super.initState();
+
+    attendanceController =
+        Get.isRegistered<AttendanceController>()
+            ? Get.find<AttendanceController>()
+            : Get.put(AttendanceController(), permanent: true);
+  }
+
   void _openCheckIn() {
+    if (attendanceController.isCheckedIn) {
+      Get.snackbar(
+        'Already Checked In',
+        'You have already checked in.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
+    if (attendanceController.isCompleted) {
+      Get.snackbar(
+        'Attendance Completed',
+        'Today attendance is already completed.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
     Get.to(
-      () => const LocationVerificationScreen(
-        isCheckOut: false,
-      ),
+      () => const LocationVerificationScreen(isCheckOut: false),
     );
   }
 
   void _openCheckOut() {
+    if (attendanceController.checkInTime.value == null) {
+      Get.snackbar(
+        'Check In Required',
+        'Please check in before checking out.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
+    if (attendanceController.checkOutTime.value != null) {
+      Get.snackbar(
+        'Already Checked Out',
+        'Your check out is already recorded.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
     Get.to(
-      () => const LocationVerificationScreen(
-        isCheckOut: true,
-      ),
+      () => const LocationVerificationScreen(isCheckOut: true),
     );
   }
 
-  void _openPermission() {
-    Get.to(() => const PermissionScreen());
-  }
+  void _openPermission() => Get.to(() => const PermissionScreen());
 
-  void _openNotification() {
-    Get.to(() => const NotificationScreen());
-  }
+  void _openNotification() => Get.to(() => const NotificationScreen());
 
-  void _openAttendanceHistory() {
-    Get.to(() => const AttendanceHistoryScreen());
-  }
+  void _openAttendanceHistory() =>
+      Get.to(() => const AttendanceHistoryScreen());
 
-  void _openAttendanceOverview() {
-    Get.to(() => const AttendanceOverviewScreen());
-  }
+  void _openAttendanceOverview() =>
+      Get.to(() => const AttendanceOverviewScreen());
 
-  void _openAttendanceRecords() {
-    Get.to(() => const AttendanceRecordsScreen());
-  }
+  void _openAttendanceRecords() =>
+      Get.to(() => const AttendanceRecordsScreen());
 
-  void _openLeave() {
-    Get.to(() => const LeaveScreen());
-  }
+  void _openLeave() => Get.to(() => const LeaveScreen());
 
-  void _openProfile() {
-    Get.to(() => const ProfileScreen());
-  }
+  void _openProfile() => Get.to(() => const ProfileScreen());
 
-  void _openCalendar() {
-    Get.to(() => CalendarScreen());
-  }
+  void _openCalendar() => Get.to(() => CalendarScreen());
 
   String _getToday() {
     final now = DateTime.now();
 
     const weekdays = [
-      'Monday',
-      'Tuesday',
-      'Wednesday',
-      'Thursday',
-      'Friday',
-      'Saturday',
-      'Sunday',
+      'Monday', 'Tuesday', 'Wednesday', 'Thursday',
+      'Friday', 'Saturday', 'Sunday',
     ];
 
     const months = [
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December',
+      'January', 'February', 'March', 'April',
+      'May', 'June', 'July', 'August',
+      'September', 'October', 'November', 'December',
     ];
 
-    return '${weekdays[now.weekday - 1]}, ${now.day} ${months[now.month - 1]}';
+    return '${weekdays[now.weekday - 1]}, '
+        '${now.day} ${months[now.month - 1]}';
   }
 
   @override
@@ -112,12 +131,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Expanded(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(
-                  20,
-                  18,
-                  20,
-                  110,
-                ),
+                padding: const EdgeInsets.fromLTRB(20, 18, 20, 110),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -154,9 +168,7 @@ class _HomeScreenState extends State<HomeScreen> {
             decoration: BoxDecoration(
               color: const Color(0xFFEAF3FF),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: const Color(0xFFD7E7FA),
-              ),
+              border: Border.all(color: const Color(0xFFD7E7FA)),
             ),
             child: const Icon(
               Icons.person_rounded,
@@ -243,10 +255,7 @@ class _HomeScreenState extends State<HomeScreen> {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF1268D5),
-            Color(0xFF084A9B),
-          ],
+          colors: [Color(0xFF1268D5), Color(0xFF084A9B)],
         ),
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
@@ -427,72 +436,79 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildAttendanceTimeline() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _sectionTitle(
-          title: 'Today',
-          subtitle: 'Attendance timeline',
-          action: 'View',
-          onTap: _openAttendanceHistory,
-        ),
-        const SizedBox(height: 14),
-        Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 18,
-            vertical: 18,
+    return Obx(() {
+      final checkIn = attendanceController.checkInTime.value;
+      final checkOut = attendanceController.checkOutTime.value;
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _sectionTitle(
+            title: 'Today',
+            subtitle: 'Attendance timeline',
+            action: 'View',
+            onTap: _openAttendanceHistory,
           ),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(23),
-            border: Border.all(
-              color: const Color(0xFFE8EEF5),
+          const SizedBox(height: 14),
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 18,
+              vertical: 18,
             ),
-          ),
-          child: Row(
-            children: [
-              Column(
-                children: [
-                  _timelineDot(
-                    color: const Color(0xFF21B573),
-                    icon: Icons.login_rounded,
-                  ),
-                  Container(
-                    width: 2,
-                    height: 38,
-                    color: const Color(0xFFE4EAF1),
-                  ),
-                  _timelineDot(
-                    color: const Color(0xFFB8C3D0),
-                    icon: Icons.logout_rounded,
-                  ),
-                ],
-              ),
-              const SizedBox(width: 15),
-              Expanded(
-                child: Column(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(23),
+              border: Border.all(color: const Color(0xFFE8EEF5)),
+            ),
+            child: Row(
+              children: [
+                Column(
                   children: [
-                    _timelineRow(
-                      title: 'Check In',
-                      subtitle: 'Office entry',
-                      time: '09:28 AM',
-                      active: true,
+                    _timelineDot(
+                      color: checkIn != null
+                          ? const Color(0xFF21B573)
+                          : const Color(0xFFB8C3D0),
+                      icon: Icons.login_rounded,
                     ),
-                    const SizedBox(height: 29),
-                    _timelineRow(
-                      title: 'Check Out',
-                      subtitle: 'Office exit',
-                      time: '-- : --',
-                      active: false,
+                    Container(
+                      width: 2,
+                      height: 38,
+                      color: const Color(0xFFE4EAF1),
+                    ),
+                    _timelineDot(
+                      color: checkOut != null
+                          ? const Color(0xFF21B573)
+                          : const Color(0xFFB8C3D0),
+                      icon: Icons.logout_rounded,
                     ),
                   ],
                 ),
-              ),
-            ],
+                const SizedBox(width: 15),
+                Expanded(
+                  child: Column(
+                    children: [
+                      _timelineRow(
+                        title: 'Check In',
+                        subtitle: 'Office entry',
+                        time: attendanceController.formatTime(checkIn),
+                        active: checkIn != null,
+                      ),
+                      const SizedBox(height: 29),
+                      _timelineRow(
+                        title: 'Check Out',
+                        subtitle: 'Office exit',
+                        time: attendanceController.formatTime(checkOut),
+                        active: checkOut != null,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
-    );
+        ],
+      );
+    });
   }
 
   Widget _timelineDot({
@@ -506,11 +522,7 @@ class _HomeScreenState extends State<HomeScreen> {
         color: color.withOpacity(0.12),
         shape: BoxShape.circle,
       ),
-      child: Icon(
-        icon,
-        color: color,
-        size: 17,
-      ),
+      child: Icon(icon, color: color, size: 17),
     );
   }
 
@@ -629,9 +641,7 @@ class _HomeScreenState extends State<HomeScreen> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: const Color(0xFFE8EEF5),
-          ),
+          border: Border.all(color: const Color(0xFFE8EEF5)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -643,11 +653,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 color: iconColor.withOpacity(0.10),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(
-                icon,
-                color: iconColor,
-                size: 20,
-              ),
+              child: Icon(icon, color: iconColor, size: 20),
             ),
             const SizedBox(height: 12),
             Text(
@@ -677,63 +683,78 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildStatsSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _sectionTitle(
-          title: 'Today at a glance',
-          subtitle: 'Your live status',
-        ),
-        const SizedBox(height: 14),
-        Row(
-          children: [
-            Expanded(
-              child: _statCard(
-                title: 'Check In',
-                value: '09:28',
-                suffix: 'AM',
-                icon: Icons.login_rounded,
-                color: const Color(0xFF20A66F),
+    return Obx(() {
+      final checkIn = attendanceController.checkInTime.value;
+      final checkOut = attendanceController.checkOutTime.value;
+      final duration = attendanceController.workingDuration.value;
+
+      final checkInParts =
+          attendanceController.formatTime(checkIn).split(' ');
+      final checkOutParts =
+          attendanceController.formatTime(checkOut).split(' ');
+
+      final hours = duration.inHours.toString().padLeft(2, '0');
+      final minutes = duration.inMinutes.remainder(60)
+          .toString().padLeft(2, '0');
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _sectionTitle(
+            title: 'Today at a glance',
+            subtitle: 'Your live status',
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: _statCard(
+                  title: 'Check In',
+                  value: checkIn == null ? '--:--' : checkInParts[0],
+                  suffix: checkIn == null ? '' : checkInParts[1],
+                  icon: Icons.login_rounded,
+                  color: const Color(0xFF20A66F),
+                ),
               ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _statCard(
-                title: 'Check Out',
-                value: '--:--',
-                suffix: '',
-                icon: Icons.logout_rounded,
-                color: const Color(0xFF7A8797),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _statCard(
+                  title: 'Check Out',
+                  value: checkOut == null ? '--:--' : checkOutParts[0],
+                  suffix: checkOut == null ? '' : checkOutParts[1],
+                  icon: Icons.logout_rounded,
+                  color: const Color(0xFF7A8797),
+                ),
               ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 10),
-        Row(
-          children: [
-            Expanded(
-              child: _statCard(
-                title: 'Total Hours',
-                value: '--:--',
-                suffix: 'hrs',
-                icon: Icons.timer_outlined,
-                color: const Color(0xFF2878D4),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: _statCard(
+                  title: 'Total Hours',
+                  value: checkIn == null ? '--:--' : '$hours:$minutes',
+                  suffix: 'hrs',
+                  icon: Icons.timer_outlined,
+                  color: const Color(0xFF2878D4),
+                ),
               ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _statCard(
-                title: 'Status',
-                value: 'Pending',
-                suffix: '',
-                icon: Icons.pending_actions_rounded,
-                color: const Color(0xFFF19A3E),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _statCard(
+                  title: 'Status',
+                  value: attendanceController.attendanceStatus,
+                  suffix: '',
+                  icon: Icons.pending_actions_rounded,
+                  color: const Color(0xFFF19A3E),
+                ),
               ),
-            ),
-          ],
-        ),
-      ],
-    );
+            ],
+          ),
+        ],
+      );
+    });
   }
 
   Widget _statCard({
@@ -748,9 +769,7 @@ class _HomeScreenState extends State<HomeScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: const Color(0xFFE8EEF5),
-        ),
+        border: Border.all(color: const Color(0xFFE8EEF5)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -764,11 +783,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   color: color.withOpacity(0.10),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(
-                  icon,
-                  size: 16,
-                  color: color,
-                ),
+                child: Icon(icon, size: 16, color: color),
               ),
               const Spacer(),
               const Icon(
@@ -833,9 +848,7 @@ class _HomeScreenState extends State<HomeScreen> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: const Color(0xFFE8EEF5),
-          ),
+          border: Border.all(color: const Color(0xFFE8EEF5)),
         ),
         child: Row(
           children: [
@@ -980,7 +993,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Bottom navigation: Home is positioned in the center.
   Widget _buildBottomNavigation() {
     return Container(
       color: const Color(0xFFF7FAFD),
@@ -991,9 +1003,7 @@ class _HomeScreenState extends State<HomeScreen> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: const Color(0xFFE6ECF3),
-          ),
+          border: Border.all(color: const Color(0xFFE6ECF3)),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.07),
@@ -1052,10 +1062,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return GestureDetector(
       onTap: () {
-        setState(() {
-          _selectedIndex = index;
-        });
-
+        setState(() => _selectedIndex = index);
         onTap();
       },
       behavior: HitTestBehavior.opaque,
