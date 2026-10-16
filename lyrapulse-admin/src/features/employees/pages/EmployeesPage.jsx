@@ -1,12 +1,20 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Alert, Box, Button, Card, CardContent, CircularProgress, Paper, Snackbar, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Alert, Box, Button, Card, Chip, Paper, Snackbar, Stack, TablePagination, Typography } from '@mui/material'
+import { Columns3 } from 'lucide-react'
 import { PageHeader } from '../../../components/common/PageHeader'
 import { SearchInput } from '../../../components/common/SearchInput'
 import { EmptyState } from '../../../components/common/EmptyState'
 import { ErrorState } from '../../../components/common/ErrorState'
-import { StatusChip } from '../../../components/common/StatusChip'
+import { LoadingState } from '../../../components/common/LoadingState'
 import apiClient from '../../../services/apiClient'
+import { authService } from '../../../services/authService'
 import { EmployeeDetailsPanel } from '../components/EmployeeDetailsPanel'
+import { EditColumnsDrawer } from '../components/EditColumnsDrawer'
+import { EmployeesTable } from '../components/EmployeesTable'
+import {
+  COLUMNS, DEFAULT_ROWS_PER_PAGE, ROWS_PER_PAGE_OPTIONS, applyFilters, describeFilter, isFilterActive, isSortAvailable, matchesSearch, sortRows,
+} from '../employeeColumns'
+import { useEmployeeColumns } from '../useEmployeeColumns'
 
 const emptyOptions = { branches: [], departments: [], designations: [] }
 
@@ -28,30 +36,45 @@ function errorMessage(error) {
   return data?.message ?? error?.message ?? 'Unable to complete this request.'
 }
 
+const idNameMap = (items) => new Map(items.map((item) => [String(item.id), item.name]))
+
 export function EmployeesPage() {
+  const currentUser = authService.getCurrentUser()
+  const can = (codename) => currentUser?.role === 'SUPERADMIN' || Boolean(currentUser?.permissions?.includes(codename))
+  const canAdd = can('employees.add_employee')
+  const canEdit = can('employees.change_employee')
+
   const [query, setQuery] = useState('')
+  const [filters, setFilters] = useState({})
+  const [sort, setSort] = useState(null) // { id, dir } — null keeps the API's default order (employee code)
+  const [page, setPage] = useState(0)
+  const [rowsPerPage, setRowsPerPage] = useState(DEFAULT_ROWS_PER_PAGE)
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(true)
   const [pageError, setPageError] = useState('')
   const [panelOpen, setPanelOpen] = useState(false)
   const [editingId, setEditingId] = useState(null)
+  const [columnsOpen, setColumnsOpen] = useState(false)
   const [options, setOptions] = useState(emptyOptions)
   const [optionsLoading, setOptionsLoading] = useState(true)
   const [optionsError, setOptionsError] = useState('')
   const [notice, setNotice] = useState('')
+  const { visibleIds, save: saveColumns, defaultIds } = useEmployeeColumns(currentUser?.id)
+  const requestId = useRef(0)
 
-  const loadEmployees = async () => {
+  const loadEmployees = useCallback(async () => {
+    const current = ++requestId.current
     setLoading(true)
     setPageError('')
     try {
       const response = await apiClient.get('/employees/')
-      setRows(listData(response))
+      if (current === requestId.current) setRows(listData(response)) // ignore responses superseded by a newer request
     } catch (error) {
-      setPageError(errorMessage(error))
+      if (current === requestId.current) setPageError(errorMessage(error))
     } finally {
-      setLoading(false)
+      if (current === requestId.current) setLoading(false)
     }
-  }
+  }, [])
 
   // Inactive options are fetched so an employee's current assignment remains selectable while editing.
   const loadOptions = async () => {
@@ -72,16 +95,46 @@ export function EmployeesPage() {
   useEffect(() => {
     loadEmployees()
     loadOptions()
-  }, [])
+  }, [loadEmployees])
 
-  const filteredRows = useMemo(() => rows.filter((row) =>
-    [row.first_name, row.last_name, row.name, row.display_name, row.employee_code, row.phone_number, row.email]
-      .filter(Boolean).join(' ').toLowerCase().includes(query.trim().toLowerCase())), [rows, query])
+  const ctx = useMemo(() => ({
+    branches: idNameMap(options.branches),
+    departments: idNameMap(options.departments),
+    designations: idNameMap(options.designations),
+  }), [options])
 
-  const departmentNames = useMemo(
-    () => new Map(options.departments.map((department) => [String(department.id), department.name])),
-    [options.departments],
-  )
+  const columns = useMemo(() => COLUMNS.filter((column) => visibleIds.includes(column.id)), [visibleIds])
+
+  // Search -> column filters -> sort -> page. The API returns the complete list, so this is global, not per-page.
+  const searched = useMemo(() => rows.filter((row) => matchesSearch(row, query)), [rows, query])
+  const filtered = useMemo(() => applyFilters(searched, filters, ctx), [searched, filters, ctx])
+  const sorted = useMemo(() => sortRows(filtered, sort, ctx), [filtered, sort, ctx])
+  const lastPage = Math.max(0, Math.ceil(sorted.length / rowsPerPage) - 1)
+  const safePage = Math.min(page, lastPage)
+  const pageRows = useMemo(() => sorted.slice(safePage * rowsPerPage, safePage * rowsPerPage + rowsPerPage), [sorted, safePage, rowsPerPage])
+
+  const activeFilters = COLUMNS.filter((column) => isFilterActive(column, filters[column.id]))
+  const hasNarrowing = Boolean(query.trim()) || activeFilters.length > 0
+  const activeCount = rows.filter((row) => row.is_active).length
+
+  const changeQuery = (value) => { setQuery(value); setPage(0) }
+  const changeFilter = (id, value) => {
+    setFilters((current) => {
+      const next = { ...current }
+      if (value === undefined) delete next[id]
+      else next[id] = value
+      return next
+    })
+    setPage(0)
+  }
+  // Click cycle per column: ascending -> descending -> back to the default order.
+  const changeSort = (id) => {
+    setSort((current) => (current?.id !== id ? { id, dir: 'asc' } : current.dir === 'asc' ? { id, dir: 'desc' } : null))
+    setPage(0)
+  }
+  // Explicit direction from a sort popover; null returns to the default order.
+  const changeSortTo = (id, dir) => { setSort(dir ? { id, dir } : null); setPage(0) }
+  const clearAll = () => { setQuery(''); setFilters({}); setPage(0) }
 
   const openCreate = () => {
     setEditingId(null)
@@ -100,65 +153,107 @@ export function EmployeesPage() {
     await loadEmployees()
   }
 
+  const handleSaveColumns = (ids) => {
+    saveColumns(ids)
+    // A hidden column can no longer be sorted by or filtered on, so drop those so nothing invisible narrows the table.
+    const keep = new Set(ids)
+    setFilters((current) => Object.fromEntries(Object.entries(current).filter(([id]) => keep.has(id))))
+    setSort((current) => (current && !isSortAvailable(current.id, keep) ? null : current))
+    setColumnsOpen(false)
+  }
+
   return (
     <Box>
       <PageHeader
         title="Employees"
         subtitle="Manage employee profiles, assignments, and account status."
-        action={<Button variant="contained" onClick={openCreate}>Add employee</Button>}
       />
 
-      <Card sx={{ mb: 2 }}>
-        <CardContent sx={{ p: { xs: 1.5, sm: 2 } }}>
-          <SearchInput value={query} onChange={setQuery} label="Search employees" placeholder="Search by name, code, phone, or email" />
-        </CardContent>
+      <Card sx={{ mb: 1.5 }}>
+        <Box sx={{ p: { xs: 1.5, sm: 2 } }}>
+          <Stack direction={{ xs: 'column', md: 'row' }} sx={{ gap: 1.5, alignItems: { md: 'center' }, justifyContent: 'space-between' }}>
+            <Typography variant="h6" component="h2" sx={{ color: 'text.primary', whiteSpace: 'nowrap' }}>
+              Total Active Employees{' '}
+              <Box component="span" sx={{ color: 'secondary.main', fontVariantNumeric: 'tabular-nums' }}>{loading && rows.length === 0 ? '…' : activeCount}</Box>
+              {hasNarrowing && !loading ? (
+                <Typography component="span" variant="body2" color="text.secondary" sx={{ ml: 1, fontWeight: 400 }}>· {sorted.length} matching</Typography>
+              ) : null}
+            </Typography>
+            <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ gap: 1, alignItems: { sm: 'center' } }}>
+              <Box sx={{ width: { xs: '100%', sm: 300 } }}>
+                <SearchInput value={query} onChange={changeQuery} label="Search employees" placeholder="Search by name, code, phone, or email" />
+              </Box>
+              <Stack direction="row" sx={{ gap: 1 }}>
+                {canAdd ? <Button variant="contained" onClick={openCreate}>Add Employee</Button> : null}
+                <Button variant="outlined" startIcon={<Columns3 size={16} aria-hidden="true" />} onClick={() => setColumnsOpen(true)}>Edit Columns</Button>
+              </Stack>
+            </Stack>
+          </Stack>
+          {activeFilters.length > 0 ? (
+            <Stack direction="row" sx={{ gap: 1, mt: 1.5, flexWrap: 'wrap', alignItems: 'center' }} aria-label="Active filters">
+              {activeFilters.map((column) => (
+                <Chip
+                  key={column.id}
+                  size="small"
+                  color="info"
+                  variant="outlined"
+                  label={`${column.label}: ${describeFilter(column, filters[column.id], ctx, rows)}`}
+                  onDelete={() => changeFilter(column.id, undefined)}
+                />
+              ))}
+              <Button size="small" onClick={() => { setFilters({}); setPage(0) }}>Clear filters</Button>
+            </Stack>
+          ) : null}
+        </Box>
       </Card>
 
       {pageError ? <ErrorState message={pageError} onRetry={loadEmployees} retrying={loading} /> : null}
+      {optionsError ? <Alert severity="warning" sx={{ mb: 2 }}>Branch, department and designation names could not be loaded: {optionsError}</Alert> : null}
 
-      <Paper sx={{ overflow: 'hidden' }}>
-        {loading ? (
-          <Box sx={{ py: 5, display: 'flex', justifyContent: 'center' }}><CircularProgress size={26} aria-label="Loading employees" /></Box>
-        ) : pageError ? (
+      <Paper variant="outlined" sx={{ overflow: 'hidden', borderRadius: 2 }}>
+        {loading && rows.length === 0 ? (
+          <LoadingState label="Loading employees…" />
+        ) : pageError && rows.length === 0 ? (
           <Box sx={{ minHeight: 96 }} />
-        ) : filteredRows.length === 0 ? (
+        ) : sorted.length === 0 ? (
           <EmptyState
-            title={query ? 'No matching employees' : 'No employees yet'}
-            description={query ? 'Try another search term.' : 'Add an employee to start building your workforce directory.'}
-            actionLabel={!query ? 'Add employee' : undefined}
-            onAction={!query ? openCreate : undefined}
+            title={hasNarrowing ? 'No matching employees' : 'No employees yet'}
+            description={hasNarrowing ? 'Try a different search or clear the filters.' : 'Add an employee to start building your workforce directory.'}
+            actionLabel={hasNarrowing ? 'Clear search and filters' : canAdd ? 'Add Employee' : undefined}
+            onAction={hasNarrowing ? clearAll : canAdd ? openCreate : undefined}
           />
         ) : (
-          <TableContainer sx={{ border: 0, borderRadius: 0 }}>
-            <Table aria-label="Employees" sx={{ minWidth: 900 }}>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Employee</TableCell>
-                  <TableCell>Employee code</TableCell>
-                  <TableCell>Phone</TableCell>
-                  <TableCell>Email</TableCell>
-                  <TableCell>Department</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell align="right">Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredRows.map((row) => (
-                  <TableRow key={row.id} hover>
-                    <TableCell sx={{ fontWeight: 600 }}>{[row.first_name, row.last_name].filter(Boolean).join(' ') || row.name}</TableCell>
-                    <TableCell>{row.employee_code}</TableCell>
-                    <TableCell>{row.phone_number}</TableCell>
-                    <TableCell>{row.email || '—'}</TableCell>
-                    <TableCell>{departmentNames.get(String(row.department)) ?? '—'}</TableCell>
-                    <TableCell><StatusChip label={row.is_active ? 'Active' : 'Inactive'} /></TableCell>
-                    <TableCell align="right"><Button size="small" onClick={() => openEdit(row)} aria-label={`Edit ${row.first_name || row.name || row.employee_code}`}>Edit</Button></TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+          <>
+            <EmployeesTable
+              rows={pageRows}
+              allRows={rows}
+              columns={columns}
+              ctx={ctx}
+              sort={sort}
+              onSort={changeSort}
+              onSortTo={changeSortTo}
+              filters={filters}
+              onFilterChange={changeFilter}
+              canEdit={canEdit}
+              onEdit={openEdit}
+            />
+            <TablePagination
+              component="div"
+              count={sorted.length}
+              page={safePage}
+              onPageChange={(_event, next) => setPage(next)}
+              rowsPerPage={rowsPerPage}
+              onRowsPerPageChange={(event) => { setRowsPerPage(Number(event.target.value)); setPage(0) }}
+              rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}
+              labelRowsPerPage="Rows"
+              sx={{ borderTop: '1px solid', borderColor: 'divider', '& .MuiTablePagination-toolbar': { minHeight: 48 } }}
+              slotProps={{ select: { inputProps: { 'aria-label': 'Rows per page' } } }}
+            />
+          </>
         )}
       </Paper>
+
+      <EditColumnsDrawer open={columnsOpen} visibleIds={visibleIds} defaultIds={defaultIds} onSave={handleSaveColumns} onClose={() => setColumnsOpen(false)} />
 
       <EmployeeDetailsPanel
         open={panelOpen}

@@ -13,6 +13,7 @@ import {
   Typography,
 } from '@mui/material'
 
+import { alpha } from '@mui/material/styles'
 import ArrowForwardRounded from '@mui/icons-material/ArrowForwardRounded'
 import CheckCircleRounded from '@mui/icons-material/CheckCircleRounded'
 import { useNavigate } from 'react-router-dom'
@@ -38,78 +39,84 @@ function detectIdentifierType(value) {
   return 'unknown'
 }
 
-// Same primary -> secondary visual language used by Flutter Login.
+// Pill-shaped primary action. The fill keeps the app-wide brand gradient (primary -> secondary) so the
+// Login button matches the Dashboard and Save Details actions.
 const primaryButtonSx = {
-  minHeight: 48,
+  minHeight: { xs: 52, md: 'clamp(46px, 6.4vh, 58px)' },
+  borderRadius: 999,
+  fontSize: 16,
   color: colors.surface,
   background: `linear-gradient(90deg, ${colors.primary}, ${colors.secondary})`,
-  boxShadow: `0 8px 18px ${colors.selection}`,
-  fontWeight: 600,
+  boxShadow: `0 10px 22px ${alpha(colors.primaryBlue, 0.22)}`,
+  transition: 'box-shadow 0.2s ease, transform 0.2s ease',
 
   '&:hover': {
     background: `linear-gradient(90deg, ${colors.primary}, ${colors.secondary})`,
-    boxShadow: `0 8px 18px ${colors.selection}`,
+    boxShadow: `0 14px 28px ${alpha(colors.primaryBlue, 0.32)}`,
+    transform: 'translateY(-1px)',
   },
 
   '&.Mui-disabled': {
-    color: colors.surface,
-    background: colors.disabled,
+    color: alpha(colors.textSecondary, 0.85),
+    background: alpha(colors.textSecondary, 0.12),
     boxShadow: 'none',
+  },
+
+  '@media (prefers-reduced-motion: reduce)': {
+    transition: 'none',
+    '&:hover': { transform: 'none' },
   },
 }
 
-// Flutter Login uses primaryBlue for active/focus elements.
-const makeFieldSx = (height) => ({
+// Rounded inputs with a soft primaryBlue focus ring.
+const makeFieldSx = (radius, height) => ({
   '& .MuiOutlinedInput-root': {
+    borderRadius: radius,
     minHeight: height,
     backgroundColor: colors.surface,
+    transition: 'box-shadow 0.2s ease',
 
     '& fieldset': {
-      borderColor: colors.border,
+      borderColor: alpha(colors.textSecondary, 0.45),
     },
 
     '&:hover fieldset': {
-      borderColor: colors.borderStrong,
+      borderColor: alpha(colors.primaryBlue, 0.6),
+    },
+
+    '&.Mui-focused': {
+      boxShadow: `0 0 0 4px ${alpha(colors.primaryBlue, 0.12)}`,
     },
 
     '&.Mui-focused fieldset': {
       borderColor: colors.primaryBlue,
+      borderWidth: 2,
+    },
+
+    '&.Mui-error fieldset': {
+      borderColor: colors.error,
     },
   },
 
   '& .MuiInputLabel-root.Mui-focused': {
     color: colors.primaryBlue,
   },
+
+  '& .MuiInputBase-input': {
+    px: 2.5,
+  },
 })
 
 function BrandMark() {
   return (
     <Stack direction="row" alignItems="center" spacing={2}>
-      <Box
-        aria-hidden="true"
-        sx={{
-          width: { xs: 46, md: 56 },
-          height: { xs: 46, md: 56 },
-          borderRadius: 2,
-          display: 'grid',
-          placeItems: 'center',
-
-          color: colors.surface,
-          fontSize: { xs: 24, md: 30 },
-          fontWeight: 800,
-
-          backgroundColor: colors.primary,
-        }}
-      >
-        L
-      </Box>
-
       <Box>
         <Typography
-          variant="h4"
           sx={{
             color: colors.primary,
-            letterSpacing: '0.02em',
+            fontSize: { xs: 22, md: 32 },
+            fontWeight: 800,
+            letterSpacing: '0.04em',
             lineHeight: 1.05,
           }}
         >
@@ -117,11 +124,12 @@ function BrandMark() {
         </Typography>
 
         <Typography
-          variant="overline"
           sx={{
             mt: 0.5,
-            color: colors.primaryDark,
-            letterSpacing: '0.3em',
+            color: colors.primaryBlue,
+            fontSize: { xs: 11, md: 13 },
+            fontWeight: 600,
+            letterSpacing: '0.45em',
           }}
         >
           ADMIN
@@ -240,10 +248,10 @@ function OtpInput({
     )
   }
 
-  const boxHeight = {
+  const boxSx = makeFieldSx('16px', {
     xs: 52,
     md: 'clamp(46px, 6.4vh, 56px)',
-  }
+  })
 
   return (
     <Stack
@@ -280,30 +288,9 @@ function OtpInput({
               inputRefs.current[index] = node
             }}
             sx={{
+              ...boxSx,
               flex: 1,
               minWidth: 0,
-
-              '& .MuiOutlinedInput-root': {
-                minHeight: boxHeight,
-                backgroundColor: colors.surface,
-
-                '& fieldset': {
-                  borderColor: colors.border,
-                },
-
-                '&:hover fieldset': {
-                  borderColor: colors.borderStrong,
-                },
-
-                '&.Mui-focused fieldset': {
-                  borderColor: colors.primaryBlue,
-                  borderWidth: 2,
-                },
-
-                '&.Mui-error fieldset': {
-                  borderColor: colors.error,
-                },
-              },
 
               '& .MuiInputBase-input': {
                 px: 0,
@@ -322,8 +309,8 @@ function OtpInput({
                   `Verification code digit ${index + 1} of ${OTP_LENGTH}`,
                 style: {
                   textAlign: 'center',
-                  fontSize: '1.25rem',
-                  fontWeight: 650,
+                  fontSize: 22,
+                  fontWeight: 700,
                   padding: '10px 0',
                 },
               },
@@ -541,6 +528,7 @@ export function LoginPage() {
       severity="error"
       sx={{
         mt: 1.5,
+        borderRadius: 3,
         py: 0.25,
       }}
     >
@@ -574,8 +562,7 @@ export function LoginPage() {
           md: '1fr',
         },
 
-        // Same page background language as Flutter Login.
-        backgroundColor: colors.background,
+        backgroundImage: `linear-gradient(135deg, ${colors.surface} 0%, ${alpha(colors.primaryBlue, 0.05)} 50%, ${alpha(colors.primaryBlue, 0.13)} 100%)`,
       }}
     >
       {/* Brand */}
@@ -692,34 +679,45 @@ export function LoginPage() {
                 'clamp(24px, 5vh, 52px) clamp(28px, 3vw, 52px)',
             },
 
-            borderRadius: 2,
+            borderRadius: {
+              xs: '28px',
+              md: '48px',
+            },
 
-            // Same card treatment as Flutter Login.
             backgroundColor: colors.surface,
 
-            border: 1,
-            borderColor: colors.border,
+            border: `1px solid ${alpha(colors.border, 0.8)}`,
 
             boxShadow:
-              `0 8px 24px ${colors.focusSubtle}`,
+              `0 28px 64px ${alpha(colors.primaryBlue, 0.14)}`,
           }}
         >
           {/* Heading */}
           <Typography
             component="h1"
-            variant="h3"
             sx={{
               color: colors.primary,
+              fontSize: {
+                xs: 30,
+                md: 'clamp(28px, 5vh, 42px)',
+              },
+              fontWeight: 800,
+              letterSpacing: '-0.02em',
+              lineHeight: 1.15,
             }}
           >
             Welcome Back
           </Typography>
 
           <Typography
-            variant="body1"
             sx={{
               mt: 1,
               color: colors.textSecondary,
+              fontSize: {
+                xs: 15,
+                md: 'clamp(14px, 2.1vh, 17px)',
+              },
+              lineHeight: 1.5,
             }}
           >
             {otpSent
@@ -752,7 +750,7 @@ export function LoginPage() {
               }
               inputRef={identifierRef}
               autoFocus
-              sx={makeFieldSx({
+              sx={makeFieldSx('28px', {
                 xs: 56,
                 md:
                   'clamp(48px, 7vh, 60px)',
@@ -790,13 +788,13 @@ export function LoginPage() {
             >
               <Typography
                 id="login-identifier-hint"
-                variant="caption"
                 sx={{
                   mt: 0.75,
                   ml: 2,
-                  display: 'block',
                   color:
                     colors.textSecondary,
+                  fontSize: 12.5,
+                  lineHeight: 1.4,
                 }}
               >
                 {hint}
@@ -831,6 +829,16 @@ export function LoginPage() {
 
                   mt:
                     'clamp(12px, 2.2vh, 20px)',
+
+                  '&.Mui-disabled': {
+                    ...primaryButtonSx['&.Mui-disabled'],
+                    ...(otpSent
+                      ? {
+                        color: colors.success,
+                        background: alpha(colors.success, 0.1),
+                      }
+                      : {}),
+                  },
                 }}
               >
                 {sending ? (
@@ -874,7 +882,7 @@ export function LoginPage() {
                       event.target.value,
                     )
                   }
-                  sx={makeFieldSx({
+                  sx={makeFieldSx('28px', {
                     xs: 56,
                     md:
                       'clamp(48px, 7vh, 60px)',
@@ -932,12 +940,13 @@ export function LoginPage() {
                 <Typography
                   id="login-otp-label"
                   component="label"
-                  variant="subtitle2"
                   sx={{
                     display: 'block',
                     mb: 1,
                     color:
                       colors.textPrimary,
+                    fontSize: 14,
+                    fontWeight: 700,
                   }}
                   role="status"
                   aria-live="polite"
@@ -980,7 +989,8 @@ export function LoginPage() {
                     sx={{
                       ml: -1,
                       color:
-                        colors.primaryBlue,
+                        colors.textPrimary,
+                      fontWeight: 700,
                     }}
                   >
                     {isEmail
@@ -994,10 +1004,10 @@ export function LoginPage() {
                     spacing={0.25}
                   >
                     <Typography
-                      variant="caption"
                       sx={{
                         color:
                           colors.textSecondary,
+                        fontSize: 13,
                       }}
                     >
                       Didn&apos;t receive
@@ -1018,6 +1028,7 @@ export function LoginPage() {
                         mr: -1,
                         color:
                           colors.primaryBlue,
+                        fontWeight: 700,
                       }}
                     >
                       {resending
@@ -1033,6 +1044,10 @@ export function LoginPage() {
                   sx={{
                     mt: 0,
                     ml: -0.5,
+                    '& .MuiFormControlLabel-label': {
+                      fontSize: 14,
+                      color: colors.textPrimary,
+                    },
                   }}
                   control={
                     <Checkbox
@@ -1046,7 +1061,7 @@ export function LoginPage() {
                       }
                       sx={{
                         color:
-                          colors.borderStrong,
+                          alpha(colors.textSecondary, 0.7),
 
                         '&.Mui-checked': {
                           color:
@@ -1114,12 +1129,11 @@ export function LoginPage() {
             }}
           >
             <Typography
-              variant="caption"
               sx={{
-                display: 'block',
                 textAlign: 'center',
                 color:
                   colors.textSecondary,
+                fontSize: 12.5,
               }}
             >
               Protected access for Lyra
