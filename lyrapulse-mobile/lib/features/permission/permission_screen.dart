@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -115,12 +116,10 @@ class _PermissionScreenState extends State<PermissionScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF7FAFE),
-
       appBar: AppBar(
         backgroundColor: const Color(0xFFF7FAFE),
         elevation: 0,
         centerTitle: true,
-
         leading: IconButton(
           onPressed: () => Get.back(),
           icon: const Icon(
@@ -129,7 +128,6 @@ class _PermissionScreenState extends State<PermissionScreen> {
             size: 20,
           ),
         ),
-
         title: const Text(
           'Request Permission',
           style: TextStyle(
@@ -139,7 +137,6 @@ class _PermissionScreenState extends State<PermissionScreen> {
           ),
         ),
       ),
-
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(20, 10, 20, 30),
@@ -373,16 +370,17 @@ class _PermissionScreenState extends State<PermissionScreen> {
 
               const SizedBox(height: 25),
 
-              // Submit Button
+              // Submit Button - LYRA PULSE Theme Blue
               SizedBox(
                 width: double.infinity,
                 height: 54,
                 child: ElevatedButton(
                   onPressed: _submitPermission,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1687D9),
+                    backgroundColor: const Color(0xFF1761C5),
                     foregroundColor: Colors.white,
                     elevation: 0,
+                    shadowColor: Colors.transparent,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(15),
                     ),
@@ -392,6 +390,7 @@ class _PermissionScreenState extends State<PermissionScreen> {
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
+                      color: Colors.white,
                     ),
                   ),
                 ),
