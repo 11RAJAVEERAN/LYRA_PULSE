@@ -185,7 +185,7 @@ class _FaceVerificationScreenState
                       widget.isCheckOut
                           ? 'CHECK-OUT FACE VERIFICATION'
                           : 'FACE VERIFICATION',
-                      style: GoogleFonts.poppins(
+                      style: GoogleFonts.inter(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
                         color: navy,
@@ -208,7 +208,7 @@ class _FaceVerificationScreenState
                         ? 'Verify your face to check out'
                         : 'Verify your face',
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.poppins(
+                    style: GoogleFonts.inter(
                       fontSize: 22,
                       fontWeight: FontWeight.w700,
                       color: navy,
@@ -218,7 +218,7 @@ class _FaceVerificationScreenState
                   Text(
                     'Position your face inside the frame and capture a clear photo.',
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.poppins(
+                    style: GoogleFonts.inter(
                       fontSize: 11,
                       height: 1.5,
                       color: grey,
@@ -282,7 +282,7 @@ class _FaceVerificationScreenState
                         _isCameraReady
                             ? 'Camera ready'
                             : 'Opening camera...',
-                        style: GoogleFonts.poppins(
+                        style: GoogleFonts.inter(
                           fontSize: 11,
                           color: grey,
                           fontWeight: FontWeight.w600,
@@ -338,7 +338,7 @@ class _FaceVerificationScreenState
                                 Text(
                                   'Capture & Continue',
                                   style:
-                                      GoogleFonts.poppins(
+                                      GoogleFonts.inter(
                                     fontSize: 13,
                                     fontWeight:
                                         FontWeight.w700,
@@ -354,7 +354,7 @@ class _FaceVerificationScreenState
 
                   Text(
                     'Make sure your face is clearly visible.',
-                    style: GoogleFonts.poppins(
+                    style: GoogleFonts.inter(
                       fontSize: 10,
                       color: grey,
                       fontWeight: FontWeight.w500,
@@ -416,7 +416,7 @@ class _FaceVerificationScreenState
                   ? 'Check-out verification'
                   : 'Check-in verification',
               textAlign: TextAlign.center,
-              style: GoogleFonts.poppins(
+              style: GoogleFonts.inter(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
                 color: Colors.white,

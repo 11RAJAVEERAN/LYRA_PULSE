@@ -66,7 +66,7 @@ class AttendanceDetailsScreen extends StatelessWidget {
                       Expanded(
                         child: Text(
                           'Attendance Details',
-                          style: GoogleFonts.poppins(
+                          style: GoogleFonts.inter(
                             color: Colors.white,
                             fontSize: 21,
                             fontWeight: FontWeight.w700,
@@ -121,7 +121,7 @@ class AttendanceDetailsScreen extends StatelessWidget {
 
                         Text(
                           employeeName,
-                          style: GoogleFonts.poppins(
+                          style: GoogleFonts.inter(
                             color: Colors.white,
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
@@ -132,7 +132,7 @@ class AttendanceDetailsScreen extends StatelessWidget {
 
                         Text(
                           'Employee',
-                          style: GoogleFonts.poppins(
+                          style: GoogleFonts.inter(
                             color: const Color(0xFF718AA0),
                             fontSize: 11,
                           ),
@@ -170,7 +170,7 @@ class AttendanceDetailsScreen extends StatelessWidget {
                             Expanded(
                               child: Text(
                                 _formattedDate(),
-                                style: GoogleFonts.poppins(
+                                style: GoogleFonts.inter(
                                   color: Colors.white,
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
@@ -240,7 +240,7 @@ class AttendanceDetailsScreen extends StatelessWidget {
                             const SizedBox(width: 12),
                             Text(
                               _calculateWorkingHours(),
-                              style: GoogleFonts.poppins(
+                              style: GoogleFonts.inter(
                                 color: Colors.white,
                                 fontSize: 18,
                                 fontWeight: FontWeight.w700,
@@ -292,7 +292,7 @@ class AttendanceDetailsScreen extends StatelessWidget {
                               const SizedBox(width: 8),
                               Text(
                                 status,
-                                style: GoogleFonts.poppins(
+                                style: GoogleFonts.inter(
                                   color: _statusColor(),
                                   fontSize: 11,
                                   fontWeight: FontWeight.w700,
@@ -310,7 +310,7 @@ class AttendanceDetailsScreen extends StatelessWidget {
                   Center(
                     child: Text(
                       'LYRA PULSE',
-                      style: GoogleFonts.poppins(
+                      style: GoogleFonts.inter(
                         color: const Color(0xFF38566D),
                         fontSize: 8,
                         fontWeight: FontWeight.w600,
@@ -379,7 +379,7 @@ class AttendanceDetailsScreen extends StatelessWidget {
   Widget _detailLabel(String text) {
     return Text(
       text,
-      style: GoogleFonts.poppins(
+      style: GoogleFonts.inter(
         color: const Color(0xFF718AA0),
         fontSize: 9,
         fontWeight: FontWeight.w700,
@@ -427,7 +427,7 @@ class AttendanceDetailsScreen extends StatelessWidget {
         const SizedBox(height: 8),
         Text(
           title,
-          style: GoogleFonts.poppins(
+          style: GoogleFonts.inter(
             color: const Color(0xFF718AA0),
             fontSize: 8,
             fontWeight: FontWeight.w600,
@@ -437,7 +437,7 @@ class AttendanceDetailsScreen extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           value,
-          style: GoogleFonts.poppins(
+          style: GoogleFonts.inter(
             color: Colors.white,
             fontSize: 14,
             fontWeight: FontWeight.w700,

@@ -416,7 +416,7 @@ class _SplashScreenState extends State<SplashScreen>
                         'Lyra Pulse',
                         textAlign: TextAlign.center,
 
-                        style: GoogleFonts.poppins(
+                        style: GoogleFonts.inter(
                           color: const Color(0xFFF7FAFF),
                           fontSize: titleSize,
                           fontWeight: FontWeight.w700,
@@ -447,7 +447,7 @@ class _SplashScreenState extends State<SplashScreen>
                         'WORK BETTER TOGETHER',
                         textAlign: TextAlign.center,
 
-                        style: GoogleFonts.poppins(
+                        style: GoogleFonts.inter(
                           color: const Color(0xFFB9D3F7),
                           fontSize: taglineSize,
                           fontWeight: FontWeight.w400,

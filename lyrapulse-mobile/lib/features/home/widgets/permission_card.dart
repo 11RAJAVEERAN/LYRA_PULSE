@@ -1,5 +1,8 @@
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+
+import '../../../app/theme/app_colors.dart';
 
 class PermissionCard extends StatelessWidget {
   const PermissionCard({
@@ -13,18 +16,22 @@ class PermissionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Color accentColor = isRequested
+        ? AppColors.success
+        : AppColors.accent;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: const Color(0xFF071A2D),
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(22),
         border: Border.all(
-          color: const Color(0xFF174663),
+          color: AppColors.border,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.20),
+            color: AppColors.textPrimary.withOpacity(0.06),
             blurRadius: 24,
             offset: const Offset(0, 10),
           ),
@@ -33,66 +40,56 @@ class PermissionCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // =========================================================
           // HEADER
-          // =========================================================
-
           Row(
             children: [
               Container(
                 width: 46,
                 height: 46,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF0B3048),
+                  color: AppColors.primary.withOpacity(0.08),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.assignment_outlined,
-                  color: Color(0xFF25DDF7),
+                  color: AppColors.primary,
                   size: 23,
                 ),
               ),
-
               const SizedBox(width: 12),
-
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'PERMISSION',
-                      style: GoogleFonts.poppins(
-                        color: Colors.white,
+                      style: GoogleFonts.inter(
+                        color: AppColors.textPrimary,
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 1.1,
                       ),
                     ),
-
                     const SizedBox(height: 3),
-
                     Text(
                       isRequested
                           ? 'Permission request submitted'
                           : 'Request attendance permission',
-                      style: GoogleFonts.poppins(
-                        color: const Color(0xFF718CA1),
+                      style: GoogleFonts.inter(
+                        color: AppColors.textSecondary,
                         fontSize: 10,
                       ),
                     ),
                   ],
                 ),
               ),
-
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 9,
                   vertical: 5,
                 ),
                 decoration: BoxDecoration(
-                  color: isRequested
-                      ? const Color(0xFF0B3B36)
-                      : const Color(0xFF0B2940),
+                  color: accentColor.withOpacity(0.10),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
@@ -103,20 +100,14 @@ class PermissionCard extends StatelessWidget {
                       height: 6,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: isRequested
-                            ? const Color(0xFF24E5C0)
-                            : const Color(0xFF25DDF7),
+                        color: accentColor,
                       ),
                     ),
-
                     const SizedBox(width: 5),
-
                     Text(
                       isRequested ? 'SENT' : 'AVAILABLE',
-                      style: GoogleFonts.poppins(
-                        color: isRequested
-                            ? const Color(0xFF24E5C0)
-                            : const Color(0xFF25DDF7),
+                      style: GoogleFonts.inter(
+                        color: accentColor,
                         fontSize: 7,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 0.8,
@@ -130,10 +121,7 @@ class PermissionCard extends StatelessWidget {
 
           const SizedBox(height: 18),
 
-          // =========================================================
           // INFORMATION
-          // =========================================================
-
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(
@@ -141,27 +129,25 @@ class PermissionCard extends StatelessWidget {
               vertical: 12,
             ),
             decoration: BoxDecoration(
-              color: const Color(0xFF061727),
+              color: AppColors.background,
               borderRadius: BorderRadius.circular(14),
             ),
             child: Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.info_outline_rounded,
-                  color: Color(0xFF25DDF7),
+                  color: AppColors.primary,
                   size: 18,
                 ),
-
                 const SizedBox(width: 9),
-
                 Expanded(
                   child: Text(
                     isRequested
                         ? 'Your permission request is waiting for approval.'
                         : 'Need permission? Submit a request to your manager.',
-                    style: GoogleFonts.poppins(
-                      color: const Color(0xFF8EA6B8),
-                      fontSize: 9,
+                    style: GoogleFonts.inter(
+                      color: AppColors.textSecondary,
+                      fontSize: 11,
                       height: 1.45,
                     ),
                   ),
@@ -172,19 +158,17 @@ class PermissionCard extends StatelessWidget {
 
           const SizedBox(height: 14),
 
-          // =========================================================
           // BUTTON
-          // =========================================================
-
           SizedBox(
             width: double.infinity,
             height: 48,
             child: ElevatedButton(
               onPressed: isRequested ? null : onPressed,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF176DFF),
-                disabledBackgroundColor: const Color(0xFF123451),
+                backgroundColor: AppColors.primary,
+                disabledBackgroundColor: AppColors.border,
                 foregroundColor: Colors.white,
+                disabledForegroundColor: AppColors.textSecondary,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
@@ -199,15 +183,13 @@ class PermissionCard extends StatelessWidget {
                         : Icons.send_rounded,
                     size: 18,
                   ),
-
                   const SizedBox(width: 8),
-
                   Text(
                     isRequested
                         ? 'Request Submitted'
                         : 'Request Permission',
-                    style: GoogleFonts.poppins(
-                      fontSize: 11,
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
                       fontWeight: FontWeight.w700,
                     ),
                   ),

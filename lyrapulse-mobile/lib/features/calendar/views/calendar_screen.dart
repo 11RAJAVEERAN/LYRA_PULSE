@@ -114,7 +114,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
             children: [
               Text(
                 'Attendance Calendar',
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.inter(
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
                   color: textColor,
@@ -123,7 +123,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
               const SizedBox(height: 5),
               Text(
                 'Select a date to regularize attendance.',
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.inter(
                   fontSize: 11,
                   color: const Color(0xFF8795A8),
                 ),
@@ -181,7 +181,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
         children: [
           Text(
             '${_monthName(_visibleMonth.month)} ${_visibleMonth.year}',
-            style: GoogleFonts.poppins(
+            style: GoogleFonts.inter(
               fontSize: 17,
               fontWeight: FontWeight.w700,
               color: textColor,
@@ -195,7 +195,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 child: Center(
                   child: Text(
                     day,
-                    style: GoogleFonts.poppins(
+                    style: GoogleFonts.inter(
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
                       color: const Color(0xFF8795A8),
@@ -257,7 +257,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     child: Center(
                       child: Text(
                         '${date.day}',
-                        style: GoogleFonts.poppins(
+                        style: GoogleFonts.inter(
                           fontSize: 12,
                           fontWeight: isToday || isSelected
                               ? FontWeight.w700
@@ -292,7 +292,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
               const SizedBox(width: 7),
               Text(
                 'Today',
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.inter(
                   fontSize: 10,
                   color: const Color(0xFF8795A8),
                 ),
@@ -310,7 +310,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
               const SizedBox(width: 7),
               Text(
                 'Current date',
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.inter(
                   fontSize: 10,
                   color: const Color(0xFF8795A8),
                 ),
@@ -344,7 +344,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
               children: [
                 Text(
                   'Need to correct attendance?',
-                  style: GoogleFonts.poppins(
+                  style: GoogleFonts.inter(
                     fontSize: 12,
                     color: textColor,
                     fontWeight: FontWeight.w700,
@@ -355,7 +355,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   'Tap any date on the calendar. The selected '
                   'date will automatically appear on the '
                   'Regularization screen.',
-                  style: GoogleFonts.poppins(
+                  style: GoogleFonts.inter(
                     fontSize: 11,
                     height: 1.6,
                     color: const Color(0xFF54708F),

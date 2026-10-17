@@ -51,7 +51,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
     FontWeight weight = FontWeight.w500,
     Color color = textColor,
   }) {
-    return GoogleFonts.poppins(
+    return GoogleFonts.inter(
       fontSize: size,
       fontWeight: weight,
       color: color,

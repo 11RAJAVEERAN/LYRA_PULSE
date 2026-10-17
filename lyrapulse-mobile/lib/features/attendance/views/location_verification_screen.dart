@@ -168,7 +168,7 @@ class _LocationVerificationScreenState
         ),
         title: Text(
           'Location Verification',
-          style: GoogleFonts.poppins(
+          style: GoogleFonts.inter(
             color: navy,
             fontSize: 18,
             fontWeight: FontWeight.w700,
@@ -209,7 +209,7 @@ class _LocationVerificationScreenState
 
                       Text(
                         badge,
-                        style: GoogleFonts.poppins(
+                        style: GoogleFonts.inter(
                           color: widget.isCheckOut
                               ? Colors.orange
                               : blue,
@@ -224,7 +224,7 @@ class _LocationVerificationScreenState
                       Text(
                         title,
                         textAlign: TextAlign.center,
-                        style: GoogleFonts.poppins(
+                        style: GoogleFonts.inter(
                           color: navy,
                           fontSize: 23,
                           fontWeight: FontWeight.w700,
@@ -237,7 +237,7 @@ class _LocationVerificationScreenState
                       Text(
                         'We need to verify that you are currently at the authorised office location.',
                         textAlign: TextAlign.center,
-                        style: GoogleFonts.poppins(
+                        style: GoogleFonts.inter(
                           color: grey,
                           fontSize: 13,
                           height: 1.6,
@@ -297,7 +297,7 @@ class _LocationVerificationScreenState
                                     children: [
                                       Text(
                                         'Current Location',
-                                        style: GoogleFonts.poppins(
+                                        style: GoogleFonts.inter(
                                           color: navy,
                                           fontSize: 14,
                                           fontWeight: FontWeight.w700,
@@ -306,7 +306,7 @@ class _LocationVerificationScreenState
                                       const SizedBox(height: 4),
                                       Text(
                                         locationText,
-                                        style: GoogleFonts.poppins(
+                                        style: GoogleFonts.inter(
                                           color: grey,
                                           fontSize: 12,
                                           height: 1.4,
@@ -341,7 +341,7 @@ class _LocationVerificationScreenState
                                     locationVerified
                                         ? 'Location detected successfully'
                                         : 'Location verification required',
-                                    style: GoogleFonts.poppins(
+                                    style: GoogleFonts.inter(
                                       color: locationVerified
                                           ? green
                                           : grey,
@@ -382,7 +382,7 @@ class _LocationVerificationScreenState
                               const SizedBox(width: 12),
                               Text(
                                 'Getting your location...',
-                                style: GoogleFonts.poppins(
+                                style: GoogleFonts.inter(
                                   color: blue,
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
@@ -420,7 +420,7 @@ class _LocationVerificationScreenState
                     widget.isCheckOut
                         ? 'Continue to Check Out'
                         : 'Continue to Check In',
-                    style: GoogleFonts.poppins(
+                    style: GoogleFonts.inter(
                       color: Colors.white,
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
@@ -435,7 +435,7 @@ class _LocationVerificationScreenState
                 onPressed: _verifyLocation,
                 child: Text(
                   'Refresh Location',
-                  style: GoogleFonts.poppins(
+                  style: GoogleFonts.inter(
                     color: navy,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,

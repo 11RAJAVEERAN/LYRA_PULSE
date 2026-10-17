@@ -136,7 +136,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
               children: [
                 Text(
                   'Notifications',
-                  style: GoogleFonts.poppins(
+                  style: GoogleFonts.inter(
                     fontSize: 22,
                     fontWeight: FontWeight.w700,
                     color: navy,
@@ -148,7 +148,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                       ? 'You are all caught up'
                       : '$_unreadCount unread notification'
                           '${_unreadCount > 1 ? 's' : ''}',
-                  style: GoogleFonts.poppins(
+                  style: GoogleFonts.inter(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                     color: muted,
@@ -162,7 +162,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
               onPressed: _markAllAsRead,
               child: Text(
                 'Read all',
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.inter(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                   color: blue,
@@ -227,7 +227,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                               Expanded(
                                 child: Text(
                                   item.title,
-                                  style: GoogleFonts.poppins(
+                                  style: GoogleFonts.inter(
                                     fontSize: 14,
                                     fontWeight: item.isRead
                                         ? FontWeight.w600
@@ -239,7 +239,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                               const SizedBox(width: 8),
                               Text(
                                 item.time,
-                                style: GoogleFonts.poppins(
+                                style: GoogleFonts.inter(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w500,
                                   color: muted,
@@ -250,7 +250,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                           const SizedBox(height: 6),
                           Text(
                             item.message,
-                            style: GoogleFonts.poppins(
+                            style: GoogleFonts.inter(
                               fontSize: 11.5,
                               height: 1.5,
                               fontWeight: FontWeight.w400,
@@ -305,7 +305,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
             const SizedBox(height: 20),
             Text(
               'No Notifications',
-              style: GoogleFonts.poppins(
+              style: GoogleFonts.inter(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
                 color: navy,
@@ -315,7 +315,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
             Text(
               'You do not have any notifications right now.',
               textAlign: TextAlign.center,
-              style: GoogleFonts.poppins(
+              style: GoogleFonts.inter(
                 fontSize: 12,
                 color: muted,
               ),

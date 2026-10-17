@@ -55,7 +55,7 @@ class PermissionSubmittedScreen extends StatelessWidget {
                   Text(
                     'REQUEST SUBMITTED',
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.poppins(
+                    style: GoogleFonts.inter(
                       color: Colors.white,
                       fontSize: 25,
                       fontWeight: FontWeight.w800,
@@ -67,7 +67,7 @@ class PermissionSubmittedScreen extends StatelessWidget {
 
                   Text(
                     'PERMISSION PENDING',
-                    style: GoogleFonts.poppins(
+                    style: GoogleFonts.inter(
                       color: const Color(0xFF20DFFF),
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
@@ -80,7 +80,7 @@ class PermissionSubmittedScreen extends StatelessWidget {
                   Text(
                     'Your permission request has been submitted successfully. Please wait for approval.',
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.poppins(
+                    style: GoogleFonts.inter(
                       color: const Color(0xFF8198AC),
                       fontSize: 11,
                       height: 1.6,
@@ -110,7 +110,7 @@ class PermissionSubmittedScreen extends StatelessWidget {
                       ),
                       child: Text(
                         'Back to Home',
-                        style: GoogleFonts.poppins(
+                        style: GoogleFonts.inter(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
                         ),
@@ -123,7 +123,7 @@ class PermissionSubmittedScreen extends StatelessWidget {
                   Text(
                     'You will be notified when your request is approved.',
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.poppins(
+                    style: GoogleFonts.inter(
                       color: const Color(0xFF536D83),
                       fontSize: 9,
                     ),
@@ -133,7 +133,7 @@ class PermissionSubmittedScreen extends StatelessWidget {
 
                   Text(
                     'LYRA PULSE',
-                    style: GoogleFonts.poppins(
+                    style: GoogleFonts.inter(
                       color: const Color(0xFF38566D),
                       fontSize: 8,
                       fontWeight: FontWeight.w600,
@@ -235,7 +235,7 @@ class PermissionSubmittedScreen extends StatelessWidget {
         Expanded(
           child: Text(
             title,
-            style: GoogleFonts.poppins(
+            style: GoogleFonts.inter(
               color: const Color(0xFF8EA5B7),
               fontSize: 10,
             ),
@@ -243,7 +243,7 @@ class PermissionSubmittedScreen extends StatelessWidget {
         ),
         Text(
           value,
-          style: GoogleFonts.poppins(
+          style: GoogleFonts.inter(
             color: Colors.white,
             fontSize: 10,
             fontWeight: FontWeight.w700,

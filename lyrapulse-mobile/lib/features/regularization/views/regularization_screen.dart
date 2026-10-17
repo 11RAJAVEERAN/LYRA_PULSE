@@ -123,7 +123,7 @@ class _RegularizationScreenState
             children: [
               Text(
                 title,
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.inter(
                   fontSize: 11,
                   color: const Color(0xFF8795A8),
                 ),
@@ -131,7 +131,7 @@ class _RegularizationScreenState
               const SizedBox(height: 10),
               Text(
                 _formatTime(time),
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.inter(
                   fontSize: 12,
                   color: textColor,
                   fontWeight: FontWeight.w600,
@@ -157,7 +157,7 @@ class _RegularizationScreenState
       appBar: AppBar(
         title: Text(
           'Regularization',
-          style: GoogleFonts.poppins(
+          style: GoogleFonts.inter(
             fontSize: 18,
             fontWeight: FontWeight.w700,
             color: textColor,
@@ -177,7 +177,7 @@ class _RegularizationScreenState
               children: [
                 Text(
                   'Correct Your Attendance',
-                  style: GoogleFonts.poppins(
+                  style: GoogleFonts.inter(
                     fontSize: 21,
                     fontWeight: FontWeight.w700,
                     color: textColor,
@@ -186,7 +186,7 @@ class _RegularizationScreenState
                 const SizedBox(height: 6),
                 Text(
                   'Select the attendance details you need to correct.',
-                  style: GoogleFonts.poppins(
+                  style: GoogleFonts.inter(
                     fontSize: 12,
                     color: const Color(0xFF8795A8),
                   ),
@@ -216,7 +216,7 @@ class _RegularizationScreenState
                       const SizedBox(height: 12),
                       Text(
                         'Selected Attendance Date',
-                        style: GoogleFonts.poppins(
+                        style: GoogleFonts.inter(
                           fontSize: 11,
                           color: Colors.white70,
                         ),
@@ -224,7 +224,7 @@ class _RegularizationScreenState
                       const SizedBox(height: 5),
                       Text(
                         _formatDate(widget.selectedDate),
-                        style: GoogleFonts.poppins(
+                        style: GoogleFonts.inter(
                           fontSize: 16,
                           color: Colors.white,
                           fontWeight: FontWeight.w700,
@@ -238,7 +238,7 @@ class _RegularizationScreenState
 
                 Text(
                   'Attendance Issue',
-                  style: GoogleFonts.poppins(
+                  style: GoogleFonts.inter(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                     color: textColor,
@@ -284,7 +284,7 @@ class _RegularizationScreenState
 
                 Text(
                   'Actual Attendance Time',
-                  style: GoogleFonts.poppins(
+                  style: GoogleFonts.inter(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                     color: textColor,
@@ -312,7 +312,7 @@ class _RegularizationScreenState
 
                 Text(
                   'Reason for Regularization',
-                  style: GoogleFonts.poppins(
+                  style: GoogleFonts.inter(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                     color: textColor,
@@ -350,7 +350,7 @@ class _RegularizationScreenState
                     icon: const Icon(Icons.send_rounded),
                     label: Text(
                       'Submit Request',
-                      style: GoogleFonts.poppins(
+                      style: GoogleFonts.inter(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
                       ),

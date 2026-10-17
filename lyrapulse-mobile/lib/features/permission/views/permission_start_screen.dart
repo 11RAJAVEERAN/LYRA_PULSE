@@ -175,7 +175,7 @@ class _PermissionStartScreenState extends State<PermissionStartScreen> {
                   Center(
                     child: Text(
                       'REQUEST',
-                      style: GoogleFonts.poppins(
+                      style: GoogleFonts.inter(
                         color: Colors.white,
                         fontSize: 27,
                         fontWeight: FontWeight.w800,
@@ -198,7 +198,7 @@ class _PermissionStartScreenState extends State<PermissionStartScreen> {
                       },
                       child: Text(
                         'PERMISSION',
-                        style: GoogleFonts.poppins(
+                        style: GoogleFonts.inter(
                           color: Colors.white,
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
@@ -214,7 +214,7 @@ class _PermissionStartScreenState extends State<PermissionStartScreen> {
                     child: Text(
                       'Submit your permission request before leaving the office.',
                       textAlign: TextAlign.center,
-                      style: GoogleFonts.poppins(
+                      style: GoogleFonts.inter(
                         color: const Color(0xFF7F96AB),
                         fontSize: 10.5,
                         height: 1.5,
@@ -322,7 +322,7 @@ class _PermissionStartScreenState extends State<PermissionStartScreen> {
                             const SizedBox(width: 9),
                             Text(
                               'Request Permission',
-                              style: GoogleFonts.poppins(
+                              style: GoogleFonts.inter(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w700,
                               ),
@@ -351,7 +351,7 @@ class _PermissionStartScreenState extends State<PermissionStartScreen> {
                         const SizedBox(width: 7),
                         Text(
                           'Your permission request is securely recorded',
-                          style: GoogleFonts.poppins(
+                          style: GoogleFonts.inter(
                             color: const Color(0xFF536D83),
                             fontSize: 9,
                             fontWeight: FontWeight.w500,
@@ -370,7 +370,7 @@ class _PermissionStartScreenState extends State<PermissionStartScreen> {
                   Center(
                     child: Text(
                       'LYRA PULSE',
-                      style: GoogleFonts.poppins(
+                      style: GoogleFonts.inter(
                         color: const Color(0xFF38566D),
                         fontSize: 8,
                         fontWeight: FontWeight.w600,
@@ -427,7 +427,7 @@ class _PermissionStartScreenState extends State<PermissionStartScreen> {
               children: [
                 Text(
                   'Employee',
-                  style: GoogleFonts.poppins(
+                  style: GoogleFonts.inter(
                     color: Colors.white,
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
@@ -436,7 +436,7 @@ class _PermissionStartScreenState extends State<PermissionStartScreen> {
                 const SizedBox(height: 3),
                 Text(
                   'Employee ID: EMP001',
-                  style: GoogleFonts.poppins(
+                  style: GoogleFonts.inter(
                     color: const Color(0xFF718CA1),
                     fontSize: 9,
                   ),
@@ -461,7 +461,7 @@ class _PermissionStartScreenState extends State<PermissionStartScreen> {
   Widget _sectionTitle(String title) {
     return Text(
       title,
-      style: GoogleFonts.poppins(
+      style: GoogleFonts.inter(
         color: const Color(0xFF718AA0),
         fontSize: 9,
         fontWeight: FontWeight.w700,
@@ -494,7 +494,7 @@ class _PermissionStartScreenState extends State<PermissionStartScreen> {
             Icons.keyboard_arrow_down_rounded,
             color: Color(0xFF20DFFF),
           ),
-          style: GoogleFonts.poppins(
+          style: GoogleFonts.inter(
             color: Colors.white,
             fontSize: 11,
             fontWeight: FontWeight.w600,
@@ -533,14 +533,14 @@ class _PermissionStartScreenState extends State<PermissionStartScreen> {
       child: TextField(
         controller: reasonController,
         maxLines: 4,
-        style: GoogleFonts.poppins(
+        style: GoogleFonts.inter(
           color: Colors.white,
           fontSize: 11,
         ),
         cursorColor: const Color(0xFF20DFFF),
         decoration: InputDecoration(
           hintText: 'Example: Need to visit bank...',
-          hintStyle: GoogleFonts.poppins(
+          hintStyle: GoogleFonts.inter(
             color: const Color(0xFF536D83),
             fontSize: 10,
           ),
@@ -596,7 +596,7 @@ class _PermissionStartScreenState extends State<PermissionStartScreen> {
             Expanded(
               child: Text(
                 value,
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.inter(
                   color: selectedReturnTime == null
                       ? const Color(0xFF536D83)
                       : Colors.white,
@@ -653,7 +653,7 @@ class _PermissionStartScreenState extends State<PermissionStartScreen> {
               children: [
                 Text(
                   'Current Location',
-                  style: GoogleFonts.poppins(
+                  style: GoogleFonts.inter(
                     color: Colors.white,
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
@@ -662,7 +662,7 @@ class _PermissionStartScreenState extends State<PermissionStartScreen> {
                 const SizedBox(height: 3),
                 Text(
                   'Office location will be verified',
-                  style: GoogleFonts.poppins(
+                  style: GoogleFonts.inter(
                     color: const Color(0xFF7FA99F),
                     fontSize: 9,
                   ),
@@ -736,7 +736,7 @@ class _PermissionStartScreenState extends State<PermissionStartScreen> {
           const SizedBox(width: 6),
           Text(
             'SECURE',
-            style: GoogleFonts.poppins(
+            style: GoogleFonts.inter(
               color: const Color(0xFF91AABD),
               fontSize: 8,
               fontWeight: FontWeight.w600,

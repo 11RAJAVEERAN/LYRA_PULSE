@@ -63,7 +63,7 @@ class CheckInCard extends StatelessWidget {
                   children: [
                     Text(
                       'CHECK IN',
-                      style: GoogleFonts.poppins(
+                      style: GoogleFonts.inter(
                         color: Colors.white,
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
@@ -77,7 +77,7 @@ class CheckInCard extends StatelessWidget {
                       isCheckedIn
                           ? 'Attendance marked'
                           : 'Mark your attendance',
-                      style: GoogleFonts.poppins(
+                      style: GoogleFonts.inter(
                         color: const Color(0xFF718CA1),
                         fontSize: 10,
                       ),
@@ -113,7 +113,7 @@ class CheckInCard extends StatelessWidget {
                     const SizedBox(width: 5),
                     Text(
                       isCheckedIn ? 'DONE' : 'READY',
-                      style: GoogleFonts.poppins(
+                      style: GoogleFonts.inter(
                         color: isCheckedIn
                             ? const Color(0xFF24E5C0)
                             : const Color(0xFF25DDF7),
@@ -156,7 +156,7 @@ class CheckInCard extends StatelessWidget {
 
                 Text(
                   'Check-in Time',
-                  style: GoogleFonts.poppins(
+                  style: GoogleFonts.inter(
                     color: const Color(0xFF718CA1),
                     fontSize: 9,
                   ),
@@ -166,7 +166,7 @@ class CheckInCard extends StatelessWidget {
 
                 Text(
                   checkInTime,
-                  style: GoogleFonts.poppins(
+                  style: GoogleFonts.inter(
                     color: Colors.white,
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
@@ -212,7 +212,7 @@ class CheckInCard extends StatelessWidget {
                     isCheckedIn
                         ? 'Checked In'
                         : 'Start Check In',
-                    style: GoogleFonts.poppins(
+                    style: GoogleFonts.inter(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
                     ),
