@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'face_verification_screen.dart';
+import '../../../app/theme/app_colors.dart';
 
 class LocationVerificationScreen extends StatefulWidget {
   final bool isCheckOut;
@@ -28,11 +29,11 @@ class _LocationVerificationScreenState
 
   Position? currentPosition;
 
-  static const Color background = Color(0xFFF7FAFE);
-  static const Color navy = Color(0xFF102B63);
-  static const Color blue = Color(0xFF3978E8);
-  static const Color green = Color(0xFF0BA875);
-  static const Color grey = Color(0xFF6B7280);
+  static const Color background = AppColors.hexFFF7FAFE;
+  static const Color navy = AppColors.hexFF102B63;
+  static const Color blue = AppColors.hexFF3978E8;
+  static const Color green = AppColors.hexFF0BA875;
+  static const Color grey = AppColors.hexFF6B7280;
 
   @override
   void initState() {
@@ -149,9 +150,8 @@ class _LocationVerificationScreenState
         ? 'Verify your location to check out'
         : 'Verify your location to check in';
 
-    final badge = widget.isCheckOut
-        ? 'CHECK-OUT LOCATION'
-        : 'CHECK-IN LOCATION';
+    final badge =
+        widget.isCheckOut ? 'CHECK-OUT LOCATION' : 'CHECK-IN LOCATION';
 
     return Scaffold(
       backgroundColor: background,
@@ -186,41 +186,32 @@ class _LocationVerificationScreenState
                   child: Column(
                     children: [
                       const SizedBox(height: 12),
-
                       Container(
                         width: 78,
                         height: 78,
                         decoration: BoxDecoration(
                           color: widget.isCheckOut
-                              ? Colors.orange.withOpacity(.10)
+                              ? AppColors.orange.withOpacity(.10)
                               : blue.withOpacity(.10),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
                           Icons.location_on_rounded,
                           size: 42,
-                          color: widget.isCheckOut
-                              ? Colors.orange
-                              : blue,
+                          color: widget.isCheckOut ? AppColors.orange : blue,
                         ),
                       ),
-
                       const SizedBox(height: 24),
-
                       Text(
                         badge,
                         style: GoogleFonts.inter(
-                          color: widget.isCheckOut
-                              ? Colors.orange
-                              : blue,
+                          color: widget.isCheckOut ? AppColors.orange : blue,
                           fontSize: 12,
                           fontWeight: FontWeight.w800,
                           letterSpacing: 1.3,
                         ),
                       ),
-
                       const SizedBox(height: 10),
-
                       Text(
                         title,
                         textAlign: TextAlign.center,
@@ -231,9 +222,7 @@ class _LocationVerificationScreenState
                           height: 1.25,
                         ),
                       ),
-
                       const SizedBox(height: 10),
-
                       Text(
                         'We need to verify that you are currently at the authorised office location.',
                         textAlign: TextAlign.center,
@@ -243,21 +232,19 @@ class _LocationVerificationScreenState
                           height: 1.6,
                         ),
                       ),
-
                       const SizedBox(height: 30),
-
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppColors.white,
                           borderRadius: BorderRadius.circular(22),
                           border: Border.all(
-                            color: const Color(0xFFE6EBF3),
+                            color: AppColors.hexFFE6EBF3,
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(.04),
+                              color: AppColors.black.withOpacity(.04),
                               blurRadius: 20,
                               offset: const Offset(0, 8),
                             ),
@@ -272,8 +259,7 @@ class _LocationVerificationScreenState
                                   height: 48,
                                   decoration: BoxDecoration(
                                     color: green.withOpacity(.10),
-                                    borderRadius:
-                                        BorderRadius.circular(14),
+                                    borderRadius: BorderRadius.circular(14),
                                   ),
                                   child: Icon(
                                     isLoading
@@ -285,7 +271,7 @@ class _LocationVerificationScreenState
                                         ? blue
                                         : locationVerified
                                             ? green
-                                            : Colors.redAccent,
+                                            : AppColors.redAccent,
                                     size: 25,
                                   ),
                                 ),
@@ -317,17 +303,13 @@ class _LocationVerificationScreenState
                                 ),
                               ],
                             ),
-
                             const SizedBox(height: 18),
-
                             Container(
                               width: double.infinity,
                               height: 1,
-                              color: const Color(0xFFECEFF4),
+                              color: AppColors.hexFFECEFF4,
                             ),
-
                             const SizedBox(height: 16),
-
                             Row(
                               children: [
                                 Icon(
@@ -342,9 +324,7 @@ class _LocationVerificationScreenState
                                         ? 'Location detected successfully'
                                         : 'Location verification required',
                                     style: GoogleFonts.inter(
-                                      color: locationVerified
-                                          ? green
-                                          : grey,
+                                      color: locationVerified ? green : grey,
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -355,9 +335,7 @@ class _LocationVerificationScreenState
                           ],
                         ),
                       ),
-
                       const SizedBox(height: 18),
-
                       if (isLoading)
                         Container(
                           width: double.infinity,
@@ -395,22 +373,17 @@ class _LocationVerificationScreenState
                   ),
                 ),
               ),
-
               const SizedBox(height: 15),
-
               SizedBox(
                 width: double.infinity,
                 height: 54,
                 child: ElevatedButton(
-                  onPressed: locationVerified
-                      ? _continueToFaceVerification
-                      : null,
+                  onPressed:
+                      locationVerified ? _continueToFaceVerification : null,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: widget.isCheckOut
-                        ? const Color.fromARGB(255, 0, 119, 255)
-                        : blue,
-                    disabledBackgroundColor:
-                        const Color(0xFFD9DEE7),
+                    backgroundColor:
+                        widget.isCheckOut ? AppColors.hexFF0077FF : blue,
+                    disabledBackgroundColor: AppColors.hexFFD9DEE7,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
@@ -421,16 +394,14 @@ class _LocationVerificationScreenState
                         ? 'Continue to Check Out'
                         : 'Continue to Check In',
                     style: GoogleFonts.inter(
-                      color: Colors.white,
+                      color: AppColors.white,
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
               ),
-
               const SizedBox(height: 10),
-
               TextButton(
                 onPressed: _verifyLocation,
                 child: Text(

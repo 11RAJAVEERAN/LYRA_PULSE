@@ -3,19 +3,20 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'attendance_history_screen.dart';
+import '../../../app/theme/app_colors.dart';
 
 class AttendanceOverviewScreen extends StatelessWidget {
   const AttendanceOverviewScreen({super.key});
 
-  static const Color background = Color(0xFFF7FAFE);
-  static const Color navy = Color(0xFF19356C);
-  static const Color purple = Color(0xFF6C63E8);
-  static const Color green = Color(0xFF18A66A);
-  static const Color orange = Color(0xFFF59E0B);
+  static const Color background = AppColors.hexFFF7FAFE;
+  static const Color navy = AppColors.hexFF19356C;
+  static const Color purple = AppColors.hexFF6C63E8;
+  static const Color green = AppColors.hexFF18A66A;
+  static const Color orange = AppColors.warning;
 
-  static const Color primaryText = Color(0xFF172B4D);
-  static const Color secondaryText = Color(0xFF65758B);
-  static const Color border = Color(0xFFE3EAF3);
+  static const Color primaryText = AppColors.hexFF172B4D;
+  static const Color secondaryText = AppColors.hexFF65758B;
+  static const Color border = AppColors.hexFFE3EAF3;
 
   @override
   Widget build(BuildContext context) {
@@ -75,7 +76,7 @@ class AttendanceOverviewScreen extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.white,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: border),
                   boxShadow: [
@@ -95,7 +96,7 @@ class AttendanceOverviewScreen extends StatelessWidget {
                           width: 44,
                           height: 44,
                           decoration: BoxDecoration(
-                            color: const Color(0xFFEAF8F2),
+                            color: AppColors.hexFFEAF8F2,
                             borderRadius: BorderRadius.circular(13),
                           ),
                           child: const Icon(
@@ -134,7 +135,7 @@ class AttendanceOverviewScreen extends StatelessWidget {
                             vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFEAF8F2),
+                            color: AppColors.hexFFEAF8F2,
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
@@ -202,7 +203,7 @@ class AttendanceOverviewScreen extends StatelessWidget {
                       title: 'Present',
                       value: '22',
                       color: green,
-                      backgroundColor: const Color(0xFFEAF8F2),
+                      backgroundColor: AppColors.hexFFEAF8F2,
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -211,8 +212,8 @@ class AttendanceOverviewScreen extends StatelessWidget {
                       icon: Icons.cancel_outlined,
                       title: 'Absent',
                       value: '2',
-                      color: const Color(0xFFE05260),
-                      backgroundColor: const Color(0xFFFFEFF1),
+                      color: AppColors.hexFFE05260,
+                      backgroundColor: AppColors.hexFFFFEFF1,
                     ),
                   ),
                 ],
@@ -228,7 +229,7 @@ class AttendanceOverviewScreen extends StatelessWidget {
                       title: 'Late',
                       value: '3',
                       color: orange,
-                      backgroundColor: const Color(0xFFFFF6E5),
+                      backgroundColor: AppColors.hexFFFFF6E5,
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -238,7 +239,7 @@ class AttendanceOverviewScreen extends StatelessWidget {
                       title: 'Working',
                       value: '8h',
                       color: purple,
-                      backgroundColor: const Color(0xFFF0EEFF),
+                      backgroundColor: AppColors.hexFFF0EEFF,
                     ),
                   ),
                 ],
@@ -266,7 +267,7 @@ class AttendanceOverviewScreen extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.white,
                   borderRadius: BorderRadius.circular(18),
                   border: Border.all(color: border),
                 ),
@@ -302,7 +303,7 @@ class AttendanceOverviewScreen extends StatelessWidget {
                       child: LinearProgressIndicator(
                         value: 0.88,
                         minHeight: 9,
-                        backgroundColor: const Color(0xFFEAF0F5),
+                        backgroundColor: AppColors.hexFFEAF0F5,
                         valueColor:
                             const AlwaysStoppedAnimation<Color>(
                           green,
@@ -346,7 +347,7 @@ class AttendanceOverviewScreen extends StatelessWidget {
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: navy,
-                    foregroundColor: Colors.white,
+                    foregroundColor: AppColors.white,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
@@ -382,7 +383,7 @@ class AttendanceOverviewScreen extends StatelessWidget {
                 child: Text(
                   'LYRA PULSE',
                   style: GoogleFonts.inter(
-                    color: const Color(0xFF8A99AA),
+                    color: AppColors.hexFF8A99AA,
                     fontSize: 8,
                     fontWeight: FontWeight.w600,
                     letterSpacing: 3,
@@ -409,7 +410,7 @@ class AttendanceOverviewScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(13),
       decoration: BoxDecoration(
-        color: const Color(0xFFF7FAFE),
+        color: AppColors.hexFFF7FAFE,
         borderRadius: BorderRadius.circular(13),
       ),
       child: Row(
@@ -462,7 +463,7 @@ class AttendanceOverviewScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(17),
         border: Border.all(color: border),
       ),
@@ -513,7 +514,7 @@ class AttendanceOverviewScreen extends StatelessWidget {
       width: 42,
       height: 42,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(13),
         border: Border.all(color: border),
       ),
@@ -539,10 +540,10 @@ class AttendanceOverviewScreen extends StatelessWidget {
         vertical: 7,
       ),
       decoration: BoxDecoration(
-        color: const Color(0xFFEAF8F2),
+        color: AppColors.hexFFEAF8F2,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: const Color(0xFFCBEBD9),
+          color: AppColors.hexFFCBEBD9,
         ),
       ),
       child: Row(

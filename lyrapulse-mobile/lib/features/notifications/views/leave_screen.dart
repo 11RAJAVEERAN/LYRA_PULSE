@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../app/theme/app_colors.dart';
 
 class LeaveScreen extends StatefulWidget {
   const LeaveScreen({super.key});
@@ -12,15 +13,15 @@ class LeaveScreen extends StatefulWidget {
 class _LeaveScreenState extends State<LeaveScreen> {
   int selectedTab = 0;
 
-  static const Color navy = Color(0xFF102B63);
-  static const Color background = Color(0xFFF5F7FD);
-  static const Color cardColor = Colors.white;
-  static const Color borderColor = Color(0xFFE5EAF2);
-  static const Color mutedText = Color(0xFF7B8497);
-  static const Color textColor = Color(0xFF18243A);
-  static const Color green = Color(0xFF0BA875);
-  static const Color orange = Color(0xFFF59E0B);
-  static const Color red = Color(0xFFEF4444);
+  static const Color navy = AppColors.hexFF102B63;
+  static const Color background = AppColors.hexFFF5F7FD;
+  static const Color cardColor = AppColors.white;
+  static const Color borderColor = AppColors.hexFFE5EAF2;
+  static const Color mutedText = AppColors.hexFF7B8497;
+  static const Color textColor = AppColors.hexFF18243A;
+  static const Color green = AppColors.hexFF0BA875;
+  static const Color orange = AppColors.warning;
+  static const Color red = AppColors.hexFFEF4444;
 
   final List<Map<String, String>> leaveRequests = [
     {
@@ -79,8 +80,8 @@ class _LeaveScreenState extends State<LeaveScreen> {
     return Scaffold(
       backgroundColor: background,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.transparent,
+        backgroundColor: AppColors.white,
+        surfaceTintColor: AppColors.transparent,
         elevation: 0,
         leading: IconButton(
           onPressed: () => Get.back(),
@@ -129,8 +130,8 @@ class _LeaveScreenState extends State<LeaveScreen> {
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [
-            Color(0xFF102B63),
-            Color(0xFF244985),
+            AppColors.hexFF102B63,
+            AppColors.hexFF244985,
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -155,19 +156,19 @@ class _LeaveScreenState extends State<LeaveScreen> {
                   style: textStyle(
                     size: 14,
                     weight: FontWeight.w500,
-                    color: Colors.white70,
+                    color: AppColors.white70,
                   ),
                 ),
               ),
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.12),
+                  color: AppColors.white.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
                   Icons.event_available_rounded,
-                  color: Colors.white,
+                  color: AppColors.white,
                   size: 23,
                 ),
               ),
@@ -182,7 +183,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                 style: textStyle(
                   size: 42,
                   weight: FontWeight.w700,
-                  color: Colors.white,
+                  color: AppColors.white,
                 ),
               ),
               Padding(
@@ -191,7 +192,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                   'days remaining',
                   style: textStyle(
                     size: 12,
-                    color: Colors.white70,
+                    color: AppColors.white70,
                   ),
                 ),
               ),
@@ -203,9 +204,9 @@ class _LeaveScreenState extends State<LeaveScreen> {
             child: const LinearProgressIndicator(
               value: 0.6,
               minHeight: 7,
-              backgroundColor: Color(0xFF536A96),
+              backgroundColor: AppColors.hexFF536A96,
               valueColor: AlwaysStoppedAnimation<Color>(
-                Colors.white,
+                AppColors.white,
               ),
             ),
           ),
@@ -217,14 +218,14 @@ class _LeaveScreenState extends State<LeaveScreen> {
                 'Used: 8 days',
                 style: textStyle(
                   size: 11,
-                  color: Colors.white70,
+                  color: AppColors.white70,
                 ),
               ),
               Text(
                 'Total: 20 days',
                 style: textStyle(
                   size: 11,
-                  color: Colors.white70,
+                  color: AppColors.white70,
                 ),
               ),
             ],
@@ -252,26 +253,26 @@ class _LeaveScreenState extends State<LeaveScreen> {
           icon: const Icon(
             Icons.add_rounded,
             size: 19,
-            color: Colors.white,
+            color: AppColors.white,
           ),
           label: Text(
             'Apply Leave',
             style: textStyle(
               size: 12,
               weight: FontWeight.w600,
-              color: Colors.white,
+              color: AppColors.white,
             ),
           ),
           style: ButtonStyle(
             backgroundColor:
-                const WidgetStatePropertyAll<Color>(Color(0xFF102B63)),
+                const WidgetStatePropertyAll<Color>(AppColors.hexFF102B63),
             foregroundColor:
-                const WidgetStatePropertyAll<Color>(Colors.white),
+                const WidgetStatePropertyAll<Color>(AppColors.white),
             overlayColor:
-                const WidgetStatePropertyAll<Color>(Color(0xFF243F78)),
+                const WidgetStatePropertyAll<Color>(AppColors.hexFF243F78),
             elevation: const WidgetStatePropertyAll<double>(0),
             shadowColor:
-                const WidgetStatePropertyAll<Color>(Colors.transparent),
+                const WidgetStatePropertyAll<Color>(AppColors.transparent),
             padding:
                 const WidgetStatePropertyAll<EdgeInsetsGeometry>(
               EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -293,7 +294,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
     return Container(
       padding: const EdgeInsets.all(5),
       decoration: BoxDecoration(
-        color: const Color(0xFFEDF1F8),
+        color: AppColors.hexFFEDF1F8,
         borderRadius: BorderRadius.circular(13),
       ),
       child: Row(
@@ -311,12 +312,12 @@ class _LeaveScreenState extends State<LeaveScreen> {
                 duration: const Duration(milliseconds: 200),
                 padding: const EdgeInsets.symmetric(vertical: 11),
                 decoration: BoxDecoration(
-                  color: isSelected ? Colors.white : Colors.transparent,
+                  color: isSelected ? AppColors.white : AppColors.transparent,
                   borderRadius: BorderRadius.circular(10),
                   boxShadow: isSelected
                       ? [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.05),
+                            color: AppColors.black.withValues(alpha: 0.05),
                             blurRadius: 6,
                             offset: const Offset(0, 2),
                           ),
@@ -371,7 +372,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
               Container(
                 padding: const EdgeInsets.all(11),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEEF2FF),
+                  color: AppColors.secondarySoft,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
@@ -474,7 +475,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
         horizontal: 20,
       ),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: borderColor),
       ),
@@ -519,7 +520,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       builder: (sheetContext) {
         return StatefulBuilder(
           builder: (context, setSheetState) {
@@ -542,8 +543,8 @@ class _LeaveScreenState extends State<LeaveScreen> {
                     data: Theme.of(context).copyWith(
                       colorScheme: const ColorScheme.light(
                         primary: navy,
-                        onPrimary: Colors.white,
-                        surface: Colors.white,
+                        onPrimary: AppColors.white,
+                        surface: AppColors.white,
                         onSurface: textColor,
                       ),
                     ),
@@ -575,7 +576,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                 MediaQuery.of(context).viewInsets.bottom + 24,
               ),
               decoration: const BoxDecoration(
-                color: Colors.white,
+                color: AppColors.white,
                 borderRadius: BorderRadius.vertical(
                   top: Radius.circular(26),
                 ),
@@ -592,7 +593,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                           width: 42,
                           height: 5,
                           decoration: BoxDecoration(
-                            color: const Color(0xFFDCE2EC),
+                            color: AppColors.hexFFDCE2EC,
                             borderRadius: BorderRadius.circular(10),
                           ),
                         ),
@@ -682,7 +683,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                           width: double.infinity,
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFEEF2FF),
+                            color: AppColors.secondarySoft,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
@@ -727,7 +728,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                                 'Please select both leave dates.',
                                 snackPosition: SnackPosition.BOTTOM,
                                 backgroundColor: navy,
-                                colorText: Colors.white,
+                                colorText: AppColors.white,
                                 margin: const EdgeInsets.all(16),
                               );
                               return;
@@ -764,7 +765,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                               'Your leave request has been submitted successfully.',
                               snackPosition: SnackPosition.BOTTOM,
                               backgroundColor: navy,
-                              colorText: Colors.white,
+                              colorText: AppColors.white,
                               margin: const EdgeInsets.all(16),
                               duration: const Duration(seconds: 3),
                             );
@@ -772,21 +773,21 @@ class _LeaveScreenState extends State<LeaveScreen> {
                           style: ButtonStyle(
                             backgroundColor:
                                 const WidgetStatePropertyAll<Color>(
-                              Color(0xFF102B63),
+                              AppColors.hexFF102B63,
                             ),
                             foregroundColor:
                                 const WidgetStatePropertyAll<Color>(
-                              Colors.white,
+                              AppColors.white,
                             ),
                             overlayColor:
                                 const WidgetStatePropertyAll<Color>(
-                              Color(0xFF243F78),
+                              AppColors.hexFF243F78,
                             ),
                             elevation:
                                 const WidgetStatePropertyAll<double>(0),
                             shadowColor:
                                 const WidgetStatePropertyAll<Color>(
-                              Colors.transparent,
+                              AppColors.transparent,
                             ),
                             shape: WidgetStatePropertyAll<OutlinedBorder>(
                               RoundedRectangleBorder(
@@ -799,7 +800,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                             style: textStyle(
                               size: 14,
                               weight: FontWeight.w600,
-                              color: Colors.white,
+                              color: AppColors.white,
                             ),
                           ),
                         ),
@@ -842,7 +843,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
         size: 20,
       ),
       filled: true,
-      fillColor: const Color(0xFFF8FAFD),
+      fillColor: AppColors.hexFFF8FAFD,
       contentPadding: const EdgeInsets.symmetric(
         horizontal: 14,
         vertical: 14,
@@ -887,7 +888,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
           vertical: 14,
         ),
         decoration: BoxDecoration(
-          color: const Color(0xFFF8FAFD),
+          color: AppColors.hexFFF8FAFD,
           borderRadius: BorderRadius.circular(13),
           border: Border.all(color: borderColor),
         ),

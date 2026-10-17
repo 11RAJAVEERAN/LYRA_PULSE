@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../app/routes/app_routes.dart';
+import '../../../app/theme/app_colors.dart';
 
 class PermissionReturnScreen extends StatelessWidget {
   const PermissionReturnScreen({super.key});
@@ -10,7 +11,7 @@ class PermissionReturnScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF04111F),
+      backgroundColor: AppColors.hexFF04111F,
       body: SafeArea(
         child: Stack(
           children: [
@@ -23,7 +24,7 @@ class PermissionReturnScreen extends StatelessWidget {
               right: -140,
               child: _glow(
                 390,
-                const Color(0xFF087BFF),
+                AppColors.hexFF087BFF,
               ),
             ),
 
@@ -32,7 +33,7 @@ class PermissionReturnScreen extends StatelessWidget {
               left: -160,
               child: _glow(
                 420,
-                const Color(0xFF00D9FF),
+                AppColors.hexFF00D9FF,
               ),
             ),
 
@@ -84,7 +85,7 @@ class PermissionReturnScreen extends StatelessWidget {
                       'WELCOME BACK',
                       textAlign: TextAlign.center,
                       style: GoogleFonts.inter(
-                        color: Colors.white,
+                        color: AppColors.white,
                         fontSize: 27,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 2.5,
@@ -99,8 +100,8 @@ class PermissionReturnScreen extends StatelessWidget {
                       shaderCallback: (bounds) {
                         return const LinearGradient(
                           colors: [
-                            Color(0xFF20DFFF),
-                            Color(0xFF24E5C0),
+                            AppColors.hexFF20DFFF,
+                            AppColors.hexFF24E5C0,
                           ],
                         ).createShader(bounds);
                       },
@@ -108,7 +109,7 @@ class PermissionReturnScreen extends StatelessWidget {
                         'RETURN TO OFFICE',
                         textAlign: TextAlign.center,
                         style: GoogleFonts.inter(
-                          color: Colors.white,
+                          color: AppColors.white,
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
                           letterSpacing: 2,
@@ -124,7 +125,7 @@ class PermissionReturnScreen extends StatelessWidget {
                       'Welcome back. Please verify your current location and face before continuing.',
                       textAlign: TextAlign.center,
                       style: GoogleFonts.inter(
-                        color: const Color(0xFF7F96AB),
+                        color: AppColors.hexFF7F96AB,
                         fontSize: 11,
                         height: 1.6,
                       ),
@@ -148,7 +149,7 @@ class PermissionReturnScreen extends StatelessWidget {
                   Text(
                     'VERIFICATION REQUIRED',
                     style: GoogleFonts.inter(
-                      color: const Color(0xFF718AA0),
+                      color: AppColors.hexFF718AA0,
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 2,
@@ -198,14 +199,14 @@ class PermissionReturnScreen extends StatelessWidget {
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
                           colors: [
-                            Color(0xFF176DFF),
-                            Color(0xFF18D5EF),
+                            AppColors.hexFF176DFF,
+                            AppColors.hexFF18D5EF,
                           ],
                         ),
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFF00CFFF)
+                            color: AppColors.hexFF00CFFF
                                 .withOpacity(0.22),
                             blurRadius: 24,
                             offset: const Offset(0, 9),
@@ -215,9 +216,9 @@ class PermissionReturnScreen extends StatelessWidget {
                       child: ElevatedButton(
                         onPressed: _startReturnVerification,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.transparent,
-                          foregroundColor: Colors.white,
-                          shadowColor: Colors.transparent,
+                          backgroundColor: AppColors.transparent,
+                          foregroundColor: AppColors.white,
+                          shadowColor: AppColors.transparent,
                           elevation: 0,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
@@ -261,14 +262,14 @@ class PermissionReturnScreen extends StatelessWidget {
                       children: [
                         const Icon(
                           Icons.shield_outlined,
-                          color: Color(0xFF536D83),
+                          color: AppColors.hexFF536D83,
                           size: 14,
                         ),
                         const SizedBox(width: 7),
                         Text(
                           'Secure attendance verification',
                           style: GoogleFonts.inter(
-                            color: const Color(0xFF536D83),
+                            color: AppColors.hexFF536D83,
                             fontSize: 9,
                             fontWeight: FontWeight.w500,
                           ),
@@ -293,8 +294,8 @@ class PermissionReturnScreen extends StatelessWidget {
                           decoration: const BoxDecoration(
                             gradient: LinearGradient(
                               colors: [
-                                Color(0xFF176DFF),
-                                Color(0xFF00D9FF),
+                                AppColors.hexFF176DFF,
+                                AppColors.hexFF00D9FF,
                               ],
                             ),
                           ),
@@ -303,7 +304,7 @@ class PermissionReturnScreen extends StatelessWidget {
                         Text(
                           'LYRA PULSE',
                           style: GoogleFonts.inter(
-                            color: const Color(0xFF38566D),
+                            color: AppColors.hexFF38566D,
                             fontSize: 8,
                             fontWeight: FontWeight.w600,
                             letterSpacing: 2.4,
@@ -316,8 +317,8 @@ class PermissionReturnScreen extends StatelessWidget {
                           decoration: const BoxDecoration(
                             gradient: LinearGradient(
                               colors: [
-                                Color(0xFF00D9FF),
-                                Color(0xFF176DFF),
+                                AppColors.hexFF00D9FF,
+                                AppColors.hexFF176DFF,
                               ],
                             ),
                           ),
@@ -354,14 +355,14 @@ class PermissionReturnScreen extends StatelessWidget {
       height: 108,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: const Color(0xFF08253A),
+        color: AppColors.hexFF08253A,
         border: Border.all(
-          color: const Color(0xFF20DFFF),
+          color: AppColors.hexFF20DFFF,
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF20DFFF).withOpacity(0.18),
+            color: AppColors.hexFF20DFFF.withOpacity(0.18),
             blurRadius: 35,
             spreadRadius: 4,
           ),
@@ -371,14 +372,14 @@ class PermissionReturnScreen extends StatelessWidget {
         margin: const EdgeInsets.all(13),
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: const Color(0xFF0B3049),
+          color: AppColors.hexFF0B3049,
           border: Border.all(
-            color: const Color(0xFF20DFFF).withOpacity(0.35),
+            color: AppColors.hexFF20DFFF.withOpacity(0.35),
           ),
         ),
         child: const Icon(
           Icons.waving_hand_rounded,
-          color: Color(0xFF20DFFF),
+          color: AppColors.hexFF20DFFF,
           size: 45,
         ),
       ),
@@ -394,10 +395,10 @@ class PermissionReturnScreen extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: const Color(0xCC071A2D),
+        color: AppColors.hexCC071A2D,
         borderRadius: BorderRadius.circular(22),
         border: Border.all(
-          color: const Color(0xFF16435F),
+          color: AppColors.hexFF16435F,
         ),
       ),
       child: Column(
@@ -409,15 +410,15 @@ class PermissionReturnScreen extends StatelessWidget {
                 width: 43,
                 height: 43,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF0A2941),
+                  color: AppColors.hexFF0A2941,
                   borderRadius: BorderRadius.circular(13),
                   border: Border.all(
-                    color: const Color(0xFF1A5575),
+                    color: AppColors.hexFF1A5575,
                   ),
                 ),
                 child: const Icon(
                   Icons.verified_user_outlined,
-                  color: Color(0xFF28DDF7),
+                  color: AppColors.hexFF28DDF7,
                   size: 22,
                 ),
               ),
@@ -426,7 +427,7 @@ class PermissionReturnScreen extends StatelessWidget {
                 child: Text(
                   'Verification Required',
                   style: GoogleFonts.inter(
-                    color: Colors.white,
+                    color: AppColors.white,
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                   ),
@@ -438,16 +439,16 @@ class PermissionReturnScreen extends StatelessWidget {
                   vertical: 5,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF0A2941),
+                  color: AppColors.hexFF0A2941,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: const Color(0xFF1B526F),
+                    color: AppColors.hexFF1B526F,
                   ),
                 ),
                 child: Text(
                   'REQUIRED',
                   style: GoogleFonts.inter(
-                    color: const Color(0xFF20DFFF),
+                    color: AppColors.hexFF20DFFF,
                     fontSize: 7,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.8,
@@ -462,7 +463,7 @@ class PermissionReturnScreen extends StatelessWidget {
           Text(
             'Before you continue your attendance, LYRA Pulse needs to verify that you have returned to the office.',
             style: GoogleFonts.inter(
-              color: const Color(0xFF8EA5B7),
+              color: AppColors.hexFF8EA5B7,
               fontSize: 10,
               height: 1.65,
             ),
@@ -486,10 +487,10 @@ class PermissionReturnScreen extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFF071C2E),
+        color: AppColors.hexFF071C2E,
         borderRadius: BorderRadius.circular(17),
         border: Border.all(
-          color: const Color(0xFF16435F),
+          color: AppColors.hexFF16435F,
         ),
       ),
       child: Row(
@@ -499,13 +500,13 @@ class PermissionReturnScreen extends StatelessWidget {
             height: 38,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: const Color(0xFF0A2941),
+              color: AppColors.hexFF0A2941,
               borderRadius: BorderRadius.circular(11),
             ),
             child: Text(
               number,
               style: GoogleFonts.inter(
-                color: const Color(0xFF20DFFF),
+                color: AppColors.hexFF20DFFF,
                 fontSize: 9,
                 fontWeight: FontWeight.w700,
               ),
@@ -518,12 +519,12 @@ class PermissionReturnScreen extends StatelessWidget {
             width: 38,
             height: 38,
             decoration: BoxDecoration(
-              color: const Color(0xFF09263B),
+              color: AppColors.hexFF09263B,
               borderRadius: BorderRadius.circular(11),
             ),
             child: Icon(
               icon,
-              color: const Color(0xFF25DDF7),
+              color: AppColors.hexFF25DDF7,
               size: 19,
             ),
           ),
@@ -537,7 +538,7 @@ class PermissionReturnScreen extends StatelessWidget {
                 Text(
                   title,
                   style: GoogleFonts.inter(
-                    color: Colors.white,
+                    color: AppColors.white,
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                   ),
@@ -546,7 +547,7 @@ class PermissionReturnScreen extends StatelessWidget {
                 Text(
                   subtitle,
                   style: GoogleFonts.inter(
-                    color: const Color(0xFF718CA1),
+                    color: AppColors.hexFF718CA1,
                     fontSize: 9,
                     height: 1.4,
                   ),
@@ -568,17 +569,17 @@ class PermissionReturnScreen extends StatelessWidget {
       width: 44,
       height: 44,
       decoration: BoxDecoration(
-        color: const Color(0xFF0A2136),
+        color: AppColors.hexFF0A2136,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: const Color(0xFF1D4564),
+          color: AppColors.hexFF1D4564,
         ),
       ),
       child: IconButton(
         onPressed: Get.back,
         icon: const Icon(
           Icons.arrow_back_rounded,
-          color: Colors.white,
+          color: AppColors.white,
           size: 21,
         ),
       ),
@@ -596,10 +597,10 @@ class PermissionReturnScreen extends StatelessWidget {
         vertical: 7,
       ),
       decoration: BoxDecoration(
-        color: const Color(0xFF0A2136),
+        color: AppColors.hexFF0A2136,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: const Color(0xFF1D4564),
+          color: AppColors.hexFF1D4564,
         ),
       ),
       child: Row(
@@ -609,14 +610,14 @@ class PermissionReturnScreen extends StatelessWidget {
             height: 6,
             decoration: const BoxDecoration(
               shape: BoxShape.circle,
-              color: Color(0xFF24E5C0),
+              color: AppColors.hexFF24E5C0,
             ),
           ),
           const SizedBox(width: 6),
           Text(
             'SECURE',
             style: GoogleFonts.inter(
-              color: const Color(0xFF91AABD),
+              color: AppColors.hexFF91AABD,
               fontSize: 8,
               fontWeight: FontWeight.w600,
               letterSpacing: 1,
@@ -644,7 +645,7 @@ class PermissionReturnScreen extends StatelessWidget {
           colors: [
             color.withOpacity(0.12),
             color.withOpacity(0.03),
-            Colors.transparent,
+            AppColors.transparent,
           ],
         ),
       ),

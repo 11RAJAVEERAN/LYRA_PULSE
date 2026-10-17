@@ -22,11 +22,11 @@ abstract final class AppTheme {
 
       appBarTheme: AppBarTheme(
         backgroundColor: AppColors.background,
-        foregroundColor: const Color(0xFF172033),
+        foregroundColor: AppColors.hexFF172033,
         elevation: 0,
         centerTitle: false,
         titleTextStyle: AppTextStyles.title.copyWith(
-          color: const Color(0xFF172033),
+          color: AppColors.hexFF172033,
         ),
       ),
 

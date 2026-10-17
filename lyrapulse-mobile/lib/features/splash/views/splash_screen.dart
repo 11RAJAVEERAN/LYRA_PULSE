@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../app/routes/app_routes.dart';
+import '../../../app/theme/app_colors.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -159,8 +160,7 @@ class _SplashScreenState extends State<SplashScreen>
             : 12;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF020A22),
-
+      backgroundColor: AppColors.hexFF020A22,
       body: Stack(
         fit: StackFit.expand,
         children: [
@@ -175,10 +175,10 @@ class _SplashScreenState extends State<SplashScreen>
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Color(0xFF071A43),
-                    Color(0xFF061535),
-                    Color(0xFF020A22),
-                    Color(0xFF02081C),
+                    AppColors.hexFF071A43,
+                    AppColors.hexFF061535,
+                    AppColors.hexFF020A22,
+                    AppColors.hexFF02081C,
                   ],
                   stops: [
                     0.0,
@@ -200,7 +200,7 @@ class _SplashScreenState extends State<SplashScreen>
             left: -120,
             child: _ambientGlow(
               size: isTablet ? 430 : 330,
-              color: const Color(0xFF006EFF),
+              color: AppColors.hexFF006EFF,
               opacity: 0.20,
             ),
           ),
@@ -214,7 +214,7 @@ class _SplashScreenState extends State<SplashScreen>
             right: -150,
             child: _ambientGlow(
               size: isTablet ? 380 : 300,
-              color: const Color(0xFF174BFF),
+              color: AppColors.hexFF174BFF,
               opacity: 0.13,
             ),
           ),
@@ -233,9 +233,9 @@ class _SplashScreenState extends State<SplashScreen>
                 decoration: BoxDecoration(
                   gradient: RadialGradient(
                     colors: [
-                      const Color(0xFF156FFF).withOpacity(0.13),
-                      const Color(0xFF087DFF).withOpacity(0.05),
-                      Colors.transparent,
+                      AppColors.hexFF156FFF.withOpacity(0.13),
+                      AppColors.hexFF087DFF.withOpacity(0.05),
+                      AppColors.transparent,
                     ],
                   ),
                 ),
@@ -300,7 +300,6 @@ class _SplashScreenState extends State<SplashScreen>
                     child: child,
                   );
                 },
-
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -310,10 +309,8 @@ class _SplashScreenState extends State<SplashScreen>
 
                     FadeTransition(
                       opacity: _logoOpacity,
-
                       child: AnimatedBuilder(
                         animation: _pulseController,
-
                         builder: (context, child) {
                           final double pulse =
                               1.0 + (_pulseController.value * 0.025);
@@ -323,14 +320,11 @@ class _SplashScreenState extends State<SplashScreen>
                             child: child,
                           );
                         },
-
                         child: SizedBox(
                           width: logoSize + 60,
                           height: logoSize + 60,
-
                           child: Stack(
                             alignment: Alignment.center,
-
                             children: [
                               // ----------------------------------------
                               // LOGO GLOW
@@ -338,22 +332,18 @@ class _SplashScreenState extends State<SplashScreen>
 
                               AnimatedBuilder(
                                 animation: _pulseController,
-
                                 builder: (context, child) {
                                   final double opacity =
-                                      0.16 +
-                                      (_pulseController.value * 0.10);
+                                      0.16 + (_pulseController.value * 0.10);
 
                                   return Container(
                                     width: logoSize * 1.05,
                                     height: logoSize * 1.05,
-
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
-
                                       boxShadow: [
                                         BoxShadow(
-                                          color: const Color(0xFF008CFF)
+                                          color: AppColors.hexFF008CFF
                                               .withOpacity(opacity),
                                           blurRadius: 45,
                                           spreadRadius: 12,
@@ -370,14 +360,12 @@ class _SplashScreenState extends State<SplashScreen>
 
                               AnimatedBuilder(
                                 animation: _waveController,
-
                                 builder: (context, child) {
                                   return CustomPaint(
                                     size: Size(
                                       logoSize + 25,
                                       logoSize + 25,
                                     ),
-
                                     painter: _LogoArcPainter(
                                       progress: _waveController.value,
                                     ),
@@ -392,7 +380,6 @@ class _SplashScreenState extends State<SplashScreen>
                               SizedBox(
                                 width: logoSize,
                                 height: logoSize,
-
                                 child: const CustomPaint(
                                   painter: _LyraLogoPainter(),
                                 ),
@@ -411,22 +398,18 @@ class _SplashScreenState extends State<SplashScreen>
 
                     FadeTransition(
                       opacity: _textOpacity,
-
                       child: Text(
                         'Lyra Pulse',
                         textAlign: TextAlign.center,
-
                         style: GoogleFonts.inter(
-                          color: const Color(0xFFF7FAFF),
+                          color: AppColors.hexFFF7FAFF,
                           fontSize: titleSize,
                           fontWeight: FontWeight.w700,
                           letterSpacing: -0.6,
                           height: 1.05,
-
                           shadows: [
                             Shadow(
-                              color: const Color(0xFF2D79FF)
-                                  .withOpacity(0.30),
+                              color: AppColors.hexFF2D79FF.withOpacity(0.30),
                               blurRadius: 18,
                             ),
                           ],
@@ -442,13 +425,11 @@ class _SplashScreenState extends State<SplashScreen>
 
                     FadeTransition(
                       opacity: _textOpacity,
-
                       child: Text(
                         'WORK BETTER TOGETHER',
                         textAlign: TextAlign.center,
-
                         style: GoogleFonts.inter(
-                          color: const Color(0xFFB9D3F7),
+                          color: AppColors.hexFFB9D3F7,
                           fontSize: taglineSize,
                           fontWeight: FontWeight.w400,
                           letterSpacing: 2.2,
@@ -464,31 +445,23 @@ class _SplashScreenState extends State<SplashScreen>
 
                     FadeTransition(
                       opacity: _textOpacity,
-
                       child: AnimatedBuilder(
                         animation: _loaderController,
-
                         builder: (context, child) {
                           return SizedBox(
                             height: 28,
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment:
-                                  CrossAxisAlignment.center,
-
+                              crossAxisAlignment: CrossAxisAlignment.center,
                               children: List.generate(
                                 5,
                                 (index) {
-                                  final double wave =
-                                      math.sin(
-                                    (_loaderController.value *
-                                            math.pi *
-                                            2) +
+                                  final double wave = math.sin(
+                                    (_loaderController.value * math.pi * 2) +
                                         (index * 0.8),
                                   );
 
-                                  final double barHeight =
-                                      9 + ((wave + 1) * 7);
+                                  final double barHeight = 9 + ((wave + 1) * 7);
 
                                   final double opacity =
                                       0.30 + ((wave + 1) * 0.25);
@@ -496,33 +469,23 @@ class _SplashScreenState extends State<SplashScreen>
                                   return Container(
                                     width: 5,
                                     height: barHeight,
-
-                                    margin:
-                                        const EdgeInsets.symmetric(
+                                    margin: const EdgeInsets.symmetric(
                                       horizontal: 3,
                                     ),
-
                                     decoration: BoxDecoration(
-                                      borderRadius:
-                                          BorderRadius.circular(8),
-
-                                      gradient:
-                                          const LinearGradient(
-                                        begin:
-                                            Alignment.topCenter,
-                                        end:
-                                            Alignment.bottomCenter,
+                                      borderRadius: BorderRadius.circular(8),
+                                      gradient: const LinearGradient(
+                                        begin: Alignment.topCenter,
+                                        end: Alignment.bottomCenter,
                                         colors: [
-                                          Color(0xFF69B7FF),
-                                          Color(0xFF087DFF),
+                                          AppColors.hexFF69B7FF,
+                                          AppColors.hexFF087DFF,
                                         ],
                                       ),
-
                                       boxShadow: [
                                         BoxShadow(
                                           color:
-                                              const Color(0xFF159CFF)
-                                                  .withOpacity(
+                                              AppColors.hexFF159CFF.withOpacity(
                                             opacity * 0.55,
                                           ),
                                           blurRadius: 10,
@@ -560,15 +523,13 @@ class _SplashScreenState extends State<SplashScreen>
       child: Container(
         width: size,
         height: size,
-
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-
           gradient: RadialGradient(
             colors: [
               color.withOpacity(opacity),
               color.withOpacity(opacity * 0.35),
-              Colors.transparent,
+              AppColors.transparent,
             ],
           ),
         ),
@@ -706,7 +667,7 @@ class _LyraLogoPainter extends CustomPainter {
 
     final Paint glowPaint = Paint()
       ..isAntiAlias = true
-      ..color = const Color(0xFF008CFF).withOpacity(0.25)
+      ..color = AppColors.hexFF008CFF.withOpacity(0.25)
       ..maskFilter = const MaskFilter.blur(
         BlurStyle.normal,
         13,
@@ -727,10 +688,10 @@ class _LyraLogoPainter extends CustomPainter {
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
         colors: [
-          Color(0xFF6D72FF),
-          Color(0xFF328CFF),
-          Color(0xFF087DFF),
-          Color(0xFF00BFFF),
+          AppColors.hexFF6D72FF,
+          AppColors.hexFF328CFF,
+          AppColors.hexFF087DFF,
+          AppColors.hexFF00BFFF,
         ],
         stops: [
           0.0,
@@ -758,7 +719,7 @@ class _LyraLogoPainter extends CustomPainter {
 
     final Paint highlightPaint = Paint()
       ..isAntiAlias = true
-      ..color = Colors.white.withOpacity(0.12);
+      ..color = AppColors.white.withOpacity(0.12);
 
     final Path highlightPath = Path();
 
@@ -837,10 +798,10 @@ class _LogoArcPainter extends CustomPainter {
         startAngle: progress * math.pi * 2,
         endAngle: progress * math.pi * 2 + math.pi * 1.5,
         colors: [
-          Colors.transparent,
-          const Color(0xFF197BFF).withOpacity(0.15),
-          const Color(0xFF00D9FF).withOpacity(0.80),
-          Colors.transparent,
+          AppColors.transparent,
+          AppColors.hexFF197BFF.withOpacity(0.15),
+          AppColors.hexFF00D9FF.withOpacity(0.80),
+          AppColors.transparent,
         ],
         stops: const [
           0.0,
@@ -889,66 +850,62 @@ class _ParticlePainter extends CustomPainter {
         y: 0.28,
         radius: 1.3,
         speed: 0.8,
-        color: const Color(0xFF159CFF),
+        color: AppColors.hexFF159CFF,
       ),
       _Particle(
         x: 0.82,
         y: 0.34,
         radius: 1.1,
         speed: 0.6,
-        color: const Color(0xFF6B5CFF),
+        color: AppColors.hexFF6B5CFF,
       ),
       _Particle(
         x: 0.20,
         y: 0.47,
         radius: 0.9,
         speed: 0.7,
-        color: const Color(0xFF00CFFF),
+        color: AppColors.hexFF00CFFF,
       ),
       _Particle(
         x: 0.76,
         y: 0.53,
         radius: 1.4,
         speed: 0.5,
-        color: const Color(0xFF4E72FF),
+        color: AppColors.hexFF4E72FF,
       ),
       _Particle(
         x: 0.34,
         y: 0.62,
         radius: 0.8,
         speed: 0.9,
-        color: const Color(0xFF8C6BFF),
+        color: AppColors.hexFF8C6BFF,
       ),
       _Particle(
         x: 0.90,
         y: 0.66,
         radius: 0.9,
         speed: 0.75,
-        color: const Color(0xFF00BFFF),
+        color: AppColors.hexFF00BFFF,
       ),
     ];
 
     for (final particle in particles) {
-      final double movement =
-          math.sin(
-                (progress * math.pi * 2 * particle.speed) +
-                    particle.x * 4,
-              ) *
-              5;
+      final double movement = math.sin(
+            (progress * math.pi * 2 * particle.speed) + particle.x * 4,
+          ) *
+          5;
 
       final Offset position = Offset(
         size.width * particle.x,
         size.height * particle.y + movement,
       );
 
-      final double opacity =
-          0.20 +
+      final double opacity = 0.20 +
           ((math.sin(
-                    progress * math.pi * 2 +
-                        particle.y * 5,
-                  ) +
-                  1) /
-              2) *
+                        progress * math.pi * 2 + particle.y * 5,
+                      ) +
+                      1) /
+                  2) *
               0.45;
 
       final Paint paint = Paint()
@@ -1025,9 +982,9 @@ class _PremiumWavePainter extends CustomPainter {
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
         colors: [
-          Color(0x50105CFF),
-          Color(0x30116EFF),
-          Color(0x00105CFF),
+          AppColors.hex50105CFF,
+          AppColors.hex30116EFF,
+          AppColors.hex00105CFF,
         ],
       ),
     );
@@ -1048,9 +1005,9 @@ class _PremiumWavePainter extends CustomPainter {
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
         colors: [
-          Color(0x45136EFF),
-          Color(0x2513A4FF),
-          Color(0x000B4EFF),
+          AppColors.hex45136EFF,
+          AppColors.hex2513A4FF,
+          AppColors.hex000B4EFF,
         ],
       ),
     );
@@ -1071,9 +1028,9 @@ class _PremiumWavePainter extends CustomPainter {
         begin: Alignment.topRight,
         end: Alignment.bottomLeft,
         colors: [
-          Color(0x605D28E8),
-          Color(0x383E2DB8),
-          Color(0x00131C62),
+          AppColors.hex605D28E8,
+          AppColors.hex383E2DB8,
+          AppColors.hex00131C62,
         ],
       ),
     );
@@ -1090,7 +1047,7 @@ class _PremiumWavePainter extends CustomPainter {
       amplitude: 17,
       frequency: 1.2,
       phase: 0.4,
-      color: const Color(0xFF087DFF),
+      color: AppColors.hexFF087DFF,
       opacity: 0.65,
       strokeWidth: 1.2,
     );
@@ -1103,7 +1060,7 @@ class _PremiumWavePainter extends CustomPainter {
       amplitude: 19,
       frequency: 1.5,
       phase: 2.0,
-      color: const Color(0xFF00CFFF),
+      color: AppColors.hexFF00CFFF,
       opacity: 0.45,
       strokeWidth: 1.0,
     );
@@ -1116,7 +1073,7 @@ class _PremiumWavePainter extends CustomPainter {
       amplitude: 20,
       frequency: 1.4,
       phase: 3.2,
-      color: const Color(0xFF8062FF),
+      color: AppColors.hexFF8062FF,
       opacity: 0.55,
       strokeWidth: 1.1,
     );
@@ -1128,27 +1085,19 @@ class _PremiumWavePainter extends CustomPainter {
     for (int i = 0; i < 7; i++) {
       final Path path = Path();
 
-      final double baseY =
-          height * 0.54 + i * 12;
+      final double baseY = height * 0.54 + i * 12;
 
       path.moveTo(
         0,
         baseY,
       );
 
-      for (
-        double x = 0;
-        x <= width;
-        x += 5
-      ) {
+      for (double x = 0; x <= width; x += 5) {
         final double n = x / width;
 
-        final double y =
-            baseY +
+        final double y = baseY +
             math.sin(
-                  n * math.pi * 2 +
-                      progress * math.pi * 2 +
-                      i * 0.25,
+                  n * math.pi * 2 + progress * math.pi * 2 + i * 0.25,
                 ) *
                 9;
 
@@ -1161,7 +1110,7 @@ class _PremiumWavePainter extends CustomPainter {
       final Paint paint = Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 0.45
-        ..color = Colors.white.withOpacity(0.055);
+        ..color = AppColors.white.withOpacity(0.055);
 
       canvas.drawPath(
         path,
@@ -1194,19 +1143,12 @@ class _PremiumWavePainter extends CustomPainter {
       baseY,
     );
 
-    for (
-      double x = 0;
-      x <= width;
-      x += 4
-    ) {
+    for (double x = 0; x <= width; x += 4) {
       final double n = x / width;
 
-      final double y =
-          baseY +
+      final double y = baseY +
           math.sin(
-                n * math.pi * 2 * frequency +
-                    progress * math.pi * 2 +
-                    phase,
+                n * math.pi * 2 * frequency + progress * math.pi * 2 + phase,
               ) *
               amplitude;
 
@@ -1269,19 +1211,12 @@ class _PremiumWavePainter extends CustomPainter {
       baseY,
     );
 
-    for (
-      double x = 0;
-      x <= width;
-      x += 4
-    ) {
+    for (double x = 0; x <= width; x += 4) {
       final double n = x / width;
 
-      final double y =
-          baseY +
+      final double y = baseY +
           math.sin(
-                n * math.pi * 2 * frequency +
-                    progress * math.pi * 2 +
-                    phase,
+                n * math.pi * 2 * frequency + progress * math.pi * 2 + phase,
               ) *
               amplitude;
 

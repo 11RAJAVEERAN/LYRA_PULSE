@@ -7,6 +7,7 @@ import 'package:geocoding/geocoding.dart';
 import 'check_in_success_screen.dart';
 import 'check_out_success_screen.dart';
 import '../controllers/attendance_controller.dart';
+import '../../../app/theme/app_colors.dart';
 
 class AttendanceConfirmationScreen extends StatefulWidget {
   final bool isCheckOut;
@@ -23,12 +24,12 @@ class AttendanceConfirmationScreen extends StatefulWidget {
 
 class _AttendanceConfirmationScreenState
     extends State<AttendanceConfirmationScreen> {
-  static const Color background = Color(0xFFF7FAFE);
-  static const Color navy = Color(0xFF19356C);
-  static const Color blue = Color(0xFF3978E8);
-  static const Color green = Color(0xFF18A66A);
-  static const Color textDark = Color(0xFF172B4D);
-  static const Color textGrey = Color(0xFF718096);
+  static const Color background = AppColors.hexFFF7FAFE;
+  static const Color navy = AppColors.hexFF19356C;
+  static const Color blue = AppColors.hexFF3978E8;
+  static const Color green = AppColors.hexFF18A66A;
+  static const Color textDark = AppColors.hexFF172B4D;
+  static const Color textGrey = AppColors.hexFF718096;
 
   late final AttendanceController attendanceController;
 
@@ -139,7 +140,7 @@ class _AttendanceConfirmationScreenState
         'Please wait until your current location is verified.',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: navy,
-        colorText: Colors.white,
+        colorText: AppColors.white,
         margin: const EdgeInsets.all(16),
       );
       return;
@@ -156,7 +157,7 @@ class _AttendanceConfirmationScreenState
             'Please complete your check in before checking out.',
             snackPosition: SnackPosition.BOTTOM,
             backgroundColor: navy,
-            colorText: Colors.white,
+            colorText: AppColors.white,
             margin: const EdgeInsets.all(16),
           );
           return;
@@ -168,7 +169,7 @@ class _AttendanceConfirmationScreenState
             'Your check out has already been recorded.',
             snackPosition: SnackPosition.BOTTOM,
             backgroundColor: navy,
-            colorText: Colors.white,
+            colorText: AppColors.white,
             margin: const EdgeInsets.all(16),
           );
           return;
@@ -194,7 +195,7 @@ class _AttendanceConfirmationScreenState
             'You have already checked in today.',
             snackPosition: SnackPosition.BOTTOM,
             backgroundColor: navy,
-            colorText: Colors.white,
+            colorText: AppColors.white,
             margin: const EdgeInsets.all(16),
           );
           return;
@@ -219,8 +220,8 @@ class _AttendanceConfirmationScreenState
         'Attendance Error',
         'Unable to save attendance. Please try again.',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red.shade700,
-        colorText: Colors.white,
+        backgroundColor: AppColors.red.shade700,
+        colorText: AppColors.white,
         margin: const EdgeInsets.all(16),
       );
     } finally {
@@ -463,7 +464,7 @@ class _AttendanceConfirmationScreenState
                   onPressed: _isSaving ? null : _confirmAttendance,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: navy,
-                    foregroundColor: Colors.white,
+                    foregroundColor: AppColors.white,
                     disabledBackgroundColor: navy.withOpacity(0.6),
                     elevation: 0,
                     shape: RoundedRectangleBorder(
@@ -476,7 +477,7 @@ class _AttendanceConfirmationScreenState
                           height: 22,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: Colors.white,
+                            color: AppColors.white,
                           ),
                         )
                       : Row(
@@ -529,14 +530,14 @@ class _AttendanceConfirmationScreenState
                   Icon(
                     Icons.lock_outline_rounded,
                     size: 15,
-                    color: Colors.grey.shade500,
+                    color: AppColors.grey.shade500,
                   ),
                   const SizedBox(width: 6),
                   Text(
                     'Your attendance data is securely verified',
                     style: TextStyle(
                       fontSize: 10.5,
-                      color: Colors.grey.shade500,
+                      color: AppColors.grey.shade500,
                     ),
                   ),
                 ],
@@ -570,11 +571,11 @@ class _AttendanceConfirmationScreenState
       width: 44,
       height: 44,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: AppColors.black.withOpacity(0.05),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -589,11 +590,11 @@ class _AttendanceConfirmationScreenState
 
   BoxDecoration _cardDecoration() {
     return BoxDecoration(
-      color: Colors.white,
+      color: AppColors.white,
       borderRadius: BorderRadius.circular(22),
       boxShadow: [
         BoxShadow(
-          color: Colors.black.withOpacity(0.045),
+          color: AppColors.black.withOpacity(0.045),
           blurRadius: 20,
           offset: const Offset(0, 8),
         ),
@@ -621,13 +622,13 @@ class _DetailRow extends StatelessWidget {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: const Color(0xFFF1F5FB),
+            color: AppColors.hexFFF1F5FB,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(
             icon,
             size: 19,
-            color: const Color(0xFF3978E8),
+            color: AppColors.hexFF3978E8,
           ),
         ),
         const SizedBox(width: 12),
@@ -636,7 +637,7 @@ class _DetailRow extends StatelessWidget {
             title,
             style: const TextStyle(
               fontSize: 12.5,
-              color: Color(0xFF718096),
+              color: AppColors.hexFF718096,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -647,7 +648,7 @@ class _DetailRow extends StatelessWidget {
             textAlign: TextAlign.end,
             style: const TextStyle(
               fontSize: 13,
-              color: Color(0xFF19356C),
+              color: AppColors.hexFF19356C,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -669,8 +670,8 @@ class _VerificationRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = verified
-        ? const Color(0xFF18A66A)
-        : const Color(0xFFB8C3D0);
+        ? AppColors.hexFF18A66A
+        : AppColors.hexFFB8C3D0;
 
     return Row(
       children: [
@@ -688,7 +689,7 @@ class _VerificationRow extends StatelessWidget {
             style: const TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF19356C),
+              color: AppColors.hexFF19356C,
             ),
           ),
         ),

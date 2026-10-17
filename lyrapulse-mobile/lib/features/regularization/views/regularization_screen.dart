@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../app/theme/app_colors.dart';
 
 class RegularizationScreen extends StatefulWidget {
   final DateTime selectedDate;
@@ -16,9 +17,9 @@ class RegularizationScreen extends StatefulWidget {
 
 class _RegularizationScreenState
     extends State<RegularizationScreen> {
-  static const Color primaryBlue = Color(0xFF1769D2);
-  static const Color backgroundColor = Color(0xFFF7FAFD);
-  static const Color textColor = Color(0xFF253858);
+  static const Color primaryBlue = AppColors.hexFF1769D2;
+  static const Color backgroundColor = AppColors.hexFFF7FAFD;
+  static const Color textColor = AppColors.hexFF253858;
 
   final _formKey = GlobalKey<FormState>();
   final _reasonController = TextEditingController();
@@ -114,9 +115,9 @@ class _RegularizationScreenState
         child: Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.white,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: const Color(0xFFE3EAF3)),
+            border: Border.all(color: AppColors.hexFFE3EAF3),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -125,7 +126,7 @@ class _RegularizationScreenState
                 title,
                 style: GoogleFonts.inter(
                   fontSize: 11,
-                  color: const Color(0xFF8795A8),
+                  color: AppColors.hexFF8795A8,
                 ),
               ),
               const SizedBox(height: 10),
@@ -188,7 +189,7 @@ class _RegularizationScreenState
                   'Select the attendance details you need to correct.',
                   style: GoogleFonts.inter(
                     fontSize: 12,
-                    color: const Color(0xFF8795A8),
+                    color: AppColors.hexFF8795A8,
                   ),
                 ),
                 const SizedBox(height: 22),
@@ -199,8 +200,8 @@ class _RegularizationScreenState
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
                       colors: [
-                        Color(0xFF1769D2),
-                        Color(0xFF084A9B),
+                        AppColors.hexFF1769D2,
+                        AppColors.hexFF084A9B,
                       ],
                     ),
                     borderRadius: BorderRadius.circular(20),
@@ -210,7 +211,7 @@ class _RegularizationScreenState
                     children: [
                       const Icon(
                         Icons.calendar_month_rounded,
-                        color: Colors.white,
+                        color: AppColors.white,
                         size: 26,
                       ),
                       const SizedBox(height: 12),
@@ -218,7 +219,7 @@ class _RegularizationScreenState
                         'Selected Attendance Date',
                         style: GoogleFonts.inter(
                           fontSize: 11,
-                          color: Colors.white70,
+                          color: AppColors.white70,
                         ),
                       ),
                       const SizedBox(height: 5),
@@ -226,7 +227,7 @@ class _RegularizationScreenState
                         _formatDate(widget.selectedDate),
                         style: GoogleFonts.inter(
                           fontSize: 16,
-                          color: Colors.white,
+                          color: AppColors.white,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -251,7 +252,7 @@ class _RegularizationScreenState
                   isExpanded: true,
                   decoration: InputDecoration(
                     filled: true,
-                    fillColor: Colors.white,
+                    fillColor: AppColors.white,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
@@ -327,7 +328,7 @@ class _RegularizationScreenState
                   decoration: InputDecoration(
                     hintText: 'Explain why attendance needs correction',
                     filled: true,
-                    fillColor: Colors.white,
+                    fillColor: AppColors.white,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
@@ -357,7 +358,7 @@ class _RegularizationScreenState
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: primaryBlue,
-                      foregroundColor: Colors.white,
+                      foregroundColor: AppColors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(15),
                       ),

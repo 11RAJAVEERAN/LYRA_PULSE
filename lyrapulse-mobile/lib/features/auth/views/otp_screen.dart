@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../../../app/routes/app_routes.dart';
+import '../../../app/theme/app_colors.dart';
 
 class OtpScreen extends StatefulWidget {
   const OtpScreen({super.key});
@@ -13,10 +14,10 @@ class OtpScreen extends StatefulWidget {
 }
 
 class _OtpScreenState extends State<OtpScreen> {
-  static const Color purple = Color(0xFF5B46F5);
-  static const Color dark = Color(0xFF171D38);
-  static const Color muted = Color(0xFF7887AD);
-  static const Color background = Color(0xFFFCFCFF);
+  static const Color purple = AppColors.hexFF5B46F5;
+  static const Color dark = AppColors.hexFF171D38;
+  static const Color muted = AppColors.hexFF7887AD;
+  static const Color background = AppColors.hexFFFCFCFF;
 
   final List<TextEditingController> otpControllers =
       List.generate(6, (_) => TextEditingController());
@@ -176,7 +177,7 @@ class _OtpScreenState extends State<OtpScreen> {
                                     width: 44,
                                     height: 44,
                                     decoration: const BoxDecoration(
-                                      color: Color(0xFFF0EEFF),
+                                      color: AppColors.hexFFF0EEFF,
                                       shape: BoxShape.circle,
                                     ),
                                     child: const Icon(
@@ -206,7 +207,7 @@ class _OtpScreenState extends State<OtpScreen> {
                                 width: 82,
                                 height: 82,
                                 decoration: const BoxDecoration(
-                                  color: Color(0xFFF0EEFF),
+                                  color: AppColors.hexFFF0EEFF,
                                   shape: BoxShape.circle,
                                 ),
                                 child: Center(
@@ -214,7 +215,7 @@ class _OtpScreenState extends State<OtpScreen> {
                                     width: 62,
                                     height: 62,
                                     decoration: const BoxDecoration(
-                                      color: Color(0xFFE5E0FF),
+                                      color: AppColors.hexFFE5E0FF,
                                       shape: BoxShape.circle,
                                     ),
                                     child: const Icon(
@@ -257,10 +258,10 @@ class _OtpScreenState extends State<OtpScreen> {
                                   vertical: 12,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: AppColors.white,
                                   borderRadius: BorderRadius.circular(24),
                                   border: Border.all(
-                                    color: const Color(0xFFE7E5FA),
+                                    color: AppColors.hexFFE7E5FA,
                                   ),
                                   boxShadow: [
                                     BoxShadow(
@@ -300,10 +301,10 @@ class _OtpScreenState extends State<OtpScreen> {
                                   vertical: 14,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: AppColors.white,
                                   borderRadius: BorderRadius.circular(20),
                                   border: Border.all(
-                                    color: const Color(0xFFE7E5FA),
+                                    color: AppColors.hexFFE7E5FA,
                                   ),
                                   boxShadow: [
                                     BoxShadow(
@@ -345,14 +346,14 @@ class _OtpScreenState extends State<OtpScreen> {
                                               counterText: '',
                                               filled: true,
                                               fillColor:
-                                                  const Color(0xFFFCFCFF),
+                                                  AppColors.hexFFFCFCFF,
                                               contentPadding: EdgeInsets.zero,
                                               enabledBorder:
                                                   OutlineInputBorder(
                                                 borderRadius:
                                                     BorderRadius.circular(12),
                                                 borderSide: const BorderSide(
-                                                  color: Color(0xFFE2E0F5),
+                                                  color: AppColors.hexFFE2E0F5,
                                                 ),
                                               ),
                                               focusedBorder:
@@ -384,8 +385,8 @@ class _OtpScreenState extends State<OtpScreen> {
                                   decoration: BoxDecoration(
                                     gradient: const LinearGradient(
                                       colors: [
-                                        Color(0xFF7965FF),
-                                        Color(0xFF5139E8),
+                                        AppColors.hexFF7965FF,
+                                        AppColors.hexFF5139E8,
                                       ],
                                     ),
                                     borderRadius: BorderRadius.circular(16),
@@ -402,10 +403,10 @@ class _OtpScreenState extends State<OtpScreen> {
                                     onPressed:
                                         _isVerifying ? null : _verifyOtp,
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.transparent,
+                                      backgroundColor: AppColors.transparent,
                                       disabledBackgroundColor:
-                                          Colors.transparent,
-                                      shadowColor: Colors.transparent,
+                                          AppColors.transparent,
+                                      shadowColor: AppColors.transparent,
                                       shape: RoundedRectangleBorder(
                                         borderRadius:
                                             BorderRadius.circular(16),
@@ -417,7 +418,7 @@ class _OtpScreenState extends State<OtpScreen> {
                                             height: 22,
                                             child: CircularProgressIndicator(
                                               strokeWidth: 2,
-                                              color: Colors.white,
+                                              color: AppColors.white,
                                             ),
                                           )
                                         : const Row(
@@ -428,14 +429,14 @@ class _OtpScreenState extends State<OtpScreen> {
                                                 'Verify OTP',
                                                 style: TextStyle(
                                                   fontSize: 16,
-                                                  color: Colors.white,
+                                                  color: AppColors.white,
                                                   fontWeight: FontWeight.w700,
                                                 ),
                                               ),
                                               SizedBox(width: 10),
                                               Icon(
                                                 Icons.arrow_forward_rounded,
-                                                color: Colors.white,
+                                                color: AppColors.white,
                                                 size: 20,
                                               ),
                                             ],
@@ -524,7 +525,7 @@ class _OtpScreenState extends State<OtpScreen> {
                         Container(
                           width: 24,
                           height: 1,
-                          color: const Color(0xFFC8C4E8),
+                          color: AppColors.hexFFC8C4E8,
                         ),
                         const SizedBox(width: 10),
                         const Text(
@@ -540,7 +541,7 @@ class _OtpScreenState extends State<OtpScreen> {
                         Container(
                           width: 24,
                           height: 1,
-                          color: const Color(0xFFC8C4E8),
+                          color: AppColors.hexFFC8C4E8,
                         ),
                       ],
                     ),
@@ -574,7 +575,7 @@ class BottomWavesPainter extends CustomPainter {
 
     canvas.drawPath(
       firstWave,
-      Paint()..color = const Color(0xFFF0EFFF),
+      Paint()..color = AppColors.hexFFF0EFFF,
     );
 
     final secondWave = Path()
@@ -593,7 +594,7 @@ class BottomWavesPainter extends CustomPainter {
 
     canvas.drawPath(
       secondWave,
-      Paint()..color = const Color(0xFFE7E6FF),
+      Paint()..color = AppColors.hexFFE7E6FF,
     );
   }
 

@@ -232,7 +232,7 @@ _buildHeroSection(),
               height: 145,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: 0.06),
+                color: AppColors.white.withValues(alpha: 0.06),
               ),
             ),
           ),
@@ -244,7 +244,7 @@ _buildHeroSection(),
               height: 125,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: 0.05),
+                color: AppColors.white.withValues(alpha: 0.05),
               ),
             ),
           ),
@@ -259,7 +259,7 @@ _buildHeroSection(),
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.13),
+                      color: AppColors.white.withValues(alpha: 0.13),
                       borderRadius: BorderRadius.circular(30),
                     ),
                     child: Row(
@@ -268,7 +268,7 @@ _buildHeroSection(),
                           width: 7,
                           height: 7,
                           decoration: const BoxDecoration(
-                            color: Color(0xFF65F4A4),
+                            color: AppColors.hexFF65F4A4,
                             shape: BoxShape.circle,
                           ),
                         ),
@@ -276,7 +276,7 @@ _buildHeroSection(),
                         Text(
                           'ATTENDANCE',
                           style: GoogleFonts.inter(
-                            color: Colors.white,
+                            color: AppColors.white,
                             fontSize: 9,
                             fontWeight: FontWeight.w700,
                             letterSpacing: 1.2,
@@ -289,7 +289,7 @@ _buildHeroSection(),
                   Text(
                     _getToday(),
                     style: GoogleFonts.inter(
-                      color: Colors.white.withValues(alpha: 0.75),
+                      color: AppColors.white.withValues(alpha: 0.75),
                       fontSize: 10,
                       fontWeight: FontWeight.w500,
                     ),
@@ -300,7 +300,7 @@ _buildHeroSection(),
               Text(
                 'Make today count.',
                 style: GoogleFonts.inter(
-                  color: Colors.white,
+                  color: AppColors.white,
                   fontSize: 24,
                   fontWeight: FontWeight.w700,
                 ),
@@ -309,7 +309,7 @@ _buildHeroSection(),
               Text(
                 'Your attendance journey starts here.',
                 style: GoogleFonts.inter(
-                  color: Colors.white.withValues(alpha: 0.72),
+                  color: AppColors.white.withValues(alpha: 0.72),
                   fontSize: 12,
                 ),
               ),
@@ -322,7 +322,7 @@ _buildHeroSection(),
                       child: Container(
                         height: 48,
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppColors.white,
                           borderRadius: BorderRadius.circular(15),
                         ),
                         child: Row(
@@ -354,10 +354,10 @@ _buildHeroSection(),
                       child: Container(
                         height: 48,
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.12),
+                          color: AppColors.white.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(15),
                           border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.25),
+                            color: AppColors.white.withValues(alpha: 0.25),
                           ),
                         ),
                         child: Row(
@@ -365,14 +365,14 @@ _buildHeroSection(),
                           children: [
                             const Icon(
                               Icons.logout_rounded,
-                              color: Colors.white,
+                              color: AppColors.white,
                               size: 20,
                             ),
                             const SizedBox(width: 8),
                             Text(
                               'Check Out',
                               style: GoogleFonts.inter(
-                                color: Colors.white,
+                                color: AppColors.white,
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -412,7 +412,7 @@ _buildHeroSection(),
               vertical: 18,
             ),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.white,
               borderRadius: BorderRadius.circular(23),
               border: Border.all(color: AppColors.border),
             ),
@@ -595,7 +595,7 @@ _buildHeroSection(),
       child: Container(
         padding: const EdgeInsets.fromLTRB(10, 14, 10, 13),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: AppColors.border),
         ),
@@ -723,7 +723,7 @@ _buildHeroSection(),
     return Container(
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: AppColors.border),
       ),
@@ -802,7 +802,7 @@ _buildHeroSection(),
         width: double.infinity,
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.white,
           borderRadius: BorderRadius.circular(24),
           border: Border.all(color: AppColors.border),
         ),
@@ -957,12 +957,12 @@ _buildHeroSection(),
         height: 66,
         padding: const EdgeInsets.symmetric(horizontal: 4),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.white,
           borderRadius: BorderRadius.circular(24),
           border: Border.all(color: AppColors.border),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.07),
+              color: AppColors.black.withValues(alpha: 0.07),
               blurRadius: 22,
               offset: const Offset(0, 8),
             ),
@@ -1032,7 +1032,7 @@ _buildHeroSection(),
           decoration: BoxDecoration(
             color: selected
                 ? AppColors.primary.withValues(alpha: 0.08)
-                : Colors.transparent,
+                : AppColors.transparent,
             borderRadius: BorderRadius.circular(16),
           ),
           child: Column(

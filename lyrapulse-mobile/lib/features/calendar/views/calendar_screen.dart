@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'package:lyrapulse_mobile/features/regularization/views/regularization_screen.dart';
+import '../../../app/theme/app_colors.dart';
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
@@ -12,9 +13,9 @@ class CalendarScreen extends StatefulWidget {
 }
 
 class _CalendarScreenState extends State<CalendarScreen> {
-  static const Color primaryBlue = Color(0xFF1769D2);
-  static const Color backgroundColor = Color(0xFFF7FAFD);
-  static const Color textColor = Color(0xFF253858);
+  static const Color primaryBlue = AppColors.hexFF1769D2;
+  static const Color backgroundColor = AppColors.hexFFF7FAFD;
+  static const Color textColor = AppColors.hexFF253858;
 
   DateTime _visibleMonth = DateTime(
     DateTime.now().year,
@@ -125,7 +126,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 'Select a date to regularize attendance.',
                 style: GoogleFonts.inter(
                   fontSize: 11,
-                  color: const Color(0xFF8795A8),
+                  color: AppColors.hexFF8795A8,
                 ),
               ),
             ],
@@ -133,10 +134,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
         ),
         Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.white,
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: const Color(0xFFE4EAF2),
+              color: AppColors.hexFFE4EAF2,
             ),
           ),
           child: Row(
@@ -171,10 +172,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
     return Container(
       padding: const EdgeInsets.fromLTRB(13, 18, 13, 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(22),
         border: Border.all(
-          color: const Color(0xFFE6ECF3),
+          color: AppColors.hexFFE6ECF3,
         ),
       ),
       child: Column(
@@ -198,7 +199,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     style: GoogleFonts.inter(
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
-                      color: const Color(0xFF8795A8),
+                      color: AppColors.hexFF8795A8,
                     ),
                   ),
                 ),
@@ -244,8 +245,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       color: isSelected
                           ? primaryBlue
                           : isToday
-                              ? const Color(0xFFEAF3FF)
-                              : Colors.transparent,
+                              ? AppColors.hexFFEAF3FF
+                              : AppColors.transparent,
                       borderRadius: BorderRadius.circular(12),
                       border: isToday && !isSelected
                           ? Border.all(
@@ -263,7 +264,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                               ? FontWeight.w700
                               : FontWeight.w500,
                           color: isSelected
-                              ? Colors.white
+                              ? AppColors.white
                               : isToday
                                   ? primaryBlue
                                   : textColor,
@@ -294,7 +295,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 'Today',
                 style: GoogleFonts.inter(
                   fontSize: 10,
-                  color: const Color(0xFF8795A8),
+                  color: AppColors.hexFF8795A8,
                 ),
               ),
               const SizedBox(width: 20),
@@ -302,7 +303,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 width: 9,
                 height: 9,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEAF3FF),
+                  color: AppColors.hexFFEAF3FF,
                   border: Border.all(color: primaryBlue),
                   shape: BoxShape.circle,
                 ),
@@ -312,7 +313,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 'Current date',
                 style: GoogleFonts.inter(
                   fontSize: 10,
-                  color: const Color(0xFF8795A8),
+                  color: AppColors.hexFF8795A8,
                 ),
               ),
             ],
@@ -326,7 +327,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFEAF3FF),
+        color: AppColors.hexFFEAF3FF,
         borderRadius: BorderRadius.circular(18),
       ),
       child: Row(
@@ -358,7 +359,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   style: GoogleFonts.inter(
                     fontSize: 11,
                     height: 1.6,
-                    color: const Color(0xFF54708F),
+                    color: AppColors.hexFF54708F,
                   ),
                 ),
               ],

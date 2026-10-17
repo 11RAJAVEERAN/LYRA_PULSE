@@ -17,6 +17,7 @@ import '../../features/permission/views/permission_return_screen.dart';
 import '../../features/leave/views/leave_screen.dart';
 
 import 'app_routes.dart';
+import '../theme/app_colors.dart';
 
 abstract final class AppPages {
   static final List<GetPage<dynamic>> pages = [
@@ -147,21 +148,21 @@ class _PlaceholderPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF04111F),
+      backgroundColor: AppColors.hexFF04111F,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF04111F),
+        backgroundColor: AppColors.hexFF04111F,
         elevation: 0,
         leading: IconButton(
           onPressed: Get.back,
           icon: const Icon(
             Icons.arrow_back_rounded,
-            color: Colors.white,
+            color: AppColors.white,
           ),
         ),
         title: Text(
           title,
           style: const TextStyle(
-            color: Colors.white,
+            color: AppColors.white,
             fontSize: 18,
             fontWeight: FontWeight.w700,
           ),
@@ -170,7 +171,7 @@ class _PlaceholderPage extends StatelessWidget {
       body: Center(
         child: Icon(
           icon,
-          color: const Color(0xFF20DFFF),
+          color: AppColors.hexFF20DFFF,
           size: 60,
         ),
       ),

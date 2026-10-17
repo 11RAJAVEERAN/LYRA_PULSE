@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import 'package:lyrapulse_mobile/features/attendance/controllers/attendance_controller.dart';
+import '../../../app/theme/app_colors.dart';
 
 class AttendanceHistoryScreen extends StatefulWidget {
   const AttendanceHistoryScreen({super.key});
@@ -110,49 +111,49 @@ class _AttendanceHistoryScreenState
   static Color _getStatusColor(String status) {
     switch (status) {
       case 'Present':
-        return const Color(0xFF22A06B);
+        return AppColors.hexFF22A06B;
       case 'Absent':
-        return const Color(0xFFE05252);
+        return AppColors.hexFFE05252;
       case 'Leave':
-        return const Color(0xFFE39A18);
+        return AppColors.hexFFE39A18;
       default:
-        return const Color(0xFF718096);
+        return AppColors.hexFF718096;
     }
   }
 
   static Color _getStatusBackground(String status) {
     switch (status) {
       case 'Present':
-        return const Color(0xFFEAF8F1);
+        return AppColors.hexFFEAF8F1;
       case 'Absent':
-        return const Color(0xFFFFEEEE);
+        return AppColors.hexFFFFEEEE;
       case 'Leave':
-        return const Color(0xFFFFF4E3);
+        return AppColors.hexFFFFF4E3;
       default:
-        return const Color(0xFFF1F6FA);
+        return AppColors.hexFFF1F6FA;
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7FAFE),
+      backgroundColor: AppColors.hexFFF7FAFE,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF7FAFE),
+        backgroundColor: AppColors.hexFFF7FAFE,
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
           onPressed: () => Get.back(),
           icon: const Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: Color(0xFF172B4D),
+            color: AppColors.hexFF172B4D,
             size: 20,
           ),
         ),
         title: const Text(
           'Attendance History',
           style: TextStyle(
-            color: Color(0xFF172B4D),
+            color: AppColors.hexFF172B4D,
             fontSize: 19,
             fontWeight: FontWeight.w700,
           ),
@@ -167,7 +168,7 @@ class _AttendanceHistoryScreenState
               PopupMenuButton<String>(
                 padding: EdgeInsets.zero,
                 offset: const Offset(0, 8),
-                color: Colors.white,
+                color: AppColors.white,
                 elevation: 8,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
@@ -189,7 +190,7 @@ class _AttendanceHistoryScreenState
                             child: Text(
                               month,
                               style: TextStyle(
-                                color: const Color(0xFF172B4D),
+                                color: AppColors.hexFF172B4D,
                                 fontSize: 14,
                                 fontWeight: isSelected
                                     ? FontWeight.w800
@@ -200,7 +201,7 @@ class _AttendanceHistoryScreenState
                           if (isSelected)
                             const Icon(
                               Icons.check_rounded,
-                              color: Color(0xFF1687D9),
+                              color: AppColors.hexFF1687D9,
                               size: 20,
                             ),
                         ],
@@ -212,14 +213,14 @@ class _AttendanceHistoryScreenState
                   width: double.infinity,
                   padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.white,
                     borderRadius: BorderRadius.circular(18),
                     border: Border.all(
-                      color: const Color(0xFFE5EBF2),
+                      color: AppColors.hexFFE5EBF2,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.03),
+                        color: AppColors.black.withOpacity(0.03),
                         blurRadius: 12,
                         offset: const Offset(0, 4),
                       ),
@@ -231,12 +232,12 @@ class _AttendanceHistoryScreenState
                         width: 48,
                         height: 48,
                         decoration: BoxDecoration(
-                          color: const Color(0xFFE8F5FF),
+                          color: AppColors.hexFFE8F5FF,
                           borderRadius: BorderRadius.circular(14),
                         ),
                         child: const Icon(
                           Icons.calendar_month_rounded,
-                          color: Color(0xFF1687D9),
+                          color: AppColors.hexFF1687D9,
                           size: 25,
                         ),
                       ),
@@ -250,7 +251,7 @@ class _AttendanceHistoryScreenState
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
-                                color: Color(0xFF172B4D),
+                                color: AppColors.hexFF172B4D,
                                 fontSize: 16,
                                 fontWeight: FontWeight.w800,
                               ),
@@ -261,7 +262,7 @@ class _AttendanceHistoryScreenState
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                color: Color(0xFF7B8798),
+                                color: AppColors.hexFF7B8798,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500,
                               ),
@@ -272,7 +273,7 @@ class _AttendanceHistoryScreenState
                       const SizedBox(width: 8),
                       const Icon(
                         Icons.keyboard_arrow_down_rounded,
-                        color: Color(0xFF718096),
+                        color: AppColors.hexFF718096,
                         size: 24,
                       ),
                     ],
@@ -285,7 +286,7 @@ class _AttendanceHistoryScreenState
               const Text(
                 'This Month',
                 style: TextStyle(
-                  color: Color(0xFF172B4D),
+                  color: AppColors.hexFF172B4D,
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
                 ),
@@ -304,8 +305,8 @@ class _AttendanceHistoryScreenState
                         title: 'Present',
                         value: present.toString(),
                         icon: Icons.check_circle_rounded,
-                        background: const Color(0xFFEAF8F1),
-                        iconColor: const Color(0xFF22A06B),
+                        background: AppColors.hexFFEAF8F1,
+                        iconColor: AppColors.hexFF22A06B,
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -314,8 +315,8 @@ class _AttendanceHistoryScreenState
                         title: 'Absent',
                         value: '0',
                         icon: Icons.cancel_rounded,
-                        background: Color(0xFFFFEEEE),
-                        iconColor: Color(0xFFE05252),
+                        background: AppColors.hexFFFFEEEE,
+                        iconColor: AppColors.hexFFE05252,
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -324,8 +325,8 @@ class _AttendanceHistoryScreenState
                         title: 'Leave',
                         value: '0',
                         icon: Icons.event_busy_rounded,
-                        background: Color(0xFFFFF4E3),
-                        iconColor: Color(0xFFE39A18),
+                        background: AppColors.hexFFFFF4E3,
+                        iconColor: AppColors.hexFFE39A18,
                       ),
                     ),
                   ],
@@ -337,7 +338,7 @@ class _AttendanceHistoryScreenState
               const Text(
                 'Attendance Records',
                 style: TextStyle(
-                  color: Color(0xFF172B4D),
+                  color: AppColors.hexFF172B4D,
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
                 ),
@@ -422,10 +423,10 @@ class _SummaryCard extends StatelessWidget {
         horizontal: 8,
       ),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: const Color(0xFFE5EBF2),
+          color: AppColors.hexFFE5EBF2,
         ),
       ),
       child: Column(
@@ -447,7 +448,7 @@ class _SummaryCard extends StatelessWidget {
           Text(
             value,
             style: const TextStyle(
-              color: Color(0xFF172B4D),
+              color: AppColors.hexFF172B4D,
               fontSize: 19,
               fontWeight: FontWeight.w800,
             ),
@@ -456,7 +457,7 @@ class _SummaryCard extends StatelessWidget {
           Text(
             title,
             style: const TextStyle(
-              color: Color(0xFF7B8798),
+              color: AppColors.hexFF7B8798,
               fontSize: 11,
               fontWeight: FontWeight.w600,
             ),
@@ -494,10 +495,10 @@ class _AttendanceCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(17),
         border: Border.all(
-          color: const Color(0xFFE5EBF2),
+          color: AppColors.hexFFE5EBF2,
         ),
       ),
       child: Row(
@@ -506,7 +507,7 @@ class _AttendanceCard extends StatelessWidget {
             width: 55,
             height: 62,
             decoration: BoxDecoration(
-              color: const Color(0xFFF1F6FA),
+              color: AppColors.hexFFF1F6FA,
               borderRadius: BorderRadius.circular(14),
             ),
             child: Column(
@@ -515,7 +516,7 @@ class _AttendanceCard extends StatelessWidget {
                 Text(
                   date,
                   style: const TextStyle(
-                    color: Color(0xFF172B4D),
+                    color: AppColors.hexFF172B4D,
                     fontSize: 19,
                     fontWeight: FontWeight.w800,
                   ),
@@ -523,7 +524,7 @@ class _AttendanceCard extends StatelessWidget {
                 Text(
                   month,
                   style: const TextStyle(
-                    color: Color(0xFF7B8798),
+                    color: AppColors.hexFF7B8798,
                     fontSize: 10,
                     fontWeight: FontWeight.w600,
                   ),
@@ -539,7 +540,7 @@ class _AttendanceCard extends StatelessWidget {
                 Text(
                   day,
                   style: const TextStyle(
-                    color: Color(0xFF172B4D),
+                    color: AppColors.hexFF172B4D,
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
                   ),
@@ -554,14 +555,14 @@ class _AttendanceCard extends StatelessWidget {
                       children: [
                         const Icon(
                           Icons.login_rounded,
-                          color: Color(0xFF22A06B),
+                          color: AppColors.hexFF22A06B,
                           size: 15,
                         ),
                         const SizedBox(width: 5),
                         Text(
                           checkIn,
                           style: const TextStyle(
-                            color: Color(0xFF718096),
+                            color: AppColors.hexFF718096,
                             fontSize: 11,
                           ),
                         ),
@@ -572,14 +573,14 @@ class _AttendanceCard extends StatelessWidget {
                       children: [
                         const Icon(
                           Icons.logout_rounded,
-                          color: Color(0xFF1687D9),
+                          color: AppColors.hexFF1687D9,
                           size: 15,
                         ),
                         const SizedBox(width: 5),
                         Text(
                           checkOut,
                           style: const TextStyle(
-                            color: Color(0xFF718096),
+                            color: AppColors.hexFF718096,
                             fontSize: 11,
                           ),
                         ),
@@ -631,10 +632,10 @@ class _EmptyAttendanceState extends StatelessWidget {
         horizontal: 20,
       ),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(17),
         border: Border.all(
-          color: const Color(0xFFE5EBF2),
+          color: AppColors.hexFFE5EBF2,
         ),
       ),
       child: Column(
@@ -643,12 +644,12 @@ class _EmptyAttendanceState extends StatelessWidget {
             width: 52,
             height: 52,
             decoration: BoxDecoration(
-              color: const Color(0xFFE8F5FF),
+              color: AppColors.hexFFE8F5FF,
               borderRadius: BorderRadius.circular(16),
             ),
             child: const Icon(
               Icons.calendar_month_rounded,
-              color: Color(0xFF1687D9),
+              color: AppColors.hexFF1687D9,
               size: 26,
             ),
           ),
@@ -656,7 +657,7 @@ class _EmptyAttendanceState extends StatelessWidget {
           const Text(
             'No attendance records',
             style: TextStyle(
-              color: Color(0xFF172B4D),
+              color: AppColors.hexFF172B4D,
               fontSize: 15,
               fontWeight: FontWeight.w800,
             ),
@@ -666,7 +667,7 @@ class _EmptyAttendanceState extends StatelessWidget {
             'No attendance data available for $month.',
             textAlign: TextAlign.center,
             style: const TextStyle(
-              color: Color(0xFF7B8798),
+              color: AppColors.hexFF7B8798,
               fontSize: 12,
               fontWeight: FontWeight.w500,
             ),

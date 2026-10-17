@@ -9,5 +9,5 @@ class AppLoader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => CircularProgressIndicator(
-      strokeWidth: 2.5, color: onDark ? Colors.white : AppColors.primary);
+      strokeWidth: 2.5, color: onDark ? AppColors.white : AppColors.primary);
 }

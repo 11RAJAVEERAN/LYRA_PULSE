@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../app/theme/app_colors.dart';
 
 class NotificationScreen extends StatefulWidget {
   const NotificationScreen({super.key});
@@ -10,14 +11,14 @@ class NotificationScreen extends StatefulWidget {
 }
 
 class _NotificationScreenState extends State<NotificationScreen> {
-  static const Color navy = Color(0xFF102B63);
-  static const Color blue = Color(0xFF4779D9);
-  static const Color purple = Color(0xFF6254E8);
-  static const Color green = Color(0xFF0BA875);
-  static const Color red = Color(0xFFE94B60);
-  static const Color orange = Color(0xFFF29D38);
-  static const Color background = Color(0xFFF5F7FD);
-  static const Color muted = Color(0xFF8491AA);
+  static const Color navy = AppColors.hexFF102B63;
+  static const Color blue = AppColors.hexFF4779D9;
+  static const Color purple = AppColors.hexFF6254E8;
+  static const Color green = AppColors.hexFF0BA875;
+  static const Color red = AppColors.hexFFE94B60;
+  static const Color orange = AppColors.hexFFF29D38;
+  static const Color background = AppColors.hexFFF5F7FD;
+  static const Color muted = AppColors.hexFF8491AA;
 
   final List<_NotificationItem> _notifications = [
     _NotificationItem(
@@ -113,7 +114,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
       child: Row(
         children: [
           Material(
-            color: Colors.white,
+            color: AppColors.white,
             borderRadius: BorderRadius.circular(14),
             child: InkWell(
               onTap: () => Navigator.pop(context),
@@ -185,7 +186,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
         return Padding(
           padding: const EdgeInsets.only(bottom: 12),
           child: Material(
-            color: Colors.white,
+            color: AppColors.white,
             borderRadius: BorderRadius.circular(20),
             child: InkWell(
               onTap: () => _markAsRead(index),
@@ -196,7 +197,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color: item.isRead
-                        ? const Color(0xFFE8EDF6)
+                        ? AppColors.hexFFE8EDF6
                         : blue.withValues(alpha: 0.18),
                   ),
                 ),

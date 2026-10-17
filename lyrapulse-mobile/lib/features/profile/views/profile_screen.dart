@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../../app/theme/app_colors.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -12,12 +13,12 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  static const Color navy = Color(0xFF102B63);
-  static const Color blue = Color(0xFF4779D9);
-  static const Color purple = Color(0xFF6254E8);
-  static const Color green = Color(0xFF0BA875);
-  static const Color background = Color(0xFFF5F7FD);
-  static const Color muted = Color(0xFF8491AA);
+  static const Color navy = AppColors.hexFF102B63;
+  static const Color blue = AppColors.hexFF4779D9;
+  static const Color purple = AppColors.hexFF6254E8;
+  static const Color green = AppColors.hexFF0BA875;
+  static const Color background = AppColors.hexFFF5F7FD;
+  static const Color muted = AppColors.hexFF8491AA;
 
   final ImagePicker _imagePicker = ImagePicker();
 
@@ -177,8 +178,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 icon: Icons.logout_rounded,
                 title: 'Logout',
                 subtitle: 'Sign out from your account',
-                iconColor: Colors.redAccent,
-                titleColor: Colors.redAccent,
+                iconColor: AppColors.redAccent,
+                titleColor: AppColors.redAccent,
                 onTap: _showLogoutDialog,
               ),
 
@@ -226,8 +227,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [
-            Color(0xFF102B63),
-            Color(0xFF4779D9),
+            AppColors.hexFF102B63,
+            AppColors.hexFF4779D9,
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -247,10 +248,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             width: 72,
             height: 72,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.18),
+              color: AppColors.white.withOpacity(0.18),
               shape: BoxShape.circle,
               border: Border.all(
-                color: Colors.white.withOpacity(0.45),
+                color: AppColors.white.withOpacity(0.45),
                 width: 2,
               ),
             ),
@@ -265,7 +266,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   : const Icon(
                       Icons.person_rounded,
                       size: 38,
-                      color: Colors.white,
+                      color: AppColors.white,
                     ),
             ),
           ),
@@ -279,7 +280,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Text(
                   employeeName,
                   style: const TextStyle(
-                    color: Colors.white,
+                    color: AppColors.white,
                     fontSize: 22,
                     fontWeight: FontWeight.w700,
                   ),
@@ -290,7 +291,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Text(
                   designation,
                   style: const TextStyle(
-                    color: Colors.white70,
+                    color: AppColors.white70,
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                   ),
@@ -301,7 +302,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Text(
                   employeeId,
                   style: const TextStyle(
-                    color: Colors.white60,
+                    color: AppColors.white60,
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                   ),
@@ -316,7 +317,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               vertical: 6,
             ),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.15),
+              color: AppColors.white.withOpacity(0.15),
               borderRadius: BorderRadius.circular(20),
             ),
             child: const Row(
@@ -324,14 +325,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 Icon(
                   Icons.verified_rounded,
-                  color: Colors.white,
+                  color: AppColors.white,
                   size: 14,
                 ),
                 SizedBox(width: 4),
                 Text(
                   'Active',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: AppColors.white,
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                   ),
@@ -375,10 +376,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         vertical: 15,
       ),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: const Color(0xFFE8ECF5),
+          color: AppColors.hexFFE8ECF5,
         ),
       ),
       child: Row(
@@ -387,7 +388,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: const Color(0xFFF0F4FF),
+              color: AppColors.hexFFF0F4FF,
               borderRadius: BorderRadius.circular(13),
             ),
             child: Icon(
@@ -449,10 +450,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         width: double.infinity,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: const Color(0xFFE8ECF5),
+            color: AppColors.hexFFE8ECF5,
           ),
         ),
         child: Row(
@@ -543,7 +544,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       StatefulBuilder(
         builder: (context, setDialogState) {
           return Dialog(
-            backgroundColor: Colors.white,
+            backgroundColor: AppColors.white,
             insetPadding: const EdgeInsets.symmetric(
               horizontal: 20,
             ),
@@ -566,7 +567,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         width: 44,
                         height: 44,
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF0F4FF),
+                          color: AppColors.hexFFF0F4FF,
                           borderRadius:
                               BorderRadius.circular(13),
                         ),
@@ -616,10 +617,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 color:
-                                    const Color(0xFFF0F4FF),
+                                    AppColors.hexFFF0F4FF,
                                 border: Border.all(
                                   color:
-                                      const Color(0xFFE0E7F5),
+                                      AppColors.hexFFE0E7F5,
                                   width: 2,
                                 ),
                               ),
@@ -665,13 +666,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     color: navy,
                                     shape: BoxShape.circle,
                                     border: Border.all(
-                                      color: Colors.white,
+                                      color: AppColors.white,
                                       width: 2,
                                     ),
                                   ),
                                   child: const Icon(
                                     Icons.camera_alt_rounded,
-                                    color: Colors.white,
+                                    color: AppColors.white,
                                     size: 17,
                                   ),
                                 ),
@@ -839,7 +840,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             snackPosition:
                                 SnackPosition.BOTTOM,
                             backgroundColor: navy,
-                            colorText: Colors.white,
+                            colorText: AppColors.white,
                             margin:
                                 const EdgeInsets.all(16),
                             borderRadius: 12,
@@ -896,7 +897,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           snackPosition:
                               SnackPosition.BOTTOM,
                           backgroundColor: green,
-                          colorText: Colors.white,
+                          colorText: AppColors.white,
                           margin:
                               const EdgeInsets.all(16),
                           borderRadius: 12,
@@ -919,7 +920,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: navy,
-                        foregroundColor: Colors.white,
+                        foregroundColor: AppColors.white,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius:
@@ -974,7 +975,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           size: 21,
         ),
         filled: true,
-        fillColor: const Color(0xFFF7F9FD),
+        fillColor: AppColors.hexFFF7F9FD,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 14,
           vertical: 15,
@@ -982,13 +983,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: const BorderSide(
-            color: Color(0xFFE8ECF5),
+            color: AppColors.hexFFE8ECF5,
           ),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: const BorderSide(
-            color: Color(0xFFE8ECF5),
+            color: AppColors.hexFFE8ECF5,
           ),
         ),
         focusedBorder: OutlineInputBorder(
@@ -1018,7 +1019,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     Get.dialog(
       Dialog(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.white,
         insetPadding:
             const EdgeInsets.symmetric(horizontal: 20),
         shape: RoundedRectangleBorder(
@@ -1092,8 +1093,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         snackPosition:
                             SnackPosition.BOTTOM,
                         backgroundColor:
-                            Colors.redAccent,
-                        colorText: Colors.white,
+                            AppColors.redAccent,
+                        colorText: AppColors.white,
                         margin:
                             const EdgeInsets.all(16),
                       );
@@ -1108,14 +1109,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       snackPosition:
                           SnackPosition.BOTTOM,
                       backgroundColor: green,
-                      colorText: Colors.white,
+                      colorText: AppColors.white,
                       margin:
                           const EdgeInsets.all(16),
                     );
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: navy,
-                    foregroundColor: Colors.white,
+                    foregroundColor: AppColors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius:
                           BorderRadius.circular(12),
@@ -1237,7 +1238,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: navy,
-              foregroundColor: Colors.white,
+              foregroundColor: AppColors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),

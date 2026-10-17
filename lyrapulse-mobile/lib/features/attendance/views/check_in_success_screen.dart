@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../app/theme/app_colors.dart';
 
 class CheckInSuccessScreen extends StatelessWidget {
   const CheckInSuccessScreen({super.key});
@@ -9,16 +10,16 @@ class CheckInSuccessScreen extends StatelessWidget {
   // COLORS
   // ===============================================================
 
-  static const Color background = Color(0xFFF7FAFE);
-  static const Color navy = Color(0xFF19356C);
-  static const Color green = Color(0xFF18A66A);
-  static const Color lightGreen = Color(0xFFEAF8F2);
-  static const Color greenBorder = Color(0xFFCBEBD9);
+  static const Color background = AppColors.hexFFF7FAFE;
+  static const Color navy = AppColors.hexFF19356C;
+  static const Color green = AppColors.hexFF18A66A;
+  static const Color lightGreen = AppColors.hexFFEAF8F2;
+  static const Color greenBorder = AppColors.hexFFCBEBD9;
 
-  static const Color primaryText = Color(0xFF172B4D);
-  static const Color secondaryText = Color(0xFF65758B);
-  static const Color lightText = Color(0xFF8A99AA);
-  static const Color border = Color(0xFFE3EAF3);
+  static const Color primaryText = AppColors.hexFF172B4D;
+  static const Color secondaryText = AppColors.hexFF65758B;
+  static const Color lightText = AppColors.hexFF8A99AA;
+  static const Color border = AppColors.hexFFE3EAF3;
 
   @override
   Widget build(BuildContext context) {
@@ -79,7 +80,7 @@ class CheckInSuccessScreen extends StatelessWidget {
                   ),
                   child: const Icon(
                     Icons.check_rounded,
-                    color: Colors.white,
+                    color: AppColors.white,
                     size: 52,
                   ),
                 ),
@@ -125,7 +126,7 @@ class CheckInSuccessScreen extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.white,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color: border,
@@ -274,7 +275,7 @@ class CheckInSuccessScreen extends StatelessWidget {
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: navy,
-                    foregroundColor: Colors.white,
+                    foregroundColor: AppColors.white,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
@@ -286,7 +287,7 @@ class CheckInSuccessScreen extends StatelessWidget {
                       Text(
                         'Done',
                         style: GoogleFonts.inter(
-                          color: Colors.white,
+                          color: AppColors.white,
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
                         ),
@@ -294,7 +295,7 @@ class CheckInSuccessScreen extends StatelessWidget {
                       const SizedBox(width: 9),
                       const Icon(
                         Icons.arrow_forward_rounded,
-                        color: Colors.white,
+                        color: AppColors.white,
                         size: 20,
                       ),
                     ],
@@ -382,7 +383,7 @@ class CheckInSuccessScreen extends StatelessWidget {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: const Color(0xFFF1F5FA),
+            color: AppColors.hexFFF1F5FA,
             borderRadius: BorderRadius.circular(11),
           ),
           child: Icon(
@@ -460,7 +461,7 @@ class CheckInSuccessScreen extends StatelessWidget {
         vertical: 14,
       ),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: greenBorder,
@@ -536,7 +537,7 @@ class CheckInSuccessScreen extends StatelessWidget {
       width: 42,
       height: 42,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(13),
         border: Border.all(
           color: border,

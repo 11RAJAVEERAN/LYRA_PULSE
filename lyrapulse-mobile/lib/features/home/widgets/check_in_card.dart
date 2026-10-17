@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../app/theme/app_colors.dart';
 
 class CheckInCard extends StatelessWidget {
   const CheckInCard({
@@ -19,14 +20,14 @@ class CheckInCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: const Color(0xFF071A2D),
+        color: AppColors.hexFF071A2D,
         borderRadius: BorderRadius.circular(22),
         border: Border.all(
-          color: const Color(0xFF174663),
+          color: AppColors.hexFF174663,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.20),
+            color: AppColors.black.withOpacity(0.20),
             blurRadius: 24,
             offset: const Offset(0, 10),
           ),
@@ -45,12 +46,12 @@ class CheckInCard extends StatelessWidget {
                 width: 46,
                 height: 46,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF0B3048),
+                  color: AppColors.hexFF0B3048,
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: const Icon(
                   Icons.login_rounded,
-                  color: Color(0xFF24DDF7),
+                  color: AppColors.hexFF24DDF7,
                   size: 23,
                 ),
               ),
@@ -64,7 +65,7 @@ class CheckInCard extends StatelessWidget {
                     Text(
                       'CHECK IN',
                       style: GoogleFonts.inter(
-                        color: Colors.white,
+                        color: AppColors.white,
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 1.1,
@@ -78,7 +79,7 @@ class CheckInCard extends StatelessWidget {
                           ? 'Attendance marked'
                           : 'Mark your attendance',
                       style: GoogleFonts.inter(
-                        color: const Color(0xFF718CA1),
+                        color: AppColors.hexFF718CA1,
                         fontSize: 10,
                       ),
                     ),
@@ -93,8 +94,8 @@ class CheckInCard extends StatelessWidget {
                 ),
                 decoration: BoxDecoration(
                   color: isCheckedIn
-                      ? const Color(0xFF0B3B36)
-                      : const Color(0xFF0B2940),
+                      ? AppColors.hexFF0B3B36
+                      : AppColors.hexFF0B2940,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
@@ -106,8 +107,8 @@ class CheckInCard extends StatelessWidget {
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: isCheckedIn
-                            ? const Color(0xFF24E5C0)
-                            : const Color(0xFF25DDF7),
+                            ? AppColors.hexFF24E5C0
+                            : AppColors.hexFF25DDF7,
                       ),
                     ),
                     const SizedBox(width: 5),
@@ -115,8 +116,8 @@ class CheckInCard extends StatelessWidget {
                       isCheckedIn ? 'DONE' : 'READY',
                       style: GoogleFonts.inter(
                         color: isCheckedIn
-                            ? const Color(0xFF24E5C0)
-                            : const Color(0xFF25DDF7),
+                            ? AppColors.hexFF24E5C0
+                            : AppColors.hexFF25DDF7,
                         fontSize: 7,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 0.8,
@@ -141,14 +142,14 @@ class CheckInCard extends StatelessWidget {
               vertical: 12,
             ),
             decoration: BoxDecoration(
-              color: const Color(0xFF061727),
+              color: AppColors.hexFF061727,
               borderRadius: BorderRadius.circular(14),
             ),
             child: Row(
               children: [
                 const Icon(
                   Icons.access_time_rounded,
-                  color: Color(0xFF25DDF7),
+                  color: AppColors.hexFF25DDF7,
                   size: 18,
                 ),
 
@@ -157,7 +158,7 @@ class CheckInCard extends StatelessWidget {
                 Text(
                   'Check-in Time',
                   style: GoogleFonts.inter(
-                    color: const Color(0xFF718CA1),
+                    color: AppColors.hexFF718CA1,
                     fontSize: 9,
                   ),
                 ),
@@ -167,7 +168,7 @@ class CheckInCard extends StatelessWidget {
                 Text(
                   checkInTime,
                   style: GoogleFonts.inter(
-                    color: Colors.white,
+                    color: AppColors.white,
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
                   ),
@@ -188,9 +189,9 @@ class CheckInCard extends StatelessWidget {
             child: ElevatedButton(
               onPressed: isCheckedIn ? null : onPressed,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF176DFF),
-                disabledBackgroundColor: const Color(0xFF123451),
-                foregroundColor: Colors.white,
+                backgroundColor: AppColors.hexFF176DFF,
+                disabledBackgroundColor: AppColors.hexFF123451,
+                foregroundColor: AppColors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),

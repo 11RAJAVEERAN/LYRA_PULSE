@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../app/routes/app_routes.dart';
+import '../../../app/theme/app_colors.dart';
 
 class PermissionStartScreen extends StatefulWidget {
   const PermissionStartScreen({super.key});
@@ -44,13 +45,13 @@ class _PermissionStartScreenState extends State<PermissionStartScreen> {
         'Reason Required',
         'Please enter the reason for your permission.',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: const Color(0xFF102A40),
-        colorText: Colors.white,
+        backgroundColor: AppColors.hexFF102A40,
+        colorText: AppColors.white,
         margin: const EdgeInsets.all(16),
         borderRadius: 14,
         icon: const Icon(
           Icons.info_outline_rounded,
-          color: Color(0xFF20DFFF),
+          color: AppColors.hexFF20DFFF,
         ),
       );
       return;
@@ -61,13 +62,13 @@ class _PermissionStartScreenState extends State<PermissionStartScreen> {
         'Return Time Required',
         'Please select your expected return time.',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: const Color(0xFF102A40),
-        colorText: Colors.white,
+        backgroundColor: AppColors.hexFF102A40,
+        colorText: AppColors.white,
         margin: const EdgeInsets.all(16),
         borderRadius: 14,
         icon: const Icon(
           Icons.access_time_rounded,
-          color: Color(0xFF20DFFF),
+          color: AppColors.hexFF20DFFF,
         ),
       );
       return;
@@ -88,8 +89,8 @@ class _PermissionStartScreenState extends State<PermissionStartScreen> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.dark(
-              primary: Color(0xFF20DFFF),
-              surface: Color(0xFF071C2E),
+              primary: AppColors.hexFF20DFFF,
+              surface: AppColors.hexFF071C2E,
             ),
           ),
           child: child!,
@@ -107,7 +108,7 @@ class _PermissionStartScreenState extends State<PermissionStartScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF04111F),
+      backgroundColor: AppColors.hexFF04111F,
       body: SafeArea(
         child: Stack(
           children: [
@@ -120,7 +121,7 @@ class _PermissionStartScreenState extends State<PermissionStartScreen> {
               right: -140,
               child: _glow(
                 390,
-                const Color(0xFF087BFF),
+                AppColors.hexFF087BFF,
               ),
             ),
 
@@ -129,7 +130,7 @@ class _PermissionStartScreenState extends State<PermissionStartScreen> {
               left: -160,
               child: _glow(
                 420,
-                const Color(0xFF00D9FF),
+                AppColors.hexFF00D9FF,
               ),
             ),
 
@@ -176,7 +177,7 @@ class _PermissionStartScreenState extends State<PermissionStartScreen> {
                     child: Text(
                       'REQUEST',
                       style: GoogleFonts.inter(
-                        color: Colors.white,
+                        color: AppColors.white,
                         fontSize: 27,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 3,
@@ -191,15 +192,15 @@ class _PermissionStartScreenState extends State<PermissionStartScreen> {
                       shaderCallback: (bounds) {
                         return const LinearGradient(
                           colors: [
-                            Color(0xFF20DFFF),
-                            Color(0xFF24E5C0),
+                            AppColors.hexFF20DFFF,
+                            AppColors.hexFF24E5C0,
                           ],
                         ).createShader(bounds);
                       },
                       child: Text(
                         'PERMISSION',
                         style: GoogleFonts.inter(
-                          color: Colors.white,
+                          color: AppColors.white,
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
                           letterSpacing: 2.5,
@@ -215,7 +216,7 @@ class _PermissionStartScreenState extends State<PermissionStartScreen> {
                       'Submit your permission request before leaving the office.',
                       textAlign: TextAlign.center,
                       style: GoogleFonts.inter(
-                        color: const Color(0xFF7F96AB),
+                        color: AppColors.hexFF7F96AB,
                         fontSize: 10.5,
                         height: 1.5,
                       ),
@@ -287,14 +288,14 @@ class _PermissionStartScreenState extends State<PermissionStartScreen> {
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
                           colors: [
-                            Color(0xFF176DFF),
-                            Color(0xFF18D5EF),
+                            AppColors.hexFF176DFF,
+                            AppColors.hexFF18D5EF,
                           ],
                         ),
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFF00CFFF)
+                            color: AppColors.hexFF00CFFF
                                 .withOpacity(0.22),
                             blurRadius: 24,
                             offset: const Offset(0, 9),
@@ -304,9 +305,9 @@ class _PermissionStartScreenState extends State<PermissionStartScreen> {
                       child: ElevatedButton(
                         onPressed: _submitPermission,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.transparent,
-                          foregroundColor: Colors.white,
-                          shadowColor: Colors.transparent,
+                          backgroundColor: AppColors.transparent,
+                          foregroundColor: AppColors.white,
+                          shadowColor: AppColors.transparent,
                           elevation: 0,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
@@ -345,14 +346,14 @@ class _PermissionStartScreenState extends State<PermissionStartScreen> {
                       children: [
                         const Icon(
                           Icons.shield_outlined,
-                          color: Color(0xFF536D83),
+                          color: AppColors.hexFF536D83,
                           size: 14,
                         ),
                         const SizedBox(width: 7),
                         Text(
                           'Your permission request is securely recorded',
                           style: GoogleFonts.inter(
-                            color: const Color(0xFF536D83),
+                            color: AppColors.hexFF536D83,
                             fontSize: 9,
                             fontWeight: FontWeight.w500,
                           ),
@@ -371,7 +372,7 @@ class _PermissionStartScreenState extends State<PermissionStartScreen> {
                     child: Text(
                       'LYRA PULSE',
                       style: GoogleFonts.inter(
-                        color: const Color(0xFF38566D),
+                        color: AppColors.hexFF38566D,
                         fontSize: 8,
                         fontWeight: FontWeight.w600,
                         letterSpacing: 2.4,
@@ -396,10 +397,10 @@ class _PermissionStartScreenState extends State<PermissionStartScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
-        color: const Color(0xFF081D31),
+        color: AppColors.hexFF081D31,
         borderRadius: BorderRadius.circular(19),
         border: Border.all(
-          color: const Color(0xFF16435F),
+          color: AppColors.hexFF16435F,
         ),
       ),
       child: Row(
@@ -409,14 +410,14 @@ class _PermissionStartScreenState extends State<PermissionStartScreen> {
             height: 48,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: const Color(0xFF0A3047),
+              color: AppColors.hexFF0A3047,
               border: Border.all(
-                color: const Color(0xFF20DFFF),
+                color: AppColors.hexFF20DFFF,
               ),
             ),
             child: const Icon(
               Icons.person_rounded,
-              color: Color(0xFF20DFFF),
+              color: AppColors.hexFF20DFFF,
               size: 24,
             ),
           ),
@@ -428,7 +429,7 @@ class _PermissionStartScreenState extends State<PermissionStartScreen> {
                 Text(
                   'Employee',
                   style: GoogleFonts.inter(
-                    color: Colors.white,
+                    color: AppColors.white,
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                   ),
@@ -437,7 +438,7 @@ class _PermissionStartScreenState extends State<PermissionStartScreen> {
                 Text(
                   'Employee ID: EMP001',
                   style: GoogleFonts.inter(
-                    color: const Color(0xFF718CA1),
+                    color: AppColors.hexFF718CA1,
                     fontSize: 9,
                   ),
                 ),
@@ -446,7 +447,7 @@ class _PermissionStartScreenState extends State<PermissionStartScreen> {
           ),
           const Icon(
             Icons.verified_rounded,
-            color: Color(0xFF24E5C0),
+            color: AppColors.hexFF24E5C0,
             size: 21,
           ),
         ],
@@ -462,7 +463,7 @@ class _PermissionStartScreenState extends State<PermissionStartScreen> {
     return Text(
       title,
       style: GoogleFonts.inter(
-        color: const Color(0xFF718AA0),
+        color: AppColors.hexFF718AA0,
         fontSize: 9,
         fontWeight: FontWeight.w700,
         letterSpacing: 1.8,
@@ -479,23 +480,23 @@ class _PermissionStartScreenState extends State<PermissionStartScreen> {
       height: 55,
       padding: const EdgeInsets.symmetric(horizontal: 15),
       decoration: BoxDecoration(
-        color: const Color(0xFF071C2E),
+        color: AppColors.hexFF071C2E,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: const Color(0xFF16435F),
+          color: AppColors.hexFF16435F,
         ),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: selectedType,
           isExpanded: true,
-          dropdownColor: const Color(0xFF071C2E),
+          dropdownColor: AppColors.hexFF071C2E,
           icon: const Icon(
             Icons.keyboard_arrow_down_rounded,
-            color: Color(0xFF20DFFF),
+            color: AppColors.hexFF20DFFF,
           ),
           style: GoogleFonts.inter(
-            color: Colors.white,
+            color: AppColors.white,
             fontSize: 11,
             fontWeight: FontWeight.w600,
           ),
@@ -524,24 +525,24 @@ class _PermissionStartScreenState extends State<PermissionStartScreen> {
   Widget _reasonField() {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF071C2E),
+        color: AppColors.hexFF071C2E,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: const Color(0xFF16435F),
+          color: AppColors.hexFF16435F,
         ),
       ),
       child: TextField(
         controller: reasonController,
         maxLines: 4,
         style: GoogleFonts.inter(
-          color: Colors.white,
+          color: AppColors.white,
           fontSize: 11,
         ),
-        cursorColor: const Color(0xFF20DFFF),
+        cursorColor: AppColors.hexFF20DFFF,
         decoration: InputDecoration(
           hintText: 'Example: Need to visit bank...',
           hintStyle: GoogleFonts.inter(
-            color: const Color(0xFF536D83),
+            color: AppColors.hexFF536D83,
             fontSize: 10,
           ),
           prefixIcon: const Padding(
@@ -552,7 +553,7 @@ class _PermissionStartScreenState extends State<PermissionStartScreen> {
             ),
             child: Icon(
               Icons.edit_note_rounded,
-              color: Color(0xFF20DFFF),
+              color: AppColors.hexFF20DFFF,
               size: 21,
             ),
           ),
@@ -579,17 +580,17 @@ class _PermissionStartScreenState extends State<PermissionStartScreen> {
         height: 55,
         padding: const EdgeInsets.symmetric(horizontal: 15),
         decoration: BoxDecoration(
-          color: const Color(0xFF071C2E),
+          color: AppColors.hexFF071C2E,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: const Color(0xFF16435F),
+            color: AppColors.hexFF16435F,
           ),
         ),
         child: Row(
           children: [
             const Icon(
               Icons.access_time_rounded,
-              color: Color(0xFF20DFFF),
+              color: AppColors.hexFF20DFFF,
               size: 20,
             ),
             const SizedBox(width: 11),
@@ -598,8 +599,8 @@ class _PermissionStartScreenState extends State<PermissionStartScreen> {
                 value,
                 style: GoogleFonts.inter(
                   color: selectedReturnTime == null
-                      ? const Color(0xFF536D83)
-                      : Colors.white,
+                      ? AppColors.hexFF536D83
+                      : AppColors.white,
                   fontSize: 10.5,
                   fontWeight: FontWeight.w500,
                 ),
@@ -607,7 +608,7 @@ class _PermissionStartScreenState extends State<PermissionStartScreen> {
             ),
             const Icon(
               Icons.arrow_forward_ios_rounded,
-              color: Color(0xFF718CA1),
+              color: AppColors.hexFF718CA1,
               size: 14,
             ),
           ],
@@ -625,10 +626,10 @@ class _PermissionStartScreenState extends State<PermissionStartScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
-        color: const Color(0xFF082A28),
+        color: AppColors.hexFF082A28,
         borderRadius: BorderRadius.circular(17),
         border: Border.all(
-          color: const Color(0xFF176055),
+          color: AppColors.hexFF176055,
         ),
       ),
       child: Row(
@@ -637,12 +638,12 @@ class _PermissionStartScreenState extends State<PermissionStartScreen> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: const Color(0xFF0B403B),
+              color: AppColors.hexFF0B403B,
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(
               Icons.location_on_outlined,
-              color: Color(0xFF24E5C0),
+              color: AppColors.hexFF24E5C0,
               size: 20,
             ),
           ),
@@ -654,7 +655,7 @@ class _PermissionStartScreenState extends State<PermissionStartScreen> {
                 Text(
                   'Current Location',
                   style: GoogleFonts.inter(
-                    color: Colors.white,
+                    color: AppColors.white,
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                   ),
@@ -663,7 +664,7 @@ class _PermissionStartScreenState extends State<PermissionStartScreen> {
                 Text(
                   'Office location will be verified',
                   style: GoogleFonts.inter(
-                    color: const Color(0xFF7FA99F),
+                    color: AppColors.hexFF7FA99F,
                     fontSize: 9,
                   ),
                 ),
@@ -672,7 +673,7 @@ class _PermissionStartScreenState extends State<PermissionStartScreen> {
           ),
           const Icon(
             Icons.check_circle_rounded,
-            color: Color(0xFF24E5C0),
+            color: AppColors.hexFF24E5C0,
             size: 20,
           ),
         ],
@@ -689,17 +690,17 @@ class _PermissionStartScreenState extends State<PermissionStartScreen> {
       width: 44,
       height: 44,
       decoration: BoxDecoration(
-        color: const Color(0xFF0A2136),
+        color: AppColors.hexFF0A2136,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: const Color(0xFF1D4564),
+          color: AppColors.hexFF1D4564,
         ),
       ),
       child: IconButton(
         onPressed: Get.back,
         icon: const Icon(
           Icons.arrow_back_rounded,
-          color: Colors.white,
+          color: AppColors.white,
           size: 21,
         ),
       ),
@@ -717,10 +718,10 @@ class _PermissionStartScreenState extends State<PermissionStartScreen> {
         vertical: 7,
       ),
       decoration: BoxDecoration(
-        color: const Color(0xFF0A2136),
+        color: AppColors.hexFF0A2136,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: const Color(0xFF1D4564),
+          color: AppColors.hexFF1D4564,
         ),
       ),
       child: Row(
@@ -730,14 +731,14 @@ class _PermissionStartScreenState extends State<PermissionStartScreen> {
             height: 6,
             decoration: const BoxDecoration(
               shape: BoxShape.circle,
-              color: Color(0xFF24E5C0),
+              color: AppColors.hexFF24E5C0,
             ),
           ),
           const SizedBox(width: 6),
           Text(
             'SECURE',
             style: GoogleFonts.inter(
-              color: const Color(0xFF91AABD),
+              color: AppColors.hexFF91AABD,
               fontSize: 8,
               fontWeight: FontWeight.w600,
               letterSpacing: 1,
@@ -758,14 +759,14 @@ class _PermissionStartScreenState extends State<PermissionStartScreen> {
       height: 96,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: const Color(0xFF08253A),
+        color: AppColors.hexFF08253A,
         border: Border.all(
-          color: const Color(0xFF20DFFF),
+          color: AppColors.hexFF20DFFF,
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF20DFFF).withOpacity(0.18),
+            color: AppColors.hexFF20DFFF.withOpacity(0.18),
             blurRadius: 30,
             spreadRadius: 3,
           ),
@@ -775,14 +776,14 @@ class _PermissionStartScreenState extends State<PermissionStartScreen> {
         margin: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: const Color(0xFF0B3049),
+          color: AppColors.hexFF0B3049,
           border: Border.all(
-            color: const Color(0xFF20DFFF).withOpacity(0.35),
+            color: AppColors.hexFF20DFFF.withOpacity(0.35),
           ),
         ),
         child: const Icon(
           Icons.assignment_outlined,
-          color: Color(0xFF20DFFF),
+          color: AppColors.hexFF20DFFF,
           size: 40,
         ),
       ),
@@ -806,7 +807,7 @@ class _PermissionStartScreenState extends State<PermissionStartScreen> {
           colors: [
             color.withOpacity(0.12),
             color.withOpacity(0.03),
-            Colors.transparent,
+            AppColors.transparent,
           ],
         ),
       ),

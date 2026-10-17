@@ -24,7 +24,7 @@ IconButton(
   onPressed: onProfileTap,
   style: IconButton.styleFrom(
     backgroundColor: AppColors.accent,
-    foregroundColor: Colors.white,
+    foregroundColor: AppColors.white,
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(14),
     ),

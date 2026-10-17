@@ -1,22 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../app/theme/app_colors.dart';
 
 class AttendanceRecordsScreen extends StatelessWidget {
   const AttendanceRecordsScreen({super.key});
 
-  static const Color navy = Color(0xFF19356C);
-  static const Color blue = Color(0xFF3978E8);
-  static const Color green = Color(0xFF18A66A);
-  static const Color orange = Color(0xFFF39A35);
-  static const Color red = Color(0xFFE94B60);
-  static const Color purple = Color(0xFF6254E8);
+  static const Color navy = AppColors.hexFF19356C;
+  static const Color blue = AppColors.hexFF3978E8;
+  static const Color green = AppColors.hexFF18A66A;
+  static const Color orange = AppColors.hexFFF39A35;
+  static const Color red = AppColors.hexFFE94B60;
+  static const Color purple = AppColors.hexFF6254E8;
 
-  static const Color background = Color(0xFFF7FAFE);
-  static const Color border = Color(0xFFE3EAF3);
-  static const Color primaryText = Color(0xFF172B4D);
-  static const Color secondaryText = Color(0xFF65758B);
-  static const Color lightText = Color(0xFF8A99AA);
+  static const Color background = AppColors.hexFFF7FAFE;
+  static const Color border = AppColors.hexFFE3EAF3;
+  static const Color primaryText = AppColors.hexFF172B4D;
+  static const Color secondaryText = AppColors.hexFF65758B;
+  static const Color lightText = AppColors.hexFF8A99AA;
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +26,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: background,
         elevation: 0,
-        surfaceTintColor: Colors.transparent,
+        surfaceTintColor: AppColors.transparent,
         leading: IconButton(
           onPressed: () => Get.back(),
           icon: const Icon(
@@ -69,7 +70,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
                 month: 'October 2026',
                 status: 'Present',
                 statusColor: green,
-                statusBackground: const Color(0xFFE5F8F0),
+                statusBackground: AppColors.hexFFE5F8F0,
                 checkIn: '09:28 AM',
                 checkOut: '06:12 PM',
                 workingHours: '08h 44m',
@@ -85,7 +86,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
                 month: 'October 2026',
                 status: 'Late',
                 statusColor: orange,
-                statusBackground: const Color(0xFFFFF1DF),
+                statusBackground: AppColors.hexFFFFF1DF,
                 checkIn: '09:47 AM',
                 checkOut: '06:15 PM',
                 workingHours: '08h 28m',
@@ -101,7 +102,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
                 month: 'October 2026',
                 status: 'Absent',
                 statusColor: red,
-                statusBackground: const Color(0xFFFFE9ED),
+                statusBackground: AppColors.hexFFFFE9ED,
                 checkIn: '--:--',
                 checkOut: '--:--',
                 workingHours: '--',
@@ -117,7 +118,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
                 month: 'October 2026',
                 status: 'Present',
                 statusColor: green,
-                statusBackground: const Color(0xFFE5F8F0),
+                statusBackground: AppColors.hexFFE5F8F0,
                 checkIn: '09:31 AM',
                 checkOut: '06:05 PM',
                 workingHours: '08h 34m',
@@ -162,7 +163,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(22),
         border: Border.all(
           color: border,
@@ -184,7 +185,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
                 height: 42,
                 width: 42,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEEF2FF),
+                  color: AppColors.secondarySoft,
                   borderRadius: BorderRadius.circular(13),
                 ),
                 child: const Icon(
@@ -225,7 +226,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF0F3FF),
+                  color: AppColors.hexFFF0F3FF,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
@@ -244,7 +245,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
 
           const Divider(
             height: 1,
-            color: Color(0xFFEDF0F5),
+            color: AppColors.hexFFEDF0F5,
           ),
 
           const SizedBox(height: 16),
@@ -335,7 +336,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
     return Container(
       height: 30,
       width: 1,
-      color: const Color(0xFFE9EDF4),
+      color: AppColors.hexFFE9EDF4,
     );
   }
 
@@ -376,7 +377,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
             vertical: 8,
           ),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.white,
             borderRadius: BorderRadius.circular(11),
             border: Border.all(
               color: border,
@@ -423,7 +424,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
     required bool faceVerified,
   }) {
     return Material(
-      color: Colors.white,
+      color: AppColors.white,
       borderRadius: BorderRadius.circular(20),
       child: InkWell(
         onTap: () {
@@ -444,7 +445,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.white,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: border,
@@ -466,7 +467,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
                     height: 55,
                     width: 55,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF1F4FA),
+                      color: AppColors.hexFFF1F4FA,
                       borderRadius: BorderRadius.circular(15),
                     ),
                     child: Column(
@@ -561,7 +562,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
 
               const Divider(
                 height: 1,
-                color: Color(0xFFEDF0F5),
+                color: AppColors.hexFFEDF0F5,
               ),
 
               const SizedBox(height: 14),
@@ -580,7 +581,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
                   Container(
                     height: 40,
                     width: 1,
-                    color: const Color(0xFFE9EDF4),
+                    color: AppColors.hexFFE9EDF4,
                   ),
 
                   Expanded(
@@ -791,7 +792,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
           28,
         ),
         decoration: const BoxDecoration(
-          color: Colors.white,
+          color: AppColors.white,
           borderRadius: BorderRadius.vertical(
             top: Radius.circular(28),
           ),
@@ -805,7 +806,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
                 height: 4,
                 width: 42,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFDDE3EC),
+                  color: AppColors.hexFFDDE3EC,
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
@@ -818,7 +819,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
                     height: 52,
                     width: 52,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF1F4FA),
+                      color: AppColors.hexFFF1F4FA,
                       borderRadius: BorderRadius.circular(15),
                     ),
                     child: Center(
@@ -937,7 +938,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
                   onPressed: () => Get.back(),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: navy,
-                    foregroundColor: Colors.white,
+                    foregroundColor: AppColors.white,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
@@ -973,7 +974,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFD),
+        color: AppColors.hexFFF8FAFD,
         borderRadius: BorderRadius.circular(13),
       ),
       child: Row(
@@ -1025,10 +1026,10 @@ class AttendanceRecordsScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFEEF5FF),
+        color: AppColors.hexFFEEF5FF,
         borderRadius: BorderRadius.circular(15),
         border: Border.all(
-          color: const Color(0xFFDCE9FF),
+          color: AppColors.hexFFDCE9FF,
         ),
       ),
       child: Row(
@@ -1037,7 +1038,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
             height: 34,
             width: 34,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.white,
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(

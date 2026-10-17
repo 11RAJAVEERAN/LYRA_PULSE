@@ -167,7 +167,7 @@ class PermissionCard extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 disabledBackgroundColor: AppColors.border,
-                foregroundColor: Colors.white,
+                foregroundColor: AppColors.white,
                 disabledForegroundColor: AppColors.textSecondary,
                 elevation: 0,
                 shape: RoundedRectangleBorder(

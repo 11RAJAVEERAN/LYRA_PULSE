@@ -23,7 +23,7 @@ class QuickActionCard extends StatelessWidget {
             margin: const EdgeInsets.all(16),
             borderRadius: 14,
             backgroundColor: AppColors.primaryDark,
-            colorText: Colors.white),
+            colorText: AppColors.white),
         child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(

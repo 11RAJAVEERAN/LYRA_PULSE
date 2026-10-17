@@ -170,7 +170,7 @@ class _HomeDrawerState extends State<HomeDrawer> {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF101D49), Color(0xFF1E3A70)],
+          colors: [AppColors.hexFF101D49, AppColors.hexFF1E3A70],
         ),
         borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(24),
@@ -186,10 +186,10 @@ class _HomeDrawerState extends State<HomeDrawer> {
                 width: 58,
                 height: 58,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.white,
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.65),
+                    color: AppColors.white.withValues(alpha: 0.65),
                     width: 2,
                   ),
                 ),
@@ -209,7 +209,7 @@ class _HomeDrawerState extends State<HomeDrawer> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.inter(
-                        color: Colors.white,
+                        color: AppColors.white,
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
                       ),
@@ -220,7 +220,7 @@ class _HomeDrawerState extends State<HomeDrawer> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.inter(
-                        color: const Color(0xFFD6E1F5),
+                        color: AppColors.hexFFD6E1F5,
                         fontSize: 11,
                         fontWeight: FontWeight.w500,
                       ),
@@ -234,9 +234,9 @@ class _HomeDrawerState extends State<HomeDrawer> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.11),
+              color: AppColors.white.withValues(alpha: 0.11),
               borderRadius: BorderRadius.circular(30),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+              border: Border.all(color: AppColors.white.withValues(alpha: 0.12)),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -244,7 +244,7 @@ class _HomeDrawerState extends State<HomeDrawer> {
                 const Icon(
                   Icons.verified_rounded,
                   size: 14,
-                  color: Color(0xFF86EFAC),
+                  color: AppColors.hexFF86EFAC,
                 ),
                 const SizedBox(width: 6),
                 Text(
@@ -252,7 +252,7 @@ class _HomeDrawerState extends State<HomeDrawer> {
                       ? 'LYRA PULSE EMPLOYEE'
                       : 'EMPLOYEE ID: ${widget.employeeId}',
                   style: GoogleFonts.inter(
-                    color: Colors.white,
+                    color: AppColors.white,
                     fontSize: 9,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.7,
@@ -283,7 +283,7 @@ class _HomeDrawerState extends State<HomeDrawer> {
       child: Material(
         color: selected
             ? (selectedColor ?? AppColors.primary.withValues(alpha: 0.08))
-            : Colors.transparent,
+            : AppColors.transparent,
         borderRadius: BorderRadius.circular(15),
         child: InkWell(
           onTap: onTap,
@@ -297,7 +297,7 @@ class _HomeDrawerState extends State<HomeDrawer> {
                   height: 39,
                   decoration: BoxDecoration(
                     color: selected
-                        ? Colors.white
+                        ? AppColors.white
                         : AppColors.border.withValues(alpha: 0.45),
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -337,7 +337,7 @@ class _HomeDrawerState extends State<HomeDrawer> {
                 Icon(
                   Icons.chevron_right_rounded,
                   size: 19,
-                  color: selected ? AppColors.primary : const Color(0xFF94A3B8),
+                  color: selected ? AppColors.primary : AppColors.sidebarMuted,
                 ),
               ],
             ),
