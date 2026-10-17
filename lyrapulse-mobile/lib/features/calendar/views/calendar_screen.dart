@@ -1,394 +1,328 @@
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
 
-import 'package:lyrapulse_mobile/features/regularization/views/regularization_screen.dart';
-import '../../../app/theme/app_colors.dart';
+import '../controllers/calendar_controller.dart';
+import '../widgets/attendance_calendar_grid.dart';
+import '../widgets/attendance_day_list.dart';
+import '../widgets/attendance_legend.dart';
+import '../widgets/calendar_month_header.dart';
+import '../widgets/calendar_view_toggle.dart';
 
-class CalendarScreen extends StatefulWidget {
-  const CalendarScreen({super.key});
+class CalendarScreen extends StatelessWidget {
+  CalendarScreen({super.key});
 
-  @override
-  State<CalendarScreen> createState() => _CalendarScreenState();
-}
+  final CalendarController controller =
+      Get.isRegistered<CalendarController>()
+          ? Get.find<CalendarController>()
+          : Get.put(CalendarController());
 
-class _CalendarScreenState extends State<CalendarScreen> {
-  static const Color primaryBlue = AppColors.hexFF1769D2;
-  static const Color backgroundColor = AppColors.hexFFF7FAFD;
-  static const Color textColor = AppColors.hexFF253858;
-
-  DateTime _visibleMonth = DateTime(
-    DateTime.now().year,
-    DateTime.now().month,
-  );
-
-  DateTime? _selectedDate;
-
-  final List<String> _weekdays = [
-    'Mon',
-    'Tue',
-    'Wed',
-    'Thu',
-    'Fri',
-    'Sat',
-    'Sun',
-  ];
-
-  String _monthName(int month) {
-    const months = [
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December',
-    ];
-
-    return months[month - 1];
-  }
-
-  void _changeMonth(int difference) {
-    setState(() {
-      _visibleMonth = DateTime(
-        _visibleMonth.year,
-        _visibleMonth.month + difference,
-      );
-
-      _selectedDate = null;
-    });
-  }
-
-  List<DateTime?> _getCalendarDates() {
-    final firstDay = DateTime(
-      _visibleMonth.year,
-      _visibleMonth.month,
-      1,
-    );
-
-    final daysInMonth = DateTime(
-      _visibleMonth.year,
-      _visibleMonth.month + 1,
-      0,
-    ).day;
-
-    final firstWeekdayOffset = firstDay.weekday - 1;
-
-    return List<DateTime?>.generate(42, (index) {
-      final dayNumber = index - firstWeekdayOffset + 1;
-
-      if (dayNumber < 1 || dayNumber > daysInMonth) {
-        return null;
-      }
-
-      return DateTime(
-        _visibleMonth.year,
-        _visibleMonth.month,
-        dayNumber,
-      );
-    });
-  }
-
-  void _openRegularization(DateTime date) {
-    setState(() {
-      _selectedDate = date;
-    });
-
-    Get.to(
-      () => RegularizationScreen(
-        selectedDate: date,
-      ),
-    );
-  }
-
-  Widget _buildMonthHeader() {
-    return Row(
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Attendance Calendar',
-                style: GoogleFonts.inter(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  color: textColor,
-                ),
-              ),
-              const SizedBox(height: 5),
-              Text(
-                'Select a date to regularize attendance.',
-                style: GoogleFonts.inter(
-                  fontSize: 11,
-                  color: AppColors.hexFF8795A8,
-                ),
-              ),
-            ],
-          ),
-        ),
-        Container(
-          decoration: BoxDecoration(
-            color: AppColors.white,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: AppColors.hexFFE4EAF2,
-            ),
-          ),
-          child: Row(
-            children: [
-              IconButton(
-                onPressed: () => _changeMonth(-1),
-                tooltip: 'Previous month',
-                icon: const Icon(
-                  Icons.chevron_left_rounded,
-                  color: primaryBlue,
-                ),
-              ),
-              IconButton(
-                onPressed: () => _changeMonth(1),
-                tooltip: 'Next month',
-                icon: const Icon(
-                  Icons.chevron_right_rounded,
-                  color: primaryBlue,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildMonthCard() {
-    final dates = _getCalendarDates();
-    final today = DateTime.now();
-
-    return Container(
-      padding: const EdgeInsets.fromLTRB(13, 18, 13, 16),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: AppColors.hexFFE6ECF3,
-        ),
-      ),
-      child: Column(
-        children: [
-          Text(
-            '${_monthName(_visibleMonth.month)} ${_visibleMonth.year}',
-            style: GoogleFonts.inter(
-              fontSize: 17,
-              fontWeight: FontWeight.w700,
-              color: textColor,
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          Row(
-            children: _weekdays.map((day) {
-              return Expanded(
-                child: Center(
-                  child: Text(
-                    day,
-                    style: GoogleFonts.inter(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.hexFF8795A8,
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-
-          const SizedBox(height: 12),
-
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: dates.length,
-            gridDelegate:
-                const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 7,
-              mainAxisExtent: 43,
-            ),
-            itemBuilder: (context, index) {
-              final date = dates[index];
-
-              if (date == null) {
-                return const SizedBox.shrink();
-              }
-
-              final isToday = date.year == today.year &&
-                  date.month == today.month &&
-                  date.day == today.day;
-
-              final isSelected = _selectedDate != null &&
-                  date.year == _selectedDate!.year &&
-                  date.month == _selectedDate!.month &&
-                  date.day == _selectedDate!.day;
-
-              return Padding(
-                padding: const EdgeInsets.all(2),
-                child: InkWell(
-                  onTap: () => _openRegularization(date),
-                  borderRadius: BorderRadius.circular(12),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 180),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? primaryBlue
-                          : isToday
-                              ? AppColors.hexFFEAF3FF
-                              : AppColors.transparent,
-                      borderRadius: BorderRadius.circular(12),
-                      border: isToday && !isSelected
-                          ? Border.all(
-                              color: primaryBlue,
-                              width: 1,
-                            )
-                          : null,
-                    ),
-                    child: Center(
-                      child: Text(
-                        '${date.day}',
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          fontWeight: isToday || isSelected
-                              ? FontWeight.w700
-                              : FontWeight.w500,
-                          color: isSelected
-                              ? AppColors.white
-                              : isToday
-                                  ? primaryBlue
-                                  : textColor,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
-
-          const SizedBox(height: 12),
-
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 9,
-                height: 9,
-                decoration: const BoxDecoration(
-                  color: primaryBlue,
-                  shape: BoxShape.circle,
-                ),
-              ),
-              const SizedBox(width: 7),
-              Text(
-                'Today',
-                style: GoogleFonts.inter(
-                  fontSize: 10,
-                  color: AppColors.hexFF8795A8,
-                ),
-              ),
-              const SizedBox(width: 20),
-              Container(
-                width: 9,
-                height: 9,
-                decoration: BoxDecoration(
-                  color: AppColors.hexFFEAF3FF,
-                  border: Border.all(color: primaryBlue),
-                  shape: BoxShape.circle,
-                ),
-              ),
-              const SizedBox(width: 7),
-              Text(
-                'Current date',
-                style: GoogleFonts.inter(
-                  fontSize: 10,
-                  color: AppColors.hexFF8795A8,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInstructionCard() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.hexFFEAF3FF,
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(
-            Icons.touch_app_rounded,
-            size: 24,
-            color: primaryBlue,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Need to correct attendance?',
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    color: textColor,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  'Tap any date on the calendar. The selected '
-                  'date will automatically appear on the '
-                  'Regularization screen.',
-                  style: GoogleFonts.inter(
-                    fontSize: 11,
-                    height: 1.6,
-                    color: AppColors.hexFF54708F,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  static const Color backgroundColor = Color(0xFFF7F9FC);
+  static const Color primaryColor = Color(0xFF1677B8);
+  static const Color textColor = Color(0xFF182638);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: backgroundColor,
       body: SafeArea(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        child: Obx(
+          () => Column(
             children: [
-              _buildMonthHeader(),
-              const SizedBox(height: 22),
-              _buildMonthCard(),
-              const SizedBox(height: 18),
-              _buildInstructionCard(),
+              _buildHeader(),
+              Expanded(
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(18, 18, 18, 28),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      CalendarMonthHeader(controller: controller),
+                      const SizedBox(height: 20),
+                      const AttendanceDayList(),
+                      if (controller.isCalendarView.value)
+                        _buildCalendarContent()
+                      else
+                        _buildListContent(),
+
+                      const SizedBox(height: 22),
+
+                      _buildRegularizationInfo(),
+
+                      const SizedBox(height: 18),
+                    ],
+                  ),
+                ),
+              ),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 16, 16, 18),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Color(0x08000000),
+            blurRadius: 12,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          const Expanded(
+            child: Text(
+              'Calendar',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w700,
+                color: textColor,
+              ),
+            ),
+          ),
+          CalendarViewToggle(controller: controller),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCalendarContent() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.fromLTRB(12, 14, 12, 18),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: const Color(0xFFEDF0F4)),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x080E2540),
+                blurRadius: 18,
+                offset: Offset(0, 5),
+              ),
+            ],
+          ),
+          child: AttendanceCalendarGrid(controller: controller),
+        ),
+        const SizedBox(height: 18),
+        const AttendanceLegend(),
+        const SizedBox(height: 28),
+        _buildSectionTitle(
+          icon: Icons.event_note_rounded,
+          title: 'Pending Regularization',
+        ),
+        const SizedBox(height: 12),
+        _buildSelectedDateCard(),
+      ],
+    );
+  }
+
+  Widget _buildListContent() {
+    const filters = [
+      'All Days',
+      'Present',
+      'Absent',
+      'On Leave',
+      'Half Day',
+      'Week Off',
+      'Holiday',
+      'Late',
+      'Punch Error',
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Expanded(
+              child: Text(
+                'Attendance Records',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: textColor,
+                ),
+              ),
+            ),
+            PopupMenuButton<String>(
+              tooltip: 'Filter attendance',
+              initialValue: controller.selectedFilter.value,
+              onSelected: controller.changeFilter,
+              itemBuilder: (context) => filters.map((filter) {
+                return PopupMenuItem<String>(
+                  value: filter,
+                  child: Text(filter),
+                );
+              }).toList(),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 13,
+                  vertical: 11,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE8F4FB),
+                  borderRadius: BorderRadius.circular(13),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(
+                      Icons.tune_rounded,
+                      size: 18,
+                      color: primaryColor,
+                    ),
+                    SizedBox(width: 7),
+                    Text(
+                      'Filters',
+                      style: TextStyle(
+                        color: primaryColor,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        const AttendanceDayList(),
+      ],
+    );
+  }
+
+  Widget _buildSectionTitle({
+    required IconData icon,
+    required String title,
+  }) {
+    return Row(
+      children: [
+        Icon(icon, color: primaryColor, size: 23),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            title,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: textColor,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSelectedDateCard() {
+    final date = controller.selectedDate.value;
+    final status = controller.statusForDay(date.day);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(17),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(17),
+        border: Border.all(color: const Color(0xFFE7ECF2)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              color: const Color(0xFFE8F4FB),
+              borderRadius: BorderRadius.circular(13),
+            ),
+            child: const Icon(
+              Icons.calendar_month_rounded,
+              color: primaryColor,
+            ),
+          ),
+          const SizedBox(width: 13),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${date.day} ${controller.monthTitle}',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                    color: textColor,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  controller.statusLabel(status),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF758292),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Icon(
+            Icons.chevron_right_rounded,
+            color: Color(0xFF8C98A5),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRegularizationInfo() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE8F3FF),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: const Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.touch_app_rounded,
+            size: 25,
+            color: primaryColor,
+          ),
+          SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Need to correct attendance?',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: textColor,
+                  ),
+                ),
+                SizedBox(height: 6),
+                Text(
+                  'Select a date to view its attendance status. '
+                  'Regularization can be connected to your existing '
+                  'regularization screen.',
+                  style: TextStyle(
+                    fontSize: 12,
+                    height: 1.6,
+                    color: Color(0xFF60758F),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
