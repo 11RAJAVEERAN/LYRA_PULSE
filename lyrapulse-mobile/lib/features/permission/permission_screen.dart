@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -116,12 +117,10 @@ class _PermissionScreenState extends State<PermissionScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.hexFFF7FAFE,
-
       appBar: AppBar(
         backgroundColor: AppColors.hexFFF7FAFE,
         elevation: 0,
         centerTitle: true,
-
         leading: IconButton(
           onPressed: () => Get.back(),
           icon: const Icon(
@@ -130,7 +129,6 @@ class _PermissionScreenState extends State<PermissionScreen> {
             size: 20,
           ),
         ),
-
         title: const Text(
           'Request Permission',
           style: TextStyle(
@@ -140,7 +138,6 @@ class _PermissionScreenState extends State<PermissionScreen> {
           ),
         ),
       ),
-
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(20, 10, 20, 30),
@@ -210,7 +207,6 @@ class _PermissionScreenState extends State<PermissionScreen> {
                   fontWeight: FontWeight.w700,
                 ),
               ),
-
               const SizedBox(height: 10),
 
               Row(
@@ -267,7 +263,6 @@ class _PermissionScreenState extends State<PermissionScreen> {
                   fontWeight: FontWeight.w700,
                 ),
               ),
-
               const SizedBox(height: 10),
 
               _InputBox(
@@ -288,7 +283,6 @@ class _PermissionScreenState extends State<PermissionScreen> {
                   fontWeight: FontWeight.w700,
                 ),
               ),
-
               const SizedBox(height: 10),
 
               _TimeBox(
@@ -308,7 +302,6 @@ class _PermissionScreenState extends State<PermissionScreen> {
                   fontWeight: FontWeight.w700,
                 ),
               ),
-
               const SizedBox(height: 10),
 
               _TimeBox(
@@ -328,7 +321,6 @@ class _PermissionScreenState extends State<PermissionScreen> {
                   fontWeight: FontWeight.w700,
                 ),
               ),
-
               const SizedBox(height: 10),
 
               _InputBox(
@@ -374,15 +366,17 @@ class _PermissionScreenState extends State<PermissionScreen> {
 
               const SizedBox(height: 25),
 
-              // Submit Button
+              // Submit Button - Home Page theme color
               SizedBox(
                 width: double.infinity,
                 height: 54,
                 child: ElevatedButton(
                   onPressed: _submitPermission,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.hexFF1687D9,
-                    foregroundColor: AppColors.white,
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    disabledBackgroundColor: AppColors.disabled,
+                    disabledForegroundColor: Colors.white,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(15),
@@ -391,6 +385,7 @@ class _PermissionScreenState extends State<PermissionScreen> {
                   child: const Text(
                     'Submit Permission',
                     style: TextStyle(
+                      color: Colors.white,
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
                     ),
@@ -430,14 +425,10 @@ class _TypeButton extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         height: 72,
         decoration: BoxDecoration(
-          color: selected
-              ? AppColors.hexFFE8F5FF
-              : AppColors.white,
+          color: selected ? AppColors.hexFFE8F5FF : AppColors.white,
           borderRadius: BorderRadius.circular(15),
           border: Border.all(
-            color: selected
-                ? AppColors.hexFF1687D9
-                : AppColors.border,
+            color: selected ? AppColors.hexFF1687D9 : AppColors.border,
             width: selected ? 1.5 : 1,
           ),
         ),
@@ -492,9 +483,7 @@ class _InputBox extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(15),
-        border: Border.all(
-          color: AppColors.border,
-        ),
+        border: Border.all(color: AppColors.border),
       ),
       child: TextField(
         controller: controller,
@@ -521,9 +510,7 @@ class _InputBox extends StatelessWidget {
               size: 21,
             ),
           ),
-          prefixIconConstraints: const BoxConstraints(
-            minWidth: 45,
-          ),
+          prefixIconConstraints: const BoxConstraints(minWidth: 45),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.all(15),
         ),
@@ -560,9 +547,7 @@ class _TimeBox extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.white,
           borderRadius: BorderRadius.circular(15),
-          border: Border.all(
-            color: AppColors.border,
-          ),
+          border: Border.all(color: AppColors.border),
         ),
         child: Row(
           children: [
@@ -580,9 +565,8 @@ class _TimeBox extends StatelessWidget {
                       ? AppColors.hexFF172B4D
                       : AppColors.hexFFA0AEC0,
                   fontSize: 14,
-                  fontWeight: isSelected
-                      ? FontWeight.w600
-                      : FontWeight.w400,
+                  fontWeight:
+                      isSelected ? FontWeight.w600 : FontWeight.w400,
                 ),
               ),
             ),
