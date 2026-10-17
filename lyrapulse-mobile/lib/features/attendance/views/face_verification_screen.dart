@@ -1,3 +1,4 @@
+
 import 'dart:async';
 
 import 'package:camera/camera.dart';
@@ -5,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../app/theme/app_colors.dart';
 import 'attendance_confirmation_screen.dart';
 
 class FaceVerificationScreen extends StatefulWidget {
@@ -26,6 +28,7 @@ class _FaceVerificationScreenState
 
   bool _isCameraReady = false;
   bool _isCapturing = false;
+  bool _cameraError = false;
 
   @override
   void initState() {
@@ -34,10 +37,15 @@ class _FaceVerificationScreenState
   }
 
   Future<void> _initializeCamera() async {
+    CameraController? controller;
+
     try {
       final cameras = await availableCameras();
 
+      if (!mounted) return;
+
       if (cameras.isEmpty) {
+        setState(() => _cameraError = true);
         return;
       }
 
@@ -50,7 +58,7 @@ class _FaceVerificationScreenState
         }
       }
 
-      final controller = CameraController(
+      controller = CameraController(
         selectedCamera,
         ResolutionPreset.medium,
         enableAudio: false,
@@ -63,37 +71,43 @@ class _FaceVerificationScreenState
         return;
       }
 
+      _cameraController = controller;
+
       setState(() {
-        _cameraController = controller;
         _isCameraReady = true;
+        _cameraError = false;
       });
     } catch (e) {
+      await controller?.dispose();
+
       if (!mounted) return;
+
+      setState(() => _cameraError = true);
 
       Get.snackbar(
         'Camera Error',
-        'Unable to open camera.',
+        'Unable to open camera. Please check camera permission.',
         snackPosition: SnackPosition.BOTTOM,
         margin: const EdgeInsets.all(16),
-        backgroundColor: Colors.white,
-        colorText: const Color(0xFF19356C),
+        backgroundColor: AppColors.surface,
+        colorText: AppColors.textPrimary,
       );
     }
   }
 
   Future<void> _capturePhoto() async {
-    if (_cameraController == null ||
-        !_cameraController!.value.isInitialized ||
+    final controller = _cameraController;
+
+    if (controller == null ||
+        !controller.value.isInitialized ||
         _isCapturing) {
       return;
     }
 
-    setState(() {
-      _isCapturing = true;
-    });
+    setState(() => _isCapturing = true);
 
     try {
-      await _cameraController!.takePicture();
+      await controller.takePicture();
 
       if (!mounted) return;
 
@@ -113,17 +127,15 @@ class _FaceVerificationScreenState
     } catch (e) {
       if (!mounted) return;
 
-      setState(() {
-        _isCapturing = false;
-      });
+      setState(() => _isCapturing = false);
 
       Get.snackbar(
         'Capture Failed',
         'Unable to capture your photo. Please try again.',
         snackPosition: SnackPosition.BOTTOM,
         margin: const EdgeInsets.all(16),
-        backgroundColor: Colors.white,
-        colorText: const Color(0xFF19356C),
+        backgroundColor: AppColors.surface,
+        colorText: AppColors.textPrimary,
       );
     }
   }
@@ -136,17 +148,18 @@ class _FaceVerificationScreenState
 
   @override
   Widget build(BuildContext context) {
-    const background = Color(0xFFF7FAFE);
-    const navy = Color(0xFF19356C);
-    const blue = Color(0xFF3978E8);
-    const green = Color(0xFF18A66A);
-    const grey = Color(0xFF7B879B);
+    final background = AppColors.background;
+    final navy = AppColors.primary;
+    final blue = AppColors.primary;
+    final green = AppColors.success;
+    final grey = AppColors.textSecondary;
 
     return Scaffold(
       backgroundColor: background,
       body: SafeArea(
         child: Column(
           children: [
+            // HEADER
             Padding(
               padding: const EdgeInsets.fromLTRB(
                 20,
@@ -162,17 +175,18 @@ class _FaceVerificationScreenState
                       width: 42,
                       height: 42,
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppColors.surface,
                         borderRadius: BorderRadius.circular(14),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
+                            color: AppColors.textPrimary
+                                .withOpacity(0.05),
                             blurRadius: 12,
                             offset: const Offset(0, 4),
                           ),
                         ],
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.arrow_back_ios_new_rounded,
                         size: 18,
                         color: navy,
@@ -188,7 +202,7 @@ class _FaceVerificationScreenState
                       style: GoogleFonts.inter(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
-                        color: navy,
+                        color: AppColors.textPrimary,
                         letterSpacing: 0.5,
                       ),
                     ),
@@ -199,8 +213,11 @@ class _FaceVerificationScreenState
 
             const SizedBox(height: 8),
 
+            // TITLE
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 20,
+              ),
               child: Column(
                 children: [
                   Text(
@@ -211,7 +228,7 @@ class _FaceVerificationScreenState
                     style: GoogleFonts.inter(
                       fontSize: 22,
                       fontWeight: FontWeight.w700,
-                      color: navy,
+                      color: AppColors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 7),
@@ -231,6 +248,7 @@ class _FaceVerificationScreenState
 
             const SizedBox(height: 22),
 
+            // CAMERA PREVIEW
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(
@@ -239,11 +257,12 @@ class _FaceVerificationScreenState
                 child: Container(
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    color: Colors.black,
+                    color: AppColors.textPrimary,
                     borderRadius: BorderRadius.circular(28),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.10),
+                        color: AppColors.textPrimary
+                            .withOpacity(0.10),
                         blurRadius: 25,
                         offset: const Offset(0, 10),
                       ),
@@ -257,6 +276,7 @@ class _FaceVerificationScreenState
 
             const SizedBox(height: 18),
 
+            // BOTTOM ACTIONS
             Padding(
               padding: const EdgeInsets.fromLTRB(
                 20,
@@ -272,16 +292,22 @@ class _FaceVerificationScreenState
                       Container(
                         width: 9,
                         height: 9,
-                        decoration: const BoxDecoration(
+                        decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: green,
+                          color: _isCameraReady
+                              ? green
+                              : _cameraError
+                                  ? AppColors.error
+                                  : AppColors.warning,
                         ),
                       ),
                       const SizedBox(width: 7),
                       Text(
                         _isCameraReady
                             ? 'Camera ready'
-                            : 'Opening camera...',
+                            : _cameraError
+                                ? 'Camera unavailable'
+                                : 'Opening camera...',
                         style: GoogleFonts.inter(
                           fontSize: 11,
                           color: grey,
@@ -302,9 +328,12 @@ class _FaceVerificationScreenState
                               ? _capturePhoto
                               : null,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: navy,
+                        backgroundColor: blue,
                         disabledBackgroundColor:
-                            Colors.grey.shade300,
+                            AppColors.border,
+                        foregroundColor: Colors.white,
+                        disabledForegroundColor:
+                            AppColors.textSecondary,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius:
@@ -331,18 +360,15 @@ class _FaceVerificationScreenState
                               children: [
                                 const Icon(
                                   Icons.camera_alt_rounded,
-                                  color: Colors.white,
                                   size: 20,
                                 ),
                                 const SizedBox(width: 10),
                                 Text(
                                   'Capture & Continue',
-                                  style:
-                                      GoogleFonts.inter(
+                                  style: GoogleFonts.inter(
                                     fontSize: 13,
                                     fontWeight:
                                         FontWeight.w700,
-                                    color: Colors.white,
                                   ),
                                 ),
                               ],
@@ -370,11 +396,48 @@ class _FaceVerificationScreenState
   }
 
   Widget _buildCameraPreview() {
+    if (_cameraError) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.no_photography_outlined,
+                size: 44,
+                color: AppColors.surface,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Camera is unavailable',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  color: AppColors.surface,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Please check camera permission and try again.',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  color: AppColors.surface.withOpacity(0.75),
+                  fontSize: 11,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     if (!_isCameraReady || _cameraController == null) {
-      return const Center(
+      return Center(
         child: CircularProgressIndicator(
           strokeWidth: 2.5,
-          color: Colors.white,
+          color: AppColors.surface,
         ),
       );
     }
@@ -391,7 +454,7 @@ class _FaceVerificationScreenState
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(120),
               border: Border.all(
-                color: Colors.white,
+                color: AppColors.surface,
                 width: 3,
               ),
             ),
@@ -408,7 +471,7 @@ class _FaceVerificationScreenState
               vertical: 9,
             ),
             decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.45),
+              color: AppColors.textPrimary.withOpacity(0.65),
               borderRadius: BorderRadius.circular(14),
             ),
             child: Text(
@@ -419,7 +482,7 @@ class _FaceVerificationScreenState
               style: GoogleFonts.inter(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: Colors.white,
+                color: AppColors.surface,
               ),
             ),
           ),
