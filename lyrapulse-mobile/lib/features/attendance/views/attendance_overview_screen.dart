@@ -48,7 +48,7 @@ class AttendanceOverviewScreen extends StatelessWidget {
 
               Text(
                 'Attendance Overview',
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.inter(
                   color: primaryText,
                   fontSize: 24,
                   fontWeight: FontWeight.w800,
@@ -59,7 +59,7 @@ class AttendanceOverviewScreen extends StatelessWidget {
 
               Text(
                 'Your attendance summary at a glance',
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.inter(
                   color: secondaryText,
                   fontSize: 11,
                 ),
@@ -112,7 +112,7 @@ class AttendanceOverviewScreen extends StatelessWidget {
                             children: [
                               Text(
                                 'Today',
-                                style: GoogleFonts.poppins(
+                                style: GoogleFonts.inter(
                                   color: primaryText,
                                   fontSize: 14,
                                   fontWeight: FontWeight.w700,
@@ -120,7 +120,7 @@ class AttendanceOverviewScreen extends StatelessWidget {
                               ),
                               Text(
                                 'Attendance Status',
-                                style: GoogleFonts.poppins(
+                                style: GoogleFonts.inter(
                                   color: secondaryText,
                                   fontSize: 9,
                                 ),
@@ -139,7 +139,7 @@ class AttendanceOverviewScreen extends StatelessWidget {
                           ),
                           child: Text(
                             'Present',
-                            style: GoogleFonts.poppins(
+                            style: GoogleFonts.inter(
                               color: green,
                               fontSize: 9,
                               fontWeight: FontWeight.w700,
@@ -184,7 +184,7 @@ class AttendanceOverviewScreen extends StatelessWidget {
 
               Text(
                 'MONTHLY SUMMARY',
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.inter(
                   color: secondaryText,
                   fontSize: 9,
                   fontWeight: FontWeight.w700,
@@ -252,7 +252,7 @@ class AttendanceOverviewScreen extends StatelessWidget {
 
               Text(
                 'ATTENDANCE RATE',
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.inter(
                   color: secondaryText,
                   fontSize: 9,
                   fontWeight: FontWeight.w700,
@@ -277,7 +277,7 @@ class AttendanceOverviewScreen extends StatelessWidget {
                         Expanded(
                           child: Text(
                             'Monthly Attendance',
-                            style: GoogleFonts.poppins(
+                            style: GoogleFonts.inter(
                               color: primaryText,
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
@@ -286,7 +286,7 @@ class AttendanceOverviewScreen extends StatelessWidget {
                         ),
                         Text(
                           '88%',
-                          style: GoogleFonts.poppins(
+                          style: GoogleFonts.inter(
                             color: green,
                             fontSize: 20,
                             fontWeight: FontWeight.w800,
@@ -316,7 +316,7 @@ class AttendanceOverviewScreen extends StatelessWidget {
                       alignment: Alignment.centerLeft,
                       child: Text(
                         '22 present days out of 25 working days',
-                        style: GoogleFonts.poppins(
+                        style: GoogleFonts.inter(
                           color: secondaryText,
                           fontSize: 9,
                         ),
@@ -357,7 +357,7 @@ class AttendanceOverviewScreen extends StatelessWidget {
                     children: [
                       Text(
                         'View Attendance Records',
-                        style: GoogleFonts.poppins(
+                        style: GoogleFonts.inter(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
                         ),
@@ -381,7 +381,7 @@ class AttendanceOverviewScreen extends StatelessWidget {
               Center(
                 child: Text(
                   'LYRA PULSE',
-                  style: GoogleFonts.poppins(
+                  style: GoogleFonts.inter(
                     color: const Color(0xFF8A99AA),
                     fontSize: 8,
                     fontWeight: FontWeight.w600,
@@ -426,7 +426,7 @@ class AttendanceOverviewScreen extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: GoogleFonts.poppins(
+                  style: GoogleFonts.inter(
                     color: secondaryText,
                     fontSize: 8,
                   ),
@@ -434,7 +434,7 @@ class AttendanceOverviewScreen extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   value,
-                  style: GoogleFonts.poppins(
+                  style: GoogleFonts.inter(
                     color: primaryText,
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
@@ -485,7 +485,7 @@ class AttendanceOverviewScreen extends StatelessWidget {
           const SizedBox(height: 11),
           Text(
             value,
-            style: GoogleFonts.poppins(
+            style: GoogleFonts.inter(
               color: primaryText,
               fontSize: 20,
               fontWeight: FontWeight.w800,
@@ -493,7 +493,7 @@ class AttendanceOverviewScreen extends StatelessWidget {
           ),
           Text(
             title,
-            style: GoogleFonts.poppins(
+            style: GoogleFonts.inter(
               color: secondaryText,
               fontSize: 9,
               fontWeight: FontWeight.w500,
@@ -558,7 +558,7 @@ class AttendanceOverviewScreen extends StatelessWidget {
           const SizedBox(width: 6),
           Text(
             'SECURE',
-            style: GoogleFonts.poppins(
+            style: GoogleFonts.inter(
               color: green,
               fontSize: 8,
               fontWeight: FontWeight.w700,
