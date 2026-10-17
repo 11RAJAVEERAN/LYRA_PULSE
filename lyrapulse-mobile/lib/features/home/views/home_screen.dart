@@ -1,4 +1,4 @@
-
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -6,7 +6,7 @@ import '../../../app/theme/app_colors.dart';
 
 import '../widgets/welcome_header.dart';
 import '../widgets/home_drawer.dart';
-
+import '../widgets/bottom_nav_bar.dart';
 
 
 
@@ -32,7 +32,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey =
       GlobalKey<ScaffoldState>();
 
-  int _selectedIndex = 0;
+  int _selectedIndex = 2;
 
   late final AttendanceController attendanceController;
 
@@ -113,6 +113,39 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _openCalendar() => Get.to(() => CalendarScreen());
 
+
+void _onBottomNavChanged(int index) {
+  if (index == _selectedIndex) return;
+
+  setState(() {
+    _selectedIndex = index;
+  });
+
+  switch (index) {
+    case 0:
+      _openAttendanceRecords();
+      break;
+
+    case 1:
+      _openLeave();
+      break;
+
+    case 2:
+      // Home screen
+      break;
+
+    case 3:
+      _openNotification();
+      break;
+
+    case 4:
+      _openProfile();
+      break;
+  }
+}
+
+
+
   String _getToday() {
     final now = DateTime.now();
 
@@ -133,35 +166,46 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+
+
     return Scaffold(
       key: _scaffoldKey,
-      drawer: HomeDrawer(
-        onHomeTap: () => Get.back(),
-        onProfileTap: () {
-          Get.back();
-          _openProfile();
-        },
-        onNotificationTap: () {
-          Get.back();
-          _openNotification();
-        },
-        onAttendanceHistoryTap: () {
-          Get.back();
-          _openAttendanceHistory();
-        },
-        onCalendarTap: () {
-          Get.back();
-          _openCalendar();
-        },
-        onPermissionTap: () {
-          Get.back();
-          _openPermission();
-        },
-        onLeaveTap: () {
-          Get.back();
-          _openLeave();
-        },
-      ),
+
+   
+
+
+drawer: HomeDrawer(
+  onHomeTap: () => Get.back(),
+  onProfileTap: () {
+    Get.back();
+    _openProfile();
+  },
+  onNotificationTap: () {
+    Get.back();
+    _openNotification();
+  },
+  onAttendanceHistoryTap: () {
+    Get.back();
+    _openAttendanceHistory();
+  },
+  onCalendarTap: () {
+    Get.back();
+    _openCalendar();
+  },
+  onPermissionTap: () {
+    Get.back();
+    _openPermission();
+  },
+  onLeaveTap: () {
+    Get.back();
+    _openLeave();
+  },
+  onLogoutTap: () {
+    Get.back();
+    Get.offAllNamed('/login');
+  },
+),
+
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
@@ -198,7 +242,12 @@ _buildHeroSection(),
           ],
         ),
       ),
-      bottomNavigationBar: _buildBottomNavigation(),
+bottomNavigationBar: BottomNavBar(
+  selectedIndex: _selectedIndex,
+  onChanged: _onBottomNavChanged,
+),
+
+    
     );
   }
 
@@ -291,28 +340,44 @@ _buildHeroSection(),
                     style: GoogleFonts.inter(
                       color: AppColors.white.withValues(alpha: 0.75),
                       fontSize: 10,
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 22),
-              Text(
-                'Make today count.',
-                style: GoogleFonts.inter(
-                  color: AppColors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 5),
-              Text(
-                'Your attendance journey starts here.',
-                style: GoogleFonts.inter(
-                  color: AppColors.white.withValues(alpha: 0.72),
-                  fontSize: 12,
-                ),
-              ),
+              const SizedBox(height: 15),
+
+
+Obx(() {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        'Working Time',
+        style: GoogleFonts.inter(
+          color: AppColors.white,
+          fontSize: 15,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      const SizedBox(height: 5),
+      Text(
+        attendanceController.formattedWorkingDuration,
+        style: GoogleFonts.inter(
+          color: AppColors.white,
+          fontSize: 28,
+          fontWeight: FontWeight.w700,
+          fontFeatures: const [
+            FontFeature.tabularFigures(),
+          ],
+        ),
+      ),
+    ],
+  );
+}),
+
+
+
               const SizedBox(height: 22),
               Row(
                 children: [
