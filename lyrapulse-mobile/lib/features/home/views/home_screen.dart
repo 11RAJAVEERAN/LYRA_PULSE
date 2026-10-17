@@ -2,6 +2,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../app/theme/app_colors.dart';
+
+import '../widgets/welcome_header.dart';
+import '../widgets/home_drawer.dart';
+
+
+
 
 import 'package:lyrapulse_mobile/features/attendance/controllers/attendance_controller.dart';
 import 'package:lyrapulse_mobile/features/attendance/views/location_verification_screen.dart';
@@ -22,6 +29,9 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final GlobalKey<ScaffoldState> _scaffoldKey =
+      GlobalKey<ScaffoldState>();
+
   int _selectedIndex = 0;
 
   late final AttendanceController attendanceController;
@@ -124,7 +134,35 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7FAFD),
+      key: _scaffoldKey,
+      drawer: HomeDrawer(
+        onHomeTap: () => Get.back(),
+        onProfileTap: () {
+          Get.back();
+          _openProfile();
+        },
+        onNotificationTap: () {
+          Get.back();
+          _openNotification();
+        },
+        onAttendanceHistoryTap: () {
+          Get.back();
+          _openAttendanceHistory();
+        },
+        onCalendarTap: () {
+          Get.back();
+          _openCalendar();
+        },
+        onPermissionTap: () {
+          Get.back();
+          _openPermission();
+        },
+        onLeaveTap: () {
+          Get.back();
+          _openLeave();
+        },
+      ),
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -135,9 +173,16 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildHeader(),
-                    const SizedBox(height: 24),
-                    _buildHeroSection(),
+                  WelcomeHeader(
+  onProfileTap: () {
+    _scaffoldKey.currentState?.openDrawer();
+  },
+  onNotificationTap: _openNotification,
+),
+const SizedBox(height: 24),
+_buildHeroSection(),
+
+
                     const SizedBox(height: 24),
                     _buildAttendanceTimeline(),
                     const SizedBox(height: 24),
@@ -157,95 +202,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildHeader() {
-    return Row(
-      children: [
-        GestureDetector(
-          onTap: _openProfile,
-          child: Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: const Color(0xFFEAF3FF),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFD7E7FA)),
-            ),
-            child: const Icon(
-              Icons.person_rounded,
-              color: Color(0xFF1769D2),
-              size: 27,
-            ),
-          ),
-        ),
-        const SizedBox(width: 13),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Good Morning 👋',
-                style: GoogleFonts.poppins(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: const Color(0xFF7A899B),
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                'Angel',
-                style: GoogleFonts.poppins(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: const Color(0xFF172B4D),
-                ),
-              ),
-            ],
-          ),
-        ),
-        GestureDetector(
-          onTap: _openNotification,
-          child: Container(
-            width: 45,
-            height: 45,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(15),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 15,
-                  offset: const Offset(0, 5),
-                ),
-              ],
-            ),
-            child: Stack(
-              children: [
-                const Center(
-                  child: Icon(
-                    Icons.notifications_none_rounded,
-                    color: Color(0xFF263B5A),
-                    size: 25,
-                  ),
-                ),
-                Positioned(
-                  top: 10,
-                  right: 10,
-                  child: Container(
-                    width: 7,
-                    height: 7,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFFF5C5C),
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
 
   Widget _buildHeroSection() {
     return Container(
@@ -255,12 +211,12 @@ class _HomeScreenState extends State<HomeScreen> {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF1268D5), Color(0xFF084A9B)],
+          colors: [AppColors.primary, AppColors.secondary],
         ),
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1268D5).withOpacity(0.22),
+            color: AppColors.primary.withValues(alpha: 0.22),
             blurRadius: 25,
             offset: const Offset(0, 12),
           ),
@@ -276,7 +232,7 @@ class _HomeScreenState extends State<HomeScreen> {
               height: 145,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.06),
+                color: Colors.white.withValues(alpha: 0.06),
               ),
             ),
           ),
@@ -288,7 +244,7 @@ class _HomeScreenState extends State<HomeScreen> {
               height: 125,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.05),
+                color: Colors.white.withValues(alpha: 0.05),
               ),
             ),
           ),
@@ -303,7 +259,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.13),
+                      color: Colors.white.withValues(alpha: 0.13),
                       borderRadius: BorderRadius.circular(30),
                     ),
                     child: Row(
@@ -319,7 +275,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         const SizedBox(width: 7),
                         Text(
                           'ATTENDANCE',
-                          style: GoogleFonts.poppins(
+                          style: GoogleFonts.inter(
                             color: Colors.white,
                             fontSize: 9,
                             fontWeight: FontWeight.w700,
@@ -332,8 +288,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   const Spacer(),
                   Text(
                     _getToday(),
-                    style: GoogleFonts.poppins(
-                      color: Colors.white.withOpacity(0.75),
+                    style: GoogleFonts.inter(
+                      color: Colors.white.withValues(alpha: 0.75),
                       fontSize: 10,
                       fontWeight: FontWeight.w500,
                     ),
@@ -343,7 +299,7 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 22),
               Text(
                 'Make today count.',
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.inter(
                   color: Colors.white,
                   fontSize: 24,
                   fontWeight: FontWeight.w700,
@@ -352,8 +308,8 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 5),
               Text(
                 'Your attendance journey starts here.',
-                style: GoogleFonts.poppins(
-                  color: Colors.white.withOpacity(0.72),
+                style: GoogleFonts.inter(
+                  color: Colors.white.withValues(alpha: 0.72),
                   fontSize: 12,
                 ),
               ),
@@ -374,14 +330,14 @@ class _HomeScreenState extends State<HomeScreen> {
                           children: [
                             const Icon(
                               Icons.login_rounded,
-                              color: Color(0xFF1268D5),
+                              color: AppColors.primary,
                               size: 20,
                             ),
                             const SizedBox(width: 8),
                             Text(
                               'Check In',
-                              style: GoogleFonts.poppins(
-                                color: const Color(0xFF1268D5),
+                              style: GoogleFonts.inter(
+                                color: AppColors.primary,
                                 fontSize: 13,
                                 fontWeight: FontWeight.w700,
                               ),
@@ -398,10 +354,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Container(
                         height: 48,
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.12),
+                          color: Colors.white.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(15),
                           border: Border.all(
-                            color: Colors.white.withOpacity(0.25),
+                            color: Colors.white.withValues(alpha: 0.25),
                           ),
                         ),
                         child: Row(
@@ -415,7 +371,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             const SizedBox(width: 8),
                             Text(
                               'Check Out',
-                              style: GoogleFonts.poppins(
+                              style: GoogleFonts.inter(
                                 color: Colors.white,
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
@@ -458,7 +414,7 @@ class _HomeScreenState extends State<HomeScreen> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(23),
-              border: Border.all(color: const Color(0xFFE8EEF5)),
+              border: Border.all(color: AppColors.border),
             ),
             child: Row(
               children: [
@@ -466,19 +422,19 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     _timelineDot(
                       color: checkIn != null
-                          ? const Color(0xFF21B573)
-                          : const Color(0xFFB8C3D0),
+                          ? AppColors.success
+                          : AppColors.border,
                       icon: Icons.login_rounded,
                     ),
                     Container(
                       width: 2,
                       height: 38,
-                      color: const Color(0xFFE4EAF1),
+                      color: AppColors.border,
                     ),
                     _timelineDot(
                       color: checkOut != null
-                          ? const Color(0xFF21B573)
-                          : const Color(0xFFB8C3D0),
+                          ? AppColors.success
+                          : AppColors.border,
                       icon: Icons.logout_rounded,
                     ),
                   ],
@@ -519,7 +475,7 @@ class _HomeScreenState extends State<HomeScreen> {
       width: 34,
       height: 34,
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha: 0.12),
         shape: BoxShape.circle,
       ),
       child: Icon(icon, color: color, size: 17),
@@ -540,18 +496,18 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               Text(
                 title,
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.inter(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
-                  color: const Color(0xFF253858),
+                  color: AppColors.textPrimary,
                 ),
               ),
               const SizedBox(height: 2),
               Text(
                 subtitle,
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.inter(
                   fontSize: 10,
-                  color: const Color(0xFF98A5B5),
+                  color: AppColors.textSecondary,
                 ),
               ),
             ],
@@ -559,12 +515,12 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         Text(
           time,
-          style: GoogleFonts.poppins(
+          style: GoogleFonts.inter(
             fontSize: 13,
             fontWeight: FontWeight.w700,
             color: active
-                ? const Color(0xFF21A66F)
-                : const Color(0xFFA3ADBA),
+                ? AppColors.success
+                : AppColors.textSecondary,
           ),
         ),
       ],
@@ -587,7 +543,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 icon: Icons.event_available_rounded,
                 title: 'Permission',
                 subtitle: 'Request',
-                iconColor: const Color(0xFF8A5CF6),
+                iconColor: AppColors.secondary,
                 onTap: _openPermission,
               ),
             ),
@@ -597,7 +553,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 icon: Icons.history_rounded,
                 title: 'History',
                 subtitle: 'Attendance',
-                iconColor: const Color(0xFF1685D8),
+                iconColor: AppColors.primary,
                 onTap: _openAttendanceHistory,
               ),
             ),
@@ -607,7 +563,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 icon: Icons.beach_access_rounded,
                 title: 'Leave',
                 subtitle: 'Apply',
-                iconColor: const Color(0xFFF39A3D),
+                iconColor: AppColors.warning,
                 onTap: _openLeave,
               ),
             ),
@@ -617,7 +573,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 icon: Icons.calendar_month_rounded,
                 title: 'Calendar',
                 subtitle: 'View',
-                iconColor: const Color(0xFF1769D2),
+                iconColor: AppColors.primary,
                 onTap: _openCalendar,
               ),
             ),
@@ -641,7 +597,7 @@ class _HomeScreenState extends State<HomeScreen> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFFE8EEF5)),
+          border: Border.all(color: AppColors.border),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -650,7 +606,7 @@ class _HomeScreenState extends State<HomeScreen> {
               width: 38,
               height: 38,
               decoration: BoxDecoration(
-                color: iconColor.withOpacity(0.10),
+                color: iconColor.withValues(alpha: 0.10),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(icon, color: iconColor, size: 20),
@@ -660,10 +616,10 @@ class _HomeScreenState extends State<HomeScreen> {
               title,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.poppins(
+              style: GoogleFonts.inter(
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
-                color: const Color(0xFF253858),
+                color: AppColors.textPrimary,
               ),
             ),
             const SizedBox(height: 2),
@@ -671,9 +627,9 @@ class _HomeScreenState extends State<HomeScreen> {
               subtitle,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.poppins(
+              style: GoogleFonts.inter(
                 fontSize: 9,
-                color: const Color(0xFF98A5B5),
+                color: AppColors.textSecondary,
               ),
             ),
           ],
@@ -713,7 +669,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   value: checkIn == null ? '--:--' : checkInParts[0],
                   suffix: checkIn == null ? '' : checkInParts[1],
                   icon: Icons.login_rounded,
-                  color: const Color(0xFF20A66F),
+                  color: AppColors.success,
                 ),
               ),
               const SizedBox(width: 10),
@@ -723,7 +679,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   value: checkOut == null ? '--:--' : checkOutParts[0],
                   suffix: checkOut == null ? '' : checkOutParts[1],
                   icon: Icons.logout_rounded,
-                  color: const Color(0xFF7A8797),
+                  color: AppColors.textSecondary,
                 ),
               ),
             ],
@@ -737,7 +693,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   value: checkIn == null ? '--:--' : '$hours:$minutes',
                   suffix: 'hrs',
                   icon: Icons.timer_outlined,
-                  color: const Color(0xFF2878D4),
+                  color: AppColors.primary,
                 ),
               ),
               const SizedBox(width: 10),
@@ -747,7 +703,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   value: attendanceController.attendanceStatus,
                   suffix: '',
                   icon: Icons.pending_actions_rounded,
-                  color: const Color(0xFFF19A3E),
+                  color: AppColors.warning,
                 ),
               ),
             ],
@@ -769,7 +725,7 @@ class _HomeScreenState extends State<HomeScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE8EEF5)),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -780,7 +736,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 width: 31,
                 height: 31,
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.10),
+                  color: color.withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(icon, size: 16, color: color),
@@ -789,16 +745,16 @@ class _HomeScreenState extends State<HomeScreen> {
               const Icon(
                 Icons.more_horiz_rounded,
                 size: 18,
-                color: Color(0xFFB7C0CB),
+                color: AppColors.border,
               ),
             ],
           ),
           const SizedBox(height: 13),
           Text(
             title,
-            style: GoogleFonts.poppins(
+            style: GoogleFonts.inter(
               fontSize: 10,
-              color: const Color(0xFF8C99A9),
+              color: AppColors.textSecondary,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -811,10 +767,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   value,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.poppins(
+                  style: GoogleFonts.inter(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF253858),
+                    color: AppColors.textPrimary,
                   ),
                 ),
               ),
@@ -824,10 +780,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   padding: const EdgeInsets.only(bottom: 2),
                   child: Text(
                     suffix,
-                    style: GoogleFonts.poppins(
+                    style: GoogleFonts.inter(
                       fontSize: 9,
                       fontWeight: FontWeight.w600,
-                      color: const Color(0xFF8C99A9),
+                      color: AppColors.textSecondary,
                     ),
                   ),
                 ),
@@ -848,7 +804,7 @@ class _HomeScreenState extends State<HomeScreen> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: const Color(0xFFE8EEF5)),
+          border: Border.all(color: AppColors.border),
         ),
         child: Row(
           children: [
@@ -864,9 +820,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: CircularProgressIndicator(
                       value: 0.72,
                       strokeWidth: 7,
-                      backgroundColor: const Color(0xFFEAF0F7),
+                      backgroundColor: AppColors.border,
                       valueColor: const AlwaysStoppedAnimation<Color>(
-                        Color(0xFF1769D2),
+                        AppColors.primary,
                       ),
                     ),
                   ),
@@ -875,17 +831,17 @@ class _HomeScreenState extends State<HomeScreen> {
                     children: [
                       Text(
                         '72%',
-                        style: GoogleFonts.poppins(
+                        style: GoogleFonts.inter(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
-                          color: const Color(0xFF253858),
+                          color: AppColors.textPrimary,
                         ),
                       ),
                       Text(
                         'month',
-                        style: GoogleFonts.poppins(
+                        style: GoogleFonts.inter(
                           fontSize: 7,
-                          color: const Color(0xFF9AA6B5),
+                          color: AppColors.textSecondary,
                         ),
                       ),
                     ],
@@ -900,10 +856,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   Text(
                     'Attendance Overview',
-                    style: GoogleFonts.poppins(
+                    style: GoogleFonts.inter(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFF253858),
+                      color: AppColors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 5),
@@ -911,10 +867,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     'View your attendance records and monthly progress.',
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.poppins(
+                    style: GoogleFonts.inter(
                       fontSize: 10,
                       height: 1.45,
-                      color: const Color(0xFF8D9AAA),
+                      color: AppColors.textSecondary,
                     ),
                   ),
                   const SizedBox(height: 9),
@@ -922,17 +878,17 @@ class _HomeScreenState extends State<HomeScreen> {
                     children: [
                       Text(
                         'View Details',
-                        style: GoogleFonts.poppins(
+                        style: GoogleFonts.inter(
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
-                          color: const Color(0xFF1769D2),
+                          color: AppColors.primary,
                         ),
                       ),
                       const SizedBox(width: 4),
                       const Icon(
                         Icons.arrow_forward_rounded,
                         size: 13,
-                        color: Color(0xFF1769D2),
+                        color: AppColors.primary,
                       ),
                     ],
                   ),
@@ -960,18 +916,18 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               Text(
                 title,
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.inter(
                   fontSize: 17,
                   fontWeight: FontWeight.w700,
-                  color: const Color(0xFF172B4D),
+                  color: AppColors.textPrimary,
                 ),
               ),
               const SizedBox(height: 2),
               Text(
                 subtitle,
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.inter(
                   fontSize: 10,
-                  color: const Color(0xFF98A5B5),
+                  color: AppColors.textSecondary,
                 ),
               ),
             ],
@@ -982,10 +938,10 @@ class _HomeScreenState extends State<HomeScreen> {
             onTap: onTap,
             child: Text(
               action,
-              style: GoogleFonts.poppins(
+              style: GoogleFonts.inter(
                 fontSize: 10,
                 fontWeight: FontWeight.w600,
-                color: const Color(0xFF1769D2),
+                color: AppColors.primary,
               ),
             ),
           ),
@@ -995,7 +951,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildBottomNavigation() {
     return Container(
-      color: const Color(0xFFF7FAFD),
+      color: AppColors.background,
       padding: const EdgeInsets.fromLTRB(10, 8, 10, 14),
       child: Container(
         height: 66,
@@ -1003,10 +959,10 @@ class _HomeScreenState extends State<HomeScreen> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: const Color(0xFFE6ECF3)),
+          border: Border.all(color: AppColors.border),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.07),
+              color: Colors.black.withValues(alpha: 0.07),
               blurRadius: 22,
               offset: const Offset(0, 8),
             ),
@@ -1075,7 +1031,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           decoration: BoxDecoration(
             color: selected
-                ? const Color(0xFFEAF3FF)
+                ? AppColors.primary.withValues(alpha: 0.08)
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(16),
           ),
@@ -1087,8 +1043,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 icon,
                 size: 21,
                 color: selected
-                    ? const Color(0xFF1769D2)
-                    : const Color(0xFF9AA6B5),
+                    ? AppColors.primary
+                    : AppColors.textSecondary,
               ),
               if (selected) ...[
                 const SizedBox(height: 3),
@@ -1096,10 +1052,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.poppins(
+                  style: GoogleFonts.inter(
                     fontSize: 8,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF1769D2),
+                    color: AppColors.primary,
                   ),
                 ),
               ],

@@ -9,12 +9,13 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-    shared_preferences: ^2.5.3
+   
+  cupertino_icons: ^1.0.8
+  shared_preferences: ^2.5.3
   dio: ^5.7.0
   flutter_secure_storage: ^9.2.2
   get: ^4.7.3
   google_fonts: ^9.0.0
-  cupertino_icons: ^1.0.8
   geolocator: ^14.0.2
   geocoding: ^4.0.0
   camera: ^0.12.1
