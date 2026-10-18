@@ -3,7 +3,10 @@ import 'package:get/get.dart';
 import '../../core/network/dio_client.dart';
 import '../../core/storage/secure_storage_service.dart';
 import '../../data/providers/api_provider.dart';
+import '../../core/services/location_service.dart';
+import '../../data/repositories/attendance_repository.dart';
 import '../../data/repositories/auth_repository.dart';
+import '../../features/attendance/controllers/attendance_controller.dart';
 import '../../features/auth/controllers/auth_controller.dart';
 import '../../features/home/controllers/home_controller.dart';
 import '../../features/profile/controllers/profile_controller.dart';
@@ -19,6 +22,10 @@ class InitialBinding extends Bindings {
     Get.put<ApiProvider>(ApiProvider(Get.find()), permanent: true);
     Get.put<AuthRepository>(AuthRepository(Get.find(), Get.find()), permanent: true);
     Get.put<AuthController>(AuthController(), permanent: true);
+    Get.put<LocationService>(LocationService(), permanent: true);
+    Get.put<AttendanceRepository>(AttendanceRepository(Get.find()), permanent: true);
+    // Permanent: it follows AuthController.employee, so it resets on logout and reloads on login.
+    Get.put<AttendanceController>(AttendanceController(), permanent: true);
     Get.lazyPut<HomeController>(() => HomeController());
     Get.lazyPut<ProfileController>(() => ProfileController());
   }

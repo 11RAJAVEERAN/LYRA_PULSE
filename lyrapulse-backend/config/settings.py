@@ -29,6 +29,7 @@ INSTALLED_APPS = [
     "apps.designations",
     "apps.accounts",
     "apps.employees",
+    "apps.attendance",
 ]
 
 MIDDLEWARE = [
@@ -76,6 +77,10 @@ TIME_ZONE = "Asia/Kolkata"
 USE_I18N = True
 USE_TZ = True
 STATIC_URL = "static/"
+# Public media (attendance photos live under MEDIA_ROOT/attendance/...). Served by Django only when DEBUG=True;
+# in production serve MEDIA_ROOT from the web server / object storage.
+MEDIA_URL = "/media/"
+MEDIA_ROOT = Path(os.getenv("MEDIA_ROOT", str(BASE_DIR / "media")))
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 AUTH_USER_MODEL = "accounts.User"
 

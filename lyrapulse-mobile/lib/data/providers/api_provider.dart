@@ -27,6 +27,32 @@ class ApiProvider {
 
   Future<Response<dynamic>> getCurrentUser() => _client.dio.get(ApiConstants.currentUser);
 
+  // ---------------------------------------------------------------------------
+  // ATTENDANCE
+  // ---------------------------------------------------------------------------
+  Future<Response<dynamic>> getTodayAttendance() => _client.dio.get(ApiConstants.attendanceToday);
+
+  Future<Response<dynamic>> verifyAttendanceLocation({
+    required double latitude,
+    required double longitude,
+    required double accuracy,
+  }) => _client.dio.post(
+    ApiConstants.attendanceVerifyLocation,
+    data: {'latitude': latitude, 'longitude': longitude, 'accuracy': accuracy},
+  );
+
+  Future<Response<dynamic>> checkIn(FormData form) => _client.dio.post(
+    ApiConstants.attendanceCheckIn,
+    data: form,
+    options: Options(sendTimeout: const Duration(seconds: 60), receiveTimeout: const Duration(seconds: 60)),
+  );
+
+  Future<Response<dynamic>> checkOut(FormData form) => _client.dio.post(
+    ApiConstants.attendanceCheckOut,
+    data: form,
+    options: Options(sendTimeout: const Duration(seconds: 60), receiveTimeout: const Duration(seconds: 60)),
+  );
+
   Future<Response<dynamic>> logout(String refreshToken) => _client.dio.post(
     ApiConstants.logout,
     data: {'refresh': refreshToken},

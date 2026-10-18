@@ -67,6 +67,21 @@ curl -X POST http://127.0.0.1:8000/api/v1/auth/verify-otp/ \
 
 Use the returned access token as `Authorization: Bearer <token>` when calling `/api/v1/auth/me/` or `/api/v1/mobile/me/`.
 
+## Employee attendance API (mobile)
+
+Employee-role JWT required. The employee is `request.user`'s profile and the branch is the employee's assigned branch;
+`employee_id`, `branch_id` and any client time are ignored. All responses use the `success/message/data|errors` envelope.
+Business errors return `errors.code` (e.g. `OUTSIDE_ATTENDANCE_RADIUS`, `ALREADY_CHECKED_IN`, `NOT_CHECKED_IN`).
+
+- `POST /api/v1/attendance/verify-location/` (JSON or form): `latitude`, `longitude`, `accuracy` -> UX pre-check only, never an authorisation.
+- `POST /api/v1/attendance/check-in/` (multipart): `latitude`, `longitude`, `accuracy`, `photo` (JPEG/PNG, max 5 MB).
+- `POST /api/v1/attendance/check-out/` (multipart): same fields; updates today's existing row.
+- `GET  /api/v1/attendance/today/` -> `NOT_CHECKED_IN | CHECKED_IN | CHECKED_OUT`.
+
+Set each branch's location in Django Admin -> Branches -> *Attendance Location* (latitude, longitude, allowed radius in meters).
+A branch without coordinates rejects attendance with `BRANCH_LOCATION_NOT_CONFIGURED`. Photos are stored under
+`MEDIA_ROOT/attendance/{checkin,checkout}/YYYY/MM/DD/<uuid>.<jpg|png>` (served by Django only when `DEBUG=True`).
+
 ## Production notes
 
 Set a strong `SECRET_KEY`, `DEBUG=False`, explicit `ALLOWED_HOSTS`, and production frontend origins in `CORS_ALLOWED_ORIGINS`. Run Gunicorn with `gunicorn config.wsgi:application`. Celery and Redis dependencies are included for later phases; attendance, device, leave, reporting, and notifications are intentionally not implemented until their specified phases.

@@ -49,20 +49,21 @@ const navButtonSx = (collapsed) => ({
   // x position when the sidebar is toggled (icon centre = 12px padding + 18px half of the 36px icon box).
   px: 1.5,
   justifyContent: collapsed ? 'center' : 'flex-start',
-  color: 'lyra.sidebarText',
-  // The sidebar itself is the brand gradient, so the selected item inverts to a surface-colored pill.
+  color: 'text.primary',
+  '& .MuiListItemIcon-root': { color: 'text.secondary' },
+  // Selected item: a soft brand-blue tint with a blue label, icon and edge marker.
   '&.active': {
-    bgcolor: 'background.paper',
-    color: 'primary.main',
-    '& .MuiListItemIcon-root': { color: 'primary.main' },
-    '&:before': { content: '""', position: 'absolute', left: 0, top: 8, bottom: 8, width: 3, borderRadius: 3, bgcolor: 'secondary.main' },
+    bgcolor: 'info.light',
+    color: 'info.dark',
+    '& .MuiListItemIcon-root': { color: 'info.main' },
+    '& .MuiListItemText-primary': { fontWeight: 650 },
+    '&:before': { content: '""', position: 'absolute', left: 0, top: 8, bottom: 8, width: 3, borderRadius: 3, bgcolor: 'info.main' },
   },
-  '&.active:hover': { bgcolor: 'background.paper', color: 'primary.main' },
-  '&:hover': { bgcolor: 'lyra.sidebarHover', color: 'common.white' },
-  '&:active:not(.active)': { bgcolor: 'lyra.sidebarActive' },
-  '&:focus-visible': { outline: '2px solid', outlineColor: 'secondary.light', outlineOffset: -2 },
-  // The selected item is a light pill, where the pale focus ring above would be invisible.
-  '&.active:focus-visible': { outlineColor: 'secondary.main' },
+  '&.active:hover': { bgcolor: 'info.light', color: 'info.dark' },
+  '&:hover': { bgcolor: 'action.hover', '& .MuiListItemIcon-root': { color: 'text.primary' } },
+  '&.active:hover .MuiListItemIcon-root': { color: 'info.main' },
+  '&:active:not(.active)': { bgcolor: 'action.selected' },
+  '&:focus-visible': { outline: '2px solid', outlineColor: 'info.main', outlineOffset: -2 },
 })
 
 export function Sidebar({ collapsed, onToggle, onNavigate }) {
@@ -119,15 +120,18 @@ export function Sidebar({ collapsed, onToggle, onNavigate }) {
       component="nav"
       aria-label="Main navigation"
       sx={{
-        width: collapsed ? 80 : 264,
+        // Inside the mobile drawer (which is slightly wider than 264px) the expanded sidebar fills it, so no dark strip shows beside the light surface.
+        width: collapsed ? 80 : { xs: '100%', md: 264 },
         height: '100vh',
         position: 'sticky',
         top: 0,
         // Only the navigation list scrolls (below), so the brand header stays reachable and no horizontal bar appears while the width animates.
         overflow: 'hidden',
         transition: reduceMotion ? 'none' : `width ${MOTION_MS}ms ease`,
-        background: (theme) => theme.palette.lyra.primaryGradient,
-        color: 'lyra.sidebarText',
+        bgcolor: 'background.paper',
+        color: 'text.primary',
+        borderRight: 1,
+        borderColor: 'divider',
         display: 'flex',
         flexDirection: 'column',
       }}
@@ -135,26 +139,26 @@ export function Sidebar({ collapsed, onToggle, onNavigate }) {
       <Box sx={{ display: 'flex', flexDirection: collapsed ? 'column' : 'row', alignItems: 'center', justifyContent: collapsed ? 'center' : 'space-between', gap: collapsed ? 0.5 : 1, px: 2, py: collapsed ? 1 : 0, minHeight: 72 }}>
         {!collapsed ? (
           <Box sx={{ minWidth: 0 }}>
-            <Typography variant="subtitle1" sx={{ color: 'common.white', fontWeight: 750, letterSpacing: '0.01em' }}>
+            <Typography variant="subtitle1" sx={{ color: 'primary.main', fontWeight: 750, letterSpacing: '0.01em' }}>
               LYRA PULSE
             </Typography>
-            <Typography variant="caption" sx={{ color: 'lyra.sidebarMuted' }}>Admin Console</Typography>
+            <Typography variant="caption" sx={{ color: 'text.secondary' }}>Admin Console</Typography>
           </Box>
         ) : (
-          <Typography variant="h6" aria-label="LYRA PULSE" sx={{ textAlign: 'center', color: 'common.white', fontWeight: 750, lineHeight: 1.2 }}>
+          <Typography variant="h6" aria-label="LYRA PULSE" sx={{ textAlign: 'center', color: 'primary.main', fontWeight: 750, lineHeight: 1.2 }}>
             L
           </Typography>
         )}
         {onToggle ? (
           <Tooltip title={collapsed ? 'Expand navigation' : 'Collapse navigation'}>
-            <IconButton aria-label={collapsed ? 'Expand navigation' : 'Collapse navigation'} onClick={onToggle} size="small" sx={{ flexShrink: 0, color: 'lyra.sidebarText', border: '1px solid', borderColor: 'lyra.sidebarDivider' }}>
+            <IconButton aria-label={collapsed ? 'Expand navigation' : 'Collapse navigation'} onClick={onToggle} size="small" sx={{ flexShrink: 0, color: 'text.secondary', border: '1px solid', borderColor: 'divider', '&:hover': { bgcolor: 'action.hover', color: 'text.primary' }, '&:focus-visible': { outline: '2px solid', outlineColor: 'info.main', outlineOffset: 1 } }}>
               {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
             </IconButton>
           </Tooltip>
         ) : null}
       </Box>
 
-      <Divider sx={{ borderColor: 'lyra.sidebarDivider' }} />
+      <Divider />
 
       <List component="div" sx={{ px: 1.25, py: 2, flex: 1, minHeight: 0, overflowY: 'auto', overflowX: 'hidden' }}>
         {visibleItems.map((item) => {
@@ -174,7 +178,7 @@ export function Sidebar({ collapsed, onToggle, onNavigate }) {
                 sx={{
                   ...navButtonSx(collapsed),
                   // Parent of the current page: a soft tint, so only the child reads as the selected page.
-                  ...(childActive ? { bgcolor: 'lyra.sidebarActive', color: 'common.white' } : null),
+                  ...(childActive ? { bgcolor: 'action.selected', color: 'info.dark', '& .MuiListItemIcon-root': { color: 'info.main' } } : null),
                 }}
               >
                 <ListItemIcon sx={{ color: 'inherit', minWidth: collapsed ? 0 : 36, justifyContent: 'center' }}>
@@ -194,7 +198,7 @@ export function Sidebar({ collapsed, onToggle, onNavigate }) {
                 {collapsed ? <Tooltip title={label} placement="right">{parent}</Tooltip> : parent}
                 {!collapsed ? (
                   <Collapse in={expanded} timeout={motionMs} unmountOnExit id={groupId}>
-                    <Box sx={{ ml: 3, pl: 1, mb: 0.5, borderLeft: '1px solid', borderColor: 'lyra.sidebarDivider' }}>
+                    <Box sx={{ ml: 3, pl: 1, mb: 0.5, borderLeft: '1px solid', borderColor: 'divider' }}>
                       {item.children.map((child) => (
                         <ListItemButton
                           key={child.path}
