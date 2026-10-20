@@ -107,6 +107,7 @@ class FingerprintEnrollmentFlowTests(unittest.TestCase):
             ],
         )
         self.assertEqual(self.display.success_slot, 1)
+        self.assertTrue(self.service._awaiting_removal)
 
     def test_different_fingerprint_on_third_scan_never_reports_success(self):
         self.sensor.verification = {"fingerprint_id": 23, "score": 900}

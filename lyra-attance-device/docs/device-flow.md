@@ -6,7 +6,9 @@
 2. Initialize OLED, buzzer, and LEDs.
 3. Connect to the configured Wi-Fi network.
 4. Show startup and ready screens.
-5. Wait for a finger to be placed.
+5. Wait for a debounced GPIO18 edge (polarity configurable; default unverified).
+   In hybrid mode, the sensor can also be probed with GetImage at the configured
+   low frequency while idle.
 6. Capture the fingerprint image.
 7. Convert the image to a template.
 8. Search the local R307 database for a matching template.
@@ -17,9 +19,17 @@
 
 ## Not found path
 
-- If the search returns no match, display `Fingerprint Not Found`.
-- Trigger the red LED with an error beep.
+- Only a valid sensor search response with confirmation `0x09` is a no-match.
+- Display `NO MATCH`, use the red LED, and sound two beeps.
 - Return to ready after finger removal.
+
+## Sensor communication errors
+
+- A timeout, missing response, malformed packet, or other R307 communication
+  error is a sensor error, not a fingerprint mismatch.
+- Keep mismatch feedback off and retry sensor initialization with backoff.
+- Recognition stays latched until removal is confirmed. If removal cannot be
+  confirmed before the configured timeout, apply the bounded rearm cooldown.
 
 ## Offline path
 

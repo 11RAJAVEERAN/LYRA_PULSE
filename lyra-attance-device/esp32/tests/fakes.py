@@ -33,11 +33,15 @@ class FakeUART:
     latest = None
 
     def __init__(self, uart_id, baudrate):
+        self.uart_id = uart_id
+        self.baudrate = baudrate
         self.writes = []
         self.response = bytearray()
+        self.init_args = {}
         FakeUART.latest = self
 
     def init(self, **kwargs):
+        self.init_args = kwargs
         return None
 
     def write(self, data):
@@ -48,6 +52,9 @@ class FakeUART:
         chunk = self.response[:size]
         del self.response[:size]
         return bytes(chunk) or None
+
+    def any(self):
+        return len(self.response)
 
 
 class FakeI2C:
