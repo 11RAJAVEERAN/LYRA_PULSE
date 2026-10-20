@@ -1,5 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
-import { Box, ButtonBase, Card, CardContent, Grid, Typography } from '@mui/material'
+import { Box, ButtonBase, Card, CardContent, Grid, Skeleton, Typography } from '@mui/material'
 import { Activity, CalendarCheck2, ChevronRight, Clock3, FileText, UserPlus, Users } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { AttendanceChart } from '../../../components/charts/AttendanceChart'
@@ -7,9 +6,11 @@ import { EmptyState } from '../../../components/common/EmptyState'
 import { ErrorState } from '../../../components/common/ErrorState'
 import { PageHeader } from '../../../components/common/PageHeader'
 import { authService } from '../../../services/authService'
+import { attendanceErrorMessage } from '../../attendance/utils/errors'
+import { formatDate } from '../../attendance/utils/format'
 import { useAuth } from '../../auth/hooks/useAuth'
-import { dashboardApi } from '../api/dashboardApi'
 import { StatsCard } from '../components/StatsCard'
+import { useDashboardAttendance } from '../hooks/useDashboardAttendance'
 
 const UNAVAILABLE = '—'
 
@@ -20,11 +21,6 @@ const leaveTiles = [
   { label: 'Approved', description: 'This month', tone: 'success' },
   { label: 'Rejected', description: 'This month', tone: 'error' },
 ]
-
-function loadErrorMessage(error) {
-  if (error?.response?.status === 403) return 'You do not have permission to view employee data on the dashboard.'
-  return 'Employee figures could not be loaded. Please try again.'
-}
 
 function SectionCard({ title, subtitle, action, children, sx }) {
   return (
@@ -102,17 +98,13 @@ function QuickAction({ label, description, icon: Icon, to, disabledReason }) {
 
 export function DashboardPage() {
   const { currentUser } = useAuth()
-  const { data: overview, error, isLoading, isError, isFetching, refetch } = useQuery({
-    queryKey: ['dashboard', 'overview'],
-    queryFn: dashboardApi.getOverview,
-  })
+  // Real attendance data from the Attendance Admin summary API; `today` refetches silently every 5 seconds and the
+  // existing figures stay on screen while it does. Only the first load shows the skeletons.
+  const { today, trend, trendLoading } = useDashboardAttendance()
+  const summary = today.data
 
   const sessionUser = authService.getCurrentUser()
   const can = (codename) => sessionUser?.role === 'SUPERADMIN' || Boolean(sessionUser?.permissions?.includes(codename))
-
-  const employees = overview?.employees
-  const trend = overview?.attendance?.trend
-  const hasTrend = Array.isArray(trend) && trend.length > 0
 
   const quickActions = [
     {
@@ -128,46 +120,45 @@ export function DashboardPage() {
   ]
 
   const totalSubtitle = (() => {
-    if (isError) return 'Unavailable right now'
-    if (!employees) return 'Loading employee data'
-    if (employees.total === 0) return 'No employees added yet'
-    const branches = `${employees.branchCount} ${employees.branchCount === 1 ? 'branch' : 'branches'}`
-    return `${employees.active} active · ${employees.inactive} inactive · ${branches}`
+    if (summary) return formatDate(summary.date)
+    return today.isError ? 'Unavailable right now' : 'Loading attendance data'
   })()
 
   return (
     <Box>
       <PageHeader title="Dashboard" subtitle={`Welcome back, ${currentUser?.name ?? 'LyraTech Admin'}`} />
 
-      {isError ? <ErrorState message={loadErrorMessage(error)} onRetry={refetch} retrying={isFetching} /> : null}
+      {today.isError && !summary ? <ErrorState message={attendanceErrorMessage(today.error)} onRetry={() => today.refetch()} retrying={today.isFetching} /> : null}
 
       <Grid container spacing={2.5} sx={{ mb: 3 }}>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatsCard
             title="Total Employees"
-            value={employees ? employees.total : UNAVAILABLE}
+            value={summary ? summary.total_employees : UNAVAILABLE}
             subtitle={totalSubtitle}
             icon={<Users size={18} />}
             tone="info"
-            loading={isLoading}
+            loading={today.isLoading}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatsCard
             title="Present Today"
-            value={UNAVAILABLE}
-            subtitle="Attendance data is not available yet"
+            value={summary ? summary.present : UNAVAILABLE}
+            subtitle="Checked in"
             icon={<Activity size={18} />}
             tone="success"
+            loading={today.isLoading}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatsCard
             title="Absent Today"
-            value={UNAVAILABLE}
-            subtitle="Attendance data is not available yet"
+            value={summary ? summary.absent : UNAVAILABLE}
+            subtitle="No check-in recorded"
             icon={<Clock3 size={18} />}
             tone="warning"
+            loading={today.isLoading}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -183,14 +174,16 @@ export function DashboardPage() {
 
       <Grid container spacing={2.5} sx={{ mb: 3 }}>
         <Grid size={{ xs: 12, lg: 8 }}>
-          <SectionCard title="Attendance Overview" subtitle="Employee attendance for this week">
-            {hasTrend ? (
+          <SectionCard title="Attendance Overview" subtitle="Employee attendance for the last 7 days">
+            {trend ? (
               <AttendanceChart data={trend} />
+            ) : trendLoading ? (
+              <Skeleton variant="rounded" height={285} aria-label="Loading attendance overview" />
             ) : (
               <EmptyState
                 compact
                 title="Attendance data is unavailable"
-                description="This project does not yet provide an attendance API, so no weekly attendance can be shown."
+                description="The daily attendance for the last 7 days could not be loaded. Please try again."
               />
             )}
           </SectionCard>

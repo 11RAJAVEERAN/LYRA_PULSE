@@ -107,6 +107,8 @@ CORS_ALLOWED_ORIGINS = [origin.strip() for origin in os.getenv(
     "CORS_ALLOWED_ORIGINS",
     "http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000",
 ).split(",") if origin.strip()]
+# Lets the admin web app (a different origin) read the CSV filename on attendance export downloads.
+CORS_EXPOSE_HEADERS = ["Content-Disposition"]
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = "DENY"
 SESSION_COOKIE_SECURE = not DEBUG

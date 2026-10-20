@@ -35,7 +35,7 @@ export function AdminLayout() {
   )
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh', backgroundColor: 'background.default' }}>
+    <Box sx={{ display: 'flex', width: '100%', maxWidth: '100%', minHeight: '100vh', overflowX: 'clip', backgroundColor: 'background.default' }}>
       {!isMobile ? (
         <Box sx={{ flexShrink: 0 }}>{sidebarContent}</Box>
       ) : (
@@ -50,9 +50,9 @@ export function AdminLayout() {
         </Drawer>
       )}
 
-      <Box sx={{ flex: 1, minWidth: 0 }}>
+      <Box sx={{ flex: '1 1 0%', minWidth: 0, maxWidth: '100%' }}>
         <Topbar title={pageTitles[location.pathname] ?? 'LYRA PULSE'} onMenu={() => setSidebarOpen(true)} showMenu={isMobile} />
-        <Box component="main" sx={{ width: '100%', maxWidth: 1600, mx: 'auto', p: { xs: 2, sm: 2.5, lg: 3 } }}>
+        <Box component="main" sx={{ width: '100%', minWidth: 0, maxWidth: 1600, mx: 'auto', p: { xs: 2, sm: 2.5, lg: 3 } }}>
           <Outlet />
         </Box>
       </Box>
