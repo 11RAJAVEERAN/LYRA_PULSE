@@ -39,7 +39,7 @@ class CalendarScreen extends StatelessWidget {
                     children: [
                       CalendarMonthHeader(controller: controller),
                       const SizedBox(height: 20),
-                      const AttendanceDayList(),
+
                       if (controller.isCalendarView.value)
                         _buildCalendarContent()
                       else
@@ -194,7 +194,7 @@ class CalendarScreen extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 16),
-        const AttendanceDayList(),
+        AttendanceDayList(controller: controller),
       ],
     );
   }
