@@ -10,7 +10,7 @@ micropython.const = lambda value: value
 sys.modules.setdefault("micropython", micropython)
 
 from main import poll_enrollment_command, run_attendance_scan, run_enrollment
-from drivers.r307 import R307CommunicationError
+from drivers.r307 import R307CommunicationError, R307TemplateError
 from services.fingerprint_service import EnrollmentError
 
 
@@ -51,13 +51,23 @@ class FakeEnrollmentAPI:
 
 
 class FakeAttendanceFingerprintService:
-    def __init__(self, matched_slot, events, capture_error=None):
+    def __init__(
+        self,
+        matched_slot,
+        events,
+        capture_error=None,
+        image_ready=True,
+        search_error=None,
+    ):
         self.matched_slot = matched_slot
         self.events = events
         self.capture_error = capture_error
+        self.image_ready = image_ready
+        self.search_error = search_error
 
-    def wait_for_finger(self):
+    def wait_for_finger(self, on_wait=None):
         self.events.append(("finger",))
+        return self.image_ready
 
     def capture_fingerprint(self):
         self.events.append(("capture",))
@@ -66,6 +76,8 @@ class FakeAttendanceFingerprintService:
 
     def search_fingerprint(self):
         self.events.append(("search",))
+        if self.search_error is not None:
+            raise self.search_error
         return self.matched_slot
 
     def wait_for_finger_removed(self):
@@ -96,7 +108,7 @@ class DevicePollingTests(unittest.TestCase):
         original_sleep = main.time.sleep
         main.time.sleep = lambda _seconds: None
         try:
-            run_attendance_scan(
+            return run_attendance_scan(
                 "LYRA-DEVICE-001",
                 api,
                 fingerprint,
@@ -189,6 +201,10 @@ class DevicePollingTests(unittest.TestCase):
             events.index(("remove",)),
         )
         self.assertEqual(api.events, [("api", "LYRA-DEVICE-001", 137)])
+        self.assertEqual(events.count(("finger",)), 1)
+        self.assertEqual(events.count(("capture",)), 1)
+        self.assertEqual(events.count(("search",)), 1)
+        self.assertEqual(events.count(("remove",)), 1)
         self.assertEqual(events.count(("buzzer", "beep_once")), 1)
         self.assertNotIn(("buzzer", "beep_twice"), events)
         self.assertIn(("show_attendance_success", "Test Employee", "CHECKED_IN"), events)
@@ -216,6 +232,23 @@ class DevicePollingTests(unittest.TestCase):
         self.assertEqual(events.count(("buzzer", "beep_twice")), 1)
         self.assertNotIn(("buzzer", "beep_once"), events)
         self.assertIn(("led", "match_failed"), events)
+
+    def test_scan_skips_conversion_and_search_without_confirmed_image(self):
+        events = []
+        api = FakeAttendanceAPI()
+        fingerprint = FakeAttendanceFingerprintService(
+            137,
+            events,
+            image_ready=False,
+        )
+
+        sensor_faulted = self.run_scan(api, fingerprint, events)
+
+        self.assertTrue(sensor_faulted)
+        self.assertNotIn(("capture",), events)
+        self.assertNotIn(("search",), events)
+        self.assertEqual(api.events, [])
+        self.assertNotIn(("remove",), events)
 
     def test_scan_waits_for_removal_then_one_second_before_ready(self):
         import main
@@ -343,12 +376,89 @@ class DevicePollingTests(unittest.TestCase):
             capture_error=R307CommunicationError("checksum failed"),
         )
 
-        self.run_scan(api, fingerprint, events)
+        sensor_faulted = self.run_scan(api, fingerprint, events)
 
         self.assertEqual(api.events, [])
         self.assertNotIn(("show_not_found",), events)
         self.assertIn(("show_sensor_error",), events)
+        self.assertTrue(sensor_faulted)
         self.assertIn(("remove",), events)
+        self.assertNotIn(("buzzer", "beep_twice"), events)
+
+    def test_search_sensor_error_never_uses_mismatch_feedback(self):
+        events = []
+        api = FakeAttendanceAPI()
+        fingerprint = FakeAttendanceFingerprintService(
+            1,
+            events,
+            search_error=R307TemplateError("Search failed: 8"),
+        )
+
+        self.assertTrue(self.run_scan(api, fingerprint, events))
+
+        self.assertEqual(api.events, [])
+        self.assertNotIn(("show_not_found",), events)
+        self.assertIn(("show_sensor_error",), events)
+        self.assertNotIn(("buzzer", "beep_twice"), events)
+        self.assertNotIn(("buzzer", "beep_once"), events)
+        self.assertIn(("led", "sensor_error"), events)
+
+    def test_enrollment_sensor_timeout_does_not_use_error_beep_or_red_match_status(self):
+        events = []
+        api = FakeEnrollmentAPI()
+
+        class FailedEnrollmentService:
+            def enroll_from_command(self, *_args):
+                raise EnrollmentError("SENSOR_TIMEOUT", "No UART response")
+
+        import main
+        original_sleep = main.time.sleep
+        main.time.sleep = lambda _seconds: None
+        try:
+            sensor_faulted = run_enrollment(
+                {"enrollment_id": "enroll-timeout"},
+                "LYRA-DEVICE-001",
+                api,
+                FailedEnrollmentService(),
+                FakeOled(events),
+                FakeOutput(events, "buzzer"),
+                FakeOutput(events, "led"),
+            )
+        finally:
+            main.time.sleep = original_sleep
+
+        self.assertTrue(sensor_faulted)
+        self.assertIn(("show_sensor_error",), events)
+        self.assertIn(("led", "sensor_error"), events)
+        self.assertNotIn(("buzzer", "error_beep"), events)
+        self.assertNotIn(("led", "red_on"), events)
+
+
+    def test_attendance_scan_marks_r307_communication_error_for_backoff_recovery(self):
+        events = []
+        fingerprint = FakeAttendanceFingerprintService(
+            25,
+            events,
+            capture_error=R307CommunicationError("zero-byte UART timeout"),
+        )
+        api = FakeAttendanceAPI()
+        import main
+        original_sleep = main.time.sleep
+        main.time.sleep = lambda _seconds: None
+        try:
+            sensor_faulted = run_attendance_scan(
+                "LYRA-DEVICE-001",
+                api,
+                fingerprint,
+                FakeOled(events),
+                FakeOutput(events, "buzzer"),
+                FakeOutput(events, "led"),
+            )
+        finally:
+            main.time.sleep = original_sleep
+
+        self.assertTrue(sensor_faulted)
+        self.assertEqual(api.events, [])
 
     def test_api_error_is_distinct_and_does_not_signal_match_success(self):
         events = []

@@ -208,7 +208,7 @@ class DeviceHardwareStatusTests(unittest.TestCase):
         display.show_attendance_success("A very long employee display name", "CHECKED_OUT")
         self.assertEqual(
             display.oled.lines,
-            ["MATCH SUCCESS", "A very long employee", "CHECKED OUT"],
+            ["MATCH SUCCESS", "A very long employee", "Welcome!", "CHECKED OUT"],
         )
         self.assertEqual((display.oled.fill_count, display.oled.show_count), (2, 2))
 
@@ -219,7 +219,17 @@ class DeviceHardwareStatusTests(unittest.TestCase):
         display.oled = FakeDisplay()
 
         display.show_ready()
-        self.assertEqual(display.oled.lines, ["PLACE FINGER"])
+        self.assertEqual(
+            display.oled.lines,
+            ["LYRA TECH", "READY", "Place finger"],
+        )
+
+        display.oled.lines = []
+        display.show_not_found()
+        self.assertEqual(
+            display.oled.lines,
+            ["NO MATCH", "Access denied", "Try again"],
+        )
 
         display.oled.lines = []
         display._show_lines(["WELCOME", "CHECKED IN"])
@@ -276,7 +286,7 @@ class DeviceHardwareStatusTests(unittest.TestCase):
         display.show_attendance_success("WELCOME", "CHECKED_IN")
         self.assertEqual(
             [entry[0] for entry in display.oled.entries],
-            ["MATCH SUCCESS", "WELCOME", "CHECKED IN"],
+            ["MATCH SUCCESS", "WELCOME", "Welcome!", "CHECKED IN"],
         )
         self.assertTrue(all(entry[1] > 0 for entry in display.oled.entries))
 
@@ -284,7 +294,7 @@ class DeviceHardwareStatusTests(unittest.TestCase):
         display.show_attendance_success("WELCOME", "CHECKED_OUT")
         self.assertEqual(
             [entry[0] for entry in display.oled.entries],
-            ["MATCH SUCCESS", "WELCOME", "CHECKED OUT"],
+            ["MATCH SUCCESS", "WELCOME", "Welcome!", "CHECKED OUT"],
         )
         self.assertTrue(all(entry[1] > 0 for entry in display.oled.entries))
 

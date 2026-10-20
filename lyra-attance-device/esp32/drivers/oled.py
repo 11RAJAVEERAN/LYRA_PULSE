@@ -83,7 +83,7 @@ class OledDisplay:
         self._show_lines(["WiFi", "Connected"])
 
     def show_ready(self):
-        self._show_lines(["PLACE FINGER"])
+        self._show_lines(["LYRA TECH", "READY", "Place finger"])
 
     def show_welcome(self):
         self._show_lines(["WELCOME"])
@@ -110,7 +110,7 @@ class OledDisplay:
         self.show_match_success(name, attendance_status)
 
     def show_match_success(self, name, attendance_status=None):
-        lines = ["MATCH SUCCESS", name[:21].rstrip()]
+        lines = ["MATCH SUCCESS", name[:21].rstrip(), "Welcome!"]
         if attendance_status == "CHECKED_IN":
             lines.append("CHECKED IN")
         elif attendance_status == "CHECKED_OUT":
@@ -118,7 +118,7 @@ class OledDisplay:
         self._show_lines(lines)
 
     def show_not_found(self):
-        self._show_lines(["NO MATCH", "Try Again"])
+        self._show_lines(["NO MATCH", "Access denied", "Try again"])
 
     def show_sensor_error(self):
         self._show_lines(["SENSOR ERROR"])

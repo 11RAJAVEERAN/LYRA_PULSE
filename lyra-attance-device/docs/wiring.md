@@ -17,8 +17,10 @@
 ## Status outputs
 
 - Buzzer -> GPIO4
-- Green LED -> GPIO18
-- Red LED -> GPIO19
+- Green LED -> GPIO25
+- Blue LED -> GPIO26
+- Red LED -> GPIO27
+- R307 TOUCH -> GPIO18
 
 ## UART configuration
 
@@ -33,3 +35,7 @@
 The intended local development serial port is:
 
 - /dev/cu.usbserial-5B150103211
+
+Use the R307S module-rated supply voltage and connect the module and ESP32
+grounds together. Do not infer the correct sensor VCC from this wiring guide;
+check the exact module specification.

@@ -11,7 +11,7 @@ SECRET_KEY = os.getenv("SECRET_KEY", "dev-only-change-this-secret-key-before-pro
 DEBUG = os.getenv("DEBUG", "True").lower() == "true"
 ALLOWED_HOSTS = [
     host.strip()
-    for host in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1,192.168.1.8").split(",")
+    for host in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1,192.168.1.4").split(",")
     if host.strip()
 ]
 

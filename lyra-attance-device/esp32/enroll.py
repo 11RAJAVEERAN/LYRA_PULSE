@@ -2,10 +2,22 @@
 
 import time
 
-from config import ENROLLMENT_TEMPLATE_ID, MAX_TEMPLATE_COUNT
+from config import (
+    ENROLLMENT_STEP_TIMEOUT_SECONDS,
+    ENROLLMENT_TEMPLATE_ID,
+    MAX_TEMPLATE_COUNT,
+)
 from drivers.oled import OledDisplay
 from drivers.r307 import R307, R307FingerError
 from utils.logger import log
+
+
+def _deadline(timeout_seconds):
+    return time.ticks_add(time.ticks_ms(), timeout_seconds * 1000)
+
+
+def _remaining(deadline):
+    return time.ticks_diff(deadline, time.ticks_ms())
 
 
 def _show(display, lines):
@@ -15,24 +27,28 @@ def _show(display, lines):
 def _wait_for_finger(sensor, display, message):
     _show(display, message)
     print("ENROLL: %s" % " ".join(message))
-    while True:
+    deadline = _deadline(ENROLLMENT_STEP_TIMEOUT_SECONDS)
+    while _remaining(deadline) > 0:
         try:
             sensor.get_image()
             return
         except R307FingerError:
             time.sleep(0.1)
+    raise RuntimeError("Timed out waiting for a fingerprint image")
 
 
 def _wait_for_finger_removed(sensor, display):
     _show(display, ["Remove finger"])
     print("ENROLL: Remove finger")
-    while True:
+    deadline = _deadline(ENROLLMENT_STEP_TIMEOUT_SECONDS)
+    while _remaining(deadline) > 0:
         try:
             sensor.get_image()
             time.sleep(0.2)
         except R307FingerError:
             log("ENROLL", "Finger removed")
             return
+    raise RuntimeError("Timed out waiting for finger removal")
 
 
 def _enroll(sensor, display, template_id):
