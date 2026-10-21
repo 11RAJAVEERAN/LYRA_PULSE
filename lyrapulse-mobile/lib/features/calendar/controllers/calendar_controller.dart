@@ -9,44 +9,39 @@ class CalendarController extends GetxController {
 
   // Sample attendance data for October 2026.
   // Replace this map with API data when the backend is ready.
- 
-final Map<String, Map<String, String>> attendanceDetails = {
-  '2026-10-17': {
-    'checkIn': '09:15 AM',
-    'checkOut': '06:10 PM',
-    'workingTime': '8h 55m',
-    'regularization': 'Pending',
-  },
-  '2026-10-16': {
-    'checkIn': '09:05 AM',
-    'checkOut': '06:00 PM',
-    'workingTime': '8h 55m',
-    'regularization': 'None',
-  },
-};
-
-final Map<String, String> attendanceStatus = {
-  '2026-10-17': 'present',
-  '2026-10-16': 'present',
-};
-
-String get selectedDateKey {
-  final date = selectedDate.value;
-  final month = date.month.toString().padLeft(2, '0');
-  final day = date.day.toString().padLeft(2, '0');
-
-  return '${date.year}-$month-$day';
-}
-
-Map<String, String> get selectedAttendance {
-  return attendanceDetails[selectedDateKey] ??
-      {
-        'checkIn': '--:--',
-        'checkOut': '--:--',
-        'workingTime': '--',
-        'regularization': 'None',
-      };
-}
+  final Map<String, String> attendanceStatus = {
+    '2026-10-01': 'absent',
+    '2026-10-02': 'absent',
+    '2026-10-03': 'absent',
+    '2026-10-04': 'absent',
+    '2026-10-05': 'absent',
+    '2026-10-06': 'absent',
+    '2026-10-07': 'absent',
+    '2026-10-08': 'present',
+    '2026-10-09': 'present',
+    '2026-10-10': 'weekOff',
+    '2026-10-11': 'present',
+    '2026-10-12': 'late',
+    '2026-10-13': 'punchError',
+    '2026-10-14': 'present',
+    '2026-10-15': 'present',
+    '2026-10-16': 'present',
+    '2026-10-17': 'present',
+    '2026-10-18': 'weekOff',
+    '2026-10-19': 'upcoming',
+    '2026-10-20': 'upcoming',
+    '2026-10-21': 'upcoming',
+    '2026-10-22': 'upcoming',
+    '2026-10-23': 'upcoming',
+    '2026-10-24': 'weekOff',
+    '2026-10-25': 'weekOff',
+    '2026-10-26': 'upcoming',
+    '2026-10-27': 'upcoming',
+    '2026-10-28': 'upcoming',
+    '2026-10-29': 'upcoming',
+    '2026-10-30': 'upcoming',
+    '2026-10-31': 'weekOff',
+  };
 
   DateTime get displayedMonth => currentMonth.value;
 

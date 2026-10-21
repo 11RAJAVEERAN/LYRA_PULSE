@@ -1,226 +1,163 @@
 
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-
-import '../../../app/theme/app_colors.dart';
 import '../controllers/calendar_controller.dart';
 
-class AttendanceDayList extends GetView<CalendarController> {
-  const AttendanceDayList({super.key});
+class AttendanceDayList extends StatelessWidget {
+  final CalendarController controller;
+
+  const AttendanceDayList({
+    super.key,
+    required this.controller,
+  });
+
+  Color _statusColor(String status) {
+    switch (status) {
+      case 'present':
+        return const Color(0xFF20A45A);
+      case 'absent':
+        return const Color(0xFFD93640);
+      case 'leave':
+        return const Color(0xFF8956E8);
+      case 'halfDay':
+      case 'late':
+      case 'punchError':
+        return const Color(0xFFE69A0A);
+      case 'holiday':
+        return const Color(0xFF168F9B);
+      case 'weekOff':
+        return const Color(0xFF66788A);
+      default:
+        return const Color(0xFF9BA5B1);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Obx(() {
-      final date = controller.selectedDate.value;
-      final details = controller.selectedAttendance;
-      final pending = details['regularization'] == 'Pending';
+    final days = controller.visibleDays;
 
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Pending Regularization
-          if (pending) ...[
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFF7E6),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: const Color(0xFFFFD591),
-                ),
-              ),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.pending_actions_rounded,
-                    color: Color(0xFFD97706),
-                    size: 25,
-                  ),
-                  const SizedBox(width: 12),
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Pending Regularization',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF92400E),
-                          ),
-                        ),
-                        SizedBox(height: 5),
-                        Text(
-                          'Attendance correction is awaiting approval.',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Color(0xFF92400E),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Icon(
-                    Icons.access_time_rounded,
-                    color: Color(0xFFD97706),
-                  ),
-                ],
+    if (days.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(28),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: const Column(
+          children: [
+            Icon(
+              Icons.event_available_rounded,
+              size: 42,
+              color: Color(0xFF9BA5B1),
+            ),
+            SizedBox(height: 10),
+            Text(
+              'No attendance records found',
+              style: TextStyle(
+                color: Color(0xFF66788A),
+                fontWeight: FontWeight.w500,
               ),
             ),
-            const SizedBox(height: 20),
           ],
-
-          // Selected date
-          Text(
-            '${_weekday(date.weekday)}, '
-            '${date.day} ${_month(date.month)} ${date.year}',
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Check In and Check Out
-          Row(
-            children: [
-              Expanded(
-                child: _timeCard(
-                  title: 'Check In',
-                  time: details['checkIn'] ?? '--:--',
-                  icon: Icons.login_rounded,
-                  color: const Color(0xFF16A34A),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _timeCard(
-                  title: 'Check Out',
-                  time: details['checkOut'] ?? '--:--',
-                  icon: Icons.logout_rounded,
-                  color: const Color(0xFFEA580C),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-
-          // Total Working Time
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(
-                color: AppColors.border,
-              ),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFEFF6FF),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: const Icon(
-                    Icons.access_time_filled_rounded,
-                    color: Color(0xFF2563EB),
-                    size: 26,
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Total Working Time',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        details['workingTime'] ?? '--',
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF2563EB),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+        ),
       );
-    });
-  }
+    }
 
-  Widget _timeCard({
-    required String title,
-    required String time,
-    required IconData icon,
-    required Color color,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: color, size: 22),
-          const SizedBox(height: 12),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 12,
-              color: AppColors.textSecondary,
-            ),
-          ),
-          const SizedBox(height: 6),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: Text(
-              time,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
+    return Column(
+      children: days.map((day) {
+        final month = controller.currentMonth.value;
+        final date = DateTime(month.year, month.month, day);
+        final status = controller.statusForDay(day);
+        final color = _statusColor(status);
+        final selected = controller.selectedDate.value.year == date.year &&
+            controller.selectedDate.value.month == date.month &&
+            controller.selectedDate.value.day == date.day;
+
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: Material(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            child: InkWell(
+              onTap: () => controller.selectDate(day),
+              borderRadius: BorderRadius.circular(16),
+              child: Container(
+                padding: const EdgeInsets.all(13),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: selected
+                        ? const Color(0xFF1684B8)
+                        : const Color(0xFFEDF0F4),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 56,
+                      height: 62,
+                      decoration: BoxDecoration(
+                        color: color.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            '$day',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                              color: color,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            controller.weekdayShort(date),
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFF748091),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 15),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            controller.statusLabel(status),
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF202D3C),
+                            ),
+                          ),
+                          const SizedBox(height: 5),
+                          Text(
+                            '${controller.monthTitle} • ${controller.weekdayShort(date)}',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFF8A95A2),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      color: color,
+                      size: 25,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
-        ],
-      ),
+        );
+      }).toList(),
     );
-  }
-
-  String _weekday(int day) {
-    const days = [
-      'Monday', 'Tuesday', 'Wednesday', 'Thursday',
-      'Friday', 'Saturday', 'Sunday',
-    ];
-    return days[day - 1];
-  }
-
-  String _month(int month) {
-    const months = [
-      'January', 'February', 'March', 'April',
-      'May', 'June', 'July', 'August',
-      'September', 'October', 'November', 'December',
-    ];
-    return months[month - 1];
   }
 }
