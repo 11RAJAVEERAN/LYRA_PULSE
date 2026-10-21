@@ -1,16 +1,18 @@
+
 import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+
 import '../../../app/theme/app_colors.dart';
 
 import '../widgets/welcome_header.dart';
 import '../widgets/home_drawer.dart';
 import '../widgets/bottom_nav_bar.dart';
 
-
-
 import 'package:lyrapulse_mobile/features/attendance/controllers/attendance_controller.dart';
+import 'package:lyrapulse_mobile/features/attendance/widgets/break_tracking_panel.dart';
 import 'package:lyrapulse_mobile/features/attendance/views/location_verification_screen.dart';
 import 'package:lyrapulse_mobile/features/attendance/views/attendance_history_screen.dart';
 import 'package:lyrapulse_mobile/features/attendance/views/attendance_overview_screen.dart';
@@ -89,6 +91,15 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
 
+    if (attendanceController.activeBreak != null) {
+      Get.snackbar(
+        'Break In Progress',
+        'Please end your break before checking out.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
     Get.to(
       () => const LocationVerificationScreen(isCheckOut: true),
     );
@@ -113,51 +124,57 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _openCalendar() => Get.to(() => CalendarScreen());
 
+  void _onBottomNavChanged(int index) {
+    if (index == _selectedIndex) return;
 
-void _onBottomNavChanged(int index) {
-  if (index == _selectedIndex) return;
+    setState(() {
+      _selectedIndex = index;
+    });
 
-  setState(() {
-    _selectedIndex = index;
-  });
-
-  switch (index) {
-    case 0:
-      _openAttendanceRecords();
-      break;
-
-    case 1:
-      _openLeave();
-      break;
-
-    case 2:
-      // Home screen
-      break;
-
-    case 3:
-      _openNotification();
-      break;
-
-    case 4:
-      _openProfile();
-      break;
+    switch (index) {
+      case 0:
+        _openAttendanceRecords();
+        break;
+      case 1:
+        _openLeave();
+        break;
+      case 2:
+        break;
+      case 3:
+        _openNotification();
+        break;
+      case 4:
+        _openProfile();
+        break;
+    }
   }
-}
-
-
 
   String _getToday() {
     final now = DateTime.now();
 
     const weekdays = [
-      'Monday', 'Tuesday', 'Wednesday', 'Thursday',
-      'Friday', 'Saturday', 'Sunday',
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+      'Sunday',
     ];
 
     const months = [
-      'January', 'February', 'March', 'April',
-      'May', 'June', 'July', 'August',
-      'September', 'October', 'November', 'December',
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
     ];
 
     return '${weekdays[now.weekday - 1]}, '
@@ -166,46 +183,39 @@ void _onBottomNavChanged(int index) {
 
   @override
   Widget build(BuildContext context) {
-
-
     return Scaffold(
       key: _scaffoldKey,
-
-   
-
-
-drawer: HomeDrawer(
-  onHomeTap: () => Get.back(),
-  onProfileTap: () {
-    Get.back();
-    _openProfile();
-  },
-  onNotificationTap: () {
-    Get.back();
-    _openNotification();
-  },
-  onAttendanceHistoryTap: () {
-    Get.back();
-    _openAttendanceHistory();
-  },
-  onCalendarTap: () {
-    Get.back();
-    _openCalendar();
-  },
-  onPermissionTap: () {
-    Get.back();
-    _openPermission();
-  },
-  onLeaveTap: () {
-    Get.back();
-    _openLeave();
-  },
-  onLogoutTap: () {
-    Get.back();
-    Get.offAllNamed('/login');
-  },
-),
-
+      drawer: HomeDrawer(
+        onHomeTap: () => Get.back(),
+        onProfileTap: () {
+          Get.back();
+          _openProfile();
+        },
+        onNotificationTap: () {
+          Get.back();
+          _openNotification();
+        },
+        onAttendanceHistoryTap: () {
+          Get.back();
+          _openAttendanceHistory();
+        },
+        onCalendarTap: () {
+          Get.back();
+          _openCalendar();
+        },
+        onPermissionTap: () {
+          Get.back();
+          _openPermission();
+        },
+        onLeaveTap: () {
+          Get.back();
+          _openLeave();
+        },
+        onLogoutTap: () {
+          Get.back();
+          Get.offAllNamed('/login');
+        },
+      ),
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
@@ -217,22 +227,29 @@ drawer: HomeDrawer(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                  WelcomeHeader(
-  onProfileTap: () {
-    _scaffoldKey.currentState?.openDrawer();
-  },
-  onNotificationTap: _openNotification,
-),
-const SizedBox(height: 24),
-_buildHeroSection(),
+                    WelcomeHeader(
+                      onProfileTap: () {
+                        _scaffoldKey.currentState?.openDrawer();
+                      },
+                      onNotificationTap: _openNotification,
+                    ),
+                    const SizedBox(height: 24),
 
+                    _buildHeroSection(),
 
                     const SizedBox(height: 24),
                     _buildAttendanceTimeline(),
+
+                    // New break tracking section.
+                    const SizedBox(height: 20),
+                    const BreakTrackingPanel(),
+
                     const SizedBox(height: 24),
                     _buildQuickActions(),
+
                     const SizedBox(height: 24),
                     _buildStatsSection(),
+
                     const SizedBox(height: 24),
                     _buildOverviewSection(),
                   ],
@@ -242,15 +259,12 @@ _buildHeroSection(),
           ],
         ),
       ),
-bottomNavigationBar: BottomNavBar(
-  selectedIndex: _selectedIndex,
-  onChanged: _onBottomNavChanged,
-),
-
-    
+      bottomNavigationBar: BottomNavBar(
+        selectedIndex: _selectedIndex,
+        onChanged: _onBottomNavChanged,
+      ),
     );
   }
-
 
   Widget _buildHeroSection() {
     return Container(
@@ -346,38 +360,54 @@ bottomNavigationBar: BottomNavBar(
                 ],
               ),
               const SizedBox(height: 15),
-
-
-Obx(() {
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(
-        'Working Time',
-        style: GoogleFonts.inter(
-          color: AppColors.white,
-          fontSize: 15,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-      const SizedBox(height: 5),
-      Text(
-        attendanceController.formattedWorkingDuration,
-        style: GoogleFonts.inter(
-          color: AppColors.white,
-          fontSize: 28,
-          fontWeight: FontWeight.w700,
-          fontFeatures: const [
-            FontFeature.tabularFigures(),
-          ],
-        ),
-      ),
-    ],
-  );
-}),
-
-
-
+              Obx(
+                () => Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Working Time',
+                      style: GoogleFonts.inter(
+                        color: AppColors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      attendanceController.formattedWorkingDuration,
+                      style: GoogleFonts.inter(
+                        color: AppColors.white,
+                        fontSize: 28,
+                        fontWeight: FontWeight.w700,
+                        fontFeatures: const [
+                          FontFeature.tabularFigures(),
+                        ],
+                      ),
+                    ),
+                    if (attendanceController.activeBreak != null) ...[
+                      const SizedBox(height: 7),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.coffee_rounded,
+                            size: 15,
+                            color: Colors.white,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            '${attendanceController.activeBreak!.type} Break in Progress',
+                            style: GoogleFonts.inter(
+                              color: AppColors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+              ),
               const SizedBox(height: 22),
               Row(
                 children: [
@@ -715,8 +745,8 @@ Obx(() {
           attendanceController.formatTime(checkOut).split(' ');
 
       final hours = duration.inHours.toString().padLeft(2, '0');
-      final minutes = duration.inMinutes.remainder(60)
-          .toString().padLeft(2, '0');
+      final minutes =
+          duration.inMinutes.remainder(60).toString().padLeft(2, '0');
 
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -754,7 +784,7 @@ Obx(() {
             children: [
               Expanded(
                 child: _statCard(
-                  title: 'Total Hours',
+                  title: 'Net Working Time',
                   value: checkIn == null ? '--:--' : '$hours:$minutes',
                   suffix: 'hrs',
                   icon: Icons.timer_outlined,
@@ -1011,123 +1041,6 @@ Obx(() {
             ),
           ),
       ],
-    );
-  }
-
-  Widget _buildBottomNavigation() {
-    return Container(
-      color: AppColors.background,
-      padding: const EdgeInsets.fromLTRB(10, 8, 10, 14),
-      child: Container(
-        height: 66,
-        padding: const EdgeInsets.symmetric(horizontal: 4),
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: AppColors.border),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.black.withValues(alpha: 0.07),
-              blurRadius: 22,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: _bottomNavItem(
-                index: 1,
-                icon: Icons.calendar_month_rounded,
-                label: 'Attendance',
-                onTap: _openAttendanceRecords,
-              ),
-            ),
-            Expanded(
-              child: _bottomNavItem(
-                index: 2,
-                icon: Icons.beach_access_rounded,
-                label: 'Leave',
-                onTap: _openLeave,
-              ),
-            ),
-            Expanded(
-              child: _bottomNavItem(
-                index: 0,
-                icon: Icons.home_rounded,
-                label: 'Home',
-                onTap: () {},
-              ),
-            ),
-            Expanded(
-              child: _bottomNavItem(
-                index: 3,
-                icon: Icons.person_rounded,
-                label: 'Profile',
-                onTap: _openProfile,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _bottomNavItem({
-    required int index,
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    final selected = _selectedIndex == index;
-
-    return GestureDetector(
-      onTap: () {
-        setState(() => _selectedIndex = index);
-        onTap();
-      },
-      behavior: HitTestBehavior.opaque,
-      child: Center(
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 220),
-          padding: EdgeInsets.symmetric(
-            horizontal: selected ? 8 : 4,
-            vertical: 8,
-          ),
-          decoration: BoxDecoration(
-            color: selected
-                ? AppColors.primary.withValues(alpha: 0.08)
-                : AppColors.transparent,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                icon,
-                size: 21,
-                color: selected
-                    ? AppColors.primary
-                    : AppColors.textSecondary,
-              ),
-              if (selected) ...[
-                const SizedBox(height: 3),
-                Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.inter(
-                    fontSize: 8,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.primary,
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

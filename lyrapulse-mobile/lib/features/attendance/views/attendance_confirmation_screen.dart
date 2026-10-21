@@ -1,20 +1,23 @@
 
+import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:geocoding/geocoding.dart';
+import 'package:image_picker/image_picker.dart';
 
+import '../controllers/attendance_controller.dart';
 import 'check_in_success_screen.dart';
 import 'check_out_success_screen.dart';
-import '../controllers/attendance_controller.dart';
-import '../../../app/theme/app_colors.dart';
 
 class AttendanceConfirmationScreen extends StatefulWidget {
   final bool isCheckOut;
+  final String photoPath;
 
   const AttendanceConfirmationScreen({
     super.key,
     this.isCheckOut = false,
+    required this.photoPath,
   });
 
   @override
@@ -24,684 +27,294 @@ class AttendanceConfirmationScreen extends StatefulWidget {
 
 class _AttendanceConfirmationScreenState
     extends State<AttendanceConfirmationScreen> {
-  static const Color background = AppColors.hexFFF7FAFE;
-  static const Color navy = AppColors.hexFF19356C;
-  static const Color blue = AppColors.hexFF3978E8;
-  static const Color green = AppColors.hexFF18A66A;
-  static const Color textDark = AppColors.hexFF172B4D;
-  static const Color textGrey = AppColors.hexFF718096;
+  final ImagePicker _picker = ImagePicker();
 
-  late final AttendanceController attendanceController;
+  late XFile _capturedPhoto;
 
-  bool _isSaving = false;
-  bool _isLoadingLocation = true;
-  String _locationText = 'Getting current location...';
-  String _dateText = '';
-  Position? _position;
+  bool _isCapturing = false;
+  bool _isSubmitting = false;
+  String? _errorMessage;
+
+  static const Color primary = Color(0xFF2196F3);
+  static const Color background = Color(0xFFF4F8FC);
 
   @override
   void initState() {
     super.initState();
-
-    attendanceController =
-        Get.isRegistered<AttendanceController>()
-            ? Get.find<AttendanceController>()
-            : Get.put(AttendanceController(), permanent: true);
-
-    final now = DateTime.now();
-    _dateText = _formatDate(now);
-
-    _loadLocation();
+    _capturedPhoto = XFile(widget.photoPath);
   }
 
-  String _formatDate(DateTime date) {
-    final day = date.day.toString().padLeft(2, '0');
-    final month = date.month.toString().padLeft(2, '0');
-    return '$day/$month/${date.year}';
-  }
+  Future<void> _takeSelfie() async {
+    if (_isCapturing || _isSubmitting) return;
 
-  Future<void> _loadLocation() async {
+    setState(() {
+      _isCapturing = true;
+      _errorMessage = null;
+    });
+
     try {
-      final serviceEnabled =
-          await Geolocator.isLocationServiceEnabled();
-
-      if (!serviceEnabled) {
-        throw Exception('Please enable location services.');
-      }
-
-      LocationPermission permission =
-          await Geolocator.checkPermission();
-
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-      }
-
-      if (permission == LocationPermission.denied ||
-          permission == LocationPermission.deniedForever) {
-        throw Exception('Location permission is not available.');
-      }
-
-      final position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-        ),
+      final XFile? photo = await _picker.pickImage(
+        source: ImageSource.camera,
+        preferredCameraDevice: CameraDevice.front,
+        imageQuality: 85,
       );
 
-      String address =
-          '${position.latitude.toStringAsFixed(5)}, '
-          '${position.longitude.toStringAsFixed(5)}';
+      if (!mounted || photo == null) return;
 
-      try {
-        final placemarks = await placemarkFromCoordinates(
-          position.latitude,
-          position.longitude,
-        );
+      final file = File(photo.path);
 
-        if (placemarks.isNotEmpty) {
-          final place = placemarks.first;
-          final parts = <String?>[
-            place.subLocality,
-            place.locality,
-            place.administrativeArea,
-          ].where((part) => part != null && part.trim().isNotEmpty);
+      if (!await file.exists() || await file.length() == 0) {
+        if (!mounted) return;
 
-          final formatted = parts.join(', ');
-          if (formatted.isNotEmpty) {
-            address = formatted;
-          }
-        }
-      } catch (_) {
-        // Keep coordinates if reverse geocoding is unavailable.
+        setState(() {
+          _errorMessage = 'Photo not saved. Please retake.';
+        });
+        return;
       }
 
       if (!mounted) return;
 
       setState(() {
-        _position = position;
-        _locationText = address;
-        _isLoadingLocation = false;
+        _capturedPhoto = photo;
+        _errorMessage = null;
       });
-    } catch (_) {
+    } catch (e, stackTrace) {
+      debugPrint('Selfie retake error: $e');
+      debugPrintStack(stackTrace: stackTrace);
+
       if (!mounted) return;
 
       setState(() {
-        _locationText = 'Location unavailable';
-        _isLoadingLocation = false;
+        _errorMessage = 'Unable to open camera. Please try again.';
       });
-    }
-  }
-
-  Future<void> _confirmAttendance() async {
-    if (_isSaving) return;
-
-    if (_isLoadingLocation || _position == null) {
-      Get.snackbar(
-        'Location Required',
-        'Please wait until your current location is verified.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: navy,
-        colorText: AppColors.white,
-        margin: const EdgeInsets.all(16),
-      );
-      return;
-    }
-
-    setState(() => _isSaving = true);
-
-    try {
-      if (widget.isCheckOut) {
-        // Make sure the saved check-in is loaded before checkout.
-        if (attendanceController.checkInTime.value == null) {
-          Get.snackbar(
-            'Check In Required',
-            'Please complete your check in before checking out.',
-            snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: navy,
-            colorText: AppColors.white,
-            margin: const EdgeInsets.all(16),
-          );
-          return;
-        }
-
-        if (attendanceController.checkOutTime.value != null) {
-          Get.snackbar(
-            'Already Checked Out',
-            'Your check out has already been recorded.',
-            snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: navy,
-            colorText: AppColors.white,
-            margin: const EdgeInsets.all(16),
-          );
-          return;
-        }
-
-        await attendanceController.checkOutNow();
-
-        if (attendanceController.checkOutTime.value == null) {
-          throw Exception('Check out time was not saved.');
-        }
-
-        if (!mounted) return;
-
-        Get.off(
-          () => const CheckOutSuccessScreen(),
-          transition: Transition.rightToLeft,
-          duration: const Duration(milliseconds: 350),
-        );
-      } else {
-        if (attendanceController.isCheckedIn) {
-          Get.snackbar(
-            'Already Checked In',
-            'You have already checked in today.',
-            snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: navy,
-            colorText: AppColors.white,
-            margin: const EdgeInsets.all(16),
-          );
-          return;
-        }
-
-        await attendanceController.checkInNow();
-
-        if (attendanceController.checkInTime.value == null) {
-          throw Exception('Check in time was not saved.');
-        }
-
-        if (!mounted) return;
-
-        Get.off(
-          () => const CheckInSuccessScreen(),
-          transition: Transition.rightToLeft,
-          duration: const Duration(milliseconds: 350),
-        );
-      }
-    } catch (e) {
-      Get.snackbar(
-        'Attendance Error',
-        'Unable to save attendance. Please try again.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: AppColors.red.shade700,
-        colorText: AppColors.white,
-        margin: const EdgeInsets.all(16),
-      );
     } finally {
       if (mounted) {
-        setState(() => _isSaving = false);
+        setState(() => _isCapturing = false);
       }
     }
+  }
+
+  Future<void> _confirmPhoto() async {
+    if (_isCapturing || _isSubmitting) return;
+
+    setState(() {
+      _isSubmitting = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final file = File(_capturedPhoto.path);
+
+      if (!await file.exists() || await file.length() == 0) {
+        throw Exception('Photo is missing. Please retake your selfie.');
+      }
+
+      final AttendanceController controller =
+          Get.isRegistered<AttendanceController>()
+              ? Get.find<AttendanceController>()
+              : Get.put(AttendanceController());
+
+      if (widget.isCheckOut) {
+        if (controller.checkInTime.value == null) {
+          throw Exception('Please check in before checking out.');
+        }
+
+        await controller.checkOutNow();
+
+        if (controller.checkOutTime.value == null) {
+          throw Exception(
+            'Check-out was not completed. Please try again.',
+          );
+        }
+
+        if (!mounted) return;
+
+        Get.off(() => const CheckOutSuccessScreen());
+      } else {
+        if (controller.checkInTime.value != null &&
+            controller.isCheckedIn) {
+          throw Exception('You are already checked in.');
+        }
+
+        await controller.checkInNow();
+
+        if (controller.checkInTime.value == null) {
+          throw Exception('Check-in was not completed.');
+        }
+
+        if (!mounted) return;
+
+        Get.off(() => const CheckInSuccessScreen());
+      }
+    } catch (e, stackTrace) {
+      debugPrint('Confirm attendance error: $e');
+      debugPrintStack(stackTrace: stackTrace);
+
+      if (!mounted) return;
+
+      setState(() {
+        _errorMessage = e.toString().replaceFirst('Exception: ', '');
+      });
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
+  }
+
+  Widget _buildPhotoPreview() {
+    return FutureBuilder<Uint8List>(
+      key: ValueKey(_capturedPhoto.path),
+      future: _capturedPhoto.readAsBytes(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: CircularProgressIndicator(color: primary),
+          );
+        }
+
+        if (snapshot.hasError ||
+            !snapshot.hasData ||
+            snapshot.data!.isEmpty) {
+          return const Center(
+            child: Text('Unable to display photo. Please retake.'),
+          );
+        }
+
+        return Image.memory(
+          snapshot.data!,
+          width: double.infinity,
+          height: double.infinity,
+          fit: BoxFit.contain,
+          gaplessPlayback: true,
+          errorBuilder: (_, __, ___) {
+            return const Center(
+              child: Text('Unable to display photo.'),
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final isCheckOut = widget.isCheckOut;
+    final action = widget.isCheckOut ? 'Check Out' : 'Check In';
 
     return Scaffold(
       backgroundColor: background,
+      appBar: AppBar(
+        title: Text('$action Selfie'),
+        backgroundColor: const Color(0xFF42A5F5),
+        foregroundColor: Colors.white,
+        elevation: 0,
+      ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 22),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
           child: Column(
             children: [
-              const SizedBox(height: 24),
-
-              // TOP BAR
-              Row(
-                children: [
-                  _iconButton(
-                    icon: Icons.arrow_back_ios_new_rounded,
-                    onTap: () => Get.back(),
-                  ),
-                  Expanded(
-                    child: Center(
-                      child: Text(
-                        isCheckOut
-                            ? 'Check Out Confirmation'
-                            : 'Attendance Confirmation',
-                        style: const TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w700,
-                          color: navy,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 44),
-                ],
-              ),
-
-              const SizedBox(height: 30),
-
-              // STATUS ICON
-              Container(
-                width: 92,
-                height: 92,
-                decoration: BoxDecoration(
-                  color: blue.withOpacity(0.10),
-                  shape: BoxShape.circle,
-                ),
-                child: Container(
-                  margin: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: blue.withOpacity(0.14),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    isCheckOut
-                        ? Icons.logout_rounded
-                        : Icons.login_rounded,
-                    color: blue,
-                    size: 36,
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 22),
-
-              Text(
-                isCheckOut ? 'CHECK OUT READY' : 'CHECK IN READY',
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.4,
-                  color: textDark,
-                ),
-              ),
-
-              const SizedBox(height: 8),
-
-              Text(
-                isCheckOut
-                    ? 'Please review your details before\nconfirming your check out.'
-                    : 'Please review your details before\nconfirming your attendance.',
+              const SizedBox(height: 12),
+              const Text(
+                'Verify Your Photo',
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 13,
-                  height: 1.5,
-                  color: textGrey,
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF17365D),
                 ),
               ),
-
-              const SizedBox(height: 28),
-
-              // EMPLOYEE DETAILS
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                decoration: _cardDecoration(),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Employee Details',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
-                        color: navy,
-                      ),
+              const SizedBox(height: 8),
+              const Text(
+                'Make sure your face is clearly visible before continuing.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.black54),
+              ),
+              const SizedBox(height: 24),
+              Expanded(
+                child: Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                      color: const Color(0xFFD8E8F8),
                     ),
-                    const SizedBox(height: 18),
-                    const _DetailRow(
-                      icon: Icons.person_rounded,
-                      title: 'Employee Name',
-                      value: 'Employee',
-                    ),
-                    const SizedBox(height: 16),
-                    const _DetailRow(
-                      icon: Icons.badge_rounded,
-                      title: 'Employee ID',
-                      value: 'LYRA001',
-                    ),
-                  ],
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: _isCapturing
+                      ? const Center(
+                          child: CircularProgressIndicator(color: primary),
+                        )
+                      : _buildPhotoPreview(),
                 ),
               ),
-
-              const SizedBox(height: 16),
-
-              // ATTENDANCE DETAILS
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                decoration: _cardDecoration(),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      isCheckOut
-                          ? 'Check Out Details'
-                          : 'Attendance Details',
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
-                        color: navy,
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-
-                    Obx(() {
-                      final savedTime = isCheckOut
-                          ? attendanceController.checkOutTime.value
-                          : attendanceController.checkInTime.value;
-
-                      final displayTime = savedTime ?? DateTime.now();
-
-                      return _DetailRow(
-                        icon: isCheckOut
-                            ? Icons.logout_rounded
-                            : Icons.login_rounded,
-                        title: isCheckOut
-                            ? 'Check Out Time'
-                            : 'Check In Time',
-                        value: attendanceController.formatTime(
-                          displayTime,
-                        ),
-                      );
-                    }),
-
-                    const SizedBox(height: 16),
-
-                    _DetailRow(
-                      icon: Icons.location_on_rounded,
-                      title: 'Location',
-                      value: _locationText,
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    _DetailRow(
-                      icon: Icons.calendar_today_rounded,
-                      title: 'Date',
-                      value: _dateText,
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              // VERIFICATION STATUS
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: green.withOpacity(0.06),
-                  borderRadius: BorderRadius.circular(22),
-                  border: Border.all(
-                    color: green.withOpacity(0.14),
+              if (_errorMessage != null) ...[
+                const SizedBox(height: 10),
+                Text(
+                  _errorMessage!,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.red,
+                    fontSize: 13,
                   ),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Verification Status',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
-                        color: navy,
-                      ),
-                    ),
-                    const SizedBox(height: 17),
-                    _VerificationRow(
-                      title: 'Location Verified',
-                      verified: _position != null,
-                    ),
-                    const SizedBox(height: 13),
-                    const _VerificationRow(
-                      title: 'Face Verified',
-                      verified: true,
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 26),
-
-              // CONFIRM BUTTON
+              ],
+              const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
                 height: 54,
-                child: ElevatedButton(
-                  onPressed: _isSaving ? null : _confirmAttendance,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: navy,
-                    foregroundColor: AppColors.white,
-                    disabledBackgroundColor: navy.withOpacity(0.6),
-                    elevation: 0,
+                child: OutlinedButton.icon(
+                  onPressed: _isCapturing || _isSubmitting
+                      ? null
+                      : _takeSelfie,
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Retake Photo'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: primary,
+                    side: const BorderSide(color: primary),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(14),
                     ),
                   ),
-                  child: _isSaving
-                      ? const SizedBox(
-                          width: 22,
-                          height: 22,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: AppColors.white,
-                          ),
-                        )
-                      : Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              isCheckOut
-                                  ? Icons.logout_rounded
-                                  : Icons.login_rounded,
-                              size: 19,
-                            ),
-                            const SizedBox(width: 9),
-                            Text(
-                              isCheckOut
-                                  ? 'Confirm Check Out'
-                                  : 'Confirm Check In',
-                              style: const TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ],
-                        ),
                 ),
               ),
-
               const SizedBox(height: 12),
-
               SizedBox(
                 width: double.infinity,
-                height: 50,
-                child: TextButton(
-                  onPressed: _isSaving ? null : () => Get.back(),
-                  child: const Text(
-                    'Cancel',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: textGrey,
+                height: 54,
+                child: ElevatedButton.icon(
+                  onPressed: _isCapturing || _isSubmitting
+                      ? null
+                      : _confirmPhoto,
+                  icon: _isSubmitting
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(Icons.check_circle_outline),
+                  label: Text(
+                    _isSubmitting ? 'Please wait...' : 'Confirm Photo',
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primary,
+                    foregroundColor: Colors.white,
+                    disabledBackgroundColor: Colors.grey.shade300,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
                     ),
                   ),
                 ),
               ),
-
               const SizedBox(height: 12),
-
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.lock_outline_rounded,
-                    size: 15,
-                    color: AppColors.grey.shade500,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Your attendance data is securely verified',
-                    style: TextStyle(
-                      fontSize: 10.5,
-                      color: AppColors.grey.shade500,
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 20),
-
-              const Text(
-                'LYRA PULSE',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 2,
-                  color: navy,
-                ),
-              ),
-
-              const SizedBox(height: 25),
             ],
           ),
         ),
       ),
-    );
-  }
-
-  Widget _iconButton({
-    required IconData icon,
-    required VoidCallback onTap,
-  }) {
-    return Container(
-      width: 44,
-      height: 44,
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.black.withOpacity(0.05),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: IconButton(
-        onPressed: onTap,
-        icon: Icon(icon, size: 18, color: navy),
-      ),
-    );
-  }
-
-  BoxDecoration _cardDecoration() {
-    return BoxDecoration(
-      color: AppColors.white,
-      borderRadius: BorderRadius.circular(22),
-      boxShadow: [
-        BoxShadow(
-          color: AppColors.black.withOpacity(0.045),
-          blurRadius: 20,
-          offset: const Offset(0, 8),
-        ),
-      ],
-    );
-  }
-}
-
-class _DetailRow extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String value;
-
-  const _DetailRow({
-    required this.icon,
-    required this.title,
-    required this.value,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: AppColors.hexFFF1F5FB,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(
-            icon,
-            size: 19,
-            color: AppColors.hexFF3978E8,
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Text(
-            title,
-            style: const TextStyle(
-              fontSize: 12.5,
-              color: AppColors.hexFF718096,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ),
-        Flexible(
-          child: Text(
-            value,
-            textAlign: TextAlign.end,
-            style: const TextStyle(
-              fontSize: 13,
-              color: AppColors.hexFF19356C,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _VerificationRow extends StatelessWidget {
-  final String title;
-  final bool verified;
-
-  const _VerificationRow({
-    required this.title,
-    this.verified = true,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final color = verified
-        ? AppColors.hexFF18A66A
-        : AppColors.hexFFB8C3D0;
-
-    return Row(
-      children: [
-        Icon(
-          verified
-              ? Icons.check_circle_rounded
-              : Icons.radio_button_unchecked_rounded,
-          color: color,
-          size: 21,
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            title,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: AppColors.hexFF19356C,
-            ),
-          ),
-        ),
-        Text(
-          verified ? 'Verified' : 'Pending',
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            color: color,
-          ),
-        ),
-      ],
     );
   }
 }

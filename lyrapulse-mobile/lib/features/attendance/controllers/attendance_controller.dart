@@ -1,8 +1,75 @@
+
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+class BreakSession {
+  final String id;
+  final String type;
+  final DateTime startTime;
+  final DateTime? endTime;
+  final double? startLatitude;
+  final double? startLongitude;
+  final double? endLatitude;
+  final double? endLongitude;
+  final String? endAddress;
+
+  const BreakSession({
+    required this.id,
+    required this.type,
+    required this.startTime,
+    this.endTime,
+    this.startLatitude,
+    this.startLongitude,
+    this.endLatitude,
+    this.endLongitude,
+    this.endAddress,
+  });
+
+  bool get isActive => endTime == null;
+
+  Duration durationAt(DateTime now) {
+    final duration = (endTime ?? now).difference(startTime);
+    return duration.isNegative ? Duration.zero : duration;
+  }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'type': type,
+        'startTime': startTime.toIso8601String(),
+        'endTime': endTime?.toIso8601String(),
+        'startLatitude': startLatitude,
+        'startLongitude': startLongitude,
+        'endLatitude': endLatitude,
+        'endLongitude': endLongitude,
+        'endAddress': endAddress,
+      };
+
+  factory BreakSession.fromJson(Map<String, dynamic> json) {
+    double? number(dynamic value) {
+      return value is num ? value.toDouble() : null;
+    }
+
+    return BreakSession(
+      id: json['id'] as String,
+      type: json['type'] as String,
+      startTime: DateTime.parse(json['startTime'] as String),
+      endTime: json['endTime'] == null
+          ? null
+          : DateTime.parse(json['endTime'] as String),
+      startLatitude: number(json['startLatitude']),
+      startLongitude: number(json['startLongitude']),
+      endLatitude: number(json['endLatitude']),
+      endLongitude: number(json['endLongitude']),
+      endAddress: json['endAddress'] as String?,
+    );
+  }
+}
 
 class AttendanceController extends GetxController {
   final Rxn<DateTime> checkInTime = Rxn<DateTime>();
@@ -13,35 +80,73 @@ class AttendanceController extends GetxController {
   final RxList<Map<String, dynamic>> attendanceHistory =
       <Map<String, dynamic>>[].obs;
 
+  final RxList<BreakSession> breakSessions =
+      <BreakSession>[].obs;
+
+  final RxBool isBreakLoading = true.obs;
+
+  // Obx listens to this value so displayed timers refresh every second.
+  final RxInt _clockTick = 0.obs;
+
   Timer? _timer;
+  bool _isInitialized = false;
 
   static const String _checkInKey = 'attendance_check_in';
   static const String _checkOutKey = 'attendance_check_out';
   static const String _historyKey = 'attendance_history';
 
-  bool _isInitialized = false;
+  String _breakKey(DateTime date) => 'lyra_breaks_${_dateKey(date)}';
 
-  // HomeScreen and confirmation screen compatibility.
-  bool get isCheckedIn {
-    return checkInTime.value != null && !isCompleted;
+  BreakSession? get activeBreak {
+    for (final session in breakSessions.reversed) {
+      if (session.isActive) return session;
+    }
+    return null;
   }
 
-  bool get isCompleted {
-    return checkInTime.value != null &&
-        checkOutTime.value != null;
+  bool get canStartBreak => activeBreak == null;
+  bool get canEndBreak => activeBreak != null;
+  bool get canCheckOut => activeBreak == null;
+
+  Duration get totalBreakDuration {
+    _clockTick.value;
+
+    final now = DateTime.now();
+
+    return breakSessions.fold<Duration>(
+      Duration.zero,
+      (total, session) => total + session.durationAt(now),
+    );
   }
+
+  // IMPORTANT: the active break timer subscribes to _clockTick.
+  Duration get activeBreakDuration {
+    _clockTick.value;
+
+    final current = activeBreak;
+    if (current == null) return Duration.zero;
+
+    return current.durationAt(DateTime.now());
+  }
+
+  String get formattedBreakDuration =>
+      formatDuration(totalBreakDuration);
+
+  String get formattedNetWorkingDuration =>
+      formatDuration(workingDuration.value);
 
   String get attendanceStatus {
-    if (isCompleted) {
-      return 'Completed';
-    }
-
-    if (isCheckedIn) {
-      return 'Checked In';
-    }
-
+    if (isCompleted) return 'Completed';
+    if (activeBreak != null) return 'On Break';
+    if (isCheckedIn) return 'Checked In';
     return 'Not Checked In';
   }
+
+  bool get isCheckedIn =>
+      checkInTime.value != null && !isCompleted;
+
+  bool get isCompleted =>
+      checkInTime.value != null && checkOutTime.value != null;
 
   @override
   void onInit() {
@@ -55,10 +160,8 @@ class AttendanceController extends GetxController {
     await loadHistory();
 
     final prefs = await SharedPreferences.getInstance();
-
     final savedCheckIn = prefs.getString(_checkInKey);
     final savedCheckOut = prefs.getString(_checkOutKey);
-
     final now = DateTime.now();
 
     final parsedCheckIn = savedCheckIn == null
@@ -69,25 +172,23 @@ class AttendanceController extends GetxController {
         ? null
         : DateTime.tryParse(savedCheckOut);
 
-    if (parsedCheckIn != null &&
-        _sameDate(parsedCheckIn, now)) {
+    if (parsedCheckIn != null && _sameDate(parsedCheckIn, now)) {
       checkInTime.value = parsedCheckIn;
 
-      if (parsedCheckOut != null &&
-          _sameDate(parsedCheckOut, now)) {
-        checkOutTime.value = parsedCheckOut;
-      } else {
-        checkOutTime.value = null;
-      }
+      checkOutTime.value =
+          parsedCheckOut != null && _sameDate(parsedCheckOut, now)
+              ? parsedCheckOut
+              : null;
     } else {
       checkInTime.value = null;
       checkOutTime.value = null;
     }
 
-    _updateWorkingDuration();
-    _startTimer();
+    await loadBreakSessions();
 
     _isInitialized = true;
+    _updateWorkingDuration();
+    _startTimer();
 
     if (checkInTime.value != null) {
       await _syncHistory();
@@ -109,24 +210,231 @@ class AttendanceController extends GetxController {
       if (decoded is List) {
         final records = decoded
             .whereType<Map>()
-            .map(
-              (item) => Map<String, dynamic>.from(item),
-            )
+            .map((item) => Map<String, dynamic>.from(item))
             .toList();
 
-        records.sort((a, b) {
-          final dateA = a['date']?.toString() ?? '';
-          final dateB = b['date']?.toString() ?? '';
-          return dateB.compareTo(dateA);
-        });
+        records.sort(
+          (a, b) => (b['date']?.toString() ?? '')
+              .compareTo(a['date']?.toString() ?? ''),
+        );
 
         attendanceHistory.assignAll(records);
       }
     } catch (e) {
-      print('Attendance history loading error: $e');
+      debugPrint('Attendance history loading error: $e');
     }
   }
 
+  Future<void> loadBreakSessions() async {
+    isBreakLoading.value = true;
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_breakKey(DateTime.now()));
+
+      if (raw == null || raw.isEmpty) {
+        breakSessions.clear();
+      } else {
+        final decoded = jsonDecode(raw) as List;
+
+        breakSessions.assignAll(
+          decoded.map(
+            (item) => BreakSession.fromJson(
+              Map<String, dynamic>.from(item as Map),
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Break history loading error: $e');
+      breakSessions.clear();
+    } finally {
+      isBreakLoading.value = false;
+      _updateWorkingDuration();
+    }
+  }
+
+  Future<void> _saveBreakSessions() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    await prefs.setString(
+      _breakKey(DateTime.now()),
+      jsonEncode(
+        breakSessions.map((session) => session.toJson()).toList(),
+      ),
+    );
+  }
+
+  Future<Position> _getCurrentPosition() async {
+    final serviceEnabled =
+        await Geolocator.isLocationServiceEnabled();
+
+    if (!serviceEnabled) {
+      throw Exception('Please turn on your device location.');
+    }
+
+    var permission = await Geolocator.checkPermission();
+
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
+
+    if (permission == LocationPermission.denied) {
+      throw Exception('Location permission was denied.');
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      throw Exception(
+        'Location permission is permanently denied. Enable it in Settings.',
+      );
+    }
+
+    return Geolocator.getCurrentPosition(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.high,
+      ),
+    );
+  }
+
+  Future<String?> _getAddress(
+    double latitude,
+    double longitude,
+  ) async {
+    try {
+      final places = await placemarkFromCoordinates(
+        latitude,
+        longitude,
+      );
+
+      if (places.isEmpty) return null;
+
+      final place = places.first;
+
+      final parts = <String?>[
+        place.name,
+        place.street,
+        place.subLocality,
+        place.locality,
+        place.administrativeArea,
+        place.postalCode,
+      ]
+          .whereType<String>()
+          .map((value) => value.trim())
+          .where((value) => value.isNotEmpty)
+          .toSet()
+          .toList();
+
+      return parts.isEmpty ? null : parts.join(', ');
+    } catch (e) {
+      debugPrint('Break return address lookup error: $e');
+      return null;
+    }
+  }
+
+  // BREAK CHECK OUT: leaving for a break starts the timer.
+  Future<String?> startBreak(String type) async {
+    await _ensureInitialized();
+
+    if (activeBreak != null) {
+      return 'A break is already in progress.';
+    }
+
+    final now = DateTime.now();
+    final id = now.microsecondsSinceEpoch.toString();
+
+    final session = BreakSession(
+      id: id,
+      type: type,
+      startTime: now,
+    );
+
+    breakSessions.add(session);
+
+    try {
+      await _saveBreakSessions();
+      _updateWorkingDuration();
+
+      // Start the timer even if work attendance is not checked in.
+      _startTimer();
+
+      if (checkInTime.value != null) {
+        await _syncHistory();
+      }
+
+      return null;
+    } catch (e) {
+      breakSessions.removeWhere((item) => item.id == id);
+      _updateWorkingDuration();
+      _startTimer();
+
+      debugPrint('Break start save error: $e');
+      return 'Unable to save break. Please try again.';
+    }
+  }
+
+  // BREAK CHECK IN: returning ends the break and saves GPS.
+  Future<String?> endBreak() async {
+    await _ensureInitialized();
+
+    final current = activeBreak;
+
+    if (current == null) {
+      return 'There is no active break.';
+    }
+
+    final index = breakSessions.indexWhere(
+      (item) => item.id == current.id,
+    );
+
+    if (index == -1) {
+      return 'Could not find the active break.';
+    }
+
+    try {
+      final position = await _getCurrentPosition();
+
+      final address = await _getAddress(
+        position.latitude,
+        position.longitude,
+      );
+
+      final completedSession = BreakSession(
+        id: current.id,
+        type: current.type,
+        startTime: current.startTime,
+        endTime: DateTime.now(),
+        startLatitude: current.startLatitude,
+        startLongitude: current.startLongitude,
+        endLatitude: position.latitude,
+        endLongitude: position.longitude,
+        endAddress: address,
+      );
+
+      breakSessions[index] = completedSession;
+
+      try {
+        await _saveBreakSessions();
+      } catch (e) {
+        breakSessions[index] = current;
+        rethrow;
+      }
+
+      _updateWorkingDuration();
+      _startTimer();
+
+      if (checkInTime.value != null) {
+        await _syncHistory();
+      }
+
+      return null;
+    } catch (e) {
+      debugPrint('Break check-in error: $e');
+
+      return e.toString().replaceFirst('Exception: ', '');
+    }
+  }
+
+  // WORK CHECK IN remains separate from break tracking.
   Future<void> checkInNow() async {
     await _ensureInitialized();
 
@@ -141,6 +449,8 @@ class AttendanceController extends GetxController {
     checkOutTime.value = null;
     workingDuration.value = Duration.zero;
 
+    // Do not clear saved break sessions.
+
     final prefs = await SharedPreferences.getInstance();
 
     await prefs.setString(
@@ -154,19 +464,20 @@ class AttendanceController extends GetxController {
     _startTimer();
   }
 
+  // WORK CHECK OUT remains separate from break tracking.
   Future<void> checkOutNow() async {
     await _ensureInitialized();
 
     final checkIn = checkInTime.value;
 
-    if (checkIn == null ||
+    if (activeBreak != null ||
+        checkIn == null ||
         checkOutTime.value != null ||
         !_sameDate(checkIn, DateTime.now())) {
       return;
     }
 
     final now = DateTime.now();
-
     checkOutTime.value = now;
 
     final prefs = await SharedPreferences.getInstance();
@@ -177,7 +488,6 @@ class AttendanceController extends GetxController {
     );
 
     _updateWorkingDuration();
-
     await _syncHistory();
     _stopTimer();
   }
@@ -190,26 +500,41 @@ class AttendanceController extends GetxController {
 
   Future<void> _syncHistory() async {
     final checkIn = checkInTime.value;
-
     if (checkIn == null) return;
 
     final checkOut = checkOutTime.value;
     final date = _dateKey(checkIn);
+    final end = checkOut ?? DateTime.now();
 
-    final record = <String, dynamic>{
-      'date': date,
-      'checkIn': checkIn.toIso8601String(),
-      'checkOut': checkOut?.toIso8601String(),
-      'status': checkOut == null ? 'Checked In' : 'Completed',
-      'workingMinutes': _calculateWorkingMinutes(
-        checkIn,
-        checkOut ?? DateTime.now(),
-      ),
-    };
+    final breakMinutes = breakSessions.fold<int>(
+      0,
+      (total, session) =>
+          total + session.durationAt(end).inMinutes,
+    );
+
+    final elapsedMinutes =
+        end.difference(checkIn).inMinutes;
+
+    final netMinutes =
+        (elapsedMinutes - breakMinutes).clamp(0, 100000000).toInt();
 
     final index = attendanceHistory.indexWhere(
       (item) => item['date']?.toString() == date,
     );
+
+    // Merge with the existing record to preserve unrelated fields.
+    final record = <String, dynamic>{
+      if (index >= 0) ...attendanceHistory[index],
+      'date': date,
+      'checkIn': checkIn.toIso8601String(),
+      'checkOut': checkOut?.toIso8601String(),
+      'status': checkOut == null ? 'Checked In' : 'Completed',
+      'workingMinutes': netMinutes,
+      'breakMinutes': breakMinutes,
+      'breakSessions': breakSessions
+          .map((session) => session.toJson())
+          .toList(),
+    };
 
     if (index >= 0) {
       attendanceHistory[index] = record;
@@ -217,11 +542,10 @@ class AttendanceController extends GetxController {
       attendanceHistory.add(record);
     }
 
-    attendanceHistory.sort((a, b) {
-      final dateA = a['date']?.toString() ?? '';
-      final dateB = b['date']?.toString() ?? '';
-      return dateB.compareTo(dateA);
-    });
+    attendanceHistory.sort(
+      (a, b) => (b['date']?.toString() ?? '')
+          .compareTo(a['date']?.toString() ?? ''),
+    );
 
     final prefs = await SharedPreferences.getInstance();
 
@@ -229,17 +553,6 @@ class AttendanceController extends GetxController {
       _historyKey,
       jsonEncode(attendanceHistory.toList()),
     );
-  }
-
-  int _calculateWorkingMinutes(
-    DateTime start,
-    DateTime end,
-  ) {
-    final difference = end.difference(start);
-
-    if (difference.isNegative) return 0;
-
-    return difference.inMinutes;
   }
 
   void _updateWorkingDuration() {
@@ -251,24 +564,27 @@ class AttendanceController extends GetxController {
     }
 
     final end = checkOutTime.value ?? DateTime.now();
-    final difference = end.difference(checkIn);
+    final elapsed = end.difference(checkIn);
+    final net = elapsed - totalBreakDuration;
 
-    workingDuration.value = difference.isNegative
-        ? Duration.zero
-        : difference;
+    workingDuration.value =
+        net.isNegative ? Duration.zero : net;
   }
 
   void _startTimer() {
     _stopTimer();
 
-    if (checkInTime.value == null ||
-        checkOutTime.value != null) {
+    // Keep ticking while either work attendance or a break is active.
+    if ((checkInTime.value == null ||
+            checkOutTime.value != null) &&
+        activeBreak == null) {
       return;
     }
 
     _timer = Timer.periodic(
       const Duration(seconds: 1),
       (_) {
+        _clockTick.value++;
         _updateWorkingDuration();
       },
     );
@@ -279,11 +595,10 @@ class AttendanceController extends GetxController {
     _timer = null;
   }
 
-  bool _sameDate(DateTime a, DateTime b) {
-    return a.year == b.year &&
-        a.month == b.month &&
-        a.day == b.day;
-  }
+  bool _sameDate(DateTime a, DateTime b) =>
+      a.year == b.year &&
+      a.month == b.month &&
+      a.day == b.day;
 
   String _dateKey(DateTime date) {
     final year = date.year.toString().padLeft(4, '0');
@@ -303,9 +618,16 @@ class AttendanceController extends GetxController {
     return '${hour.toString().padLeft(2, '0')}:$minute $period';
   }
 
-  String get formattedWorkingDuration {
-    final duration = workingDuration.value;
+  String formatDuration(Duration duration) {
+    final hours = duration.inHours.toString().padLeft(2, '0');
+    final minutes =
+        duration.inMinutes.remainder(60).toString().padLeft(2, '0');
 
+    return '${hours}h ${minutes}m';
+  }
+
+  // Includes seconds so the active timer visibly counts upward.
+  String formatElapsedDuration(Duration duration) {
     final hours = duration.inHours.toString().padLeft(2, '0');
     final minutes =
         duration.inMinutes.remainder(60).toString().padLeft(2, '0');
@@ -315,6 +637,12 @@ class AttendanceController extends GetxController {
     return '$hours:$minutes:$seconds';
   }
 
+  String get formattedWorkingDuration {
+    final duration = workingDuration.value;
+    return formatElapsedDuration(duration);
+  }
+
+  // Preserve attendance history and break records.
   Future<void> resetAttendance() async {
     _stopTimer();
 
@@ -326,8 +654,6 @@ class AttendanceController extends GetxController {
 
     await prefs.remove(_checkInKey);
     await prefs.remove(_checkOutKey);
-
-    // Keep previously saved attendance history.
   }
 
   @override
@@ -336,3 +662,4 @@ class AttendanceController extends GetxController {
     super.onClose();
   }
 }
+
