@@ -8,6 +8,7 @@ export const employeesApi = {
   get: async (id) => unwrap(await apiClient.get(`/employees/${id}/`)),
   create: async (payload) => unwrap(await apiClient.post('/employees/', payload)),
   update: async (id, payload) => unwrap(await apiClient.patch(`/employees/${id}/`, payload)),
+  manualAttendance: async (employeeId) => unwrap(await apiClient.post('/attendance/admin/manual/', { employee_id: employeeId })),
   formAccess: async () => unwrap(await apiClient.get('/employees/form-access/')),
   employeeTypes: async () => list(unwrap(await apiClient.get('/employee-types/'))),
   payrollGroups: async () => list(unwrap(await apiClient.get('/payroll-groups/'))),

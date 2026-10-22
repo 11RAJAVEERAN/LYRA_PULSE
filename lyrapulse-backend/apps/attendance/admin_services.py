@@ -22,7 +22,7 @@ A range is reported as one logical row per employee PER DAY (never collapsed int
 grouped by date (newest first by default); the other sort keys order the rows inside each date.
 """
 import datetime as dt
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List, Optional
 
 from django.db.models import Count, Exists, F, OuterRef, Q, Subquery
@@ -67,6 +67,7 @@ class AttendanceRow:
     employee: Employee
     attendance_date: dt.date
     attendance: Optional[Attendance]
+    sessions: list = field(default_factory=list)
 
     @property
     def status(self):
@@ -86,6 +87,11 @@ def working_seconds(attendance):
         return None
     seconds = int((attendance.check_out_at - attendance.check_in_at).total_seconds())
     return seconds if seconds >= 0 else None
+
+
+def total_working_seconds(sessions):
+    values = [working_seconds(item) for item in sessions]
+    return None if not any(value is not None for value in values) else sum(value or 0 for value in values)
 
 
 def format_duration(seconds):
@@ -168,11 +174,10 @@ def _rows_for_day(user, day, filters, start, stop):
     queryset = (day_queryset(user, day, filters).select_related(*EMPLOYEE_RELATED)
                 .order_by(*_order_by(filters.ordering))[start:stop])
     employees = list(queryset)
-    records = {
-        record.employee_id: record
-        for record in Attendance.objects.filter(employee_id__in=[e.pk for e in employees], attendance_date=day)
-    }
-    return [AttendanceRow(employee, day, records.get(employee.pk)) for employee in employees]
+    records = {}
+    for record in Attendance.objects.filter(employee_id__in=[e.pk for e in employees], attendance_date=day).prefetch_related("actions").order_by("check_in_at", "pk"):
+        records.setdefault(record.employee_id, []).append(record)
+    return [AttendanceRow(employee, day, (records.get(employee.pk) or [None])[-1], records.get(employee.pk, [])) for employee in employees]
 
 
 class AttendanceRowSequence:
@@ -249,5 +254,5 @@ def get_day_row(user, employee_id, day):
                 .filter(pk=employee_id).first())
     if employee is None:
         return None
-    attendance = Attendance.objects.select_related("branch").filter(employee=employee, attendance_date=day).first()
-    return AttendanceRow(employee, day, attendance)
+    sessions = list(Attendance.objects.select_related("branch").filter(employee=employee, attendance_date=day).prefetch_related("actions").order_by("check_in_at", "pk"))
+    return AttendanceRow(employee, day, sessions[-1] if sessions else None, sessions)

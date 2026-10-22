@@ -5,6 +5,7 @@ get it from their role group; SUPERADMIN always) + `scope_queryset` organization
 users have no such permission and get 403.
 """
 import csv
+import json
 
 from django.http import StreamingHttpResponse
 from django.utils import timezone
@@ -117,6 +118,7 @@ CSV_HEADER = [
     "Check-in Verified", "Check-in Photo",
     "Check-out Latitude", "Check-out Longitude", "Check-out Accuracy (m)", "Check-out Distance (m)",
     "Check-out Verified", "Check-out Photo",
+    "Session Count", "Sessions JSON",
 ]
 
 
@@ -154,7 +156,7 @@ def csv_row(row, request):
         row.status,
         _local(attendance.check_in_at) if attendance else "",
         _local(attendance.check_out_at) if attendance else "",
-        _plain(services.format_duration(services.working_seconds(attendance))),
+        _plain(services.format_duration(services.total_working_seconds(row.sessions))),
         _plain(attendance.check_in_latitude) if attendance else "",
         _plain(attendance.check_in_longitude) if attendance else "",
         _plain(attendance.check_in_accuracy) if attendance else "",
@@ -167,6 +169,10 @@ def csv_row(row, request):
         _plain(attendance.check_out_distance_meters) if has_out else "",
         _yes_no(attendance.check_out_location_verified) if has_out else "",
         _plain(media_url(request, attendance.check_out_photo)) if has_out else "",
+        len(row.sessions),
+        json.dumps([{"check_in": _local(s.check_in_at), "check_out": _local(s.check_out_at), "source": s.source,
+                     "actions": [{"action": action.action, "method": action.method, "actor_id": action.actor_id, "at": _local(action.occurred_at)} for action in s.actions.all()],
+                     "working_seconds": services.working_seconds(s)} for s in row.sessions], separators=(",", ":")),
     ]
 
 

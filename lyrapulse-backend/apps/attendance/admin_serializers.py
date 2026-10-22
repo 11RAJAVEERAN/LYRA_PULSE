@@ -13,7 +13,7 @@ from apps.designations.models import Designation
 
 from .admin_services import (
     MAX_RANGE_DAYS, ORDERING_CHOICES, STATUS_FILTER_VALUES, DEFAULT_EXPORT_ORDERING, DEFAULT_LIST_ORDERING,
-    AttendanceFilters, format_duration, working_seconds,
+    AttendanceFilters, format_duration, total_working_seconds, working_seconds,
 )
 from .models import Attendance
 
@@ -179,7 +179,7 @@ class AdminAttendanceRowSerializer(_RowSerializer):
     """One table row of the Admin Attendance page."""
 
     def to_representation(self, row):
-        attendance, seconds = row.attendance, working_seconds(row.attendance)
+        attendance, seconds = row.attendance, total_working_seconds(row.sessions)
         return {
             "employee": self._employee(row),
             "branch": _brief(row.employee.branch),
@@ -196,6 +196,8 @@ class AdminAttendanceRowSerializer(_RowSerializer):
             "working_hours_display": format_duration(seconds),
             "check_in_location_verified": attendance.check_in_location_verified if attendance else None,
             "check_out_location_verified": attendance.check_out_location_verified if attendance else None,
+            "session_count": len(row.sessions),
+            "sessions": [{"id": item.pk, "check_in_at": _when(item.check_in_at), "check_out_at": _when(item.check_out_at), "source": item.source, "actions": list(item.actions.values("action", "method", "occurred_at")), "working_seconds": working_seconds(item)} for item in row.sessions],
         }
 
 
@@ -229,7 +231,7 @@ class AdminAttendanceDetailSerializer(_RowSerializer):
         }
 
     def to_representation(self, row):
-        attendance, seconds = row.attendance, working_seconds(row.attendance)
+        attendance, seconds = row.attendance, total_working_seconds(row.sessions or ([row.attendance] if row.attendance else []))
         employee = row.employee
         return {
             "employee": {
@@ -246,4 +248,10 @@ class AdminAttendanceDetailSerializer(_RowSerializer):
             "check_out": self._check_out(attendance),
             "working_seconds": seconds,
             "working_hours_display": format_duration(seconds),
+            "sessions": [{
+                "id": item.pk, "source": item.source,
+                "check_in": self._check_in(item), "check_out": self._check_out(item),
+                "actions": list(item.actions.values("action", "method", "actor_id", "occurred_at")),
+                "working_seconds": working_seconds(item),
+            } for item in row.sessions or ([row.attendance] if row.attendance else [])],
         }

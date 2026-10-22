@@ -171,6 +171,7 @@ class EmployeeFormAccessView(APIView):
         return success_response({
             "can_view_sensitive": can_view_sensitive_employee_data(request.user),
             "can_change_sensitive": can_change_sensitive_employee_data(request.user),
+            "can_edit_attendance_permissions": request.user.role in (request.user.Role.SUPERADMIN, request.user.Role.ADMIN),
         })
 
 

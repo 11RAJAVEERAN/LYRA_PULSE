@@ -29,6 +29,8 @@ INSTALLED_APPS = [
     "apps.designations",
     "apps.accounts",
     "apps.employees",
+    "apps.devices",
+    "apps.fingerprints",
     "apps.attendance",
 ]
 

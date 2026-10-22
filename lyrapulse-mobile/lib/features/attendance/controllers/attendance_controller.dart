@@ -52,17 +52,27 @@ class AttendanceController extends GetxController {
   bool get isCheckIn => action.value == AttendanceAction.checkIn;
 
   AttendanceState? get state => today.value?.state;
-  bool get canCheckIn => state == AttendanceState.notCheckedIn;
+  bool get canCheckIn => state == AttendanceState.notCheckedIn || state == AttendanceState.checkedOut;
   bool get canCheckOut => state == AttendanceState.checkedIn;
 
   /// Worked time derived from the backend timestamps. Reactive: read inside Obx.
   Duration get workingDuration {
     final current = today.value;
-    final start = current?.checkInAt;
-    if (current == null || start == null) return Duration.zero;
-    final end = current.checkOutAt ?? _now.value;
-    final difference = end.difference(start);
-    return difference.isNegative ? Duration.zero : difference;
+    if (current == null) return Duration.zero;
+    if (current.sessions.isEmpty) {
+      final start = current.checkInAt;
+      if (start == null) return Duration.zero;
+      final difference = (current.checkOutAt ?? _now.value).difference(start);
+      return difference.isNegative ? Duration.zero : difference;
+    }
+    var total = Duration.zero;
+    for (final session in current.sessions) {
+      final start = session.checkInAt;
+      if (start == null) continue;
+      final difference = (session.checkOutAt ?? _now.value).difference(start);
+      if (!difference.isNegative) total += difference;
+    }
+    return total;
   }
 
   String get statusLabel {

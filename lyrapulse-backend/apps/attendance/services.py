@@ -15,7 +15,7 @@ from django.utils import timezone
 from apps.employees.models import Employee
 
 from .exceptions import AttendanceError
-from .models import Attendance
+from .models import Attendance, AttendanceEvent
 
 logger = logging.getLogger(__name__)
 
@@ -145,7 +145,9 @@ def _todays_attendance_exists(employee, today):
     return Attendance.objects.filter(employee=employee, attendance_date=today).exists()
 
 
-def check_in(*, employee, branch, latitude, longitude, accuracy, photo):
+@transaction.atomic
+def check_in(*, employee, branch, latitude, longitude, accuracy, photo=None):
+    employee = Employee.objects.select_for_update().get(pk=employee.pk)
     _require_accuracy(accuracy)
     verification = verify_attendance_location(branch, latitude, longitude, accuracy)
     if not verification.verified:
@@ -153,8 +155,8 @@ def check_in(*, employee, branch, latitude, longitude, accuracy, photo):
 
     now = timezone.now()  # server time; any client-supplied time is ignored
     today = timezone.localdate(now)
-    already_checked_in = AttendanceError("ALREADY_CHECKED_IN", "You have already checked in today.", 409)
-    if _todays_attendance_exists(employee, today):  # fast path; the unique constraint is the real guard
+    already_checked_in = AttendanceError("ALREADY_CHECKED_IN", "You already have an open attendance session.", 409)
+    if Attendance.objects.filter(employee=employee, check_out_at__isnull=True).exists():
         raise already_checked_in
 
     lat, lon, _ = validate_coordinates(latitude, longitude)
@@ -162,15 +164,14 @@ def check_in(*, employee, branch, latitude, longitude, accuracy, photo):
         employee=employee, branch=branch, attendance_date=today, check_in_at=now,
         check_in_latitude=_decimal7(lat), check_in_longitude=_decimal7(lon),
         check_in_accuracy=verification.accuracy_meters, check_in_distance_meters=verification.distance_meters,
-        check_in_location_verified=True, check_in_photo=photo,
+        check_in_location_verified=True, check_in_photo=photo or "",
     )
     try:
         with transaction.atomic():
             attendance.save(force_insert=True)  # writes the photo, then INSERTs
+            AttendanceEvent.objects.create(attendance=attendance, action=AttendanceEvent.Action.CHECK_IN, method=AttendanceEvent.Method.MOBILE_GPS, occurred_at=now)
     except IntegrityError:
         _discard_file(attendance.check_in_photo)
-        if Attendance.objects.filter(employee=employee, attendance_date=today).exists():
-            raise already_checked_in from None  # lost a race with a concurrent request
         raise
     except Exception:
         _discard_file(attendance.check_in_photo)
@@ -178,7 +179,9 @@ def check_in(*, employee, branch, latitude, longitude, accuracy, photo):
     return attendance
 
 
-def check_out(*, employee, branch, latitude, longitude, accuracy, photo):
+@transaction.atomic
+def check_out(*, employee, branch, latitude, longitude, accuracy, photo=None):
+    employee = Employee.objects.select_for_update().get(pk=employee.pk)
     _require_accuracy(accuracy)
     verification = verify_attendance_location(branch, latitude, longitude, accuracy)
     if not verification.verified:
@@ -191,11 +194,11 @@ def check_out(*, employee, branch, latitude, longitude, accuracy, photo):
     try:
         with transaction.atomic():
             # Row lock serialises concurrent check-out taps: the second one sees check_out_at already set.
-            attendance = Attendance.objects.select_for_update().filter(employee=employee, attendance_date=today).first()
+            attendance = Attendance.objects.select_for_update().filter(employee=employee, check_out_at__isnull=True).order_by("-check_in_at").first()
             if attendance is None:
-                raise AttendanceError("NOT_CHECKED_IN", "You have not checked in today.", 409)
-            if attendance.check_out_at is not None:
-                raise AttendanceError("ALREADY_CHECKED_OUT", "You have already checked out today.", 409)
+                if Attendance.objects.filter(employee=employee, attendance_date=today, check_out_at__isnull=False).exists():
+                    raise AttendanceError("ALREADY_CHECKED_OUT", "There is no open session to check out.", 409)
+                raise AttendanceError("NOT_CHECKED_IN", "You do not have an open attendance session.", 409)
             if attendance.branch_id != branch.pk:
                 raise AttendanceError("BRANCH_MISMATCH", "Your branch changed since check-in. Please contact HR.", 409)
             attendance.check_out_at = now
@@ -204,8 +207,9 @@ def check_out(*, employee, branch, latitude, longitude, accuracy, photo):
             attendance.check_out_accuracy = verification.accuracy_meters
             attendance.check_out_distance_meters = verification.distance_meters
             attendance.check_out_location_verified = True
-            attendance.check_out_photo = photo
+            attendance.check_out_photo = photo or ""
             attendance.save(update_fields=CHECK_OUT_FIELDS)
+            AttendanceEvent.objects.create(attendance=attendance, action=AttendanceEvent.Action.CHECK_OUT, method=AttendanceEvent.Method.MOBILE_GPS, occurred_at=now)
     except AttendanceError:
         raise
     except Exception:
@@ -217,10 +221,15 @@ def check_out(*, employee, branch, latitude, longitude, accuracy, photo):
 
 def today_state(employee):
     today = timezone.localdate()
-    attendance = Attendance.objects.filter(employee=employee, attendance_date=today).first()
+    sessions = list(Attendance.objects.filter(employee=employee, attendance_date=today).order_by("check_in_at"))
+    open_session = Attendance.objects.filter(employee=employee, check_out_at__isnull=True).order_by("-check_in_at").first()
+    if open_session and open_session not in sessions:
+        sessions.append(open_session)
+    attendance = open_session or (sessions[-1] if sessions else None)
     if attendance is None:
-        return {"attendance_date": today, "state": Attendance.State.NOT_CHECKED_IN.value, "check_in_at": None, "check_out_at": None}
+        return {"attendance_date": today, "state": Attendance.State.NOT_CHECKED_IN.value, "check_in_at": None, "check_out_at": None, "sessions": []}
     return {
         "attendance_date": attendance.attendance_date, "state": attendance.state.value,
         "check_in_at": attendance.check_in_at, "check_out_at": attendance.check_out_at,
+        "sessions": [{"id": row.pk, "check_in_at": row.check_in_at, "check_out_at": row.check_out_at, "source": row.source} for row in sessions],
     }

@@ -9,6 +9,7 @@ export const emptyEmployeeForm = {
   bank_name: '', bank_branch_name: '', bank_account_number: '', bank_ifsc_code: '',
   emergency_contact_number: '', emergency_contact_name: '', emergency_contact_relation: '', emergency_contact_address: '',
   date_of_birth: '', is_active: true,
+  biometric_attendance_enabled: false, mobile_gps_attendance_enabled: false, photo_attendance_enabled: false,
 }
 
 export const DOCUMENT_SLOTS = [
@@ -76,11 +77,14 @@ export function employeeToForm(employee) {
     emergency_contact_number: employee.emergency_contact_number ?? '', emergency_contact_name: employee.emergency_contact_name ?? '',
     emergency_contact_relation: employee.emergency_contact_relation ?? '', emergency_contact_address: employee.emergency_contact_address ?? '',
     date_of_birth: employee.date_of_birth ?? '', is_active: employee.is_active ?? true,
+    biometric_attendance_enabled: employee.biometric_attendance_enabled ?? false,
+    mobile_gps_attendance_enabled: employee.mobile_gps_attendance_enabled ?? false,
+    photo_attendance_enabled: employee.photo_attendance_enabled ?? false,
   })
   return form
 }
 
-export function formToPayload(form, { sensitiveEditable }) {
+export function formToPayload(form, { sensitiveEditable, attendancePermissionsEditable = false }) {
   const [firstName, ...rest] = form.name.trim().split(/\s+/)
   const payload = {
     employee_code: form.employee_code.trim(), first_name: firstName ?? '', last_name: rest.join(' '),
@@ -100,6 +104,11 @@ export function formToPayload(form, { sensitiveEditable }) {
     payload.bank_branch_name = form.bank_branch_name.trim()
     payload.bank_ifsc_code = form.bank_ifsc_code.trim().toUpperCase()
     if (form.bank_account_number.trim()) payload.bank_account_number = form.bank_account_number.replace(/\s+/g, '')
+  }
+  if (attendancePermissionsEditable) {
+    payload.biometric_attendance_enabled = Boolean(form.biometric_attendance_enabled)
+    payload.mobile_gps_attendance_enabled = Boolean(form.mobile_gps_attendance_enabled)
+    payload.photo_attendance_enabled = Boolean(form.photo_attendance_enabled)
   }
   return payload
 }

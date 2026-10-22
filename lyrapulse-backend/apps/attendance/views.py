@@ -48,6 +48,8 @@ class AttendanceAPIView(APIView):
 
     def employee_and_branch(self, request):
         employee = services.resolve_employee(request.user)
+        if not employee.mobile_gps_attendance_enabled:
+            raise AttendanceError("MOBILE_ATTENDANCE_DISABLED", "Mobile GPS attendance is not enabled for this employee.", 403)
         return employee, services.resolve_branch(employee)
 
 
@@ -82,12 +84,17 @@ class CheckInView(AttendanceAPIView):
         request={"multipart/form-data": AttendanceActionSerializer},
         responses={201: _envelope("CheckInResponse", inline_serializer(name="CheckInData", fields={"attendance": CheckInResultSerializer()})),
                    400: OpenApiResponse(_ERROR, description="Invalid coordinates, accuracy or photo"), **_COMMON_ERRORS},
-        description="Creates today's attendance record using SERVER time. Location is re-verified; employee_id/branch_id/time in the request are ignored.",
+        description="Opens a new session using SERVER time. Location is re-verified; employee_id/branch_id/time in the request are ignored.",
     )
     def post(self, request):
         employee, branch = self.employee_and_branch(request)
-        serializer = AttendanceActionSerializer(data=request.data)
+        payload = request.data if employee.photo_attendance_enabled else request.data.copy()
+        if not employee.photo_attendance_enabled:
+            payload.pop("photo", None)
+        serializer = AttendanceActionSerializer(data=payload)
         serializer.is_valid(raise_exception=True)
+        if employee.photo_attendance_enabled and not serializer.validated_data.get("photo"):
+            raise AttendanceError("PHOTO_REQUIRED", "A photo is required for this attendance action.", 400)
         attendance = services.check_in(employee=employee, branch=branch, **serializer.validated_data)
         return success_response({"attendance": CheckInResultSerializer(attendance).data}, "Check-in successful.", status.HTTP_201_CREATED)
 
@@ -99,12 +106,17 @@ class CheckOutView(AttendanceAPIView):
         request={"multipart/form-data": AttendanceActionSerializer},
         responses={200: _envelope("CheckOutResponse", inline_serializer(name="CheckOutData", fields={"attendance": CheckOutResultSerializer()})),
                    400: OpenApiResponse(_ERROR, description="Invalid coordinates, accuracy or photo"), **_COMMON_ERRORS},
-        description="Completes today's existing attendance record (no new row) using SERVER time. Location is re-verified.",
+        description="Closes the employee's currently open session using SERVER time. Location is re-verified.",
     )
     def post(self, request):
         employee, branch = self.employee_and_branch(request)
-        serializer = AttendanceActionSerializer(data=request.data)
+        payload = request.data if employee.photo_attendance_enabled else request.data.copy()
+        if not employee.photo_attendance_enabled:
+            payload.pop("photo", None)
+        serializer = AttendanceActionSerializer(data=payload)
         serializer.is_valid(raise_exception=True)
+        if employee.photo_attendance_enabled and not serializer.validated_data.get("photo"):
+            raise AttendanceError("PHOTO_REQUIRED", "A photo is required for this attendance action.", 400)
         attendance = services.check_out(employee=employee, branch=branch, **serializer.validated_data)
         return success_response({"attendance": CheckOutResultSerializer(attendance).data}, "Check-out successful.")
 

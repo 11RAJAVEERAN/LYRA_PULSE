@@ -21,6 +21,7 @@ const SECTIONS = [
   { id: 'legal', title: 'Legal Documents' },
   { id: 'emergency', title: 'Emergency Contact Information' },
   { id: 'personal', title: 'Personal Information' },
+  { id: 'attendance', title: 'Attendance Permissions' },
 ]
 
 const DOCUMENT_GROUPS = [
@@ -53,7 +54,7 @@ export function EmployeeDetailsPanel({ open, employeeId, rows, options, optionsL
   const [loadError, setLoadError] = useState('')
   const [saving, setSaving] = useState(false)
   const [formError, setFormError] = useState('')
-  const [access, setAccess] = useState({ can_view_sensitive: false, can_change_sensitive: false })
+  const [access, setAccess] = useState({ can_view_sensitive: false, can_change_sensitive: false, can_edit_attendance_permissions: false })
   const [masters, setMasters] = useState({ employeeTypes: [], payrollGroups: [] })
   const [mastersError, setMastersError] = useState('')
   const [storedDocs, setStoredDocs] = useState([])
@@ -62,6 +63,8 @@ export function EmployeeDetailsPanel({ open, employeeId, rows, options, optionsL
   const [busyDoc, setBusyDoc] = useState('')
   const [activeEmployeeId, setActiveEmployeeId] = useState(null)
   const [maskedAccount, setMaskedAccount] = useState('')
+  const [manualAttendanceNotice, setManualAttendanceNotice] = useState('')
+  const [manualAttendanceBusy, setManualAttendanceBusy] = useState(false)
 
   const sensitiveVisible = access.can_view_sensitive || access.can_change_sensitive
   const sensitiveEditable = access.can_change_sensitive
@@ -230,6 +233,19 @@ export function EmployeeDetailsPanel({ open, employeeId, rows, options, optionsL
     }
   }
 
+  const recordManualAttendance = async () => {
+    if (!activeEmployeeId || manualAttendanceBusy) return
+    if (!window.confirm('Record a manual attendance action for this employee? The action will check in or check out based on the current open session.')) return
+    setManualAttendanceBusy(true)
+    setManualAttendanceNotice('')
+    try {
+      const result = await employeesApi.manualAttendance(activeEmployeeId)
+      setManualAttendanceNotice(`Manual ${String(result.action || '').toLowerCase().replace('_', ' ')} recorded.`)
+    } catch (error) {
+      setManualAttendanceNotice(mapBackendErrors(error).general || 'Manual attendance could not be recorded.')
+    } finally { setManualAttendanceBusy(false) }
+  }
+
   // ---- save ----
   const save = async (event) => {
     event?.preventDefault()
@@ -244,7 +260,7 @@ export function EmployeeDetailsPanel({ open, employeeId, rows, options, optionsL
     }
     setSaving(true)
     setFormError('')
-    const payload = formToPayload(form, { sensitiveEditable })
+    const payload = formToPayload(form, { sensitiveEditable, attendancePermissionsEditable: access.can_edit_attendance_permissions })
     let savedId = activeEmployeeId
     try {
       const saved = savedId ? await employeesApi.update(savedId, payload) : await employeesApi.create(payload)
@@ -423,6 +439,18 @@ export function EmployeeDetailsPanel({ open, employeeId, rows, options, optionsL
                         <TextField {...inputProps('date_of_birth', { props: { slotProps: { inputLabel: { shrink: true }, htmlInput: { max: new Date().toISOString().slice(0, 10) } } } })}
                           label="Date of Birth" type="date" />
                       </Box>
+                    ) : null}
+
+                    {section.id === 'attendance' ? (
+                      access.can_edit_attendance_permissions ? (
+                        <Box sx={sectionBlock}>
+                          <Alert severity="info" sx={fullRow}>New employees have all attendance methods disabled. Mobile check-in and check-out require GPS; a photo is required for both actions when Photo Attendance is enabled.</Alert>
+                          <FormControlLabel control={<Switch checked={form.biometric_attendance_enabled} onChange={(event) => setValue('biometric_attendance_enabled', event.target.checked)} disabled={saving} />} label="Biometric Attendance" />
+                          <FormControlLabel control={<Switch checked={form.mobile_gps_attendance_enabled} onChange={(event) => setValue('mobile_gps_attendance_enabled', event.target.checked)} disabled={saving} />} label="Mobile GPS Attendance" />
+                          <FormControlLabel control={<Switch checked={form.photo_attendance_enabled} onChange={(event) => setValue('photo_attendance_enabled', event.target.checked)} disabled={saving} />} label="Photo Attendance" />
+                          {isEdit ? <Box sx={fullRow}><Button variant="outlined" onClick={recordManualAttendance} disabled={manualAttendanceBusy || saving}>{manualAttendanceBusy ? 'Recording…' : 'Record Admin Manual Attendance'}</Button>{manualAttendanceNotice ? <Typography role="status" variant="body2" sx={{ mt: 1 }}>{manualAttendanceNotice}</Typography> : null}<Typography variant="caption" display="block" color="text.secondary">This action alternates between check-in and check-out and is recorded with the acting administrator.</Typography></Box> : null}
+                        </Box>
+                      ) : <Alert severity="info" sx={{ m: 3 }}>Attendance permissions can be changed by Super Admin and Admin users.</Alert>
                     ) : null}
                   </AccordionDetails>
                 </Accordion>
