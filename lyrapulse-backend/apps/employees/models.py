@@ -58,6 +58,10 @@ class Employee(models.Model):
     emergency_contact = models.CharField(max_length=20, blank=True)
     address = models.TextField(blank=True)
     is_active = models.BooleanField(default=True)
+    # Self-attendance is opt-in for all employees, including existing rows after migration.
+    biometric_attendance_enabled = models.BooleanField(default=False)
+    mobile_gps_attendance_enabled = models.BooleanField(default=False)
+    photo_attendance_enabled = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -131,3 +135,14 @@ class EmployeeDocument(models.Model):
 
     def __str__(self):
         return f"{self.employee_id} {self.doc_type} {self.side}"
+
+
+class AttendancePermissionAudit(models.Model):
+    employee = models.ForeignKey(Employee, on_delete=models.PROTECT, related_name="attendance_permission_audits")
+    actor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="attendance_permission_changes")
+    previous_values = models.JSONField()
+    new_values = models.JSONField()
+    changed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-changed_at"]

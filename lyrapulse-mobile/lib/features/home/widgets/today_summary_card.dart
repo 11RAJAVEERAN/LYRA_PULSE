@@ -58,6 +58,18 @@ class TodaySummaryCard extends GetView<AttendanceController> {
               color: AppColors.warning,
               showLine: false,
             ),
+            if ((today?.sessions.length ?? 0) > 1) ...[
+              const SizedBox(height: 10),
+              Text(
+                today!.sessions.asMap().entries.map((entry) {
+                  final session = entry.value;
+                  final start = Formatters.time12(session.checkInAt, placeholder: '--');
+                  final end = Formatters.time12(session.checkOutAt, placeholder: 'Open');
+                  return '${entry.key + 1}. $start – $end';
+                }).join('   •   '),
+                style: AppTextStyles.bodySmall,
+              ),
+            ],
           ]);
         }),
       );

@@ -138,6 +138,26 @@ export function AttendanceDetailDrawer({ open, selection, onClose }) {
                     <Typography variant="subtitle2">{detail.working_hours_display ?? NO_VALUE}</Typography>
                   </Stack>
 
+                  {Array.isArray(detail.sessions) && detail.sessions.length > 0 ? (
+                    <Box sx={{ p: 1.5, border: 1, borderColor: 'divider', borderRadius: 1.5 }}>
+                      <Typography variant="subtitle2" sx={{ mb: 1 }}>Attendance Sessions ({detail.sessions.length})</Typography>
+                      <Stack divider={<Divider flexItem />}>
+                        {detail.sessions.map((session, index) => (
+                          <Box key={session.id ?? index} sx={{ py: 1 }}>
+                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                              Session {index + 1}: {formatTime(session.check_in?.time)} – {formatTime(session.check_out?.time)}
+                            </Typography>
+                            {session.actions?.map((action, actionIndex) => (
+                              <Typography key={`${action.action}-${actionIndex}`} variant="caption" display="block" color="text.secondary">
+                                {action.action.replace('_', ' ')} · {action.method.replace('_', ' ')} · {formatTime(action.occurred_at)}{action.actor_id ? ` · Admin ${action.actor_id}` : ''}
+                              </Typography>
+                            ))}
+                          </Box>
+                        ))}
+                      </Stack>
+                    </Box>
+                  ) : null}
+
                   <PhotoCard key={`in-${detail.employee.id}-${detail.attendance_date}`} title="Check In Photo" data={detail.check_in} onPreview={setPreview} />
                   <PhotoCard key={`out-${detail.employee.id}-${detail.attendance_date}`} title="Check Out Photo" data={detail.check_out} emptyLabel="No check-out photo" onPreview={setPreview} />
                   <Divider />

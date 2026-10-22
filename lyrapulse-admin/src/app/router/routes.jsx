@@ -8,6 +8,7 @@ import { ProtectedRoute } from './ProtectedRoute'
 import { AdminLayout } from '../../components/layout/AdminLayout'
 import { AdminUsersPage } from '../../features/adminUsers/pages/AdminUsersPage'
 import { SuperAdminRoute } from './SuperAdminRoute'
+import { DevicesPage } from '../../features/devices/pages/DevicesPage'
 
 export const routes = [
   {
@@ -38,6 +39,10 @@ export const routes = [
             element: <AttendancePage />,
           },
           {
+            path: ROUTES.devices,
+            element: <DevicesPage />,
+          },
+          {
             path: ROUTES.adminUsers,
             element: <SuperAdminRoute><AdminUsersPage /></SuperAdminRoute>,
           },
@@ -47,7 +52,6 @@ export const routes = [
             ROUTES.branches,
             ROUTES.departments,
             ROUTES.designations,
-            ROUTES.devices,
             ROUTES.reports,
             ROUTES.settings,
           ].map((path) => ({

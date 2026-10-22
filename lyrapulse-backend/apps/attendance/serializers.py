@@ -38,6 +38,7 @@ class LocationSerializer(serializers.Serializer):
 class AttendanceActionSerializer(LocationSerializer):
     """multipart/form-data body for check-in and check-out."""
     photo = serializers.FileField(
+        required=False,
         validators=[validate_attendance_photo],
         help_text=f"JPEG or PNG image, at most {MAX_PHOTO_BYTES // (1024 * 1024)} MB. Content is verified server-side.",
         error_messages={
@@ -82,3 +83,4 @@ class TodayStateSerializer(serializers.Serializer):
     state = serializers.ChoiceField(choices=["NOT_CHECKED_IN", "CHECKED_IN", "CHECKED_OUT"])
     check_in_at = serializers.DateTimeField(allow_null=True)
     check_out_at = serializers.DateTimeField(allow_null=True)
+    sessions = serializers.ListField(child=serializers.DictField(), required=False)

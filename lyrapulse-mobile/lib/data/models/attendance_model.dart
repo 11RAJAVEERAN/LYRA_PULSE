@@ -30,18 +30,37 @@ class TodayAttendance {
     this.attendanceDate,
     this.checkInAt,
     this.checkOutAt,
+    this.sessions = const [],
   });
 
   final AttendanceState state;
   final DateTime? attendanceDate;
   final DateTime? checkInAt;
   final DateTime? checkOutAt;
+  final List<TodaySession> sessions;
 
   factory TodayAttendance.fromJson(Map<String, dynamic> json) => TodayAttendance(
         state: AttendanceState.parse(json['state']),
         attendanceDate: DateTime.tryParse(json['attendance_date']?.toString() ?? ''),
         checkInAt: _parseServerTime(json['check_in_at']),
         checkOutAt: _parseServerTime(json['check_out_at']),
+        sessions: (json['sessions'] is List ? json['sessions'] as List : const [])
+            .whereType<Map>()
+            .map((item) => TodaySession.fromJson(Map<String, dynamic>.from(item)))
+            .toList(growable: false),
+      );
+}
+
+class TodaySession {
+  const TodaySession({required this.checkInAt, this.checkOutAt, this.source = ''});
+  final DateTime? checkInAt;
+  final DateTime? checkOutAt;
+  final String source;
+
+  factory TodaySession.fromJson(Map<String, dynamic> json) => TodaySession(
+        checkInAt: _parseServerTime(json['check_in_at']),
+        checkOutAt: _parseServerTime(json['check_out_at']),
+        source: json['source']?.toString() ?? '',
       );
 }
 

@@ -22,7 +22,7 @@ class EmployeeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Employee
-        fields = ("id", "employee_code", "phone_number", "name", "branch", "department", "designation", "joining_date", "profile_photo", "date_of_birth", "gender", "emergency_contact", "address", "is_active")
+        fields = ("id", "employee_code", "phone_number", "name", "branch", "department", "designation", "joining_date", "profile_photo", "date_of_birth", "gender", "emergency_contact", "address", "is_active", "biometric_attendance_enabled", "mobile_gps_attendance_enabled", "photo_attendance_enabled")
 
 
 IFSC_PATTERN = re.compile(r"^[A-Z]{4}0[A-Z0-9]{6}$")
@@ -82,7 +82,8 @@ class EmployeeManagementSerializer(serializers.ModelSerializer):
                   "emergency_contact_number", "emergency_contact_name", "emergency_contact_relation", "emergency_contact_address",
                   # Salary + bank (sensitive)
                   "salary_type", "monthly_salary", "payroll_group",
-                  "bank_name", "bank_branch_name", "bank_account_number", "bank_ifsc_code")
+                  "bank_name", "bank_branch_name", "bank_account_number", "bank_ifsc_code",
+                  "biometric_attendance_enabled", "mobile_gps_attendance_enabled", "photo_attendance_enabled")
         read_only_fields = ("id",)
 
     def to_representation(self, instance):
@@ -98,10 +99,19 @@ class EmployeeManagementSerializer(serializers.ModelSerializer):
         else:
             for field in SENSITIVE_FIELDS:
                 data.pop(field, None)
+        user = getattr(request, "user", None)
+        if not user or user.role not in (User.Role.SUPERADMIN, User.Role.ADMIN):
+            for field in ("biometric_attendance_enabled", "mobile_gps_attendance_enabled", "photo_attendance_enabled"):
+                data.pop(field, None)
         return data
 
     def validate(self, attrs):
         request = self.context.get("request")
+        permission_fields = {"biometric_attendance_enabled", "mobile_gps_attendance_enabled", "photo_attendance_enabled"}
+        if permission_fields.intersection(attrs):
+            actor = getattr(request, "user", None)
+            if actor is None or actor.role not in (User.Role.SUPERADMIN, User.Role.ADMIN):
+                raise PermissionDenied("Only Super Admin and Admin users can change attendance permissions.")
         if any(field in attrs for field in SENSITIVE_WRITE_FIELDS) and not can_change_sensitive_employee_data(getattr(request, "user", None)):
             raise PermissionDenied("You do not have permission to change salary or bank details.")
         # Never trust client-supplied branch/department/designation ids: for scoped admins they must all
@@ -177,10 +187,19 @@ class EmployeeManagementSerializer(serializers.ModelSerializer):
             phone_number=phone_number, email=email, first_name=first_name,
             last_name=last_name, role=User.Role.EMPLOYEE, is_active=is_active,
         )
-        return Employee.objects.create(user=user, **validated_data)
+        employee = Employee.objects.create(user=user, **validated_data)
+        changed = {field: getattr(employee, field) for field in ("biometric_attendance_enabled", "mobile_gps_attendance_enabled", "photo_attendance_enabled") if getattr(employee, field)}
+        if changed:
+            from .models import AttendancePermissionAudit
+            AttendancePermissionAudit.objects.create(employee=employee, actor=self.context["request"].user,
+                previous_values={field: False for field in changed}, new_values=changed)
+        return employee
 
     @transaction.atomic
     def update(self, instance, validated_data):
+        permission_fields = ("biometric_attendance_enabled", "mobile_gps_attendance_enabled", "photo_attendance_enabled")
+        changed_permissions = {field: bool(validated_data[field]) for field in permission_fields if field in validated_data and getattr(instance, field) != validated_data[field]}
+        previous_permissions = {field: getattr(instance, field) for field in changed_permissions}
         if validated_data.get("bank_account_number") == "":
             validated_data.pop("bank_account_number")  # blank on edit means "keep the stored value"
         user_fields = ("first_name", "last_name", "phone_number", "email")
@@ -192,7 +211,16 @@ class EmployeeManagementSerializer(serializers.ModelSerializer):
             instance.user.save(update_fields=["first_name", "last_name", "phone_number", "email", "is_active", "updated_at"])
         elif any(field in self.initial_data for field in user_fields):
             instance.user.save(update_fields=["first_name", "last_name", "phone_number", "email", "updated_at"])
-        return super().update(instance, validated_data)
+        instance = super().update(instance, validated_data)
+        if changed_permissions:
+            from .models import AttendancePermissionAudit
+            AttendancePermissionAudit.objects.create(
+                employee=instance,
+                actor=self.context["request"].user,
+                previous_values=previous_permissions,
+                new_values=changed_permissions,
+            )
+        return instance
 
 
 class BranchOptionSerializer(serializers.ModelSerializer):
