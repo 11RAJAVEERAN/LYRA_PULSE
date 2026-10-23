@@ -169,10 +169,10 @@ def csv_row(row, request):
         _plain(attendance.check_out_distance_meters) if has_out else "",
         _yes_no(attendance.check_out_location_verified) if has_out else "",
         _plain(media_url(request, attendance.check_out_photo)) if has_out else "",
-        len(row.sessions),
+        len(row.sessions) if row.sessions else "",
         json.dumps([{"check_in": _local(s.check_in_at), "check_out": _local(s.check_out_at), "source": s.source,
                      "actions": [{"action": action.action, "method": action.method, "actor_id": action.actor_id, "at": _local(action.occurred_at)} for action in s.actions.all()],
-                     "working_seconds": services.working_seconds(s)} for s in row.sessions], separators=(",", ":")),
+                     "working_seconds": services.working_seconds(s)} for s in row.sessions], separators=(",", ":")) if row.sessions else "",
     ]
 
 

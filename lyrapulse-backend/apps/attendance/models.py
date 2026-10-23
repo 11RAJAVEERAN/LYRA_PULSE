@@ -1,6 +1,7 @@
 import uuid
 
 from django.db import models
+from django.db.models import Q
 from django.utils import timezone
 
 from apps.branches.models import Branch
@@ -63,8 +64,11 @@ class Attendance(models.Model):
 
     class Meta:
         ordering = ["-attendance_date", "-check_in_at"]
-        constraints = [
-        ]
+        constraints = [models.UniqueConstraint(
+            fields=("employee", "attendance_date"),
+            condition=Q(check_out_at__isnull=True),
+            name="one_open_attendance_per_employee_day",
+        )]
         indexes = [
             models.Index(fields=["branch", "attendance_date"], name="attendance_branch_date_idx"),
         ]

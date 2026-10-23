@@ -16,6 +16,10 @@ class EmployeeModel {
     this.emergencyContact = '',
     this.profilePhoto,
     this.isActive = true,
+    this.mobileAttendanceEnabled = false,
+    this.photoAttendanceEnabled = false,
+    this.locationAttendanceEnabled = false,
+    this.biometricAttendanceEnabled = false,
   });
 
   final int id;
@@ -33,6 +37,10 @@ class EmployeeModel {
   final String emergencyContact;
   final String? profilePhoto;
   final bool isActive;
+  final bool mobileAttendanceEnabled;
+  final bool photoAttendanceEnabled;
+  final bool locationAttendanceEnabled;
+  final bool biometricAttendanceEnabled;
 
   factory EmployeeModel.fromJson(Map<String, dynamic> json, {String emailFallback = ''}) {
     String? relationName(dynamic value) {
@@ -60,6 +68,10 @@ class EmployeeModel {
       department: relationName(json['department']),
       designation: relationName(json['designation']),
       isActive: json['is_active'] as bool? ?? true,
+      mobileAttendanceEnabled: json['mobile_gps_attendance_enabled'] as bool? ?? false,
+      photoAttendanceEnabled: json['photo_attendance_enabled'] as bool? ?? false,
+      locationAttendanceEnabled: json['location_attendance_enabled'] as bool? ?? false,
+      biometricAttendanceEnabled: json['biometric_attendance_enabled'] as bool? ?? false,
     );
   }
 }

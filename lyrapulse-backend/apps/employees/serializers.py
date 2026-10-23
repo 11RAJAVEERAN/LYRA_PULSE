@@ -22,7 +22,7 @@ class EmployeeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Employee
-        fields = ("id", "employee_code", "phone_number", "name", "branch", "department", "designation", "joining_date", "profile_photo", "date_of_birth", "gender", "emergency_contact", "address", "is_active", "biometric_attendance_enabled", "mobile_gps_attendance_enabled", "photo_attendance_enabled")
+        fields = ("id", "employee_code", "phone_number", "name", "branch", "department", "designation", "joining_date", "profile_photo", "date_of_birth", "gender", "emergency_contact", "address", "is_active", "biometric_attendance_enabled", "mobile_gps_attendance_enabled", "photo_attendance_enabled", "location_attendance_enabled", "auto_punch_out_enabled")
 
 
 IFSC_PATTERN = re.compile(r"^[A-Z]{4}0[A-Z0-9]{6}$")

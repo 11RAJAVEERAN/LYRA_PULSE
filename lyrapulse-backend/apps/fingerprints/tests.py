@@ -41,6 +41,7 @@ class FingerprintEnrollmentAPITests(TestCase):
             user=self.employee_user,
             branch=self.branch,
             department=self.department,
+            biometric_attendance_enabled=True,
         )
         self.device_token = "test-device-token-not-for-production"
         self.device = Device(

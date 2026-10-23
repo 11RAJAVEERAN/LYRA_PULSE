@@ -24,14 +24,14 @@ class LocationCheckScreen extends GetView<AttendanceController> {
             final action = controller.action.value;
             final status = controller.locationStatus.value;
             return Column(children: [
-              FlowHeader(action: action, step: 1, subtitle: 'Verify your location'),
+              FlowHeader(action: action, step: 1, totalSteps: controller.locationRequired && controller.photoRequired ? 3 : 2, subtitle: 'Verify your location'),
               const SizedBox(height: 22),
               Expanded(child: SingleChildScrollView(child: _StatusCard(controller: controller))),
               const SizedBox(height: 12),
               if (status == LocationStatus.failed) ..._recoveryActions(),
               AppButton(
-                label: 'Continue to photo',
-                icon: Icons.photo_camera_rounded,
+                label: controller.photoRequired ? 'Continue to photo' : 'Continue',
+                icon: controller.photoRequired ? Icons.photo_camera_rounded : Icons.arrow_forward_rounded,
                 useGradient: true,
                 onPressed: status == LocationStatus.verified ? controller.continueToCamera : null,
               ),

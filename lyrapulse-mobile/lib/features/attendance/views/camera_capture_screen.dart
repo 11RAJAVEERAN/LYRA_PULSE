@@ -25,7 +25,8 @@ class CameraCaptureScreen extends GetView<CameraCaptureController> {
           child: Column(children: [
             Obx(() => FlowHeader(
                   action: attendance.action.value,
-                  step: 2,
+                  step: attendance.locationRequired ? 2 : 1,
+                  totalSteps: attendance.locationRequired ? 3 : 2,
                   subtitle: 'Take your attendance photo',
                   onDark: true,
                 )),

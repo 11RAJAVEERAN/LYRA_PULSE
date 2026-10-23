@@ -6,9 +6,9 @@ from .services import MAX_GPS_ACCURACY_METERS
 from .validators import MAX_PHOTO_BYTES, validate_attendance_photo
 
 
-def _float_field(label, low, high):
+def _float_field(label, low, high, *, required=True):
     message = f"{label} must be a number between {low} and {high}."
-    return serializers.FloatField(min_value=low, max_value=high, error_messages={
+    return serializers.FloatField(required=required, min_value=low, max_value=high, error_messages={
         "required": f"{label} is required.", "null": f"{label} is required.", "invalid": message,
         "min_value": message, "max_value": message,
     })
@@ -37,6 +37,9 @@ class LocationSerializer(serializers.Serializer):
 
 class AttendanceActionSerializer(LocationSerializer):
     """multipart/form-data body for check-in and check-out."""
+    latitude = _float_field("Latitude", -90, 90, required=False)
+    longitude = _float_field("Longitude", -180, 180, required=False)
+    accuracy = _float_field("GPS accuracy", 0, MAX_GPS_ACCURACY_METERS, required=False)
     photo = serializers.FileField(
         required=False,
         validators=[validate_attendance_photo],
@@ -56,8 +59,8 @@ class BranchBriefSerializer(serializers.Serializer):
 class VerifyLocationResultSerializer(serializers.Serializer):
     verified = serializers.BooleanField()
     branch = BranchBriefSerializer()
-    distance_meters = serializers.FloatField()
-    allowed_radius_meters = serializers.IntegerField()
+    distance_meters = serializers.FloatField(allow_null=True)
+    allowed_radius_meters = serializers.IntegerField(allow_null=True)
     accuracy_meters = serializers.FloatField(allow_null=True)
 
 

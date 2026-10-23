@@ -145,33 +145,55 @@ def _todays_attendance_exists(employee, today):
     return Attendance.objects.filter(employee=employee, attendance_date=today).exists()
 
 
+def _is_open_attendance_conflict(error):
+    cause = error.__cause__
+    constraint = getattr(getattr(cause, "diag", None), "constraint_name", None)
+    if constraint == "one_open_attendance_per_employee_day":
+        return True
+    message = str(cause or error).lower()
+    return "one_open_attendance_per_employee_day" in message or (
+        "attendance_attendance.employee_id" in message and "attendance_attendance.attendance_date" in message
+    )
+
+
 @transaction.atomic
-def check_in(*, employee, branch, latitude, longitude, accuracy, photo=None):
+def check_in(*, employee, branch, latitude=None, longitude=None, accuracy=None, photo=None, location_required=True):
     employee = Employee.objects.select_for_update().get(pk=employee.pk)
-    _require_accuracy(accuracy)
-    verification = verify_attendance_location(branch, latitude, longitude, accuracy)
-    if not verification.verified:
-        raise _outside_radius_error(verification)
+    verification = None
+    if location_required:
+        _require_accuracy(accuracy)
+        verification = verify_attendance_location(branch, latitude, longitude, accuracy)
+        if not verification.verified:
+            raise _outside_radius_error(verification)
 
     now = timezone.now()  # server time; any client-supplied time is ignored
     today = timezone.localdate(now)
     already_checked_in = AttendanceError("ALREADY_CHECKED_IN", "You already have an open attendance session.", 409)
-    if Attendance.objects.filter(employee=employee, check_out_at__isnull=True).exists():
+    if _todays_attendance_exists(employee, today) and Attendance.objects.filter(
+        employee=employee, attendance_date=today, check_out_at__isnull=True
+    ).exists():
         raise already_checked_in
 
-    lat, lon, _ = validate_coordinates(latitude, longitude)
+    lat, lon, _ = validate_coordinates(latitude, longitude) if location_required else (None, None, None)
     attendance = Attendance(
         employee=employee, branch=branch, attendance_date=today, check_in_at=now,
-        check_in_latitude=_decimal7(lat), check_in_longitude=_decimal7(lon),
-        check_in_accuracy=verification.accuracy_meters, check_in_distance_meters=verification.distance_meters,
-        check_in_location_verified=True, check_in_photo=photo or "",
+        check_in_latitude=_decimal7(lat) if lat is not None else None,
+        check_in_longitude=_decimal7(lon) if lon is not None else None,
+        check_in_accuracy=verification.accuracy_meters if verification else None,
+        check_in_distance_meters=verification.distance_meters if verification else None,
+        check_in_location_verified=True if verification else None, check_in_photo=photo or "",
     )
     try:
         with transaction.atomic():
             attendance.save(force_insert=True)  # writes the photo, then INSERTs
             AttendanceEvent.objects.create(attendance=attendance, action=AttendanceEvent.Action.CHECK_IN, method=AttendanceEvent.Method.MOBILE_GPS, occurred_at=now)
-    except IntegrityError:
+    except IntegrityError as error:
         _discard_file(attendance.check_in_photo)
+        # Row locks serialize on databases that support them; this partial unique index is
+        # the final guard for backends where select_for_update is a no-op (including SQLite).
+        # Convert the expected race into the same conflict response as the pre-check.
+        if _is_open_attendance_conflict(error):
+            raise already_checked_in from error
         raise
     except Exception:
         _discard_file(attendance.check_in_photo)
@@ -180,21 +202,25 @@ def check_in(*, employee, branch, latitude, longitude, accuracy, photo=None):
 
 
 @transaction.atomic
-def check_out(*, employee, branch, latitude, longitude, accuracy, photo=None):
+def check_out(*, employee, branch, latitude=None, longitude=None, accuracy=None, photo=None, location_required=True):
     employee = Employee.objects.select_for_update().get(pk=employee.pk)
-    _require_accuracy(accuracy)
-    verification = verify_attendance_location(branch, latitude, longitude, accuracy)
-    if not verification.verified:
-        raise _outside_radius_error(verification)
+    verification = None
+    if location_required:
+        _require_accuracy(accuracy)
+        verification = verify_attendance_location(branch, latitude, longitude, accuracy)
+        if not verification.verified:
+            raise _outside_radius_error(verification)
 
     now = timezone.now()
     today = timezone.localdate(now)
-    lat, lon, _ = validate_coordinates(latitude, longitude)
+    lat, lon, _ = validate_coordinates(latitude, longitude) if location_required else (None, None, None)
     attendance = None
     try:
         with transaction.atomic():
             # Row lock serialises concurrent check-out taps: the second one sees check_out_at already set.
-            attendance = Attendance.objects.select_for_update().filter(employee=employee, check_out_at__isnull=True).order_by("-check_in_at").first()
+            attendance = Attendance.objects.select_for_update().filter(
+                employee=employee, attendance_date=today, check_out_at__isnull=True
+            ).order_by("-check_in_at").first()
             if attendance is None:
                 if Attendance.objects.filter(employee=employee, attendance_date=today, check_out_at__isnull=False).exists():
                     raise AttendanceError("ALREADY_CHECKED_OUT", "There is no open session to check out.", 409)
@@ -202,11 +228,11 @@ def check_out(*, employee, branch, latitude, longitude, accuracy, photo=None):
             if attendance.branch_id != branch.pk:
                 raise AttendanceError("BRANCH_MISMATCH", "Your branch changed since check-in. Please contact HR.", 409)
             attendance.check_out_at = now
-            attendance.check_out_latitude = _decimal7(lat)
-            attendance.check_out_longitude = _decimal7(lon)
-            attendance.check_out_accuracy = verification.accuracy_meters
-            attendance.check_out_distance_meters = verification.distance_meters
-            attendance.check_out_location_verified = True
+            attendance.check_out_latitude = _decimal7(lat) if lat is not None else None
+            attendance.check_out_longitude = _decimal7(lon) if lon is not None else None
+            attendance.check_out_accuracy = verification.accuracy_meters if verification else None
+            attendance.check_out_distance_meters = verification.distance_meters if verification else None
+            attendance.check_out_location_verified = True if verification else None
             attendance.check_out_photo = photo or ""
             attendance.save(update_fields=CHECK_OUT_FIELDS)
             AttendanceEvent.objects.create(attendance=attendance, action=AttendanceEvent.Action.CHECK_OUT, method=AttendanceEvent.Method.MOBILE_GPS, occurred_at=now)

@@ -35,6 +35,8 @@ class IntegrationRulesTests(TestCase):
         self.assertFalse(self.employee.biometric_attendance_enabled)
         self.assertFalse(self.employee.mobile_gps_attendance_enabled)
         self.assertFalse(self.employee.photo_attendance_enabled)
+        self.assertFalse(self.employee.location_attendance_enabled)
+        self.assertFalse(self.employee.auto_punch_out_enabled)
 
     def test_gps_disabled_blocks_mobile_even_if_photo_enabled(self):
         self.employee.photo_attendance_enabled = True
@@ -42,6 +44,14 @@ class IntegrationRulesTests(TestCase):
         response = self.post_mobile("check-in")
         self.assertEqual(response.status_code, 403)
         self.assertEqual(Attendance.objects.count(), 0)
+
+    def test_mobile_disabled_blocks_even_when_photo_and_location_are_enabled(self):
+        self.employee.photo_attendance_enabled = True
+        self.employee.location_attendance_enabled = True
+        self.employee.save(update_fields=("photo_attendance_enabled", "location_attendance_enabled"))
+        response = self.post_mobile("check-in")
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.json()["errors"]["code"], "MOBILE_ATTENDANCE_DISABLED")
 
     def test_photo_on_requires_photo_for_check_in_and_check_out(self):
         self.employee.mobile_gps_attendance_enabled = True
@@ -58,6 +68,28 @@ class IntegrationRulesTests(TestCase):
         row = Attendance.objects.get()
         self.assertFalse(row.check_in_photo)
         self.assertTrue(row.actions.filter(action="CHECK_IN", method="MOBILE_GPS").exists())
+
+    def test_photo_on_location_off_accepts_photo_without_geofence(self):
+        self.employee.mobile_gps_attendance_enabled = True
+        self.employee.photo_attendance_enabled = True
+        self.employee.location_attendance_enabled = False
+        self.employee.save(update_fields=("mobile_gps_attendance_enabled", "photo_attendance_enabled", "location_attendance_enabled"))
+        response = self.post_mobile("check-in", photo="send")
+        self.assertEqual(response.status_code, 201, response.content)
+        row = Attendance.objects.get()
+        self.assertTrue(row.check_in_photo)
+        self.assertIsNone(row.check_in_location_verified)
+
+    def test_photo_and_location_are_both_required(self):
+        self.employee.mobile_gps_attendance_enabled = True
+        self.employee.photo_attendance_enabled = True
+        self.employee.location_attendance_enabled = True
+        self.employee.save(update_fields=("mobile_gps_attendance_enabled", "photo_attendance_enabled", "location_attendance_enabled"))
+        missing_photo = self.post_mobile("check-in", photo=None)
+        self.assertEqual(missing_photo.status_code, 400)
+        outside = self.client.post(self.base + "check-in/", {**self.location, "latitude": 11.748, "photo": image_file()}, format="multipart")
+        self.assertEqual(outside.status_code, 403)
+        self.assertEqual(Attendance.objects.count(), 0)
 
     def test_multiple_sessions_per_day_and_method_audit(self):
         self.employee.mobile_gps_attendance_enabled = True
@@ -86,3 +118,15 @@ class IntegrationRulesTests(TestCase):
         self.assertEqual(second.status_code, 200)
         self.assertEqual(Attendance.objects.filter(employee=self.employee).count(), 1)
         self.assertEqual(DeviceAttendanceEvent.objects.filter(device=device).count(), 1)
+
+    def test_device_event_is_rejected_when_biometric_permission_is_off(self):
+        device = Device(device_id="D-2", branch=self.branch, token_hash="")
+        device.set_token("test-device-secret-2")
+        device.save()
+        EmployeeFingerprint.objects.create(employee=self.employee, device=device, fingerprint_slot=13, finger="right_index")
+        payload = {"device_id": "D-2", "event_id": "0d70e206-92a2-4ec8-924c-80bbdf2c8b7c", "fingerprint_slot": 13,
+                   "occurred_at": (timezone.now() - timedelta(seconds=1)).isoformat()}
+        client = APIClient()
+        response = client.post(self.base + "fingerprint/events/", payload, format="json", HTTP_AUTHORIZATION="Device test-device-secret-2")
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(Attendance.objects.count(), 0)

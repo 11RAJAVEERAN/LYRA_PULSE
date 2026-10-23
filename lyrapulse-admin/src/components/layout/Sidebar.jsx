@@ -80,6 +80,7 @@ export function Sidebar({ collapsed, onToggle, onNavigate }) {
   const canSee = ({ superadminOnly, path }) => {
     if (superadminOnly) return user?.role === 'SUPERADMIN'
     if (path === '/employees') return user?.role === 'SUPERADMIN' || user?.permissions?.includes('employees.view_employee')
+    if (path === '/permissions') return user?.role === 'SUPERADMIN' || user?.role === 'ADMIN'
     return user?.role === 'SUPERADMIN'
   }
 
