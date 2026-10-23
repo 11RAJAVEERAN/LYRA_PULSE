@@ -65,6 +65,15 @@ class VerifyLocationView(AttendanceAPIView):
     )
     def post(self, request):
         employee, branch = self.employee_and_branch(request)
+        if not employee.location_attendance_enabled:
+            data = VerifyLocationResultSerializer({
+                "verified": True,
+                "branch": {"id": branch.pk, "name": branch.name},
+                "distance_meters": None,
+                "allowed_radius_meters": None,
+                "accuracy_meters": None,
+            }).data
+            return success_response(data, "Location verification is not required for this employee.")
         serializer = LocationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         result = services.verify_attendance_location(branch, **serializer.validated_data)
@@ -88,14 +97,17 @@ class CheckInView(AttendanceAPIView):
     )
     def post(self, request):
         employee, branch = self.employee_and_branch(request)
-        payload = request.data if employee.photo_attendance_enabled else request.data.copy()
+        payload = request.data.copy()
         if not employee.photo_attendance_enabled:
             payload.pop("photo", None)
+        if not employee.location_attendance_enabled:
+            for field in ("latitude", "longitude", "accuracy"):
+                payload.pop(field, None)
         serializer = AttendanceActionSerializer(data=payload)
         serializer.is_valid(raise_exception=True)
         if employee.photo_attendance_enabled and not serializer.validated_data.get("photo"):
             raise AttendanceError("PHOTO_REQUIRED", "A photo is required for this attendance action.", 400)
-        attendance = services.check_in(employee=employee, branch=branch, **serializer.validated_data)
+        attendance = services.check_in(employee=employee, branch=branch, location_required=employee.location_attendance_enabled, **serializer.validated_data)
         return success_response({"attendance": CheckInResultSerializer(attendance).data}, "Check-in successful.", status.HTTP_201_CREATED)
 
 
@@ -110,14 +122,17 @@ class CheckOutView(AttendanceAPIView):
     )
     def post(self, request):
         employee, branch = self.employee_and_branch(request)
-        payload = request.data if employee.photo_attendance_enabled else request.data.copy()
+        payload = request.data.copy()
         if not employee.photo_attendance_enabled:
             payload.pop("photo", None)
+        if not employee.location_attendance_enabled:
+            for field in ("latitude", "longitude", "accuracy"):
+                payload.pop(field, None)
         serializer = AttendanceActionSerializer(data=payload)
         serializer.is_valid(raise_exception=True)
         if employee.photo_attendance_enabled and not serializer.validated_data.get("photo"):
             raise AttendanceError("PHOTO_REQUIRED", "A photo is required for this attendance action.", 400)
-        attendance = services.check_out(employee=employee, branch=branch, **serializer.validated_data)
+        attendance = services.check_out(employee=employee, branch=branch, location_required=employee.location_attendance_enabled, **serializer.validated_data)
         return success_response({"attendance": CheckOutResultSerializer(attendance).data}, "Check-out successful.")
 
 

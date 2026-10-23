@@ -32,10 +32,10 @@ class AttendanceRepository {
       });
 
   Future<AttendanceActionResult> checkIn({
-    required double latitude,
-    required double longitude,
-    required double accuracy,
-    required String photoPath,
+    double? latitude,
+    double? longitude,
+    double? accuracy,
+    String? photoPath,
   }) =>
       _guard(() async {
         final form = await _form(latitude, longitude, accuracy, photoPath);
@@ -47,10 +47,10 @@ class AttendanceRepository {
       });
 
   Future<AttendanceActionResult> checkOut({
-    required double latitude,
-    required double longitude,
-    required double accuracy,
-    required String photoPath,
+    double? latitude,
+    double? longitude,
+    double? accuracy,
+    String? photoPath,
   }) =>
       _guard(() async {
         final form = await _form(latitude, longitude, accuracy, photoPath);
@@ -63,16 +63,17 @@ class AttendanceRepository {
 
   // ---------------------------------------------------------------------------
 
-  Future<FormData> _form(double latitude, double longitude, double accuracy, String photoPath) async {
-    final lower = photoPath.toLowerCase();
-    final extension = lower.endsWith('.png') ? 'png' : 'jpg';
-    return FormData.fromMap({
-      'latitude': latitude,
-      'longitude': longitude,
-      'accuracy': accuracy,
+  Future<FormData> _form(double? latitude, double? longitude, double? accuracy, String? photoPath) async {
+    final fields = <String, dynamic>{};
+    if (latitude != null && longitude != null && accuracy != null) {
+      fields.addAll({'latitude': latitude, 'longitude': longitude, 'accuracy': accuracy});
+    }
+    if (photoPath != null) {
+      final extension = photoPath.toLowerCase().endsWith('.png') ? 'png' : 'jpg';
       // Only the file bytes matter: the server validates content and names the file itself.
-      'photo': await MultipartFile.fromFile(photoPath, filename: 'photo.$extension'),
-    });
+      fields['photo'] = await MultipartFile.fromFile(photoPath, filename: 'photo.$extension');
+    }
+    return FormData.fromMap(fields);
   }
 
   Future<T> _guard<T>(Future<T> Function() request) async {

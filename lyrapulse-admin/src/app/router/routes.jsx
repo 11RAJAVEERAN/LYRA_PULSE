@@ -9,6 +9,7 @@ import { AdminLayout } from '../../components/layout/AdminLayout'
 import { AdminUsersPage } from '../../features/adminUsers/pages/AdminUsersPage'
 import { SuperAdminRoute } from './SuperAdminRoute'
 import { DevicesPage } from '../../features/devices/pages/DevicesPage'
+import { AttendancePermissionsPage } from '../../features/attendancePermissions/pages/AttendancePermissionsPage'
 
 export const routes = [
   {
@@ -43,12 +44,15 @@ export const routes = [
             element: <DevicesPage />,
           },
           {
+            path: ROUTES.permissions,
+            element: <AttendancePermissionsPage />,
+          },
+          {
             path: ROUTES.adminUsers,
             element: <SuperAdminRoute><AdminUsersPage /></SuperAdminRoute>,
           },
           ...[
             ROUTES.leaves,
-            ROUTES.permissions,
             ROUTES.branches,
             ROUTES.departments,
             ROUTES.designations,

@@ -35,7 +35,12 @@ class AttendanceConfirmScreen extends GetView<AttendanceController> {
               final error = controller.submitError.value;
               final label = attendanceTitle(action);
               return Column(children: [
-                FlowHeader(action: action, step: 3, subtitle: 'Review and confirm'),
+                FlowHeader(
+                  action: action,
+                  step: (controller.locationRequired ? 1 : 0) + (controller.photoRequired ? 1 : 0) + 1,
+                  totalSteps: (controller.locationRequired ? 1 : 0) + (controller.photoRequired ? 1 : 0) + 1,
+                  subtitle: 'Review and confirm',
+                ),
                 const SizedBox(height: 18),
                 Expanded(
                   child: SingleChildScrollView(
@@ -46,7 +51,7 @@ class AttendanceConfirmScreen extends GetView<AttendanceController> {
                           height: 260,
                           width: double.infinity,
                           child: path == null
-                              ? const ColoredBox(color: AppColors.hover)
+                              ? const ColoredBox(color: AppColors.hover, child: Center(child: Icon(Icons.fact_check_rounded, size: 64, color: AppColors.primaryBlue)))
                               : Image.file(File(path), fit: BoxFit.cover),
                         ),
                       ),
@@ -55,17 +60,17 @@ class AttendanceConfirmScreen extends GetView<AttendanceController> {
                         child: Column(children: [
                           FlowInfoRow(
                               icon: Icons.fingerprint_rounded, label: 'Action', value: label),
-                          if (verification != null && verification.branchName.isNotEmpty)
+                          if (controller.locationRequired && verification != null && verification.branchName.isNotEmpty)
                             FlowInfoRow(
                                 icon: Icons.apartment_rounded,
                                 label: 'Branch',
                                 value: verification.branchName),
-                          if (verification != null)
+                          if (controller.locationRequired && verification != null)
                             FlowInfoRow(
                                 icon: Icons.straighten_rounded,
                                 label: 'Distance from branch',
                                 value: Formatters.distance(verification.distanceMeters)),
-                          if (position != null)
+                          if (controller.locationRequired && position != null)
                             FlowInfoRow(
                                 icon: Icons.gps_fixed_rounded,
                                 label: 'GPS accuracy',
@@ -92,7 +97,7 @@ class AttendanceConfirmScreen extends GetView<AttendanceController> {
                   onPressed: submitting ? null : controller.submit,
                 ),
                 const SizedBox(height: 8),
-                TextButton.icon(
+                if (controller.photoRequired) TextButton.icon(
                   onPressed: submitting ? null : controller.retakePhoto,
                   icon: const Icon(Icons.replay_rounded, size: 18),
                   label: Text('Retake photo',

@@ -175,7 +175,7 @@ class EmployeeDetailsFormTests(TestCase):
     def test_form_access_endpoint(self):
         self.client.force_authenticate(user=self.hr)
         self.assertEqual(self.client.get("/api/v1/employees/form-access/").data["data"],
-                         {"can_view_sensitive": False, "can_change_sensitive": False})
+                         {"can_view_sensitive": False, "can_change_sensitive": False, "can_edit_attendance_permissions": False})
         self.client.force_authenticate(user=self.payroll_hr)
         self.assertTrue(self.client.get("/api/v1/employees/form-access/").data["data"]["can_change_sensitive"])
 

@@ -606,6 +606,11 @@ class IntegrationWithMobileFlowTests(AdminAttendanceTestCase):
         return self.api(employee.user).post(f"{BASE}{action}/", data, format="multipart")
 
     def test_30_mobile_check_in_and_out_are_visible_to_admin_and_unchanged(self):
+        Employee.objects.filter(pk=self.karthik.pk).update(
+            mobile_gps_attendance_enabled=True,
+            photo_attendance_enabled=True,
+            location_attendance_enabled=True,
+        )
         self.assertEqual(self.by_code()["EMP003"]["status"], "ABSENT")
         response = self.mobile_post(self.karthik, "check-in")
         self.assertEqual(response.status_code, 201, response.content)

@@ -197,7 +197,7 @@ class AdminAttendanceRowSerializer(_RowSerializer):
             "check_in_location_verified": attendance.check_in_location_verified if attendance else None,
             "check_out_location_verified": attendance.check_out_location_verified if attendance else None,
             "session_count": len(row.sessions),
-            "sessions": [{"id": item.pk, "check_in_at": _when(item.check_in_at), "check_out_at": _when(item.check_out_at), "source": item.source, "actions": list(item.actions.values("action", "method", "occurred_at")), "working_seconds": working_seconds(item)} for item in row.sessions],
+            "sessions": [{"id": item.pk, "check_in_at": _when(item.check_in_at), "check_out_at": _when(item.check_out_at), "source": item.source, "actions": [{"action": action.action, "method": action.method, "occurred_at": _when(action.occurred_at)} for action in item.actions.all()], "working_seconds": working_seconds(item)} for item in row.sessions],
         }
 
 

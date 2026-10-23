@@ -50,6 +50,9 @@ class AttendanceController extends GetxController {
   final result = Rxn<AttendanceActionResult>();
 
   bool get isCheckIn => action.value == AttendanceAction.checkIn;
+  bool get mobileAttendanceEnabled => _auth.employee.value?.mobileAttendanceEnabled ?? false;
+  bool get photoRequired => _auth.employee.value?.photoAttendanceEnabled ?? false;
+  bool get locationRequired => _auth.employee.value?.locationAttendanceEnabled ?? false;
 
   AttendanceState? get state => today.value?.state;
   bool get canCheckIn => state == AttendanceState.notCheckedIn || state == AttendanceState.checkedOut;
@@ -136,6 +139,12 @@ class AttendanceController extends GetxController {
   /// Entry point from Home. Only starts when today's backend state allows it.
   Future<void> startFlow(AttendanceAction requested) async {
     if (isSubmitting.value) return;
+    if (!mobileAttendanceEnabled) {
+      AppSnackbar.show(_auth.employee.value?.biometricAttendanceEnabled == true
+          ? 'Mobile attendance is disabled. Use your assigned biometric device.'
+          : 'Mobile attendance is not enabled for your account. Contact your administrator.');
+      return;
+    }
     if (state == null) {
       AppSnackbar.show('Attendance status is not loaded yet. Please try again.');
       unawaited(refreshToday());
@@ -155,8 +164,14 @@ class AttendanceController extends GetxController {
     }
     await _resetFlow();
     action.value = requested;
-    Get.toNamed(AppRoutes.attendanceLocation);
-    unawaited(verifyLocation());
+    if (locationRequired) {
+      Get.toNamed(AppRoutes.attendanceLocation);
+      unawaited(verifyLocation());
+    } else if (photoRequired) {
+      Get.toNamed(AppRoutes.attendanceCamera);
+    } else {
+      unawaited(submit());
+    }
   }
 
   /// Fresh GPS fix, then the real `verify-location/` call (pre-camera check only;
@@ -205,7 +220,7 @@ class AttendanceController extends GetxController {
 
   void continueToCamera() {
     if (locationStatus.value != LocationStatus.verified) return;
-    Get.toNamed(AppRoutes.attendanceCamera);
+    Get.toNamed(photoRequired ? AppRoutes.attendanceCamera : AppRoutes.attendanceConfirm);
   }
 
   void setPhoto(String path) {
@@ -231,8 +246,11 @@ class AttendanceController extends GetxController {
     if (isSubmitting.value) return;
     final fix = position.value;
     final path = photoPath.value;
-    if (fix == null || path == null || verification.value?.verified != true) {
-      AppSnackbar.show('Verify your location and take a photo first.');
+    if ((locationRequired && (fix == null || verification.value?.verified != true)) ||
+        (photoRequired && path == null)) {
+      AppSnackbar.show(locationRequired
+          ? (photoRequired ? 'Verify your location and take a photo first.' : 'Verify your location first.')
+          : 'Take your attendance photo first.');
       return;
     }
     isSubmitting.value = true;
@@ -240,9 +258,9 @@ class AttendanceController extends GetxController {
     try {
       final done = isCheckIn
           ? await _repository.checkIn(
-              latitude: fix.latitude, longitude: fix.longitude, accuracy: fix.accuracy, photoPath: path)
+              latitude: fix?.latitude, longitude: fix?.longitude, accuracy: fix?.accuracy, photoPath: path)
           : await _repository.checkOut(
-              latitude: fix.latitude, longitude: fix.longitude, accuracy: fix.accuracy, photoPath: path);
+              latitude: fix?.latitude, longitude: fix?.longitude, accuracy: fix?.accuracy, photoPath: path);
       result.value = done;
       await discardPhoto();
       // Backend is the source of truth: re-fetch rather than patching local state.

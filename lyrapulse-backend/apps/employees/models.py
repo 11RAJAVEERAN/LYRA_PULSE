@@ -62,6 +62,8 @@ class Employee(models.Model):
     biometric_attendance_enabled = models.BooleanField(default=False)
     mobile_gps_attendance_enabled = models.BooleanField(default=False)
     photo_attendance_enabled = models.BooleanField(default=False)
+    location_attendance_enabled = models.BooleanField(default=False)
+    auto_punch_out_enabled = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

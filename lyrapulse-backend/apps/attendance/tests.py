@@ -3,6 +3,7 @@ import os
 import re
 import shutil
 import tempfile
+import unittest
 from datetime import datetime, timezone as dt_timezone
 from decimal import Decimal
 from io import BytesIO
@@ -11,14 +12,15 @@ from unittest.mock import patch
 from django.contrib.auth.models import Permission
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.db import IntegrityError, transaction
+from django.db import IntegrityError, connection, transaction
+from django.test.utils import CaptureQueriesContext
 from django.test import SimpleTestCase, TestCase, override_settings
 from PIL import Image
 from rest_framework.test import APIClient
 
 from apps.accounts.models import User
 from apps.branches.models import Branch
-from apps.employees.models import Employee
+from apps.employees.models import AttendancePermissionAudit, Employee
 from apps.organizations.models import Organization
 
 from . import services
@@ -142,6 +144,12 @@ class AttendanceAPITestCase(TestCase):
             latitude=BRANCH_LAT, longitude=BRANCH_LON, attendance_radius_meters=100,
         )
         self.user, self.employee = self.make_employee("EMP001", "9876500001", self.branch)
+        # Legacy attendance-flow tests model employees whose existing settings were preserved by
+        # the 0003/0004 data migrations. New employees remain disabled by default in model tests.
+        self.employee.mobile_gps_attendance_enabled = True
+        self.employee.photo_attendance_enabled = True
+        self.employee.location_attendance_enabled = True
+        self.employee.save(update_fields=("mobile_gps_attendance_enabled", "photo_attendance_enabled", "location_attendance_enabled"))
         self.client = APIClient()
         self.client.force_authenticate(self.user)
 
@@ -203,6 +211,11 @@ class AuthAndScopingTests(AttendanceAPITestCase):
         self.assertEqual(Attendance.objects.get().branch, self.branch)
         # An employee of the other branch cannot use this branch's coordinates
         other_user, _ = self.make_employee("EMP003", "9876500003", far_branch)
+        Employee.objects.filter(user=other_user).update(
+            mobile_gps_attendance_enabled=True,
+            photo_attendance_enabled=True,
+            location_attendance_enabled=True,
+        )
         client = APIClient()
         client.force_authenticate(other_user)
         self.assertEqual(self.error_code(self.check_in(client=client)), "OUTSIDE_ATTENDANCE_RADIUS")
@@ -299,7 +312,7 @@ class CheckInTests(AttendanceAPITestCase):
     def test_15_missing_photo_rejected(self):
         response = self.check_in(photo=None)
         self.assertEqual(response.status_code, 400)
-        self.assertIn("photo", response.json()["errors"])
+        self.assertEqual(response.json()["errors"]["code"], "PHOTO_REQUIRED")
         self.assertEqual(Attendance.objects.count(), 0)
 
     def test_16_invalid_photo_rejected(self):
@@ -432,7 +445,7 @@ class CheckOutTests(AttendanceAPITestCase):
         self.check_in()
         response = self.check_out(photo=None)
         self.assertEqual(response.status_code, 400)
-        self.assertIn("photo", response.json()["errors"])
+        self.assertEqual(response.json()["errors"]["code"], "PHOTO_REQUIRED")
         self.assertIsNone(Attendance.objects.get().check_out_at)
 
     def test_28_to_30_checkout_evidence_stored(self):
@@ -504,6 +517,148 @@ class TodayTests(AttendanceAPITestCase):
         other.force_authenticate(other_user)
         self.check_in()
         self.assertEqual(other.get(f"{BASE}today/").json()["data"]["state"], "NOT_CHECKED_IN")
+
+
+class AttendancePermissionApiTests(AttendanceAPITestCase):
+    permissions_url = "/api/v1/attendance-permissions/"
+
+    def setUp(self):
+        super().setUp()
+        Employee.objects.filter(pk=self.employee.pk).update(
+            mobile_gps_attendance_enabled=False,
+            photo_attendance_enabled=False,
+            location_attendance_enabled=False,
+        )
+        self.employee.refresh_from_db()
+
+    def admin_client(self, *, branch=None, role=User.Role.ADMIN):
+        admin = User.objects.create_user(
+            f"admin-{Employee.objects.count()}-{role.lower()}@example.test",
+            role=role,
+            organization=self.org if role != User.Role.SUPERADMIN else None,
+        )
+        if branch is not None:
+            admin.allowed_branches.add(branch)
+        client = APIClient()
+        client.force_authenticate(admin)
+        return client, admin
+
+    def assert_employee_only_lock(self, queries):
+        lock_queries = [query["sql"] for query in queries if "FOR UPDATE" in query["sql"].upper()]
+        self.assertTrue(lock_queries, "Expected the update query to lock employee rows.")
+        for sql in lock_queries:
+            self.assertRegex(sql, r'FOR UPDATE OF ("?employees_employee"?)')
+
+    @unittest.skipUnless(connection.vendor == "postgresql", "PostgreSQL row-lock SQL assertion")
+    def test_individual_patch_locks_only_employee_row(self):
+        client, _ = self.admin_client(branch=self.branch)
+        with CaptureQueriesContext(connection) as queries:
+            response = client.patch(
+                f"{self.permissions_url}{self.employee.pk}/",
+                {"mobile_gps_attendance_enabled": True},
+                format="json",
+            )
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assert_employee_only_lock(queries)
+
+    @unittest.skipUnless(connection.vendor == "postgresql", "PostgreSQL row-lock SQL assertion")
+    def test_bulk_patch_locks_only_employee_rows(self):
+        _, second = self.make_employee("EMP002", "9876500018", self.branch)
+        client, _ = self.admin_client(branch=self.branch)
+        with CaptureQueriesContext(connection) as queries:
+            response = client.post(self.permissions_url + "bulk/", {
+                "employee_ids": [self.employee.pk, second.pk],
+                "permissions": {"auto_punch_out_enabled": True},
+            }, format="json")
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assert_employee_only_lock(queries)
+
+    def test_scoped_listing_and_update_create_audit_record(self):
+        client, admin = self.admin_client(branch=self.branch)
+        response = client.get(self.permissions_url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual([row["id"] for row in response.json()["data"]["results"]], [self.employee.pk])
+        updated = client.patch(
+            f"{self.permissions_url}{self.employee.pk}/",
+            {"mobile_gps_attendance_enabled": True, "location_attendance_enabled": True},
+            format="json",
+        )
+        self.assertEqual(updated.status_code, 200)
+        self.assertTrue(updated.json()["data"]["mobile_gps_attendance_enabled"])
+        audit = AttendancePermissionAudit.objects.get(employee=self.employee)
+        self.assertEqual(audit.actor, admin)
+        self.assertEqual(audit.previous_values["mobile_gps_attendance_enabled"], False)
+        self.assertEqual(audit.new_values["location_attendance_enabled"], True)
+
+    def test_bulk_update_saves_permissions_and_audit_for_each_in_scope_employee(self):
+        _, second = self.make_employee("EMP002", "9876500017", self.branch)
+        client, admin = self.admin_client(branch=self.branch)
+        response = client.post(self.permissions_url + "bulk/", {
+            "employee_ids": [self.employee.pk, second.pk],
+            "permissions": {"biometric_attendance_enabled": True, "auto_punch_out_enabled": True},
+        }, format="json")
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(response.json()["data"]["updated"], 2)
+        self.assertEqual(AttendancePermissionAudit.objects.filter(actor=admin).count(), 2)
+        self.assertTrue(Employee.objects.get(pk=self.employee.pk).biometric_attendance_enabled)
+        self.assertTrue(Employee.objects.get(pk=second.pk).auto_punch_out_enabled)
+
+    def test_employee_outside_branch_scope_cannot_be_updated(self):
+        other_org = Organization.objects.create(name="Other", code="OTHER")
+        other_branch = Branch.objects.create(organization=other_org, name="Elsewhere", code="OTHER-B")
+        _, other_employee = self.make_employee("EMP-OTHER", "9876500015", other_branch)
+        client, _ = self.admin_client(branch=self.branch)
+        response = client.patch(f"{self.permissions_url}{other_employee.pk}/", {"mobile_gps_attendance_enabled": True}, format="json")
+        self.assertEqual(response.status_code, 404)
+        self.assertFalse(other_employee.refresh_from_db() or other_employee.mobile_gps_attendance_enabled)
+
+    def test_bulk_update_is_atomic_and_scope_checked(self):
+        other_org = Organization.objects.create(name="Other", code="OTHER")
+        other_branch = Branch.objects.create(organization=other_org, name="Elsewhere", code="OTHER-B")
+        _, other_employee = self.make_employee("EMP-OTHER", "9876500016", other_branch)
+        client, _ = self.admin_client(branch=self.branch)
+        response = client.post(self.permissions_url + "bulk/", {
+            "employee_ids": [self.employee.pk, other_employee.pk],
+            "permissions": {"biometric_attendance_enabled": True},
+        }, format="json")
+        self.assertEqual(response.status_code, 404)
+        self.employee.refresh_from_db()
+        self.assertFalse(self.employee.biometric_attendance_enabled)
+        self.assertEqual(AttendancePermissionAudit.objects.count(), 0)
+
+
+class IndependentLocationPermissionTests(AttendanceAPITestCase):
+    def enable_mobile(self, *, location=False, photo=False):
+        self.employee.mobile_gps_attendance_enabled = True
+        self.employee.location_attendance_enabled = location
+        self.employee.photo_attendance_enabled = photo
+        self.employee.save(update_fields=("mobile_gps_attendance_enabled", "location_attendance_enabled", "photo_attendance_enabled"))
+
+    def test_location_off_allows_check_in_and_check_out_without_gps(self):
+        self.enable_mobile(location=False)
+        response = self.client.post(f"{BASE}check-in/", {}, format="multipart")
+        self.assertEqual(response.status_code, 201, response.content)
+        attendance = Attendance.objects.get()
+        self.assertIsNone(attendance.check_in_location_verified)
+        self.assertIsNone(attendance.check_in_latitude)
+        response = self.client.post(f"{BASE}check-out/", {}, format="multipart")
+        self.assertEqual(response.status_code, 200, response.content)
+        attendance.refresh_from_db()
+        self.assertIsNone(attendance.check_out_location_verified)
+
+    def test_location_on_requires_gps_and_rejects_outside_radius(self):
+        self.enable_mobile(location=True)
+        missing = self.client.post(f"{BASE}check-in/", {}, format="multipart")
+        self.assertEqual(missing.status_code, 400)
+        outside = self.check_in(location=FAR, photo=None)
+        self.assertEqual(self.error_code(outside), "OUTSIDE_ATTENDANCE_RADIUS")
+        self.assertEqual(Attendance.objects.count(), 0)
+
+    def test_location_off_ignores_outside_coordinates(self):
+        self.enable_mobile(location=False)
+        response = self.check_in(location=FAR, photo=None)
+        self.assertEqual(response.status_code, 201, response.content)
+        self.assertIsNone(Attendance.objects.get().check_in_location_verified)
 
 
 class MediaIsolationTests(AttendanceAPITestCase):

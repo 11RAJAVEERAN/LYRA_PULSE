@@ -166,3 +166,10 @@ Code: `apps/attendance/admin_services.py` (scope, present/absent, summary, worki
 ## Production notes
 
 Set a strong `SECRET_KEY`, `DEBUG=False`, explicit `ALLOWED_HOSTS`, and production frontend origins in `CORS_ALLOWED_ORIGINS`. Run Gunicorn with `gunicorn config.wsgi:application`. Celery and Redis dependencies are included for later phases; attendance, device, leave, reporting, and notifications are intentionally not implemented until their specified phases.
+# Attendance permissions
+
+Administrators manage per-employee mobile, photo, location, biometric, and auto-punch-out settings through `GET /api/v1/attendance-permissions/`, `GET/PATCH /api/v1/attendance-permissions/{employee_id}/`, and `POST /api/v1/attendance-permissions/bulk/`. Access is limited to Super Admin and Admin users and employee records are restricted to their allowed branches. Changes are recorded in `AttendancePermissionAudit`.
+
+Mobile check-in and check-out enforce the employee's mobile, photo, and location settings on the server. Existing employees that already had mobile attendance retain the previous photo and geofence requirements after migration. New employees receive disabled settings and must be configured by an administrator.
+
+`auto_punch_out_enabled` is configuration only. The project currently has no configured task scheduler or shift-end rules to execute automatic checkout; integrate a reliable scheduler and shift end-time policy before treating enabled values as automatic behavior.
