@@ -12,8 +12,7 @@ class AttendanceHistoryScreen extends StatefulWidget {
       _AttendanceHistoryScreenState();
 }
 
-class _AttendanceHistoryScreenState
-    extends State<AttendanceHistoryScreen> {
+class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
   late final AttendanceController controller;
   late String selectedMonth;
 
@@ -41,25 +40,49 @@ class _AttendanceHistoryScreenState
 
   static String _monthName(int month) {
     const names = [
-      'January', 'February', 'March', 'April',
-      'May', 'June', 'July', 'August',
-      'September', 'October', 'November', 'December',
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
     ];
     return names[month - 1];
   }
 
   static String _shortMonthName(int month) {
     const names = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return names[month - 1];
   }
 
   static String _weekdayName(int weekday) {
     const names = [
-      'Monday', 'Tuesday', 'Wednesday', 'Thursday',
-      'Friday', 'Saturday', 'Sunday',
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+      'Sunday',
     ];
     return names[weekday - 1];
   }
@@ -81,13 +104,11 @@ class _AttendanceHistoryScreenState
       final checkInString = record['checkIn']?.toString();
       final checkOutString = record['checkOut']?.toString();
 
-      final checkIn = checkInString == null
-          ? null
-          : DateTime.tryParse(checkInString);
+      final checkIn =
+          checkInString == null ? null : DateTime.tryParse(checkInString);
 
-      final checkOut = checkOutString == null
-          ? null
-          : DateTime.tryParse(checkOutString);
+      final checkOut =
+          checkOutString == null ? null : DateTime.tryParse(checkOutString);
 
       result.add(
         _AttendanceData(
@@ -220,7 +241,7 @@ class _AttendanceHistoryScreenState
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.black.withOpacity(0.03),
+                        color: AppColors.black.withValues(alpha: 0.03),
                         blurRadius: 12,
                         offset: const Offset(0, 4),
                       ),
@@ -280,9 +301,7 @@ class _AttendanceHistoryScreenState
                   ),
                 ),
               ),
-
               const SizedBox(height: 22),
-
               const Text(
                 'This Month',
                 style: TextStyle(
@@ -291,9 +310,7 @@ class _AttendanceHistoryScreenState
                   fontWeight: FontWeight.w800,
                 ),
               ),
-
               const SizedBox(height: 12),
-
               Obx(() {
                 final records = selectedRecords;
                 final present = records.length;
@@ -332,9 +349,7 @@ class _AttendanceHistoryScreenState
                   ],
                 );
               }),
-
               const SizedBox(height: 25),
-
               const Text(
                 'Attendance Records',
                 style: TextStyle(
@@ -343,9 +358,7 @@ class _AttendanceHistoryScreenState
                   fontWeight: FontWeight.w800,
                 ),
               ),
-
               const SizedBox(height: 12),
-
               Obx(() {
                 final records = selectedRecords;
 
@@ -367,8 +380,7 @@ class _AttendanceHistoryScreenState
                         checkOut: record.checkOut,
                         status: record.status,
                         statusColor: _getStatusColor(record.status),
-                        statusBackground:
-                            _getStatusBackground(record.status),
+                        statusBackground: _getStatusBackground(record.status),
                       ),
                     );
                   }).toList(),

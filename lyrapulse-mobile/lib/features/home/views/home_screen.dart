@@ -1,4 +1,3 @@
-
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -31,8 +30,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final GlobalKey<ScaffoldState> _scaffoldKey =
-      GlobalKey<ScaffoldState>();
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   int _selectedIndex = 2;
 
@@ -42,10 +40,9 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
 
-    attendanceController =
-        Get.isRegistered<AttendanceController>()
-            ? Get.find<AttendanceController>()
-            : Get.put(AttendanceController(), permanent: true);
+    attendanceController = Get.isRegistered<AttendanceController>()
+        ? Get.find<AttendanceController>()
+        : Get.put(AttendanceController(), permanent: true);
   }
 
   void _openCheckIn() {
@@ -58,10 +55,10 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
 
-    if (attendanceController.isCompleted) {
+    if (attendanceController.checkOutTime.value != null) {
       Get.snackbar(
-        'Attendance Completed',
-        'Today attendance is already completed.',
+        'Already Checked Out',
+        'Your check out is already recorded.',
         snackPosition: SnackPosition.BOTTOM,
       );
       return;
@@ -613,9 +610,7 @@ class _HomeScreenState extends State<HomeScreen> {
           style: GoogleFonts.inter(
             fontSize: 13,
             fontWeight: FontWeight.w700,
-            color: active
-                ? AppColors.success
-                : AppColors.textSecondary,
+            color: active ? AppColors.success : AppColors.textSecondary,
           ),
         ),
       ],
@@ -739,8 +734,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final checkOut = attendanceController.checkOutTime.value;
       final duration = attendanceController.workingDuration.value;
 
-      final checkInParts =
-          attendanceController.formatTime(checkIn).split(' ');
+      final checkInParts = attendanceController.formatTime(checkIn).split(' ');
       final checkOutParts =
           attendanceController.formatTime(checkOut).split(' ');
 

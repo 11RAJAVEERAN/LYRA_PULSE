@@ -1,4 +1,3 @@
-
 import 'dart:io';
 
 import 'package:camera/camera.dart';
@@ -16,12 +15,10 @@ class FaceVerificationScreen extends StatefulWidget {
   });
 
   @override
-  State<FaceVerificationScreen> createState() =>
-      _FaceVerificationScreenState();
+  State<FaceVerificationScreen> createState() => _FaceVerificationScreenState();
 }
 
-class _FaceVerificationScreenState
-    extends State<FaceVerificationScreen> {
+class _FaceVerificationScreenState extends State<FaceVerificationScreen> {
   CameraController? _cameraController;
 
   bool _isCameraReady = false;
@@ -95,8 +92,7 @@ class _FaceVerificationScreenState
 
       setState(() {
         _isCameraReady = false;
-        _cameraError =
-            'Unable to open camera. Please check camera permission.';
+        _cameraError = 'Unable to open camera. Please check camera permission.';
       });
     }
   }
@@ -298,7 +294,6 @@ class _FaceVerificationScreenState
                   fit: StackFit.expand,
                   children: [
                     _buildCameraPreview(),
-
                     if (_isCameraReady)
                       Center(
                         child: IgnorePointer(
@@ -311,7 +306,6 @@ class _FaceVerificationScreenState
                           ),
                         ),
                       ),
-
                     Positioned(
                       top: 14,
                       left: 12,
@@ -321,7 +315,7 @@ class _FaceVerificationScreenState
                           vertical: 8,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.95),
+                          color: Colors.white.withValues(alpha: 0.95),
                           borderRadius: BorderRadius.circular(24),
                         ),
                         child: Row(
@@ -436,9 +430,8 @@ class _FaceVerificationScreenState
               SizedBox(
                 height: 52,
                 child: ElevatedButton(
-                  onPressed: _isCameraReady && !_isCapturing
-                      ? _capturePhoto
-                      : null,
+                  onPressed:
+                      _isCameraReady && !_isCapturing ? _capturePhoto : null,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: primary,
                     foregroundColor: Colors.white,

@@ -27,7 +27,7 @@ class CheckOutCard extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.black.withOpacity(0.20),
+            color: AppColors.black.withValues(alpha: 0.20),
             blurRadius: 24,
             offset: const Offset(0, 10),
           ),
@@ -55,9 +55,7 @@ class CheckOutCard extends StatelessWidget {
                   size: 23,
                 ),
               ),
-
               const SizedBox(width: 12),
-
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -71,9 +69,7 @@ class CheckOutCard extends StatelessWidget {
                         letterSpacing: 1.1,
                       ),
                     ),
-
                     const SizedBox(height: 3),
-
                     Text(
                       isCheckedOut
                           ? 'Attendance completed'
@@ -86,7 +82,6 @@ class CheckOutCard extends StatelessWidget {
                   ],
                 ),
               ),
-
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 9,
@@ -111,9 +106,7 @@ class CheckOutCard extends StatelessWidget {
                             : AppColors.hexFF25DDF7,
                       ),
                     ),
-
                     const SizedBox(width: 5),
-
                     Text(
                       isCheckedOut ? 'DONE' : 'PENDING',
                       style: GoogleFonts.inter(
@@ -154,9 +147,7 @@ class CheckOutCard extends StatelessWidget {
                   color: AppColors.hexFF25DDF7,
                   size: 18,
                 ),
-
                 const SizedBox(width: 9),
-
                 Text(
                   'Check-out Time',
                   style: GoogleFonts.inter(
@@ -164,9 +155,7 @@ class CheckOutCard extends StatelessWidget {
                     fontSize: 9,
                   ),
                 ),
-
                 const Spacer(),
-
                 Text(
                   checkOutTime,
                   style: GoogleFonts.inter(
@@ -208,13 +197,9 @@ class CheckOutCard extends StatelessWidget {
                         : Icons.logout_rounded,
                     size: 18,
                   ),
-
                   const SizedBox(width: 8),
-
                   Text(
-                    isCheckedOut
-                        ? 'Checked Out'
-                        : 'Start Check Out',
+                    isCheckedOut ? 'Checked Out' : 'Start Check Out',
                     style: GoogleFonts.inter(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,

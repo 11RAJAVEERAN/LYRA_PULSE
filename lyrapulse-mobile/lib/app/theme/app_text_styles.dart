@@ -47,12 +47,12 @@ abstract final class AppTextStyles {
   );
 
   static final TextTheme textTheme = ThemeData().textTheme.copyWith(
-    displayLarge: display,
-    headlineMedium: headline,
-    titleLarge: title,
-    bodyLarge: body,
-    bodyMedium: body,
-    bodySmall: bodySmall,
-    labelLarge: label,
-  );
+        displayLarge: display,
+        headlineMedium: headline,
+        titleLarge: title,
+        bodyLarge: body,
+        bodyMedium: body,
+        bodySmall: bodySmall,
+        labelLarge: label,
+      );
 }

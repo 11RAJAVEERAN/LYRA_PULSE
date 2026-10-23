@@ -114,13 +114,15 @@ class _HomeDrawerState extends State<HomeDrawer> {
                       title: 'Permission',
                       subtitle: 'Request permission',
                       icon: Icons.fact_check_rounded,
-                      onTap: () => _select('Permission', widget.onPermissionTap),
+                      onTap: () =>
+                          _select('Permission', widget.onPermissionTap),
                     ),
                     _menuItem(
                       title: 'Leave Management',
                       subtitle: 'Apply and track leave',
                       icon: Icons.beach_access_rounded,
-                      onTap: () => _select('Leave Management', widget.onLeaveTap),
+                      onTap: () =>
+                          _select('Leave Management', widget.onLeaveTap),
                     ),
                   ],
                 ),
@@ -236,7 +238,8 @@ class _HomeDrawerState extends State<HomeDrawer> {
             decoration: BoxDecoration(
               color: AppColors.white.withValues(alpha: 0.11),
               borderRadius: BorderRadius.circular(30),
-              border: Border.all(color: AppColors.white.withValues(alpha: 0.12)),
+              border:
+                  Border.all(color: AppColors.white.withValues(alpha: 0.12)),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -275,8 +278,8 @@ class _HomeDrawerState extends State<HomeDrawer> {
     Color? selectedColor,
   }) {
     final bool selected = _selectedItem == title;
-    final Color effectiveIconColor = iconColor ??
-        (selected ? AppColors.primary : AppColors.textSecondary);
+    final Color effectiveIconColor =
+        iconColor ?? (selected ? AppColors.primary : AppColors.textSecondary);
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
@@ -314,7 +317,8 @@ class _HomeDrawerState extends State<HomeDrawer> {
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.inter(
                           fontSize: 12,
-                          fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+                          fontWeight:
+                              selected ? FontWeight.w700 : FontWeight.w600,
                           color: selected
                               ? AppColors.primary
                               : AppColors.textPrimary,

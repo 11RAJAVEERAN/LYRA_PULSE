@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import '../controllers/calendar_controller.dart';
 
@@ -63,9 +62,8 @@ class AttendanceCalendarGrid extends StatelessWidget {
     return Column(
       children: [
         Row(
-          children: [
-            'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'
-          ].map((day) {
+          children:
+              ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) {
             return Expanded(
               child: Center(
                 child: Padding(
@@ -119,9 +117,7 @@ class AttendanceCalendarGrid extends StatelessWidget {
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 160),
                 decoration: BoxDecoration(
-                  color: selected
-                      ? const Color(0xFFE7F3FF)
-                      : baseColor,
+                  color: selected ? const Color(0xFFE7F3FF) : baseColor,
                   borderRadius: BorderRadius.circular(9),
                   border: Border.all(
                     color: selected

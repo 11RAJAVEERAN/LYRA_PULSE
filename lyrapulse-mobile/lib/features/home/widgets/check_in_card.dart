@@ -27,7 +27,7 @@ class CheckInCard extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.black.withOpacity(0.20),
+            color: AppColors.black.withValues(alpha: 0.20),
             blurRadius: 24,
             offset: const Offset(0, 10),
           ),
@@ -55,9 +55,7 @@ class CheckInCard extends StatelessWidget {
                   size: 23,
                 ),
               ),
-
               const SizedBox(width: 12),
-
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -71,9 +69,7 @@ class CheckInCard extends StatelessWidget {
                         letterSpacing: 1.1,
                       ),
                     ),
-
                     const SizedBox(height: 3),
-
                     Text(
                       isCheckedIn
                           ? 'Attendance marked'
@@ -86,7 +82,6 @@ class CheckInCard extends StatelessWidget {
                   ],
                 ),
               ),
-
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 9,
@@ -152,9 +147,7 @@ class CheckInCard extends StatelessWidget {
                   color: AppColors.hexFF25DDF7,
                   size: 18,
                 ),
-
                 const SizedBox(width: 9),
-
                 Text(
                   'Check-in Time',
                   style: GoogleFonts.inter(
@@ -162,9 +155,7 @@ class CheckInCard extends StatelessWidget {
                     fontSize: 9,
                   ),
                 ),
-
                 const Spacer(),
-
                 Text(
                   checkInTime,
                   style: GoogleFonts.inter(
@@ -206,13 +197,9 @@ class CheckInCard extends StatelessWidget {
                         : Icons.login_rounded,
                     size: 18,
                   ),
-
                   const SizedBox(width: 8),
-
                   Text(
-                    isCheckedIn
-                        ? 'Checked In'
-                        : 'Start Check In',
+                    isCheckedIn ? 'Checked In' : 'Start Check In',
                     style: GoogleFonts.inter(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,

@@ -9,16 +9,14 @@ class PermissionStartScreen extends StatefulWidget {
   const PermissionStartScreen({super.key});
 
   @override
-  State<PermissionStartScreen> createState() =>
-      _PermissionStartScreenState();
+  State<PermissionStartScreen> createState() => _PermissionStartScreenState();
 }
 
 class _PermissionStartScreenState extends State<PermissionStartScreen> {
   String selectedType = 'Personal Work';
   TimeOfDay? selectedReturnTime;
 
-  final TextEditingController reasonController =
-      TextEditingController();
+  final TextEditingController reasonController = TextEditingController();
 
   final List<String> permissionTypes = [
     'Personal Work',
@@ -295,8 +293,7 @@ class _PermissionStartScreenState extends State<PermissionStartScreen> {
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.hexFF00CFFF
-                                .withOpacity(0.22),
+                            color: AppColors.hexFF00CFFF.withValues(alpha: 0.22),
                             blurRadius: 24,
                             offset: const Offset(0, 9),
                           ),
@@ -766,7 +763,7 @@ class _PermissionStartScreenState extends State<PermissionStartScreen> {
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.hexFF20DFFF.withOpacity(0.18),
+            color: AppColors.hexFF20DFFF.withValues(alpha: 0.18),
             blurRadius: 30,
             spreadRadius: 3,
           ),
@@ -778,7 +775,7 @@ class _PermissionStartScreenState extends State<PermissionStartScreen> {
           shape: BoxShape.circle,
           color: AppColors.hexFF0B3049,
           border: Border.all(
-            color: AppColors.hexFF20DFFF.withOpacity(0.35),
+            color: AppColors.hexFF20DFFF.withValues(alpha: 0.35),
           ),
         ),
         child: const Icon(
@@ -805,8 +802,8 @@ class _PermissionStartScreenState extends State<PermissionStartScreen> {
         shape: BoxShape.circle,
         gradient: RadialGradient(
           colors: [
-            color.withOpacity(0.12),
-            color.withOpacity(0.03),
+            color.withValues(alpha: 0.12),
+            color.withValues(alpha: 0.03),
             AppColors.transparent,
           ],
         ),

@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -111,9 +110,7 @@ class BottomNavBar extends StatelessWidget {
               Icon(
                 isSelected ? item.selectedIcon : item.icon,
                 size: 21,
-                color: isSelected
-                    ? AppColors.primary
-                    : AppColors.textSecondary,
+                color: isSelected ? AppColors.primary : AppColors.textSecondary,
               ),
               if (isSelected) ...[
                 const SizedBox(height: 3),

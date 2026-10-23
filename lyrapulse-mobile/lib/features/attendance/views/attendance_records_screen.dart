@@ -53,17 +53,11 @@ class AttendanceRecordsScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildSubtitle(),
-
               const SizedBox(height: 18),
-
               _buildMonthlySummary(),
-
               const SizedBox(height: 22),
-
               _buildFilterHeader(),
-
               const SizedBox(height: 14),
-
               _buildAttendanceCard(
                 date: '06',
                 day: 'Monday',
@@ -77,9 +71,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
                 locationVerified: true,
                 faceVerified: true,
               ),
-
               const SizedBox(height: 13),
-
               _buildAttendanceCard(
                 date: '03',
                 day: 'Friday',
@@ -93,9 +85,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
                 locationVerified: true,
                 faceVerified: true,
               ),
-
               const SizedBox(height: 13),
-
               _buildAttendanceCard(
                 date: '02',
                 day: 'Thursday',
@@ -109,9 +99,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
                 locationVerified: false,
                 faceVerified: false,
               ),
-
               const SizedBox(height: 13),
-
               _buildAttendanceCard(
                 date: '01',
                 day: 'Wednesday',
@@ -125,13 +113,9 @@ class AttendanceRecordsScreen extends StatelessWidget {
                 locationVerified: true,
                 faceVerified: true,
               ),
-
               const SizedBox(height: 24),
-
               _buildInfoMessage(),
-
               const SizedBox(height: 22),
-
               _buildFooter(),
             ],
           ),
@@ -194,9 +178,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
                   size: 23,
                 ),
               ),
-
               const SizedBox(width: 11),
-
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -219,7 +201,6 @@ class AttendanceRecordsScreen extends StatelessWidget {
                   ],
                 ),
               ),
-
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 10,
@@ -240,16 +221,12 @@ class AttendanceRecordsScreen extends StatelessWidget {
               ),
             ],
           ),
-
           const SizedBox(height: 18),
-
           const Divider(
             height: 1,
             color: AppColors.hexFFEDF0F5,
           ),
-
           const SizedBox(height: 16),
-
           Row(
             children: [
               Expanded(
@@ -259,9 +236,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
                   color: green,
                 ),
               ),
-
               _verticalDivider(),
-
               Expanded(
                 child: _summaryItem(
                   value: '2',
@@ -269,9 +244,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
                   color: red,
                 ),
               ),
-
               _verticalDivider(),
-
               Expanded(
                 child: _summaryItem(
                   value: '3',
@@ -279,9 +252,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
                   color: orange,
                 ),
               ),
-
               _verticalDivider(),
-
               Expanded(
                 child: _summaryItem(
                   value: '1',
@@ -370,7 +341,6 @@ class AttendanceRecordsScreen extends StatelessWidget {
             ],
           ),
         ),
-
         Container(
           padding: const EdgeInsets.symmetric(
             horizontal: 11,
@@ -510,9 +480,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
                             fontWeight: FontWeight.w700,
                           ),
                         ),
-
                         const SizedBox(height: 2),
-
                         Text(
                           month,
                           style: GoogleFonts.inter(
@@ -557,16 +525,12 @@ class AttendanceRecordsScreen extends StatelessWidget {
                   ),
                 ],
               ),
-
               const SizedBox(height: 15),
-
               const Divider(
                 height: 1,
                 color: AppColors.hexFFEDF0F5,
               ),
-
               const SizedBox(height: 14),
-
               Row(
                 children: [
                   Expanded(
@@ -577,13 +541,11 @@ class AttendanceRecordsScreen extends StatelessWidget {
                       color: blue,
                     ),
                   ),
-
                   Container(
                     height: 40,
                     width: 1,
                     color: AppColors.hexFFE9EDF4,
                   ),
-
                   Expanded(
                     child: Padding(
                       padding: const EdgeInsets.only(
@@ -599,9 +561,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
                   ),
                 ],
               ),
-
               const SizedBox(height: 14),
-
               Row(
                 children: [
                   const Icon(
@@ -609,9 +569,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
                     color: green,
                     size: 16,
                   ),
-
                   const SizedBox(width: 6),
-
                   Text(
                     'Working Hours',
                     style: GoogleFonts.inter(
@@ -619,9 +577,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
                       fontSize: 9,
                     ),
                   ),
-
                   const Spacer(),
-
                   Text(
                     workingHours,
                     style: GoogleFonts.inter(
@@ -632,10 +588,8 @@ class AttendanceRecordsScreen extends StatelessWidget {
                   ),
                 ],
               ),
-
               if (locationVerified || faceVerified) ...[
                 const SizedBox(height: 12),
-
                 Row(
                   children: [
                     if (locationVerified)
@@ -644,19 +598,15 @@ class AttendanceRecordsScreen extends StatelessWidget {
                         label: 'Location Verified',
                         color: green,
                       ),
-
                     if (locationVerified && faceVerified)
                       const SizedBox(width: 7),
-
                     if (faceVerified)
                       _verificationBadge(
                         icon: Icons.face_rounded,
                         label: 'Face Verified',
                         color: blue,
                       ),
-
                     const Spacer(),
-
                     const Icon(
                       Icons.arrow_forward_ios_rounded,
                       color: lightText,
@@ -697,9 +647,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
             size: 16,
           ),
         ),
-
         const SizedBox(width: 8),
-
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -810,9 +758,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
-
               const SizedBox(height: 18),
-
               Row(
                 children: [
                   Container(
@@ -833,9 +779,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-
                   const SizedBox(width: 12),
-
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -858,7 +802,6 @@ class AttendanceRecordsScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 10,
@@ -879,58 +822,42 @@ class AttendanceRecordsScreen extends StatelessWidget {
                   ),
                 ],
               ),
-
               const SizedBox(height: 20),
-
               _detailRow(
                 icon: Icons.login_rounded,
                 title: 'Check In',
                 value: checkIn,
                 color: blue,
               ),
-
               const SizedBox(height: 12),
-
               _detailRow(
                 icon: Icons.logout_rounded,
                 title: 'Check Out',
                 value: checkOut,
                 color: purple,
               ),
-
               const SizedBox(height: 12),
-
               _detailRow(
                 icon: Icons.schedule_rounded,
                 title: 'Working Hours',
                 value: workingHours,
                 color: green,
               ),
-
               const SizedBox(height: 12),
-
               _detailRow(
                 icon: Icons.location_on_rounded,
                 title: 'Location Verification',
-                value: locationVerified
-                    ? 'Verified'
-                    : 'Not Available',
+                value: locationVerified ? 'Verified' : 'Not Available',
                 color: locationVerified ? green : red,
               ),
-
               const SizedBox(height: 12),
-
               _detailRow(
                 icon: Icons.face_rounded,
                 title: 'Face Verification',
-                value: faceVerified
-                    ? 'Verified'
-                    : 'Not Available',
+                value: faceVerified ? 'Verified' : 'Not Available',
                 color: faceVerified ? green : red,
               ),
-
               const SizedBox(height: 22),
-
               SizedBox(
                 width: double.infinity,
                 height: 48,
@@ -992,9 +919,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
               size: 18,
             ),
           ),
-
           const SizedBox(width: 10),
-
           Expanded(
             child: Text(
               title,
@@ -1004,7 +929,6 @@ class AttendanceRecordsScreen extends StatelessWidget {
               ),
             ),
           ),
-
           Text(
             value,
             style: GoogleFonts.inter(
@@ -1047,9 +971,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
               size: 19,
             ),
           ),
-
           const SizedBox(width: 10),
-
           Expanded(
             child: Text(
               'Attendance records are securely maintained and can be verified using location and face verification.',

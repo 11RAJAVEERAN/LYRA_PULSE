@@ -16,7 +16,9 @@ class TodayStatusCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppDimensions.cardRadius),
           boxShadow: const [
             BoxShadow(
-                color:AppColors.textPrimary, blurRadius: 24, offset: Offset(0, 8))
+                color: AppColors.textPrimary,
+                blurRadius: 24,
+                offset: Offset(0, 8))
           ]),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [

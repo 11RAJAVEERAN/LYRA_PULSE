@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import '../controllers/calendar_controller.dart';
 
@@ -63,9 +62,7 @@ class CalendarViewToggle extends StatelessWidget {
         ),
         child: Icon(
           icon,
-          color: selected
-              ? const Color(0xFF1677B8)
-              : const Color(0xFF8B96A5),
+          color: selected ? const Color(0xFF1677B8) : const Color(0xFF8B96A5),
           size: 23,
         ),
       ),

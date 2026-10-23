@@ -136,9 +136,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
               ),
             ),
           ),
-
           const SizedBox(width: 13),
-
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -151,9 +149,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-
                 const SizedBox(height: 2),
-
                 Text(
                   _unreadCount == 0
                       ? 'You are all caught up'
@@ -167,7 +163,6 @@ class _NotificationScreenState extends State<NotificationScreen> {
               ],
             ),
           ),
-
           if (_unreadCount > 0)
             InkWell(
               onTap: _markAllAsRead,
@@ -233,9 +228,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
           child: Container(
             padding: const EdgeInsets.all(15),
             decoration: BoxDecoration(
-              color: notification.isRead
-                  ? AppColors.white
-                  : AppColors.hexFFF8FAFF,
+              color:
+                  notification.isRead ? AppColors.white : AppColors.hexFFF8FAFF,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
                 color: notification.isRead
@@ -291,9 +285,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                               ),
                             ),
                           ),
-
                           const SizedBox(width: 8),
-
                           if (!notification.isRead)
                             Container(
                               margin: const EdgeInsets.only(top: 4),
@@ -306,9 +298,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                             ),
                         ],
                       ),
-
                       const SizedBox(height: 5),
-
                       Text(
                         notification.message,
                         style: GoogleFonts.inter(
@@ -318,9 +308,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                           fontWeight: FontWeight.w400,
                         ),
                       ),
-
                       const SizedBox(height: 8),
-
                       Row(
                         children: [
                           Icon(
@@ -328,9 +316,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                             color: muted,
                             size: 12,
                           ),
-
                           const SizedBox(width: 4),
-
                           Text(
                             notification.time,
                             style: GoogleFonts.inter(
@@ -339,9 +325,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                               fontWeight: FontWeight.w500,
                             ),
                           ),
-
                           const Spacer(),
-
                           if (!notification.isRead)
                             Container(
                               padding: const EdgeInsets.symmetric(
@@ -399,9 +383,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                 size: 42,
               ),
             ),
-
             const SizedBox(height: 22),
-
             Text(
               'No Notifications',
               textAlign: TextAlign.center,
@@ -411,9 +393,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                 fontWeight: FontWeight.w700,
               ),
             ),
-
             const SizedBox(height: 7),
-
             Text(
               'You don’t have any notifications right now.\n'
               'We will notify you when something important happens.',

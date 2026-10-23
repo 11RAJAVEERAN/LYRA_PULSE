@@ -11,12 +11,10 @@ class RegularizationScreen extends StatefulWidget {
   });
 
   @override
-  State<RegularizationScreen> createState() =>
-      _RegularizationScreenState();
+  State<RegularizationScreen> createState() => _RegularizationScreenState();
 }
 
-class _RegularizationScreenState
-    extends State<RegularizationScreen> {
+class _RegularizationScreenState extends State<RegularizationScreen> {
   static const Color primaryBlue = AppColors.hexFF1769D2;
   static const Color backgroundColor = AppColors.hexFFF7FAFD;
   static const Color textColor = AppColors.hexFF253858;
@@ -36,9 +34,18 @@ class _RegularizationScreenState
 
   String _formatDate(DateTime date) {
     const months = [
-      'January', 'February', 'March', 'April',
-      'May', 'June', 'July', 'August',
-      'September', 'October', 'November', 'December',
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
     ];
 
     return '${date.day} ${months[date.month - 1]} ${date.year}';
@@ -193,7 +200,6 @@ class _RegularizationScreenState
                   ),
                 ),
                 const SizedBox(height: 22),
-
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(18),
@@ -234,9 +240,7 @@ class _RegularizationScreenState
                     ],
                   ),
                 ),
-
                 const SizedBox(height: 24),
-
                 Text(
                   'Attendance Issue',
                   style: GoogleFonts.inter(
@@ -246,9 +250,8 @@ class _RegularizationScreenState
                   ),
                 ),
                 const SizedBox(height: 10),
-
                 DropdownButtonFormField<String>(
-                  value: _issue,
+                  initialValue: _issue,
                   isExpanded: true,
                   decoration: InputDecoration(
                     filled: true,
@@ -280,9 +283,7 @@ class _RegularizationScreenState
                     setState(() => _issue = value);
                   },
                 ),
-
                 const SizedBox(height: 24),
-
                 Text(
                   'Actual Attendance Time',
                   style: GoogleFonts.inter(
@@ -292,7 +293,6 @@ class _RegularizationScreenState
                   ),
                 ),
                 const SizedBox(height: 12),
-
                 Row(
                   children: [
                     _timeCard(
@@ -308,9 +308,7 @@ class _RegularizationScreenState
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 24),
-
                 Text(
                   'Reason for Regularization',
                   style: GoogleFonts.inter(
@@ -320,7 +318,6 @@ class _RegularizationScreenState
                   ),
                 ),
                 const SizedBox(height: 10),
-
                 TextFormField(
                   controller: _reasonController,
                   maxLines: 4,
@@ -340,9 +337,7 @@ class _RegularizationScreenState
                     return null;
                   },
                 ),
-
                 const SizedBox(height: 24),
-
                 SizedBox(
                   width: double.infinity,
                   height: 52,

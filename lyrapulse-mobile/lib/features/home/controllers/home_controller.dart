@@ -1,4 +1,3 @@
-
 import 'dart:async';
 
 import 'package:get/get.dart';
@@ -33,8 +32,7 @@ class HomeController extends GetxController {
 
     final elapsed = DateTime.now().difference(startTime);
 
-    workingDuration.value =
-        elapsed.isNegative ? Duration.zero : elapsed;
+    workingDuration.value = elapsed.isNegative ? Duration.zero : elapsed;
   }
 
   /// Call this only after check-out is successfully completed.
@@ -50,10 +48,8 @@ class HomeController extends GetxController {
     final duration = workingDuration.value;
 
     final hours = duration.inHours.toString().padLeft(2, '0');
-    final minutes =
-        duration.inMinutes.remainder(60).toString().padLeft(2, '0');
-    final seconds =
-        duration.inSeconds.remainder(60).toString().padLeft(2, '0');
+    final minutes = duration.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
 
     return '$hours:$minutes:$seconds';
   }

@@ -38,7 +38,7 @@ class CheckOutSuccessScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(14),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.black.withOpacity(0.05),
+                            color: AppColors.black.withValues(alpha: 0.05),
                             blurRadius: 12,
                             offset: const Offset(0, 4),
                           ),
@@ -78,13 +78,13 @@ class CheckOutSuccessScreen extends StatelessWidget {
                   width: 118,
                   height: 118,
                   decoration: BoxDecoration(
-                    color: green.withOpacity(0.10),
+                    color: green.withValues(alpha: 0.10),
                     shape: BoxShape.circle,
                   ),
                   child: Container(
                     margin: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: green.withOpacity(0.15),
+                      color: green.withValues(alpha: 0.15),
                       shape: BoxShape.circle,
                     ),
                     child: Container(
@@ -139,7 +139,7 @@ class CheckOutSuccessScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(22),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.black.withOpacity(0.045),
+                        color: AppColors.black.withValues(alpha: 0.045),
                         blurRadius: 20,
                         offset: const Offset(0, 8),
                       ),
@@ -153,7 +153,7 @@ class CheckOutSuccessScreen extends StatelessWidget {
                             width: 48,
                             height: 48,
                             decoration: BoxDecoration(
-                              color: blue.withOpacity(0.10),
+                              color: blue.withValues(alpha: 0.10),
                               borderRadius: BorderRadius.circular(15),
                             ),
                             child: const Icon(
@@ -192,7 +192,7 @@ class CheckOutSuccessScreen extends StatelessWidget {
                               vertical: 6,
                             ),
                             decoration: BoxDecoration(
-                              color: green.withOpacity(0.10),
+                              color: green.withValues(alpha: 0.10),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: const Text(
@@ -268,10 +268,10 @@ class CheckOutSuccessScreen extends StatelessWidget {
                     vertical: 14,
                   ),
                   decoration: BoxDecoration(
-                    color: green.withOpacity(0.07),
+                    color: green.withValues(alpha: 0.07),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: green.withOpacity(0.15),
+                      color: green.withValues(alpha: 0.15),
                     ),
                   ),
                   child: const Row(
@@ -395,9 +395,7 @@ class _InfoRow extends StatelessWidget {
             color: iconColor,
           ),
         ),
-
         const SizedBox(width: 12),
-
         Expanded(
           child: Text(
             title,
@@ -408,7 +406,6 @@ class _InfoRow extends StatelessWidget {
             ),
           ),
         ),
-
         Text(
           value,
           style: TextStyle(

@@ -11,8 +11,7 @@ class AuthController extends GetxController {
   final phoneController = TextEditingController();
   final otpController = TextEditingController();
 
-  final secondsRemaining =
-      AppConstants.otpCountdownSeconds.obs;
+  final secondsRemaining = AppConstants.otpCountdownSeconds.obs;
 
   final isVerifying = false.obs;
 
@@ -41,8 +40,7 @@ class AuthController extends GetxController {
 
     otpController.clear();
 
-    secondsRemaining.value =
-        AppConstants.otpCountdownSeconds;
+    secondsRemaining.value = AppConstants.otpCountdownSeconds;
 
     Get.toNamed(AppRoutes.otp);
 
@@ -76,8 +74,7 @@ class AuthController extends GetxController {
 
     otpController.clear();
 
-    secondsRemaining.value =
-        AppConstants.otpCountdownSeconds;
+    secondsRemaining.value = AppConstants.otpCountdownSeconds;
 
     AppSnackbar.show('A new OTP has been sent');
   }

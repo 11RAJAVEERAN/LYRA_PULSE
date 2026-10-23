@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -16,9 +15,8 @@ class PermissionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color accentColor = isRequested
-        ? AppColors.success
-        : AppColors.accent;
+    final Color accentColor =
+        isRequested ? AppColors.success : AppColors.accent;
 
     return Container(
       width: double.infinity,
@@ -31,7 +29,7 @@ class PermissionCard extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.textPrimary.withOpacity(0.06),
+            color: AppColors.textPrimary.withValues(alpha: 0.06),
             blurRadius: 24,
             offset: const Offset(0, 10),
           ),
@@ -47,7 +45,7 @@ class PermissionCard extends StatelessWidget {
                 width: 46,
                 height: 46,
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.08),
+                  color: AppColors.primary.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Icon(
@@ -89,7 +87,7 @@ class PermissionCard extends StatelessWidget {
                   vertical: 5,
                 ),
                 decoration: BoxDecoration(
-                  color: accentColor.withOpacity(0.10),
+                  color: accentColor.withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
@@ -185,9 +183,7 @@ class PermissionCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    isRequested
-                        ? 'Request Submitted'
-                        : 'Request Permission',
+                    isRequested ? 'Request Submitted' : 'Request Permission',
                     style: GoogleFonts.inter(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,

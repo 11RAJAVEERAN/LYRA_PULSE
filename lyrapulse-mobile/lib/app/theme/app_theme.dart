@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 
 import 'app_colors.dart';
@@ -19,7 +18,6 @@ abstract final class AppTheme {
       scaffoldBackgroundColor: AppColors.background,
       colorScheme: colorScheme,
       textTheme: AppTextStyles.textTheme,
-
       appBarTheme: AppBarTheme(
         backgroundColor: AppColors.background,
         foregroundColor: AppColors.hexFF172033,
@@ -29,7 +27,6 @@ abstract final class AppTheme {
           color: AppColors.hexFF172033,
         ),
       ),
-
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           textStyle: AppTextStyles.button,
@@ -39,13 +36,11 @@ abstract final class AppTheme {
           ),
         ),
       ),
-
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           textStyle: AppTextStyles.label,
         ),
       ),
-
       inputDecorationTheme: InputDecorationTheme(
         labelStyle: AppTextStyles.bodySmall,
         hintStyle: AppTextStyles.bodySmall,

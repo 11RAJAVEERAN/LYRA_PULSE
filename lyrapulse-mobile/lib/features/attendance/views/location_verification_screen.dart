@@ -191,8 +191,8 @@ class _LocationVerificationScreenState
                         height: 78,
                         decoration: BoxDecoration(
                           color: widget.isCheckOut
-                              ? AppColors.orange.withOpacity(.10)
-                              : blue.withOpacity(.10),
+                              ? AppColors.orange.withValues(alpha: .10)
+                              : blue.withValues(alpha: .10),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
@@ -244,7 +244,7 @@ class _LocationVerificationScreenState
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.black.withOpacity(.04),
+                              color: AppColors.black.withValues(alpha: .04),
                               blurRadius: 20,
                               offset: const Offset(0, 8),
                             ),
@@ -258,7 +258,7 @@ class _LocationVerificationScreenState
                                   width: 48,
                                   height: 48,
                                   decoration: BoxDecoration(
-                                    color: green.withOpacity(.10),
+                                    color: green.withValues(alpha: .10),
                                     borderRadius: BorderRadius.circular(14),
                                   ),
                                   child: Icon(
@@ -343,7 +343,7 @@ class _LocationVerificationScreenState
                             vertical: 16,
                           ),
                           decoration: BoxDecoration(
-                            color: blue.withOpacity(.06),
+                            color: blue.withValues(alpha: .06),
                             borderRadius: BorderRadius.circular(16),
                           ),
                           child: Row(

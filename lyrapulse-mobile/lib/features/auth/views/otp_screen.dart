@@ -22,8 +22,7 @@ class _OtpScreenState extends State<OtpScreen> {
   final List<TextEditingController> otpControllers =
       List.generate(6, (_) => TextEditingController());
 
-  final List<FocusNode> focusNodes =
-      List.generate(6, (_) => FocusNode());
+  final List<FocusNode> focusNodes = List.generate(6, (_) => FocusNode());
 
   final ValueNotifier<int> secondsNotifier = ValueNotifier<int>(15);
 
@@ -188,9 +187,7 @@ class _OtpScreenState extends State<OtpScreen> {
                                   ),
                                 ),
                               ),
-
                               SizedBox(height: compact ? 12 : 20),
-
                               const Text(
                                 'LYRA PULSE',
                                 style: TextStyle(
@@ -200,9 +197,7 @@ class _OtpScreenState extends State<OtpScreen> {
                                   letterSpacing: 3,
                                 ),
                               ),
-
                               SizedBox(height: compact ? 18 : 28),
-
                               Container(
                                 width: 82,
                                 height: 82,
@@ -226,9 +221,7 @@ class _OtpScreenState extends State<OtpScreen> {
                                   ),
                                 ),
                               ),
-
                               SizedBox(height: compact ? 16 : 22),
-
                               const Text(
                                 'Verify Your Number',
                                 textAlign: TextAlign.center,
@@ -238,9 +231,7 @@ class _OtpScreenState extends State<OtpScreen> {
                                   color: dark,
                                 ),
                               ),
-
                               const SizedBox(height: 10),
-
                               const Text(
                                 'Enter the 6-digit OTP to continue.',
                                 textAlign: TextAlign.center,
@@ -249,9 +240,7 @@ class _OtpScreenState extends State<OtpScreen> {
                                   fontSize: 14,
                                 ),
                               ),
-
                               const SizedBox(height: 22),
-
                               Container(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 20,
@@ -292,9 +281,7 @@ class _OtpScreenState extends State<OtpScreen> {
                                   ],
                                 ),
                               ),
-
                               const SizedBox(height: 26),
-
                               Container(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 10,
@@ -345,19 +332,16 @@ class _OtpScreenState extends State<OtpScreen> {
                                             decoration: InputDecoration(
                                               counterText: '',
                                               filled: true,
-                                              fillColor:
-                                                  AppColors.hexFFFCFCFF,
+                                              fillColor: AppColors.hexFFFCFCFF,
                                               contentPadding: EdgeInsets.zero,
-                                              enabledBorder:
-                                                  OutlineInputBorder(
+                                              enabledBorder: OutlineInputBorder(
                                                 borderRadius:
                                                     BorderRadius.circular(12),
                                                 borderSide: const BorderSide(
                                                   color: AppColors.hexFFE2E0F5,
                                                 ),
                                               ),
-                                              focusedBorder:
-                                                  OutlineInputBorder(
+                                              focusedBorder: OutlineInputBorder(
                                                 borderRadius:
                                                     BorderRadius.circular(12),
                                                 borderSide: const BorderSide(
@@ -375,9 +359,7 @@ class _OtpScreenState extends State<OtpScreen> {
                                   }),
                                 ),
                               ),
-
                               const SizedBox(height: 24),
-
                               SizedBox(
                                 width: double.infinity,
                                 height: 54,
@@ -392,24 +374,21 @@ class _OtpScreenState extends State<OtpScreen> {
                                     borderRadius: BorderRadius.circular(16),
                                     boxShadow: [
                                       BoxShadow(
-                                        color:
-                                            purple.withValues(alpha: 0.22),
+                                        color: purple.withValues(alpha: 0.22),
                                         blurRadius: 15,
                                         offset: const Offset(0, 6),
                                       ),
                                     ],
                                   ),
                                   child: ElevatedButton(
-                                    onPressed:
-                                        _isVerifying ? null : _verifyOtp,
+                                    onPressed: _isVerifying ? null : _verifyOtp,
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: AppColors.transparent,
                                       disabledBackgroundColor:
                                           AppColors.transparent,
                                       shadowColor: AppColors.transparent,
                                       shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(16),
+                                        borderRadius: BorderRadius.circular(16),
                                       ),
                                     ),
                                     child: _isVerifying
@@ -444,9 +423,7 @@ class _OtpScreenState extends State<OtpScreen> {
                                   ),
                                 ),
                               ),
-
                               const SizedBox(height: 20),
-
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
@@ -461,17 +438,14 @@ class _OtpScreenState extends State<OtpScreen> {
                                     valueListenable: secondsNotifier,
                                     builder: (context, seconds, child) {
                                       return InkWell(
-                                        onTap: seconds == 0
-                                            ? _resendOtp
-                                            : null,
+                                        onTap: seconds == 0 ? _resendOtp : null,
                                         child: Text(
                                           seconds == 0
                                               ? 'Resend OTP'
                                               : 'Resend in 00:${seconds.toString().padLeft(2, '0')}',
                                           style: TextStyle(
-                                            color: seconds == 0
-                                                ? purple
-                                                : muted,
+                                            color:
+                                                seconds == 0 ? purple : muted,
                                             fontSize: 12,
                                             fontWeight: FontWeight.w700,
                                           ),
@@ -481,9 +455,7 @@ class _OtpScreenState extends State<OtpScreen> {
                                   ),
                                 ],
                               ),
-
                               SizedBox(height: compact ? 18 : 24),
-
                               const Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [

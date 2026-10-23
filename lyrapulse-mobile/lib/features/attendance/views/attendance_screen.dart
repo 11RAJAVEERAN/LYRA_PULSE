@@ -59,9 +59,7 @@ class AttendanceScreen extends StatelessWidget {
                   Row(
                     children: [
                       _backButton(),
-
                       const SizedBox(width: 14),
-
                       Expanded(
                         child: Text(
                           'Attendance',
@@ -72,7 +70,6 @@ class AttendanceScreen extends StatelessWidget {
                           ),
                         ),
                       ),
-
                       Container(
                         width: 44,
                         height: 44,
@@ -144,13 +141,10 @@ class AttendanceScreen extends StatelessWidget {
                                 size: 27,
                               ),
                             ),
-
                             const SizedBox(width: 14),
-
                             Expanded(
                               child: Column(
-                                crossAxisAlignment:
-                                    CrossAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
                                     '28 September 2026',
@@ -171,23 +165,18 @@ class AttendanceScreen extends StatelessWidget {
                                 ],
                               ),
                             ),
-
                             _statusBadge(
                               'Present',
                               AppColors.hexFF25DDF7,
                             ),
                           ],
                         ),
-
                         const SizedBox(height: 22),
-
                         const Divider(
                           color: AppColors.hexFF16384F,
                           height: 1,
                         ),
-
                         const SizedBox(height: 18),
-
                         Row(
                           children: [
                             Expanded(
@@ -197,13 +186,11 @@ class AttendanceScreen extends StatelessWidget {
                                 value: '09:12 AM',
                               ),
                             ),
-
                             Container(
                               width: 1,
                               height: 45,
                               color: AppColors.hexFF19425A,
                             ),
-
                             Expanded(
                               child: _timeItem(
                                 icon: Icons.logout_rounded,
@@ -244,9 +231,7 @@ class AttendanceScreen extends StatelessWidget {
                           value: '22',
                         ),
                       ),
-
                       const SizedBox(width: 10),
-
                       Expanded(
                         child: _summaryCard(
                           icon: Icons.event_busy_rounded,
@@ -254,9 +239,7 @@ class AttendanceScreen extends StatelessWidget {
                           value: '02',
                         ),
                       ),
-
                       const SizedBox(width: 10),
-
                       Expanded(
                         child: _summaryCard(
                           icon: Icons.pending_actions_rounded,
@@ -286,7 +269,6 @@ class AttendanceScreen extends StatelessWidget {
                           ),
                         ),
                       ),
-
                       Text(
                         'September',
                         style: GoogleFonts.inter(
@@ -443,10 +425,10 @@ class AttendanceScreen extends StatelessWidget {
         vertical: 6,
       ),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.10),
+        color: color.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: color.withOpacity(0.30),
+          color: color.withValues(alpha: 0.30),
         ),
       ),
       child: Text(
@@ -640,9 +622,7 @@ class AttendanceScreen extends StatelessWidget {
                         ),
                       ],
                     ),
-
                     const SizedBox(height: 6),
-
                     Row(
                       children: [
                         const Icon(
@@ -700,8 +680,8 @@ class AttendanceScreen extends StatelessWidget {
         shape: BoxShape.circle,
         gradient: RadialGradient(
           colors: [
-            color.withOpacity(0.11),
-            color.withOpacity(0.025),
+            color.withValues(alpha: 0.11),
+            color.withValues(alpha: 0.025),
             AppColors.transparent,
           ],
         ),
