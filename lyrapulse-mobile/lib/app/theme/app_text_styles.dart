@@ -46,13 +46,24 @@ abstract final class AppTextStyles {
     color: AppColors.white,
   );
 
-  static final TextTheme textTheme = ThemeData().textTheme.copyWith(
+  static final TextTheme textTheme = ThemeData()
+      .textTheme
+      .apply(fontFamily: GoogleFonts.inter().fontFamily)
+      .copyWith(
         displayLarge: display,
+        displayMedium: display.copyWith(fontSize: 30),
+        displaySmall: display.copyWith(fontSize: 28),
+        headlineLarge: headline,
         headlineMedium: headline,
+        headlineSmall: headline.copyWith(fontSize: 22),
         titleLarge: title,
+        titleMedium: title.copyWith(fontSize: 16, fontWeight: FontWeight.w600),
+        titleSmall: label,
         bodyLarge: body,
         bodyMedium: body,
         bodySmall: bodySmall,
         labelLarge: label,
+        labelMedium: label.copyWith(fontSize: 12),
+        labelSmall: label.copyWith(fontSize: 11, fontWeight: FontWeight.w500),
       );
 }

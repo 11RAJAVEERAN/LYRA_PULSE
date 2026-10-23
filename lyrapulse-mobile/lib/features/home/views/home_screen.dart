@@ -1,26 +1,18 @@
-import 'dart:ui';
+
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../app/theme/app_colors.dart';
-
-import '../widgets/welcome_header.dart';
-import '../widgets/home_drawer.dart';
-import '../widgets/bottom_nav_bar.dart';
-
-import 'package:lyrapulse_mobile/features/attendance/controllers/attendance_controller.dart';
-import 'package:lyrapulse_mobile/features/attendance/widgets/break_tracking_panel.dart';
-import 'package:lyrapulse_mobile/features/attendance/views/location_verification_screen.dart';
-import 'package:lyrapulse_mobile/features/attendance/views/attendance_history_screen.dart';
-import 'package:lyrapulse_mobile/features/attendance/views/attendance_overview_screen.dart';
-import 'package:lyrapulse_mobile/features/attendance/views/attendance_records_screen.dart';
-import 'package:lyrapulse_mobile/features/permission/permission_screen.dart';
-import 'package:lyrapulse_mobile/features/profile/views/profile_screen.dart';
-import 'package:lyrapulse_mobile/features/leave/views/leave_screen.dart';
-import 'package:lyrapulse_mobile/features/notification/views/notification_screen.dart';
-import 'package:lyrapulse_mobile/features/calendar/views/calendar_screen.dart';
+import '../../attendance/controllers/attendance_controller.dart';
+import '../../attendance/views/location_verification_screen.dart';
+import '../../calendar/views/calendar_screen.dart';
+import '../../leave/views/leave_screen.dart';
+import '../../notification/views/notification_screen.dart';
+import '../../permission/permission_screen.dart';
+import '../../profile/views/profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -30,135 +22,42 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-
-  int _selectedIndex = 2;
-
   late final AttendanceController attendanceController;
+
+  Timer? _clockTimer;
+  DateTime _now = DateTime.now();
+
+  bool _showMonthlyCalendar = false;
+  DateTime _selectedDate = DateTime.now();
+  DateTime _displayedMonth = DateTime.now();
 
   @override
   void initState() {
     super.initState();
 
-    attendanceController = Get.isRegistered<AttendanceController>()
-        ? Get.find<AttendanceController>()
-        : Get.put(AttendanceController(), permanent: true);
-  }
-
-  void _openCheckIn() {
-    if (attendanceController.isCheckedIn) {
-      Get.snackbar(
-        'Already Checked In',
-        'You have already checked in.',
-        snackPosition: SnackPosition.BOTTOM,
-      );
-      return;
+    if (Get.isRegistered<AttendanceController>()) {
+      attendanceController = Get.find<AttendanceController>();
+    } else {
+      attendanceController = Get.put(AttendanceController());
     }
 
-    if (attendanceController.checkOutTime.value != null) {
-      Get.snackbar(
-        'Already Checked Out',
-        'Your check out is already recorded.',
-        snackPosition: SnackPosition.BOTTOM,
-      );
-      return;
-    }
-
-    Get.to(
-      () => const LocationVerificationScreen(isCheckOut: false),
+    _clockTimer = Timer.periodic(
+      const Duration(seconds: 1),
+      (_) {
+        if (mounted) {
+          setState(() => _now = DateTime.now());
+        }
+      },
     );
   }
 
-  void _openCheckOut() {
-    if (attendanceController.checkInTime.value == null) {
-      Get.snackbar(
-        'Check In Required',
-        'Please check in before checking out.',
-        snackPosition: SnackPosition.BOTTOM,
-      );
-      return;
-    }
-
-    if (attendanceController.checkOutTime.value != null) {
-      Get.snackbar(
-        'Already Checked Out',
-        'Your check out is already recorded.',
-        snackPosition: SnackPosition.BOTTOM,
-      );
-      return;
-    }
-
-    if (attendanceController.activeBreak != null) {
-      Get.snackbar(
-        'Break In Progress',
-        'Please end your break before checking out.',
-        snackPosition: SnackPosition.BOTTOM,
-      );
-      return;
-    }
-
-    Get.to(
-      () => const LocationVerificationScreen(isCheckOut: true),
-    );
+  @override
+  void dispose() {
+    _clockTimer?.cancel();
+    super.dispose();
   }
 
-  void _openPermission() => Get.to(() => const PermissionScreen());
-
-  void _openNotification() => Get.to(() => const NotificationScreen());
-
-  void _openAttendanceHistory() =>
-      Get.to(() => const AttendanceHistoryScreen());
-
-  void _openAttendanceOverview() =>
-      Get.to(() => const AttendanceOverviewScreen());
-
-  void _openAttendanceRecords() =>
-      Get.to(() => const AttendanceRecordsScreen());
-
-  void _openLeave() => Get.to(() => const LeaveScreen());
-
-  void _openProfile() => Get.to(() => const ProfileScreen());
-
-  void _openCalendar() => Get.to(() => CalendarScreen());
-
-  void _onBottomNavChanged(int index) {
-    if (index == _selectedIndex) return;
-
-    setState(() {
-      _selectedIndex = index;
-    });
-
-    switch (index) {
-      case 0:
-        _openAttendanceRecords();
-        break;
-      case 1:
-        _openLeave();
-        break;
-      case 2:
-        break;
-      case 3:
-        _openNotification();
-        break;
-      case 4:
-        _openProfile();
-        break;
-    }
-  }
-
-  String _getToday() {
-    final now = DateTime.now();
-
-    const weekdays = [
-      'Monday',
-      'Tuesday',
-      'Wednesday',
-      'Thursday',
-      'Friday',
-      'Saturday',
-      'Sunday',
-    ];
-
+  String _monthName(int month) {
     const months = [
       'January',
       'February',
@@ -174,109 +73,496 @@ class _HomeScreenState extends State<HomeScreen> {
       'December',
     ];
 
-    return '${weekdays[now.weekday - 1]}, '
-        '${now.day} ${months[now.month - 1]}';
+    return months[month - 1];
+  }
+
+  String get _dateLabel {
+    const weekdays = [
+      'Mon',
+      'Tue',
+      'Wed',
+      'Thu',
+      'Fri',
+      'Sat',
+      'Sun',
+    ];
+
+    return '${weekdays[_selectedDate.weekday - 1]}, '
+        '${_selectedDate.day} '
+        '${_monthName(_selectedDate.month)} '
+        '${_selectedDate.year}';
+  }
+
+  String _time(DateTime? value) {
+    if (value == null) return '--:-- --';
+
+    final hour = value.hour % 12 == 0 ? 12 : value.hour % 12;
+    final minute = value.minute.toString().padLeft(2, '0');
+    final period = value.hour >= 12 ? 'PM' : 'AM';
+
+    return '$hour:$minute $period';
+  }
+
+  String get _workingTime {
+    try {
+      return attendanceController.formattedWorkingDuration;
+    } catch (_) {
+      return '00:00:00';
+    }
+  }
+
+  String get _breakTime {
+    try {
+      return attendanceController.formattedBreakDuration;
+    } catch (_) {
+      return '00h 00m';
+    }
+  }
+
+  bool get _isCheckedIn => attendanceController.isCheckedIn;
+
+  DateTime? get _checkInTime => attendanceController.checkInTime.value;
+
+  Future<void> _attendanceAction() async {
+    final checkingOut = _isCheckedIn;
+
+    if (checkingOut && _checkInTime == null) {
+      Get.snackbar(
+        'Attendance',
+        'Please check in before checking out.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
+    await Get.to(
+      () => LocationVerificationScreen(isCheckOut: checkingOut),
+      transition: Transition.cupertino,
+    );
+
+    if (mounted) setState(() {});
+  }
+
+  void _openPage(int index) {
+    switch (index) {
+      case 0:
+        Get.to(() => CalendarScreen());
+        break;
+      case 1:
+        Get.to(() => LeaveScreen());
+        break;
+      case 2:
+        Get.to(() => PermissionScreen());
+        break;
+      case 3:
+        Get.to(() => NotificationScreen());
+        break;
+      case 4:
+        Get.to(() => ProfileScreen());
+        break;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      key: _scaffoldKey,
-      drawer: HomeDrawer(
-        onHomeTap: () => Get.back(),
-        onProfileTap: () {
-          Get.back();
-          _openProfile();
-        },
-        onNotificationTap: () {
-          Get.back();
-          _openNotification();
-        },
-        onAttendanceHistoryTap: () {
-          Get.back();
-          _openAttendanceHistory();
-        },
-        onCalendarTap: () {
-          Get.back();
-          _openCalendar();
-        },
-        onPermissionTap: () {
-          Get.back();
-          _openPermission();
-        },
-        onLeaveTap: () {
-          Get.back();
-          _openLeave();
-        },
-        onLogoutTap: () {
-          Get.back();
-          Get.offAllNamed('/login');
-        },
-      ),
       backgroundColor: AppColors.background,
+      drawer: _buildDrawer(),
       body: SafeArea(
-        child: Column(
+        bottom: false,
+        child: Stack(
           children: [
-            Expanded(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(20, 18, 20, 110),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    WelcomeHeader(
-                      onProfileTap: () {
-                        _scaffoldKey.currentState?.openDrawer();
-                      },
-                      onNotificationTap: _openNotification,
-                    ),
-                    const SizedBox(height: 24),
-
-                    _buildHeroSection(),
-
-                    const SizedBox(height: 24),
-                    _buildAttendanceTimeline(),
-
-                    // New break tracking section.
-                    const SizedBox(height: 20),
-                    const BreakTrackingPanel(),
-
-                    const SizedBox(height: 24),
-                    _buildQuickActions(),
-
-                    const SizedBox(height: 24),
-                    _buildStatsSection(),
-
-                    const SizedBox(height: 24),
-                    _buildOverviewSection(),
-                  ],
+            Positioned(
+              top: -100,
+              right: -80,
+              child: Container(
+                width: 240,
+                height: 240,
+                decoration: BoxDecoration(
+                  color: AppColors.primaryBlue.withValues(alpha: .08),
+                  shape: BoxShape.circle,
                 ),
               ),
+            ),
+            CustomScrollView(
+              physics: const BouncingScrollPhysics(),
+              slivers: [
+                SliverToBoxAdapter(child: _buildHeader()),
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 112),
+                  sliver: SliverList(
+                    delegate: SliverChildListDelegate([
+                      _buildDateSelector(),
+                      const SizedBox(height: 14),
+                      _buildWorkingCard(),
+                      const SizedBox(height: 17),
+                      _buildSectionTitle(),
+                      const SizedBox(height: 10),
+                      _buildActivityCard(),
+                      const SizedBox(height: 14),
+                      _buildLocationCard(),
+                    ]),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
       ),
-      bottomNavigationBar: BottomNavBar(
-        selectedIndex: _selectedIndex,
-        onChanged: _onBottomNavChanged,
+      bottomNavigationBar: _buildBottomNavigation(),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButton: _buildAttendanceButton(),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppColors.primary.withValues(alpha: .08),
+            AppColors.secondary.withValues(alpha: .02),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Row(
+        children: [
+          Builder(
+            builder: (context) => Material(
+              color: Colors.white.withOpacity(.78),
+              borderRadius: BorderRadius.circular(18),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(18),
+                onTap: () => Scaffold.of(context).openDrawer(),
+                child: const SizedBox(
+                  width: 46,
+                  height: 46,
+                  child: Icon(
+                    Icons.menu_rounded,
+                    color: AppColors.primary,
+                    size: 24,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 15),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Welcome back',
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    color: AppColors.primary,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  'USER NAME',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    fontSize: 19,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Material(
+            color: Colors.white,
+            shape: const CircleBorder(),
+            child: InkWell(
+              customBorder: const CircleBorder(),
+              onTap: () => _openPage(3),
+              child: const SizedBox(
+                width: 46,
+                height: 46,
+                child: Icon(
+                  Icons.campaign_outlined,
+                  color: AppColors.primary,
+                  size: 24,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildHeroSection() {
+  // Tap the date to expand/collapse the inline monthly calendar.
+  Widget _buildDateSelector() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Material(
+            color: AppColors.surfaceMuted,
+            borderRadius: BorderRadius.circular(30),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(30),
+              onTap: () {
+                setState(() {
+                  _showMonthlyCalendar = !_showMonthlyCalendar;
+                  _displayedMonth = DateTime(
+                    _selectedDate.year,
+                    _selectedDate.month,
+                  );
+                });
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 13,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(30),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.calendar_month_rounded,
+                      color: AppColors.secondary,
+                      size: 21,
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      _dateLabel,
+                      style: GoogleFonts.inter(
+                        color: AppColors.textPrimary,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Icon(
+                      _showMonthlyCalendar
+                          ? Icons.keyboard_arrow_up_rounded
+                          : Icons.keyboard_arrow_down_rounded,
+                      color: AppColors.textSecondary,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+        if (_showMonthlyCalendar) ...[
+          const SizedBox(height: 12),
+          _buildMonthlyCalendar(),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildMonthlyCalendar() {
+    final firstDay = DateTime(
+      _displayedMonth.year,
+      _displayedMonth.month,
+      1,
+    );
+
+    final daysInMonth = DateTime(
+      _displayedMonth.year,
+      _displayedMonth.month + 1,
+      0,
+    ).day;
+
+    final startingOffset = firstDay.weekday - 1;
+    final today = DateTime.now();
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(22),
+      padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppColors.primary, AppColors.secondary],
-        ),
-        borderRadius: BorderRadius.circular(28),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.border),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.22),
+            color: AppColors.primary.withOpacity(.05),
+            blurRadius: 14,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              IconButton(
+                tooltip: 'Previous month',
+                onPressed: () {
+                  setState(() {
+                    _displayedMonth = DateTime(
+                      _displayedMonth.year,
+                      _displayedMonth.month - 1,
+                    );
+                  });
+                },
+                icon: const Icon(
+                  Icons.chevron_left_rounded,
+                  color: AppColors.primary,
+                ),
+              ),
+              Expanded(
+                child: Text(
+                  '${_monthName(_displayedMonth.month)} ${_displayedMonth.year}',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+              IconButton(
+                tooltip: 'Next month',
+                onPressed: () {
+                  setState(() {
+                    _displayedMonth = DateTime(
+                      _displayedMonth.year,
+                      _displayedMonth.month + 1,
+                    );
+                  });
+                },
+                icon: const Icon(
+                  Icons.chevron_right_rounded,
+                  color: AppColors.primary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              for (final weekday in [
+                'Mon',
+                'Tue',
+                'Wed',
+                'Thu',
+                'Fri',
+                'Sat',
+                'Sun',
+              ])
+                Expanded(
+                  child: Center(
+                    child: Text(
+                      weekday,
+                      style: GoogleFonts.inter(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: startingOffset + daysInMonth,
+            gridDelegate:
+                const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 7,
+              mainAxisSpacing: 6,
+              crossAxisSpacing: 4,
+              childAspectRatio: 1,
+            ),
+            itemBuilder: (context, index) {
+              if (index < startingOffset) {
+                return const SizedBox.shrink();
+              }
+
+              final day = index - startingOffset + 1;
+              final date = DateTime(
+                _displayedMonth.year,
+                _displayedMonth.month,
+                day,
+              );
+
+              final isSelected =
+                  date.year == _selectedDate.year &&
+                  date.month == _selectedDate.month &&
+                  date.day == _selectedDate.day;
+
+              final isToday =
+                  date.year == today.year &&
+                  date.month == today.month &&
+                  date.day == today.day;
+
+              return Material(
+                color: isSelected
+                    ? AppColors.primary
+                    : Colors.transparent,
+                shape: const CircleBorder(),
+                child: InkWell(
+                  customBorder: const CircleBorder(),
+                  onTap: () {
+                    setState(() {
+                      _selectedDate = date;
+                      _showMonthlyCalendar = false;
+                    });
+                  },
+                  child: Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: isToday && !isSelected
+                          ? Border.all(color: AppColors.primary)
+                          : null,
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      '$day',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: isSelected || isToday
+                            ? FontWeight.w800
+                            : FontWeight.w500,
+                        color: isSelected
+                            ? Colors.white
+                            : AppColors.textPrimary,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWorkingCard() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        gradient: const LinearGradient(
+          colors: [
+            AppColors.primaryDark,
+            AppColors.primary,
+            AppColors.selection,
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: .22),
             blurRadius: 25,
             offset: const Offset(0, 12),
           ),
@@ -285,196 +571,86 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Stack(
         children: [
           Positioned(
-            right: -35,
-            top: -40,
+            right: -45,
+            top: -85,
             child: Container(
-              width: 145,
-              height: 145,
+              width: 230,
+              height: 230,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppColors.white.withValues(alpha: 0.06),
-              ),
-            ),
-          ),
-          Positioned(
-            right: 30,
-            bottom: -65,
-            child: Container(
-              width: 125,
-              height: 125,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.white.withValues(alpha: 0.05),
+                border: Border.all(
+                  color: Colors.white.withOpacity(.09),
+                  width: 2,
+                ),
               ),
             ),
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.white.withValues(alpha: 0.13),
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 7,
-                          height: 7,
-                          decoration: const BoxDecoration(
-                            color: AppColors.hexFF65F4A4,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        const SizedBox(width: 7),
-                        Text(
-                          'ATTENDANCE',
-                          style: GoogleFonts.inter(
-                            color: AppColors.white,
-                            fontSize: 9,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 1.2,
-                          ),
-                        ),
-                      ],
+              Text(
+                'WORKING HOURS',
+                style: GoogleFonts.inter(
+                  color: Colors.white.withOpacity(.84),
+                  fontSize: 12,
+                
+                ),
+              ),
+              const SizedBox(height: 10),
+              Obx(
+                () => FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    _workingTime,
+                    style: GoogleFonts.inter(
+                      color: Colors.white,
+                      fontSize: 30,
+                      fontWeight: FontWeight.w600,
+                      height: 1.15,
                     ),
                   ),
-                  const Spacer(),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Icon(
+                    Icons.trending_up_rounded,
+                    color: Colors.white.withOpacity(.9),
+                    size: 17,
+                  ),
+                  const SizedBox(width: 9),
                   Text(
-                    _getToday(),
+                    'Hours worked today',
                     style: GoogleFonts.inter(
-                      color: AppColors.white.withValues(alpha: 0.75),
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
+                      color: Colors.white.withOpacity(.85),
+                      fontSize: 12,
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 15),
               Obx(
-                () => Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Working Time',
-                      style: GoogleFonts.inter(
-                        color: AppColors.white,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      attendanceController.formattedWorkingDuration,
-                      style: GoogleFonts.inter(
-                        color: AppColors.white,
-                        fontSize: 28,
-                        fontWeight: FontWeight.w700,
-                        fontFeatures: const [
-                          FontFeature.tabularFigures(),
-                        ],
-                      ),
-                    ),
-                    if (attendanceController.activeBreak != null) ...[
-                      const SizedBox(height: 7),
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.coffee_rounded,
-                            size: 15,
-                            color: Colors.white,
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            '${attendanceController.activeBreak!.type} Break in Progress',
-                            style: GoogleFonts.inter(
-                              color: AppColors.white,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ],
+                () => _infoRow(
+                  Icons.coffee_rounded,
+                  
+                  'Total Break Time',
+               
+                  _breakTime,
                 ),
               ),
-              const SizedBox(height: 22),
-              Row(
-                children: [
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: _openCheckIn,
-                      child: Container(
-                        height: 48,
-                        decoration: BoxDecoration(
-                          color: AppColors.white,
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(
-                              Icons.login_rounded,
-                              color: AppColors.primary,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Check In',
-                              style: GoogleFonts.inter(
-                                color: AppColors.primary,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: _openCheckOut,
-                      child: Container(
-                        height: 48,
-                        decoration: BoxDecoration(
-                          color: AppColors.white.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(15),
-                          border: Border.all(
-                            color: AppColors.white.withValues(alpha: 0.25),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(
-                              Icons.logout_rounded,
-                              color: AppColors.white,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Check Out',
-                              style: GoogleFonts.inter(
-                                color: AppColors.white,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Divider(
+                  color: Colors.white.withOpacity(.25),
+                  height: 1,
+                ),
+              ),
+              _infoRow(
+                Icons.access_time_rounded,
+                'Shift Timing',
+                '08:00 am - 06:00 pm',
               ),
             ],
           ),
@@ -483,505 +659,474 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildAttendanceTimeline() {
-    return Obx(() {
-      final checkIn = attendanceController.checkInTime.value;
-      final checkOut = attendanceController.checkOutTime.value;
-
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _sectionTitle(
-            title: 'Today',
-            subtitle: 'Attendance timeline',
-            action: 'View',
-            onTap: _openAttendanceHistory,
-          ),
-          const SizedBox(height: 14),
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 18,
-              vertical: 18,
-            ),
-            decoration: BoxDecoration(
-              color: AppColors.white,
-              borderRadius: BorderRadius.circular(23),
-              border: Border.all(color: AppColors.border),
-            ),
-            child: Row(
-              children: [
-                Column(
-                  children: [
-                    _timelineDot(
-                      color: checkIn != null
-                          ? AppColors.success
-                          : AppColors.border,
-                      icon: Icons.login_rounded,
-                    ),
-                    Container(
-                      width: 2,
-                      height: 38,
-                      color: AppColors.border,
-                    ),
-                    _timelineDot(
-                      color: checkOut != null
-                          ? AppColors.success
-                          : AppColors.border,
-                      icon: Icons.logout_rounded,
-                    ),
-                  ],
-                ),
-                const SizedBox(width: 15),
-                Expanded(
-                  child: Column(
-                    children: [
-                      _timelineRow(
-                        title: 'Check In',
-                        subtitle: 'Office entry',
-                        time: attendanceController.formatTime(checkIn),
-                        active: checkIn != null,
-                      ),
-                      const SizedBox(height: 29),
-                      _timelineRow(
-                        title: 'Check Out',
-                        subtitle: 'Office exit',
-                        time: attendanceController.formatTime(checkOut),
-                        active: checkOut != null,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      );
-    });
-  }
-
-  Widget _timelineDot({
-    required Color color,
-    required IconData icon,
-  }) {
-    return Container(
-      width: 34,
-      height: 34,
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        shape: BoxShape.circle,
-      ),
-      child: Icon(icon, color: color, size: 17),
-    );
-  }
-
-  Widget _timelineRow({
-    required String title,
-    required String subtitle,
-    required String time,
-    required bool active,
-  }) {
+  Widget _infoRow(IconData icon, String label, String value) {
     return Row(
       children: [
+        Container(
+          width: 37,
+          height: 37,
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(.15),
+            borderRadius: BorderRadius.circular(11),
+          ),
+          child: Icon(icon, color: Colors.white, size: 25),
+        ),
+        const SizedBox(width: 14),
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: GoogleFonts.inter(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                subtitle,
-                style: GoogleFonts.inter(
-                  fontSize: 10,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-            ],
+          child: Text(
+            label,
+            style: GoogleFonts.inter(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
+            ),
           ),
         ),
-        Text(
-          time,
-          style: GoogleFonts.inter(
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-            color: active ? AppColors.success : AppColors.textSecondary,
+        const SizedBox(width: 8),
+        Flexible(
+          child: Text(
+            value,
+            textAlign: TextAlign.right,
+            style: GoogleFonts.inter(
+              color: Colors.white,
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+            ),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildQuickActions() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildSectionTitle() {
+    return Row(
       children: [
-        _sectionTitle(
-          title: 'Quick Actions',
-          subtitle: 'Everything you need',
+        DecoratedBox(
+          decoration: BoxDecoration(
+            color: AppColors.primary.withValues(alpha: .08),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: const SizedBox(
+            width: 40,
+            height: 40,
+            child: Icon(
+              Icons.show_chart_rounded,
+              color: AppColors.primary,
+              size: 28,
+            ),
+          ),
         ),
-        const SizedBox(height: 14),
-        Row(
-          children: [
-            Expanded(
-              child: _actionItem(
-                icon: Icons.event_available_rounded,
-                title: 'Permission',
-                subtitle: 'Request',
-                iconColor: AppColors.secondary,
-                onTap: _openPermission,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _actionItem(
-                icon: Icons.history_rounded,
-                title: 'History',
-                subtitle: 'Attendance',
-                iconColor: AppColors.primary,
-                onTap: _openAttendanceHistory,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _actionItem(
-                icon: Icons.beach_access_rounded,
-                title: 'Leave',
-                subtitle: 'Apply',
-                iconColor: AppColors.warning,
-                onTap: _openLeave,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _actionItem(
-                icon: Icons.calendar_month_rounded,
-                title: 'Calendar',
-                subtitle: 'View',
-                iconColor: AppColors.primary,
-                onTap: _openCalendar,
-              ),
-            ),
-          ],
+        const SizedBox(width: 14),
+        Text(
+          "Today's activity",
+          style: GoogleFonts.inter(
+            color: AppColors.textPrimary,
+            fontSize: 15,
+            fontWeight: FontWeight.w800,
+          ),
         ),
       ],
     );
   }
 
-  Widget _actionItem({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required Color iconColor,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(10, 14, 10, 13),
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: iconColor.withValues(alpha: 0.10),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, color: iconColor, size: 20),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.inter(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              subtitle,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.inter(
-                fontSize: 9,
-                color: AppColors.textSecondary,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  Widget _buildActivityCard() {
+    final checkIn = _checkInTime;
+    final entries = <Widget>[];
 
-  Widget _buildStatsSection() {
-    return Obx(() {
-      final checkIn = attendanceController.checkInTime.value;
-      final checkOut = attendanceController.checkOutTime.value;
-      final duration = attendanceController.workingDuration.value;
+    final sessions = attendanceController.breakSessions
+        .where(
+          (session) =>
+              session.startTime.year == _now.year &&
+              session.startTime.month == _now.month &&
+              session.startTime.day == _now.day,
+        )
+        .toList()
+      ..sort((a, b) => a.startTime.compareTo(b.startTime));
 
-      final checkInParts = attendanceController.formatTime(checkIn).split(' ');
-      final checkOutParts =
-          attendanceController.formatTime(checkOut).split(' ');
-
-      final hours = duration.inHours.toString().padLeft(2, '0');
-      final minutes =
-          duration.inMinutes.remainder(60).toString().padLeft(2, '0');
-
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _sectionTitle(
-            title: 'Today at a glance',
-            subtitle: 'Your live status',
+    if (checkIn != null &&
+        checkIn.year == _now.year &&
+        checkIn.month == _now.month &&
+        checkIn.day == _now.day) {
+      entries.add(
+        _activityRow(
+          _ActivityEntry(
+            'Punch In',
+            _time(checkIn),
+            true,
           ),
-          const SizedBox(height: 14),
-          Row(
+        ),
+      );
+    }
+
+    for (final session in sessions) {
+      entries.add(
+        _activityRow(
+          _ActivityEntry(
+            'Punch Out',
+            _time(session.startTime),
+            false,
+          ),
+        ),
+      );
+
+      entries.add(
+        _buildBreakCard(
+          session.durationAt(_now),
+          session.isActive,
+        ),
+      );
+
+      if (session.endTime != null) {
+        entries.add(
+          _activityRow(
+            _ActivityEntry(
+              'Punch In',
+              _time(session.endTime),
+              true,
+            ),
+          ),
+        );
+      }
+    }
+
+    if (entries.isEmpty) {
+      entries.add(
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 24),
+          child: Column(
             children: [
-              Expanded(
-                child: _statCard(
-                  title: 'Check In',
-                  value: checkIn == null ? '--:--' : checkInParts[0],
-                  suffix: checkIn == null ? '' : checkInParts[1],
-                  icon: Icons.login_rounded,
-                  color: AppColors.success,
+              Icon(
+                Icons.access_time_rounded,
+                size: 35,
+                color: AppColors.textSecondary.withOpacity(.6),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'No attendance yet',
+                style: GoogleFonts.inter(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textSecondary,
                 ),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _statCard(
-                  title: 'Check Out',
-                  value: checkOut == null ? '--:--' : checkOutParts[0],
-                  suffix: checkOut == null ? '' : checkOutParts[1],
-                  icon: Icons.logout_rounded,
+              const SizedBox(height: 4),
+              Text(
+                'Check in to start your day',
+                style: GoogleFonts.inter(
+                  fontSize: 12,
                   color: AppColors.textSecondary,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: _statCard(
-                  title: 'Net Working Time',
-                  value: checkIn == null ? '--:--' : '$hours:$minutes',
-                  suffix: 'hrs',
-                  icon: Icons.timer_outlined,
-                  color: AppColors.primary,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _statCard(
-                  title: 'Status',
-                  value: attendanceController.attendanceStatus,
-                  suffix: '',
-                  icon: Icons.pending_actions_rounded,
-                  color: AppColors.warning,
-                ),
-              ),
-            ],
+        ),
+      );
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(15, 20, 15, 20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(21),
+        border: Border.all(
+          color: AppColors.border.withOpacity(.75),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withOpacity(.035),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
           ),
         ],
-      );
-    });
-  }
-
-  Widget _statCard({
-    required String title,
-    required String value,
-    required String suffix,
-    required IconData icon,
-    required Color color,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.border),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                width: 31,
-                height: 31,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.10),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(icon, size: 16, color: color),
-              ),
-              const Spacer(),
-              const Icon(
-                Icons.more_horiz_rounded,
-                size: 18,
-                color: AppColors.border,
-              ),
-            ],
-          ),
-          const SizedBox(height: 13),
-          Text(
-            title,
-            style: GoogleFonts.inter(
-              fontSize: 10,
-              color: AppColors.textSecondary,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Flexible(
-                child: Text(
-                  value,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.inter(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              ),
-              if (suffix.isNotEmpty) ...[
-                const SizedBox(width: 4),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 2),
-                  child: Text(
-                    suffix,
-                    style: GoogleFonts.inter(
-                      fontSize: 9,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          ),
+          for (int i = 0; i < entries.length; i++) ...[
+            if (i > 0) const SizedBox(height: 17),
+            entries[i],
+          ],
         ],
       ),
     );
   }
 
-  Widget _buildOverviewSection() {
-    return GestureDetector(
-      onTap: _openAttendanceOverview,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Row(
-          children: [
-            SizedBox(
-              width: 74,
-              height: 74,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  SizedBox(
-                    width: 74,
-                    height: 74,
-                    child: CircularProgressIndicator(
-                      value: 0.72,
-                      strokeWidth: 7,
-                      backgroundColor: AppColors.border,
-                      valueColor: const AlwaysStoppedAnimation<Color>(
-                        AppColors.primary,
-                      ),
-                    ),
-                  ),
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        '72%',
-                        style: GoogleFonts.inter(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      Text(
-                        'month',
-                        style: GoogleFonts.inter(
-                          fontSize: 7,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+  Widget _buildBreakCard(Duration duration, bool isActive) {
+    final seconds = duration.inSeconds < 0 ? 0 : duration.inSeconds;
+    final minutes = seconds ~/ 60;
+    final remainingSeconds = seconds % 60;
+
+    final label = minutes > 0
+        ? '$minutes ${minutes == 1 ? 'Min' : 'Mins'} Break'
+        : '$remainingSeconds ${remainingSeconds == 1 ? 'Sec' : 'Secs'} Break';
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: Container(
+              height: 1.3,
+              color: const Color(0xFFF0E5C8),
+            ),
+          ),
+          Container(
+            constraints: const BoxConstraints(maxWidth: 220),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 13,
+              vertical: 10,
+            ),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFFCF3),
+              borderRadius: BorderRadius.circular(30),
+              border: Border.all(
+                color: const Color(0xFFE9D49A),
+                width: 1.3,
               ),
             ),
-            const SizedBox(width: 17),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Attendance Overview',
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 5),
-                  Text(
-                    'View your attendance records and monthly progress.',
-                    maxLines: 2,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.coffee_rounded,
+                  size: 15,
+                  color: Color(0xFFC58A12),
+                ),
+                const SizedBox(width: 7),
+                Flexible(
+                  child: Text(
+                    isActive ? '$label · Ongoing' : label,
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.inter(
                       fontSize: 10,
-                      height: 1.45,
-                      color: AppColors.textSecondary,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFFC58A12),
                     ),
                   ),
-                  const SizedBox(height: 9),
-                  Row(
-                    children: [
-                      Text(
-                        'View Details',
-                        style: GoogleFonts.inter(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      const Icon(
-                        Icons.arrow_forward_rounded,
-                        size: 13,
-                        color: AppColors.primary,
-                      ),
-                    ],
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: Container(
+              height: 1.3,
+              color: const Color(0xFFF0E5C8),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _activityRow(_ActivityEntry entry) {
+    final isIn = entry.isPunchIn;
+
+    return Row(
+      children: [
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: isIn
+                ? const Color(0xFFE5F8EE)
+                : const Color(0xFFFFE9EC),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            isIn ? Icons.login_rounded : Icons.logout_rounded,
+            color: isIn
+                ? const Color(0xFF159665)
+                : const Color(0xFFD6384D),
+            size: 20,
+          ),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Text(
+            entry.title,
+            style: GoogleFonts.inter(
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
+              color: AppColors.black
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          entry.subtitle,
+          textAlign: TextAlign.right,
+          style: GoogleFonts.inter(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textPrimary,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLocationCard() {
+    return Container(
+      padding: const EdgeInsets.all(13),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.location_on_outlined,
+            color: AppColors.black,
+            size: 20,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Location verification',
+                  style: GoogleFonts.inter(
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.black,
                   ),
-                ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Your location is checked during attendance',
+                  style: GoogleFonts.inter(
+                    fontSize: 10,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Icon(
+            Icons.verified_user_outlined,
+            color: Color(0xFF16A36A),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAttendanceButton() {
+    return GestureDetector(
+      onTap: _attendanceAction,
+      child: Container(
+        width: 100,
+        height: 100,
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withValues(alpha: .25),
+              blurRadius: 22,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Container(
+          decoration: const BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(
+              colors: [
+                AppColors.primary,
+                AppColors.secondaryDark,
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.location_on_rounded,
+                color: Colors.white,
+                size: 25,
+              ),
+              const SizedBox(height: 2),
+              Text(
+                _isCheckedIn ? 'Check Out' : 'Check In',
+                style: GoogleFonts.inter(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBottomNavigation() {
+    return BottomAppBar(
+      color: Colors.white,
+      elevation: 16,
+      notchMargin: 7,
+      shape: const CircularNotchedRectangle(),
+      child: SizedBox(
+        height: 42,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            _navItem(
+              Icons.calendar_month_outlined,
+              'Calendar',
+              0,
+            ),
+            _navItem(
+              Icons.beach_access_outlined,
+              'Leave',
+              1,
+            ),
+            const SizedBox(width: 82),
+            _navItem(
+              Icons.request_quote_outlined,
+              'Permission',
+              2,
+            ),
+            _navItem(
+              Icons.person_outlined,
+              'profile',
+              3,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _navItem(IconData icon, String label, int index) {
+    return InkWell(
+      onTap: () => _openPage(index),
+      borderRadius: BorderRadius.circular(15),
+      child: SizedBox(
+        width: 62,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              color: AppColors.textSecondary,
+              size: 27,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              maxLines: 1,
+              style: GoogleFonts.inter(
+                fontSize: 8,
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ],
@@ -990,51 +1135,149 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _sectionTitle({
-    required String title,
-    required String subtitle,
-    String? action,
-    VoidCallback? onTap,
-  }) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: GoogleFonts.inter(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
+  Widget _buildDrawer() {
+    return Drawer(
+      backgroundColor: Colors.white,
+      child: SafeArea(
+        child: Column(
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(22, 28, 22, 25),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.primaryDark,
+                    AppColors.primary,
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
               ),
-              const SizedBox(height: 2),
-              Text(
-                subtitle,
-                style: GoogleFonts.inter(
-                  fontSize: 10,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-            ],
-          ),
-        ),
-        if (action != null)
-          GestureDetector(
-            onTap: onTap,
-            child: Text(
-              action,
-              style: GoogleFonts.inter(
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-                color: AppColors.primary,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const CircleAvatar(
+                    radius: 31,
+                    backgroundColor: Colors.white24,
+                    child: Icon(
+                      Icons.person_rounded,
+                      color: Colors.white,
+                      size: 34,
+                    ),
+                  ),
+                  const SizedBox(height: 13),
+                  Text(
+                    'Madhavan',
+                    style: GoogleFonts.inter(
+                      color: Colors.white,
+                      fontSize: 21,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Employee',
+                    style: GoogleFonts.inter(
+                      color: Colors.white70,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
-      ],
+            _drawerItem(
+              Icons.home_outlined,
+              'Home',
+              () => Get.back(),
+            ),
+            _drawerItem(
+              Icons.calendar_month_outlined,
+              'Attendance Calendar',
+              () {
+                Get.back();
+                _openPage(0);
+              },
+            ),
+            _drawerItem(
+              Icons.beach_access_outlined,
+              'Leave',
+              () {
+                Get.back();
+                _openPage(1);
+              },
+            ),
+            _drawerItem(
+              Icons.request_quote_outlined,
+              'Permission',
+              () {
+                Get.back();
+                _openPage(2);
+              },
+            ),
+            _drawerItem(
+              Icons.notifications_none_rounded,
+              'Notifications',
+              () {
+                Get.back();
+                _openPage(3);
+              },
+            ),
+            _drawerItem(
+              Icons.person_outline_rounded,
+              'Profile',
+              () {
+                Get.back();
+                _openPage(4);
+              },
+            ),
+            const Spacer(),
+            _drawerItem(
+              Icons.logout_rounded,
+              'Logout',
+              () {
+                Get.back();
+                Get.offAllNamed('/login');
+              },
+              color: const Color(0xFFD6384D),
+            ),
+            const SizedBox(height: 15),
+          ],
+        ),
+      ),
     );
   }
+
+  Widget _drawerItem(
+    IconData icon,
+    String label,
+    VoidCallback onTap, {
+    Color color = AppColors.textPrimary,
+  }) {
+    return ListTile(
+      onTap: onTap,
+      leading: Icon(icon, color: color),
+      title: Text(
+        label,
+        style: GoogleFonts.inter(
+          color: color,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 22),
+      dense: true,
+    );
+  }
+}
+
+class _ActivityEntry {
+  const _ActivityEntry(
+    this.title,
+    this.subtitle,
+    this.isPunchIn,
+  );
+
+  final String title;
+  final String subtitle;
+  final bool isPunchIn;
 }
