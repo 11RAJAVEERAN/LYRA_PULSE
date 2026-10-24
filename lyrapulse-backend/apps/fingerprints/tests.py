@@ -14,6 +14,7 @@ from apps.branches.models import Branch
 from apps.devices.models import Device
 from apps.departments.models import Department
 from apps.employees.models import Employee
+from apps.organizations.models import Organization
 
 from .admin import FingerprintEnrollmentAdmin
 from .models import EmployeeFingerprint, FingerprintEnrollment
@@ -26,6 +27,7 @@ class FingerprintEnrollmentAPITests(TestCase):
             "9100000001",
             role=User.Role.SUPERADMIN,
             is_active=True,
+            is_superuser=True,
         )
         self.employee_user = User.objects.create_user(
             "9100000002",
@@ -33,8 +35,9 @@ class FingerprintEnrollmentAPITests(TestCase):
             first_name="Test",
             last_name="Employee",
         )
-        self.branch = Branch.objects.create(name="Main", code="MAIN")
-        self.other_branch = Branch.objects.create(name="Other", code="OTHER")
+        self.organization = Organization.objects.create(name="Main Org", code="MAIN-ORG")
+        self.branch = Branch.objects.create(organization=self.organization, name="Main", code="MAIN")
+        self.other_branch = Branch.objects.create(organization=self.organization, name="Other", code="OTHER")
         self.department = Department.objects.create(name="Operations", branch=self.branch)
         self.employee = Employee.objects.create(
             employee_code="FP-EMP001",
@@ -446,3 +449,27 @@ class FingerprintEnrollmentAPITests(TestCase):
         self.assertEqual(response.data["data"]["enrollment_id"], enrollment_id)
         self.assertEqual(response.data["data"]["status"], FingerprintEnrollment.Status.PENDING)
         self.assertIsNone(response.data["data"]["fingerprint_slot"])
+
+    def test_customer_owner_cannot_read_another_organizations_enrollment_status(self):
+        other_org = Organization.objects.create(name="Other Org", code="OTHER-ORG")
+        other_branch = Branch.objects.create(organization=other_org, name="Other Branch", code="OTHER-BR")
+        other_user = User.objects.create_user("9100000005")
+        other_employee = Employee.objects.create(
+            employee_code="FP-OTHER", user=other_user, branch=other_branch,
+            biometric_attendance_enabled=True,
+        )
+        other_device = Device(device_id="OTHER-DEVICE", branch=other_branch)
+        other_device.set_token("another-test-device-token")
+        other_device.save()
+        enrollment = FingerprintEnrollment.objects.create(
+            employee=other_employee, device=other_device, finger="left_index",
+            created_by=self.admin, expires_at=timezone.now() + timedelta(minutes=5),
+        )
+        owner = User.objects.create_user("9100000006", role=User.Role.SUPERADMIN, organization=self.organization)
+        self.client.force_authenticate(owner)
+
+        response = self.client.get(
+            "/api/v1/employees/%s/fingerprints/enrollments/%s/" % (other_employee.pk, enrollment.pk)
+        )
+
+        self.assertEqual(response.status_code, 404)

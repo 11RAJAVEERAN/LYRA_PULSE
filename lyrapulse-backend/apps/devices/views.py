@@ -19,7 +19,14 @@ class DeviceManagementView(APIView):
     permission_classes = [IsAuthenticated, CanViewEmployees]
 
     def get(self, request):
-        devices = scope_queryset(Device.objects.select_related("branch"), request.user, "branch").order_by("device_id")
+        devices = scope_queryset(Device.objects.select_related("branch"), request.user, "branch")
+        branch_id = request.query_params.get("branch")
+        if branch_id:
+            try:
+                devices = devices.filter(branch_id=int(branch_id))
+            except (TypeError, ValueError):
+                devices = devices.none()
+        devices = devices.order_by("device_id")
         return success_response([{"device_id": d.device_id, "name": d.name, "branch_id": d.branch_id,
             "branch_name": d.branch.name, "is_active": d.is_active} for d in devices])
 

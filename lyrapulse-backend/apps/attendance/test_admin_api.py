@@ -161,6 +161,13 @@ class ListTests(AdminAttendanceTestCase):
         self.assertEqual(sorted(self.codes(self.superadmin)), ["EMP001", "EMP002", "EMP003", "EMP004", "EMP900"])
         self.assertEqual(self.codes(self.admin_no_scope), [])  # fail-closed: no scope assigned -> no data
 
+    def test_customer_superadmin_attendance_is_limited_to_assigned_organization(self):
+        owner = self.admin("9111000005", [], role=User.Role.SUPERADMIN)
+        self.assertEqual(sorted(self.codes(owner)), ["EMP001", "EMP002", "EMP003", "EMP004"])
+        self.assertEqual(self.api(owner).get(f"{ADMIN}{self.outsider.pk}/").status_code, 404)
+        summary = self.api(owner).get(f"{ADMIN}summary/").json()["data"]
+        self.assertEqual(summary["total_employees"], 4)
+
     def test_03b_scope_cannot_be_bypassed_with_ids(self):
         for params in ({"branch": self.other_branch.pk}, {"branch": self.branch_b.pk},  # admin_a lacks Chennai
                        {"department": self.other_dept.pk}, {"designation": self.other_desig.pk}):
@@ -551,6 +558,12 @@ class ExportTests(AdminAttendanceTestCase):
         absent = cells["EMP003"]
         self.assertEqual(absent["Status"], "ABSENT")
         self.assertEqual([absent[c] for c in header[7:]], [""] * len(header[7:]))
+
+    def test_customer_superadmin_export_is_limited_to_assigned_organization(self):
+        owner = self.admin("9111000005", [], role=User.Role.SUPERADMIN)
+        response, rows = self.export(owner)
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn("EMP900", [row[1] for row in rows[1:]])
 
     def test_27_export_respects_filters_and_dates(self):
         _, rows = self.export(status="absent")

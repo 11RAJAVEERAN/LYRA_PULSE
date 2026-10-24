@@ -2,6 +2,10 @@ import axios from 'axios'
 import { apiConfig } from '../app/config/apiConfig'
 import { storageService } from './storageService'
 
+export const SELECTED_BRANCH_KEY = 'lyrapulse_admin_selected_branch'
+export const BRANCH_CONTEXT_EVENT = 'lyrapulse:branch-change'
+
+
 const apiClient = axios.create({
   baseURL: apiConfig.baseUrl,
   timeout: apiConfig.timeout,
@@ -15,6 +19,17 @@ apiClient.interceptors.request.use((config) => {
 
   if (token && config.headers) {
     config.headers.Authorization = `Bearer ${token}`
+  }
+
+  if (config.method?.toLowerCase() === 'get') {
+    const path = (config.url ?? '').replace(apiConfig.baseUrl, '').split('?')[0].replace(/^\//, '')
+    const branchScopedPath = path === 'employees/' || path === 'devices/'
+      || path.startsWith('attendance/admin/') || path === 'attendance/admin/'
+      || path === 'attendance-permissions/'
+    const branchId = window.localStorage.getItem(SELECTED_BRANCH_KEY)
+    if (branchScopedPath && branchId && config.params?.branch == null) {
+      config.params = { ...config.params, branch: branchId }
+    }
   }
 
   return config

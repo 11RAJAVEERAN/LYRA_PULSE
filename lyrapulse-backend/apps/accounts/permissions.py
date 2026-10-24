@@ -19,7 +19,11 @@ class HasModelPermission(BasePermission):
 class IsSuperAdmin(BasePermission):
     def has_permission(self, request, view):
         user = request.user
-        return bool(user and user.is_authenticated and user.is_active and user.role == User.Role.SUPERADMIN)
+        if not (user and user.is_authenticated and user.is_active and user.role == User.Role.SUPERADMIN):
+            return False
+        return bool(user.has_global_scope or (
+            user.organization_id and user.organization and user.organization.is_active
+        ))
 
 
 class IsEmployee(BasePermission):

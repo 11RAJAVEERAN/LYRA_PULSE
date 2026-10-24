@@ -6,7 +6,7 @@ import { SearchInput } from '../../../components/common/SearchInput'
 import { EmptyState } from '../../../components/common/EmptyState'
 import { ErrorState } from '../../../components/common/ErrorState'
 import { LoadingState } from '../../../components/common/LoadingState'
-import apiClient from '../../../services/apiClient'
+import apiClient, { BRANCH_CONTEXT_EVENT } from '../../../services/apiClient'
 import { authService } from '../../../services/authService'
 import { EmployeeDetailsPanel } from '../components/EmployeeDetailsPanel'
 import { EditColumnsDrawer } from '../components/EditColumnsDrawer'
@@ -96,6 +96,13 @@ export function EmployeesPage() {
     loadEmployees()
     loadOptions()
   }, [loadEmployees])
+
+  useEffect(() => {
+    const refreshBranchData = () => loadEmployees()
+    window.addEventListener(BRANCH_CONTEXT_EVENT, refreshBranchData)
+    return () => window.removeEventListener(BRANCH_CONTEXT_EVENT, refreshBranchData)
+  }, [loadEmployees])
+
 
   const ctx = useMemo(() => ({
     branches: idNameMap(options.branches),

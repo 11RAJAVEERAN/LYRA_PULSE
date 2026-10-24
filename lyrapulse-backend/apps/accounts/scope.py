@@ -9,9 +9,9 @@ from django.core.exceptions import ValidationError
 def validate_scope(role, organization, branches, require_organization=True):
     """Raise ValidationError (field-keyed) if role/organization/branches are inconsistent.
 
-    SUPERADMIN is global and needs no scope. `require_organization=False` is used by the JSON API so the
-    current React form (which does not send an organization yet) keeps working; such users are fail-closed
-    in `scope_queryset` and see no data until a scope is assigned.
+    A business user's organization is required by internal forms. The JSON API can
+    still create an unscoped account for compatibility; it then sees no data until
+    an organization and, for non-SUPERADMIN roles, allowed branches are assigned.
     """
     from .models import User
 
@@ -31,7 +31,7 @@ def validate_scope(role, organization, branches, require_organization=True):
 
 
 def scope_queryset(queryset, user, branch_lookup):
-    """Restrict `queryset` to the user's scope. SUPERADMIN sees everything; everyone else only allowed branches.
+    """Restrict `queryset` to the user's scope. Only trusted platform superusers are global.
 
     `branch_lookup` is the ORM path to the branch, e.g. "branch", "department__branch", or "id" for Branch itself.
     """

@@ -170,6 +170,8 @@ class OrganizationScopeTests(TestCase):
         self.madurai = Branch.objects.create(organization=self.devi, name="Madurai", code="DEVI-MDU")
         self.bangalore = Branch.objects.create(organization=self.lyra, name="Bangalore", code="LYRA-BLR")
         self.superadmin = User.objects.create_user("9000000000", role=User.Role.SUPERADMIN, is_superuser=True)
+        self.devi_owner = User.objects.create_user("9000000001", role=User.Role.SUPERADMIN, organization=self.devi)
+        self.lyra_owner = User.objects.create_user("9000000002", role=User.Role.SUPERADMIN, organization=self.lyra)
         self.murugan = User.objects.create_user("9999999999", first_name="Murugan", role=User.Role.ADMIN, organization=self.devi)
         self.murugan.allowed_branches.add(self.chennai)
         self.murugan.groups.add(ensure_role_group(User.Role.ADMIN))
@@ -193,6 +195,112 @@ class OrganizationScopeTests(TestCase):
     def test_superadmin_sees_all_employees(self):
         self.client.force_authenticate(user=self.superadmin)
         self.assertEqual(self._codes(self.client.get("/api/v1/employees/")), {"E1", "E2", "E3"})
+
+    def test_customer_superadmins_are_scoped_to_their_active_organization(self):
+        from apps.devices.models import Device
+
+        from apps.departments.models import Department
+        from apps.designations.models import Designation
+
+        dev_department = Department.objects.create(name="Devi Ops", branch=self.chennai)
+        lyra_department = Department.objects.create(name="Lyra Ops", branch=self.bangalore)
+        Designation.objects.create(name="Devi Lead", department=dev_department)
+        Designation.objects.create(name="Lyra Lead", department=lyra_department)
+        dev_device = Device(device_id="DEVI-DEVICE", branch=self.chennai)
+        dev_device.set_token("devi-device-test-token")
+        dev_device.save()
+        lyra_device = Device(device_id="LYRA-DEVICE", branch=self.bangalore)
+        lyra_device.set_token("lyra-device-test-token")
+        lyra_device.save()
+
+        self.client.force_authenticate(user=self.devi_owner)
+        self.assertEqual(self._codes(self.client.get("/api/v1/employees/")), {"E1", "E2"})
+        self.assertEqual(self.client.get(f"/api/v1/employees/{self.emp_other_org.pk}/").status_code, 404)
+        self.assertEqual(
+            {item["name"] for item in self.client.get("/api/v1/branches/").data["data"]},
+            {"Chennai", "Madurai"},
+        )
+        self.assertEqual(
+            {item["name"] for item in self.client.get("/api/v1/departments/").data["data"]},
+            {"Devi Ops"},
+        )
+        self.assertEqual(
+            {item["name"] for item in self.client.get("/api/v1/designations/").data["data"]},
+            {"Devi Lead"},
+        )
+        devices = self.client.get("/api/v1/devices/")
+        self.assertEqual({item["device_id"] for item in devices.data["data"]}, {dev_device.device_id})
+        cross_org_update = self.client.patch("/api/v1/devices/", {"device_id": lyra_device.device_id, "name": "changed"}, format="json")
+        self.assertEqual(cross_org_update.status_code, 404)
+        cross_org_provision = self.client.post("/api/v1/devices/", {
+            "device_id": "DEVI-CROSS", "branch_id": self.bangalore.pk,
+        }, format="json")
+        self.assertEqual(cross_org_provision.status_code, 404)
+        self.client.force_authenticate(user=self.lyra_owner)
+        self.assertEqual(self._codes(self.client.get("/api/v1/employees/")), {"E3"})
+
+    def test_branch_filter_stays_within_authenticated_scope_for_employees_and_devices(self):
+        from apps.devices.models import Device
+
+        dev_device = Device(device_id="DEVI-FILTER", branch=self.chennai)
+        dev_device.set_token("devi-filter-test-token")
+        dev_device.save()
+        other_device = Device(device_id="LYRA-FILTER", branch=self.bangalore)
+        other_device.set_token("lyra-filter-test-token")
+        other_device.save()
+
+        self.client.force_authenticate(user=self.devi_owner)
+        self.assertEqual(self._codes(self.client.get("/api/v1/employees/", {"branch": self.chennai.pk})), {"E1"})
+        self.assertEqual(self._codes(self.client.get("/api/v1/employees/", {"branch": self.bangalore.pk})), set())
+        devices = self.client.get("/api/v1/devices/", {"branch": self.chennai.pk})
+        self.assertEqual({item["device_id"] for item in devices.data["data"]}, {dev_device.device_id})
+        devices = self.client.get("/api/v1/devices/", {"branch": self.bangalore.pk})
+        self.assertEqual(devices.data["data"], [])
+        self.assertEqual(self.client.get("/api/v1/employees/", {"branch": "invalid"}).data["data"], [])
+
+    def test_customer_superadmin_without_active_organization_is_fail_closed(self):
+        unassigned = User.objects.create_user("9000000003", role=User.Role.SUPERADMIN)
+        self.client.force_authenticate(user=unassigned)
+        self.assertEqual(self._codes(self.client.get("/api/v1/employees/")), set())
+        self.assertEqual(self.client.get(f"/api/v1/employees/{self.emp_other_org.pk}/").status_code, 404)
+        self.lyra.is_active = False
+        self.lyra.save(update_fields=["is_active"])
+        self.client.force_authenticate(user=self.lyra_owner)
+        self.assertEqual(self._codes(self.client.get("/api/v1/employees/")), set())
+
+    def test_customer_superadmin_admin_user_api_is_tenant_scoped(self):
+        dev_user = User.objects.create_user("9000000011", role=User.Role.HR, organization=self.devi)
+        lyra_user = User.objects.create_user("9000000012", role=User.Role.HR, organization=self.lyra)
+        self.client.force_authenticate(user=self.devi_owner)
+        listing = self.client.get("/api/v1/auth/admin/users/")
+        self.assertEqual({item["id"] for item in listing.data["data"]}, {self.murugan.pk, dev_user.pk})
+        self.assertEqual(self.client.get(f"/api/v1/auth/admin/users/{lyra_user.pk}/").status_code, 404)
+        response = self.client.post("/api/v1/auth/admin/users/", {
+            "phone_number": "9000000015", "role": "HR", "branch_ids": [self.chennai.pk],
+        }, format="json")
+        self.assertEqual(response.status_code, 201)
+        managed_user = User.objects.get(phone_number="9000000015")
+        self.assertEqual(managed_user.organization, self.devi)
+        self.assertFalse(managed_user.is_staff)
+        response = self.client.post("/api/v1/auth/admin/users/", {
+            "phone_number": "9000000013", "role": "HR", "organization": self.lyra.pk,
+        }, format="json")
+        self.assertEqual(response.status_code, 400)
+        response = self.client.post("/api/v1/auth/admin/users/", {
+            "phone_number": "9000000014", "role": "HR", "branch_ids": [self.bangalore.pk],
+        }, format="json")
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(User.objects.filter(phone_number__in=["9000000013", "9000000014"]).exists())
+
+    def test_customer_owner_cannot_create_organizations_or_branches_via_website_api(self):
+        self.client.force_authenticate(user=self.devi_owner)
+        self.assertEqual(self.client.post("/api/v1/branches/", {"name": "New", "code": "NEW"}).status_code, 405)
+        self.assertEqual(self.client.post("/api/v1/organizations/", {"name": "New", "code": "NEW"}).status_code, 404)
+
+    def test_customer_superadmin_does_not_gain_django_admin_access_from_role(self):
+        self.client.force_login(self.devi_owner)
+        response = self.client.get("/admin/")
+        self.assertEqual(response.status_code, 302)
 
     def test_admin_without_scope_sees_nothing(self):
         from apps.accounts.services.role_permissions import ensure_role_group
