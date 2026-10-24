@@ -15,9 +15,14 @@ class BottomNavBar extends StatelessWidget {
 
   static const List<_NavItem> _items = [
     _NavItem(
+      icon: Icons.home_outlined,
+      selectedIcon: Icons.home_rounded,
+      label: 'Home',
+    ),
+    _NavItem(
       icon: Icons.calendar_month_outlined,
       selectedIcon: Icons.calendar_month_rounded,
-      label: 'Attendance',
+      label: 'Calendar',
     ),
     _NavItem(
       icon: Icons.beach_access_outlined,
@@ -25,19 +30,9 @@ class BottomNavBar extends StatelessWidget {
       label: 'Leave',
     ),
     _NavItem(
-      icon: Icons.home_outlined,
-      selectedIcon: Icons.home_rounded,
-      label: 'Home',
-    ),
-    _NavItem(
-      icon: Icons.notifications_none_rounded,
-      selectedIcon: Icons.notifications_rounded,
-      label: 'Notification',
-    ),
-    _NavItem(
-      icon: Icons.person_outline_rounded,
-      selectedIcon: Icons.person_rounded,
-      label: 'Profile',
+      icon: Icons.access_time_outlined,
+      selectedIcon: Icons.access_time_filled_rounded,
+      label: 'Permission',
     ),
   ];
 
@@ -110,7 +105,9 @@ class BottomNavBar extends StatelessWidget {
               Icon(
                 isSelected ? item.selectedIcon : item.icon,
                 size: 21,
-                color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                color: isSelected
+                    ? AppColors.primary
+                    : AppColors.textSecondary,
               ),
               if (isSelected) ...[
                 const SizedBox(height: 3),

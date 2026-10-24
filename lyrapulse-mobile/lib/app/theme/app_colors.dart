@@ -44,6 +44,16 @@ abstract final class AppColors {
   static const Color errorDark = Color(0xFFB91C1C);
   static const Color errorBackground = Color(0xFFFEF2F2);
 
+  // Home screen states
+  static const Color breakBackground = Color(0xFFFFFCF3);
+  static const Color breakBorder = Color(0xFFE9D49A);
+  static const Color breakAccent = Color(0xFFC58A12);
+  static const Color breakDivider = Color(0xFFF0E5C8);
+  static const Color attendanceInBackground = Color(0xFFE5F8EE);
+  static const Color attendanceIn = Color(0xFF159665);
+  static const Color attendanceOutBackground = Color(0xFFFFE9EC);
+  static const Color attendanceOut = Color(0xFFD6384D);
+
   static const Color info = Color(0xFF2563EB);
   static const Color infoDark = Color(0xFF1D4ED8);
   static const Color infoBackground = Color(0xFFEFF6FF);
@@ -309,6 +319,7 @@ abstract final class AppColors {
   static const Color redAccent = Colors.redAccent;
   static const Color transparent = Colors.transparent;
   static const Color white = Colors.white;
+  static const Color white24 = Colors.white24;
   static const Color white60 = Colors.white60;
   static const Color white70 = Colors.white70;
 }

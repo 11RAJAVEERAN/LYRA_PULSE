@@ -5,14 +5,19 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'package:geolocator/geolocator.dart';
+import '../../attendance/views/face_verification_screen.dart';
+
+
 import '../../../app/theme/app_colors.dart';
 import '../../attendance/controllers/attendance_controller.dart';
-import '../../attendance/views/location_verification_screen.dart';
 import '../../calendar/views/calendar_screen.dart';
 import '../../leave/views/leave_screen.dart';
 import '../../notification/views/notification_screen.dart';
 import '../../permission/permission_screen.dart';
 import '../../profile/views/profile_screen.dart';
+
+import '../widgets/hold_to_confirm_button.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -31,26 +36,137 @@ class _HomeScreenState extends State<HomeScreen> {
   DateTime _selectedDate = DateTime.now();
   DateTime _displayedMonth = DateTime.now();
 
-  @override
-  void initState() {
-    super.initState();
 
-    if (Get.isRegistered<AttendanceController>()) {
-      attendanceController = Get.find<AttendanceController>();
-    } else {
-      attendanceController = Get.put(AttendanceController());
-    }
+   int _selectedIndex = 0;
 
-    _clockTimer = Timer.periodic(
-      const Duration(seconds: 1),
-      (_) {
-        if (mounted) {
-          setState(() => _now = DateTime.now());
-        }
-      },
-    );
+
+
+
+@override
+void initState() {
+  super.initState();
+
+  if (Get.isRegistered<AttendanceController>()) {
+    attendanceController = Get.find<AttendanceController>();
+  } else {
+    attendanceController = Get.put(AttendanceController());
   }
 
+  _clockTimer = Timer.periodic(
+    const Duration(seconds: 1),
+    (_) {
+      if (mounted) {
+        setState(() => _now = DateTime.now());
+      }
+    },
+  );
+
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    _checkLocationService();
+  });
+}
+Future<void> _checkLocationService() async {
+  final isEnabled =
+      await Geolocator.isLocationServiceEnabled();
+
+  if (!mounted || isEnabled) return;
+
+
+await showModalBottomSheet<void>(
+  context: context,
+  isDismissible: false,
+  enableDrag: false,
+  isScrollControlled: true,
+  backgroundColor: AppColors.transparent,
+  builder: (sheetContext) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(17, 17, 17, 19),
+      decoration: const BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(24),
+        ),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 42,
+              height: 5,
+              decoration: BoxDecoration(
+                color: AppColors.border,
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Container(
+              width: 68,
+              height: 68,
+              decoration: BoxDecoration(
+                color: AppColors.primaryBlue.withValues(alpha: 0.10),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.location_off_rounded,
+                color: AppColors.primaryBlue,
+                size: 50,
+              ),
+            ),
+            const SizedBox(height: 18),
+            const Text(
+              'Location is turned off',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Please turn on your location to use '
+              'Lyra Pulse attendance features.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12,
+                height: 1.5,
+                color: AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryBlue,
+                  foregroundColor: AppColors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                ),
+                onPressed: () async {
+                  Navigator.of(sheetContext).pop();
+                  await Geolocator.openLocationSettings();
+                },
+                icon: const Icon(Icons.location_on_rounded),
+                label: const Text(
+                  'Turn On Location',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  },
+);
+}    
   @override
   void dispose() {
     _clockTimer?.cancel();
@@ -123,92 +239,212 @@ class _HomeScreenState extends State<HomeScreen> {
 
   DateTime? get _checkInTime => attendanceController.checkInTime.value;
 
-  Future<void> _attendanceAction() async {
-    final checkingOut = _isCheckedIn;
 
-    if (checkingOut && _checkInTime == null) {
+Future<void> _attendanceAction() async {
+  final checkingOut = _isCheckedIn;
+
+  if (checkingOut && _checkInTime == null) {
+    Get.snackbar(
+      'Attendance',
+      'Please check in before checking out.',
+      snackPosition: SnackPosition.BOTTOM,
+    );
+    return;
+  }
+
+  try {
+    // Check whether location service is enabled.
+    final serviceEnabled =
+        await Geolocator.isLocationServiceEnabled();
+
+    if (!serviceEnabled) {
       Get.snackbar(
-        'Attendance',
-        'Please check in before checking out.',
+        'Location Required',
+        'Please turn on your phone location.',
         snackPosition: SnackPosition.BOTTOM,
       );
       return;
     }
 
-    await Get.to(
-      () => LocationVerificationScreen(isCheckOut: checkingOut),
-      transition: Transition.cupertino,
+    // Check and request location permission.
+    var permission = await Geolocator.checkPermission();
+
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
+
+    if (permission == LocationPermission.denied ||
+        permission == LocationPermission.deniedForever) {
+      Get.snackbar(
+        'Permission Required',
+        'Allow location permission to continue.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
+    // Verify that the current GPS location can be obtained.
+    await Geolocator.getCurrentPosition(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.high,
+      ),
     );
 
-    if (mounted) setState(() {});
-  }
+    if (!mounted) return;
 
-  void _openPage(int index) {
-    switch (index) {
-      case 0:
-        Get.to(() => CalendarScreen());
-        break;
-      case 1:
-        Get.to(() => LeaveScreen());
-        break;
-      case 2:
-        Get.to(() => PermissionScreen());
-        break;
-      case 3:
-        Get.to(() => NotificationScreen());
-        break;
-      case 4:
-        Get.to(() => ProfileScreen());
-        break;
+    // Skip the Location Verification page.
+    // Continue directly to face verification.
+    await Get.to(
+      () => FaceVerificationScreen(
+        isCheckOut: checkingOut,
+      ),
+      transition: Transition.rightToLeft,
+      duration: const Duration(milliseconds: 350),
+    );
+
+    if (mounted) {
+      setState(() {});
     }
+  } catch (_) {
+    Get.snackbar(
+      'Location Error',
+      'Unable to verify your location. Please try again.',
+      snackPosition: SnackPosition.BOTTOM,
+    );
   }
+}
+
+
+
+
+
+void _selectTab(int index) {
+  if (!mounted) return;
+
+  setState(() {
+    _selectedIndex = index;
+  });
+}
+
+void _openPage(int index) {
+  switch (index) {
+    case 0:
+      _selectTab(0);
+      break;
+    case 1:
+      _selectTab(1);
+      break;
+    case 2:
+      _selectTab(2);
+      break;
+    case 3:
+      _selectTab(3);
+      break;
+    case 4:
+      Get.to(() => ProfileScreen());
+      break;
+    case 5:
+      Get.to(() => NotificationScreen());
+      break;
+  }
+}
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
       drawer: _buildDrawer(),
-      body: SafeArea(
-        bottom: false,
-        child: Stack(
-          children: [
-            Positioned(
-              top: -100,
-              right: -80,
-              child: Container(
-                width: 240,
-                height: 240,
-                decoration: BoxDecoration(
-                  color: AppColors.primaryBlue.withValues(alpha: .08),
-                  shape: BoxShape.circle,
-                ),
+
+      body: IndexedStack(
+  index: _selectedIndex,
+  children: [
+    SafeArea(
+      bottom: false,
+      child: Stack(
+        children: [
+          Positioned(
+            top: -100,
+            right: -80,
+            child: Container(
+              width: 240,
+              height: 240,
+              decoration: BoxDecoration(
+                color: AppColors.primaryBlue.withValues(alpha: .03),
+                shape: BoxShape.circle,
               ),
             ),
-            CustomScrollView(
-              physics: const BouncingScrollPhysics(),
-              slivers: [
-                SliverToBoxAdapter(child: _buildHeader()),
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 112),
-                  sliver: SliverList(
-                    delegate: SliverChildListDelegate([
-                      _buildDateSelector(),
-                      const SizedBox(height: 14),
-                      _buildWorkingCard(),
-                      const SizedBox(height: 17),
-                      _buildSectionTitle(),
-                      const SizedBox(height: 10),
-                      _buildActivityCard(),
-                      const SizedBox(height: 14),
-                      _buildLocationCard(),
-                    ]),
-                  ),
-                ),
-              ],
-            ),
-          ],
+          ),
+
+
+RefreshIndicator(
+  color: AppColors.primary,
+  backgroundColor: AppColors.white,
+  strokeWidth: 3,
+  displacement: 45,
+  edgeOffset: 0,
+onRefresh: () async {
+  await Future.delayed(
+    const Duration(milliseconds: 800),
+  );
+
+  if (mounted) {
+    setState(() {});
+  }
+},
+  child: CustomScrollView(
+    physics: const ClampingScrollPhysics(
+      parent: AlwaysScrollableScrollPhysics(),
+    ),
+    slivers: [
+      SliverToBoxAdapter(child: _buildHeader()),
+      SliverPadding(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 112),
+        sliver: SliverList(
+          delegate: SliverChildListDelegate([
+            _buildDateSelector(),
+            const SizedBox(height: 14),
+            _buildWorkingCard(),
+            const SizedBox(height: 17),
+            _buildSectionTitle(),
+            const SizedBox(height: 10),
+            _buildActivityCard(),
+            const SizedBox(height: 14),
+          ]),
         ),
       ),
+    ],
+  ),
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        ],
+      ),
+    ),
+
+    CalendarScreen(),
+    LeaveScreen(),
+    const PermissionScreen(),
+  ],
+),
       bottomNavigationBar: _buildBottomNavigation(),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButton: _buildAttendanceButton(),
@@ -232,7 +468,7 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           Builder(
             builder: (context) => Material(
-              color: Colors.white.withOpacity(.78),
+              color: AppColors.white.withValues(alpha: .78),
               borderRadius: BorderRadius.circular(18),
               child: InkWell(
                 borderRadius: BorderRadius.circular(18),
@@ -276,11 +512,11 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           Material(
-            color: Colors.white,
+            color: AppColors.white,
             shape: const CircleBorder(),
             child: InkWell(
               customBorder: const CircleBorder(),
-              onTap: () => _openPage(3),
+              onTap: () => _openPage(5),
               child: const SizedBox(
                 width: 46,
                 height: 46,
@@ -385,12 +621,12 @@ class _HomeScreenState extends State<HomeScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: AppColors.border),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(.05),
+            color: AppColors.primary.withValues(alpha: .05),
             blurRadius: 14,
             offset: const Offset(0, 5),
           ),
@@ -506,7 +742,7 @@ class _HomeScreenState extends State<HomeScreen> {
               return Material(
                 color: isSelected
                     ? AppColors.primary
-                    : Colors.transparent,
+                    : AppColors.transparent,
                 shape: const CircleBorder(),
                 child: InkWell(
                   customBorder: const CircleBorder(),
@@ -532,7 +768,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ? FontWeight.w800
                             : FontWeight.w500,
                         color: isSelected
-                            ? Colors.white
+                            ? AppColors.white
                             : AppColors.textPrimary,
                       ),
                     ),
@@ -553,9 +789,9 @@ class _HomeScreenState extends State<HomeScreen> {
         borderRadius: BorderRadius.circular(24),
         gradient: const LinearGradient(
           colors: [
-            AppColors.primaryDark,
-            AppColors.primary,
-            AppColors.selection,
+            AppColors.secondaryDark,
+            AppColors.secondaryDark,
+            AppColors.secondaryDark,
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -579,7 +815,7 @@ class _HomeScreenState extends State<HomeScreen> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: Colors.white.withOpacity(.09),
+                  color: AppColors.white.withValues(alpha: .09),
                   width: 2,
                 ),
               ),
@@ -591,7 +827,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Text(
                 'WORKING HOURS',
                 style: GoogleFonts.inter(
-                  color: Colors.white.withOpacity(.84),
+                  color: AppColors.white.withValues(alpha: .84),
                   fontSize: 12,
                 
                 ),
@@ -604,7 +840,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Text(
                     _workingTime,
                     style: GoogleFonts.inter(
-                      color: Colors.white,
+                      color: AppColors.white,
                       fontSize: 30,
                       fontWeight: FontWeight.w600,
                       height: 1.15,
@@ -617,14 +853,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   Icon(
                     Icons.trending_up_rounded,
-                    color: Colors.white.withOpacity(.9),
+                    color: AppColors.white.withValues(alpha: .9),
                     size: 17,
                   ),
                   const SizedBox(width: 9),
                   Text(
                     'Hours worked today',
                     style: GoogleFonts.inter(
-                      color: Colors.white.withOpacity(.85),
+                      color: AppColors.white.withValues(alpha: .85),
                       fontSize: 12,
                     ),
                   ),
@@ -643,7 +879,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 child: Divider(
-                  color: Colors.white.withOpacity(.25),
+                  color: AppColors.white.withValues(alpha: .25),
                   height: 1,
                 ),
               ),
@@ -666,17 +902,17 @@ class _HomeScreenState extends State<HomeScreen> {
           width: 37,
           height: 37,
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(.15),
+            color: AppColors.white.withValues(alpha: .15),
             borderRadius: BorderRadius.circular(11),
           ),
-          child: Icon(icon, color: Colors.white, size: 25),
+          child: Icon(icon, color: AppColors.white, size: 25),
         ),
         const SizedBox(width: 14),
         Expanded(
           child: Text(
             label,
             style: GoogleFonts.inter(
-              color: Colors.white,
+              color: AppColors.white,
               fontWeight: FontWeight.w600,
               fontSize: 13,
             ),
@@ -688,7 +924,7 @@ class _HomeScreenState extends State<HomeScreen> {
             value,
             textAlign: TextAlign.right,
             style: GoogleFonts.inter(
-              color: Colors.white,
+              color: AppColors.white,
               fontSize: 15,
               fontWeight: FontWeight.w800,
             ),
@@ -798,7 +1034,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Icon(
                 Icons.access_time_rounded,
                 size: 35,
-                color: AppColors.textSecondary.withOpacity(.6),
+                color: AppColors.textSecondary.withValues(alpha: .6),
               ),
               const SizedBox(height: 10),
               Text(
@@ -827,14 +1063,14 @@ class _HomeScreenState extends State<HomeScreen> {
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(15, 20, 15, 20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(21),
         border: Border.all(
-          color: AppColors.border.withOpacity(.75),
+          color: AppColors.border.withValues(alpha: .75),
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(.035),
+            color: AppColors.primary.withValues(alpha: .035),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),
@@ -867,7 +1103,7 @@ class _HomeScreenState extends State<HomeScreen> {
           Expanded(
             child: Container(
               height: 1.3,
-              color: const Color(0xFFF0E5C8),
+              color: AppColors.breakDivider,
             ),
           ),
           Container(
@@ -877,10 +1113,10 @@ class _HomeScreenState extends State<HomeScreen> {
               vertical: 10,
             ),
             decoration: BoxDecoration(
-              color: const Color(0xFFFFFCF3),
+              color: AppColors.breakBackground,
               borderRadius: BorderRadius.circular(30),
               border: Border.all(
-                color: const Color(0xFFE9D49A),
+                color: AppColors.breakBorder,
                 width: 1.3,
               ),
             ),
@@ -890,7 +1126,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 const Icon(
                   Icons.coffee_rounded,
                   size: 15,
-                  color: Color(0xFFC58A12),
+                  color: AppColors.breakAccent,
                 ),
                 const SizedBox(width: 7),
                 Flexible(
@@ -901,7 +1137,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     style: GoogleFonts.inter(
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFFC58A12),
+                      color: AppColors.breakAccent,
                     ),
                   ),
                 ),
@@ -911,7 +1147,7 @@ class _HomeScreenState extends State<HomeScreen> {
           Expanded(
             child: Container(
               height: 1.3,
-              color: const Color(0xFFF0E5C8),
+              color: AppColors.breakDivider,
             ),
           ),
         ],
@@ -929,15 +1165,15 @@ class _HomeScreenState extends State<HomeScreen> {
           height: 40,
           decoration: BoxDecoration(
             color: isIn
-                ? const Color(0xFFE5F8EE)
-                : const Color(0xFFFFE9EC),
+                ? AppColors.attendanceInBackground
+                : AppColors.attendanceOutBackground,
             shape: BoxShape.circle,
           ),
           child: Icon(
             isIn ? Icons.login_rounded : Icons.logout_rounded,
             color: isIn
-                ? const Color(0xFF159665)
-                : const Color(0xFFD6384D),
+                ? AppColors.attendanceIn
+                : AppColors.attendanceOut,
             size: 20,
           ),
         ),
@@ -966,178 +1202,146 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildLocationCard() {
-    return Container(
-      padding: const EdgeInsets.all(13),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.border),
-      ),
+  // Widget _buildLocationCard() {
+    // return Container(
+    //   padding: const EdgeInsets.all(13),
+    //   decoration: BoxDecoration(
+    //     color: Colors.white,
+    //     borderRadius: BorderRadius.circular(20),
+    //     border: Border.all(color: AppColors.border),
+    //   ),
+      // child: Row(
+      //   children: [
+      //     const Icon(
+      //       Icons.location_on_outlined,
+      //       color: AppColors.black,
+      //       size: 20,
+      //     ),
+      //     const SizedBox(width: 12),
+      //     Expanded(
+      //       child: Column(
+      //         crossAxisAlignment: CrossAxisAlignment.start,
+              // children: [
+              //   Text(
+              //     'Location verification',
+              //     style: GoogleFonts.inter(
+              //       fontWeight: FontWeight.w500,
+              //       color: AppColors.black,
+              //     ),
+              //   ),
+                // const SizedBox(height: 4),
+                // Text(
+                //   'Your location is checked during attendance',
+                //   style: GoogleFonts.inter(
+                //     fontSize: 10,
+                //     color: AppColors.textSecondary,
+                //   ),
+                // ),
+          //     ],
+          //   ),
+          // ),
+  //         const Icon(
+  //           Icons.verified_user_outlined,
+  //           color: Color(0xFF16A36A),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
+
+Widget _buildAttendanceButton() {
+  return HoldToConfirmButton(
+    isCheckOut: _isCheckedIn,
+    onConfirm: _attendanceAction,
+  );
+}
+
+Widget _buildBottomNavigation() {
+  return BottomAppBar(
+    color: AppColors.white,
+    elevation: 16,
+    notchMargin: 7,
+    shape: const CircularNotchedRectangle(),
+    child: SizedBox(
+      height: 58,
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          const Icon(
-            Icons.location_on_outlined,
-            color: AppColors.black,
-            size: 20,
+          _navItem(
+            Icons.home_rounded, 
+          'Home', 0),
+
+          _navItem(
+            Icons.calendar_month_outlined,
+            'Calendar',
+            1,
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Location verification',
-                  style: GoogleFonts.inter(
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.black,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Your location is checked during attendance',
-                  style: GoogleFonts.inter(
-                    fontSize: 10,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Icon(
-            Icons.verified_user_outlined,
-            color: Color(0xFF16A36A),
+          const SizedBox(width: 72),
+          _navItem(Icons.beach_access_outlined, 'Leave', 2),
+          _navItem(
+            Icons.access_time_outlined,
+            'Permission',
+            3,
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
-  Widget _buildAttendanceButton() {
-    return GestureDetector(
-      onTap: _attendanceAction,
-      child: Container(
-        width: 100,
-        height: 100,
-        padding: const EdgeInsets.all(4),
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primary.withValues(alpha: .25),
-              blurRadius: 22,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Container(
-          decoration: const BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: LinearGradient(
-              colors: [
-                AppColors.primary,
-                AppColors.secondaryDark,
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+Widget _navItem(
+  IconData icon,
+  String label,
+  int index,
+) {
+  final bool isSelected = _selectedIndex == index;
+
+  return InkWell(
+    onTap: () => _selectTab(index),
+    borderRadius: BorderRadius.circular(15),
+    child: SizedBox(
+      width: 66,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            color: isSelected
+                ? AppColors.primaryBlue
+                : AppColors.sidebarMuted,
+            size: 23,
+          ),
+          const SizedBox(height: 3),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.inter(
+              fontSize: 9,
+              color: isSelected
+                  ? AppColors.secondary
+                  : AppColors.sidebarMuted,
+              fontWeight: isSelected
+                  ? FontWeight.w800
+                  : FontWeight.w600,
             ),
           ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(
-                Icons.location_on_rounded,
-                color: Colors.white,
-                size: 25,
-              ),
-              const SizedBox(height: 2),
-              Text(
-                _isCheckedIn ? 'Check Out' : 'Check In',
-                style: GoogleFonts.inter(
-                  color: Colors.white,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        ),
+        ],
       ),
-    );
-  }
+    ),
+  );
+}
 
-  Widget _buildBottomNavigation() {
-    return BottomAppBar(
-      color: Colors.white,
-      elevation: 16,
-      notchMargin: 7,
-      shape: const CircularNotchedRectangle(),
-      child: SizedBox(
-        height: 42,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _navItem(
-              Icons.calendar_month_outlined,
-              'Calendar',
-              0,
-            ),
-            _navItem(
-              Icons.beach_access_outlined,
-              'Leave',
-              1,
-            ),
-            const SizedBox(width: 82),
-            _navItem(
-              Icons.request_quote_outlined,
-              'Permission',
-              2,
-            ),
-            _navItem(
-              Icons.person_outlined,
-              'profile',
-              3,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
-  Widget _navItem(IconData icon, String label, int index) {
-    return InkWell(
-      onTap: () => _openPage(index),
-      borderRadius: BorderRadius.circular(15),
-      child: SizedBox(
-        width: 62,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              color: AppColors.textSecondary,
-              size: 27,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              maxLines: 1,
-              style: GoogleFonts.inter(
-                fontSize: 8,
-                color: AppColors.textSecondary,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+
+
+
+
 
   Widget _buildDrawer() {
     return Drawer(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.white,
       child: SafeArea(
         child: Column(
           children: [
@@ -1159,10 +1363,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   const CircleAvatar(
                     radius: 31,
-                    backgroundColor: Colors.white24,
+                    backgroundColor: AppColors.white24,
                     child: Icon(
                       Icons.person_rounded,
-                      color: Colors.white,
+                      color: AppColors.white,
                       size: 34,
                     ),
                   ),
@@ -1170,7 +1374,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   Text(
                     'Madhavan',
                     style: GoogleFonts.inter(
-                      color: Colors.white,
+                      color: AppColors.white,
                       fontSize: 21,
                       fontWeight: FontWeight.w800,
                     ),
@@ -1179,7 +1383,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   Text(
                     'Employee',
                     style: GoogleFonts.inter(
-                      color: Colors.white70,
+                      color: AppColors.white70,
                       fontSize: 13,
                     ),
                   ),
@@ -1191,6 +1395,8 @@ class _HomeScreenState extends State<HomeScreen> {
               'Home',
               () => Get.back(),
             ),
+
+            
             _drawerItem(
               Icons.calendar_month_outlined,
               'Attendance Calendar',
@@ -1239,7 +1445,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 Get.back();
                 Get.offAllNamed('/login');
               },
-              color: const Color(0xFFD6384D),
+              color: AppColors.attendanceOut,
             ),
             const SizedBox(height: 15),
           ],
