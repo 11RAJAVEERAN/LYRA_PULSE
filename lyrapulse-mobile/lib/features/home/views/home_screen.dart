@@ -6,13 +6,11 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../app/theme/app_colors.dart';
-
 import '../widgets/welcome_header.dart';
 import '../widgets/home_drawer.dart';
 import '../widgets/bottom_nav_bar.dart';
 
 import 'package:lyrapulse_mobile/features/attendance/controllers/attendance_controller.dart';
-import 'package:lyrapulse_mobile/features/attendance/widgets/break_tracking_panel.dart';
 import 'package:lyrapulse_mobile/features/attendance/views/location_verification_screen.dart';
 import 'package:lyrapulse_mobile/features/attendance/views/attendance_history_screen.dart';
 import 'package:lyrapulse_mobile/features/attendance/views/attendance_overview_screen.dart';
@@ -48,16 +46,12 @@ class _HomeScreenState extends State<HomeScreen> {
             : Get.put(AttendanceController(), permanent: true);
   }
 
-  void _openCheckIn() {
-    if (attendanceController.isCheckedIn) {
-      Get.snackbar(
-        'Already Checked In',
-        'You have already checked in.',
-        snackPosition: SnackPosition.BOTTOM,
-      );
-      return;
-    }
-
+  // Fingerprint action flow:
+  // 1. Not checked in -> Office Check In.
+  // 2. Checked in, before 6:30 PM -> Start Break.
+  // 3. Break active -> End Break and resume working time.
+  // 4. At/after 6:30 PM, with no active break -> Office Check Out.
+  Future<void> _handleFingerprintAction() async {
     if (attendanceController.isCompleted) {
       Get.snackbar(
         'Attendance Completed',
@@ -67,39 +61,75 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
 
-    Get.to(
-      () => const LocationVerificationScreen(isCheckOut: false),
-    );
-  }
-
-  void _openCheckOut() {
-    if (attendanceController.checkInTime.value == null) {
-      Get.snackbar(
-        'Check In Required',
-        'Please check in before checking out.',
-        snackPosition: SnackPosition.BOTTOM,
+    // First action: Office Check In.
+    if (!attendanceController.isCheckedIn) {
+      Get.to(
+        () => const LocationVerificationScreen(isCheckOut: false),
       );
       return;
     }
 
-    if (attendanceController.checkOutTime.value != null) {
-      Get.snackbar(
-        'Already Checked Out',
-        'Your check out is already recorded.',
-        snackPosition: SnackPosition.BOTTOM,
-      );
-      return;
-    }
-
+    // If a break is active, this action ends the break.
+    // Working time resumes after the break is successfully ended.
     if (attendanceController.activeBreak != null) {
       Get.snackbar(
-        'Break In Progress',
-        'Please end your break before checking out.',
+        'Break Check In',
+        'Processing your return from break...',
         snackPosition: SnackPosition.BOTTOM,
+        duration: const Duration(seconds: 2),
       );
+
+      final error = await attendanceController.endBreak();
+
+      if (error != null) {
+        Get.snackbar(
+          'Break Check In Failed',
+          error,
+          snackPosition: SnackPosition.BOTTOM,
+        );
+      } else {
+        Get.snackbar(
+          'Welcome Back',
+          'Your break has ended. Working time resumed.',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+      }
+
       return;
     }
 
+    final now = DateTime.now();
+
+    final officeClosingTime = DateTime(
+      now.year,
+      now.month,
+      now.day,
+      18,
+      30,
+    );
+
+    // Before 6:30 PM, start a break.
+    if (now.isBefore(officeClosingTime)) {
+      final error = await attendanceController.startBreak('Break');
+
+      if (error != null) {
+        Get.snackbar(
+          'Unable to Start Break',
+          error,
+          snackPosition: SnackPosition.BOTTOM,
+        );
+      } else {
+        Get.snackbar(
+          'Break Started',
+          'Working time paused. Break timer started.',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+      }
+
+      return;
+    }
+
+    // At or after 6:30 PM, perform Office Check Out.
     Get.to(
       () => const LocationVerificationScreen(isCheckOut: true),
     );
@@ -185,6 +215,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       key: _scaffoldKey,
+      backgroundColor: AppColors.background,
       drawer: HomeDrawer(
         onHomeTap: () => Get.back(),
         onProfileTap: () {
@@ -216,14 +247,13 @@ class _HomeScreenState extends State<HomeScreen> {
           Get.offAllNamed('/login');
         },
       ),
-      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
           children: [
             Expanded(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(20, 18, 20, 110),
+                padding: const EdgeInsets.fromLTRB(20, 18, 20, 28),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -234,24 +264,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       onNotificationTap: _openNotification,
                     ),
                     const SizedBox(height: 24),
-
                     _buildHeroSection(),
-
                     const SizedBox(height: 24),
-                    _buildAttendanceTimeline(),
-
-                    // New break tracking section.
-                    const SizedBox(height: 20),
-                    const BreakTrackingPanel(),
-
-                    const SizedBox(height: 24),
-                    _buildQuickActions(),
-
-                    const SizedBox(height: 24),
-                    _buildStatsSection(),
-
-                    const SizedBox(height: 24),
-                    _buildOverviewSection(),
+                    _buildAttendanceOverview(),
                   ],
                 ),
               ),
@@ -259,9 +274,17 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: BottomNavBar(
-        selectedIndex: _selectedIndex,
-        onChanged: _onBottomNavChanged,
+      bottomNavigationBar: Obx(
+        () => BottomNavBar(
+          selectedIndex: _selectedIndex,
+          onChanged: _onBottomNavChanged,
+          onFingerprintAction: () {
+            _handleFingerprintAction();
+          },
+          isCheckedIn: attendanceController.isCheckedIn,
+          isOnBreak: attendanceController.activeBreak != null,
+          isCompleted: attendanceController.isCompleted,
+        ),
       ),
     );
   }
@@ -326,15 +349,27 @@ class _HomeScreenState extends State<HomeScreen> {
                       borderRadius: BorderRadius.circular(30),
                     ),
                     child: Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Container(
-                          width: 7,
-                          height: 7,
-                          decoration: const BoxDecoration(
-                            color: AppColors.hexFF65F4A4,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
+                        Obx(() {
+                          final color =
+                              attendanceController.isCompleted
+                                  ? Colors.redAccent
+                                  : attendanceController.activeBreak != null
+                                      ? Colors.redAccent
+                                      : attendanceController.isCheckedIn
+                                          ? AppColors.hexFF65F4A4
+                                          : AppColors.white;
+
+                          return Container(
+                            width: 7,
+                            height: 7,
+                            decoration: BoxDecoration(
+                              color: color,
+                              shape: BoxShape.circle,
+                            ),
+                          );
+                        }),
                         const SizedBox(width: 7),
                         Text(
                           'ATTENDANCE',
@@ -349,540 +384,129 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                   const Spacer(),
-                  Text(
-                    _getToday(),
-                    style: GoogleFonts.inter(
-                      color: AppColors.white.withValues(alpha: 0.75),
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
+                  Flexible(
+                    child: Text(
+                      _getToday(),
+                      textAlign: TextAlign.end,
+                      style: GoogleFonts.inter(
+                        color: AppColors.white.withValues(alpha: 0.85),
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 15),
+              const SizedBox(height: 22),
+              Text(
+                'Working Time',
+                style: GoogleFonts.inter(
+                  color: AppColors.white,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 5),
               Obx(
-                () => Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Working Time',
-                      style: GoogleFonts.inter(
-                        color: AppColors.white,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      attendanceController.formattedWorkingDuration,
-                      style: GoogleFonts.inter(
-                        color: AppColors.white,
-                        fontSize: 28,
-                        fontWeight: FontWeight.w700,
-                        fontFeatures: const [
-                          FontFeature.tabularFigures(),
-                        ],
-                      ),
-                    ),
-                    if (attendanceController.activeBreak != null) ...[
-                      const SizedBox(height: 7),
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.coffee_rounded,
-                            size: 15,
-                            color: Colors.white,
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            '${attendanceController.activeBreak!.type} Break in Progress',
-                            style: GoogleFonts.inter(
-                              color: AppColors.white,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
+                () => Text(
+                  attendanceController.formattedWorkingDuration,
+                  style: GoogleFonts.inter(
+                    color: AppColors.white,
+                    fontSize: 30,
+                    fontWeight: FontWeight.w700,
+                    fontFeatures: const [
+                      FontFeature.tabularFigures(),
                     ],
-                  ],
+                  ),
                 ),
               ),
               const SizedBox(height: 22),
-              Row(
-                children: [
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: _openCheckIn,
-                      child: Container(
-                        height: 48,
-                        decoration: BoxDecoration(
-                          color: AppColors.white,
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(
-                              Icons.login_rounded,
-                              color: AppColors.primary,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Check In',
-                              style: GoogleFonts.inter(
-                                color: AppColors.primary,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 15,
+                  vertical: 13,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.white.withValues(alpha: 0.09),
+                  borderRadius: BorderRadius.circular(17),
+                  border: Border.all(
+                    color: AppColors.white.withValues(alpha: 0.22),
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: _openCheckOut,
-                      child: Container(
-                        height: 48,
-                        decoration: BoxDecoration(
-                          color: AppColors.white.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(15),
-                          border: Border.all(
-                            color: AppColors.white.withValues(alpha: 0.25),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(
-                              Icons.logout_rounded,
-                              color: AppColors.white,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Check Out',
-                              style: GoogleFonts.inter(
-                                color: AppColors.white,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAttendanceTimeline() {
-    return Obx(() {
-      final checkIn = attendanceController.checkInTime.value;
-      final checkOut = attendanceController.checkOutTime.value;
-
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _sectionTitle(
-            title: 'Today',
-            subtitle: 'Attendance timeline',
-            action: 'View',
-            onTap: _openAttendanceHistory,
-          ),
-          const SizedBox(height: 14),
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 18,
-              vertical: 18,
-            ),
-            decoration: BoxDecoration(
-              color: AppColors.white,
-              borderRadius: BorderRadius.circular(23),
-              border: Border.all(color: AppColors.border),
-            ),
-            child: Row(
-              children: [
-                Column(
+                ),
+                child: Row(
                   children: [
-                    _timelineDot(
-                      color: checkIn != null
-                          ? AppColors.success
-                          : AppColors.border,
-                      icon: Icons.login_rounded,
+                    Icon(
+                      Icons.access_time_rounded,
+                      size: 26,
+                      color: AppColors.white,
                     ),
-                    Container(
-                      width: 2,
-                      height: 38,
-                      color: AppColors.border,
-                    ),
-                    _timelineDot(
-                      color: checkOut != null
-                          ? AppColors.success
-                          : AppColors.border,
-                      icon: Icons.logout_rounded,
+                    const SizedBox(width: 13),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Office Timing',
+                            style: GoogleFonts.inter(
+                              color: AppColors.white.withValues(alpha: 0.85),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            '9:30 AM – 6:30 PM',
+                            style: GoogleFonts.inter(
+                              color: AppColors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
-                const SizedBox(width: 15),
-                Expanded(
-                  child: Column(
+              ),
+              Obx(() {
+                if (attendanceController.activeBreak == null) {
+                  return const SizedBox.shrink();
+                }
+
+                return Padding(
+                  padding: const EdgeInsets.only(top: 13),
+                  child: Row(
                     children: [
-                      _timelineRow(
-                        title: 'Check In',
-                        subtitle: 'Office entry',
-                        time: attendanceController.formatTime(checkIn),
-                        active: checkIn != null,
+                      const Icon(
+                        Icons.coffee_rounded,
+                        size: 16,
+                        color: Colors.redAccent,
                       ),
-                      const SizedBox(height: 29),
-                      _timelineRow(
-                        title: 'Check Out',
-                        subtitle: 'Office exit',
-                        time: attendanceController.formatTime(checkOut),
-                        active: checkOut != null,
+                      const SizedBox(width: 7),
+                      Text(
+                        'Break in progress',
+                        style: GoogleFonts.inter(
+                          color: AppColors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        attendanceController.formatElapsedDuration(
+                          attendanceController.activeBreakDuration,
+                        ),
+                        style: GoogleFonts.inter(
+                          color: AppColors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ],
                   ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      );
-    });
-  }
-
-  Widget _timelineDot({
-    required Color color,
-    required IconData icon,
-  }) {
-    return Container(
-      width: 34,
-      height: 34,
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        shape: BoxShape.circle,
-      ),
-      child: Icon(icon, color: color, size: 17),
-    );
-  }
-
-  Widget _timelineRow({
-    required String title,
-    required String subtitle,
-    required String time,
-    required bool active,
-  }) {
-    return Row(
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: GoogleFonts.inter(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                subtitle,
-                style: GoogleFonts.inter(
-                  fontSize: 10,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-            ],
-          ),
-        ),
-        Text(
-          time,
-          style: GoogleFonts.inter(
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-            color: active
-                ? AppColors.success
-                : AppColors.textSecondary,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildQuickActions() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _sectionTitle(
-          title: 'Quick Actions',
-          subtitle: 'Everything you need',
-        ),
-        const SizedBox(height: 14),
-        Row(
-          children: [
-            Expanded(
-              child: _actionItem(
-                icon: Icons.event_available_rounded,
-                title: 'Permission',
-                subtitle: 'Request',
-                iconColor: AppColors.secondary,
-                onTap: _openPermission,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _actionItem(
-                icon: Icons.history_rounded,
-                title: 'History',
-                subtitle: 'Attendance',
-                iconColor: AppColors.primary,
-                onTap: _openAttendanceHistory,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _actionItem(
-                icon: Icons.beach_access_rounded,
-                title: 'Leave',
-                subtitle: 'Apply',
-                iconColor: AppColors.warning,
-                onTap: _openLeave,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _actionItem(
-                icon: Icons.calendar_month_rounded,
-                title: 'Calendar',
-                subtitle: 'View',
-                iconColor: AppColors.primary,
-                onTap: _openCalendar,
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _actionItem({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required Color iconColor,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(10, 14, 10, 13),
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: iconColor.withValues(alpha: 0.10),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, color: iconColor, size: 20),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.inter(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              subtitle,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.inter(
-                fontSize: 9,
-                color: AppColors.textSecondary,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatsSection() {
-    return Obx(() {
-      final checkIn = attendanceController.checkInTime.value;
-      final checkOut = attendanceController.checkOutTime.value;
-      final duration = attendanceController.workingDuration.value;
-
-      final checkInParts =
-          attendanceController.formatTime(checkIn).split(' ');
-      final checkOutParts =
-          attendanceController.formatTime(checkOut).split(' ');
-
-      final hours = duration.inHours.toString().padLeft(2, '0');
-      final minutes =
-          duration.inMinutes.remainder(60).toString().padLeft(2, '0');
-
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _sectionTitle(
-            title: 'Today at a glance',
-            subtitle: 'Your live status',
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: _statCard(
-                  title: 'Check In',
-                  value: checkIn == null ? '--:--' : checkInParts[0],
-                  suffix: checkIn == null ? '' : checkInParts[1],
-                  icon: Icons.login_rounded,
-                  color: AppColors.success,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _statCard(
-                  title: 'Check Out',
-                  value: checkOut == null ? '--:--' : checkOutParts[0],
-                  suffix: checkOut == null ? '' : checkOutParts[1],
-                  icon: Icons.logout_rounded,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: _statCard(
-                  title: 'Net Working Time',
-                  value: checkIn == null ? '--:--' : '$hours:$minutes',
-                  suffix: 'hrs',
-                  icon: Icons.timer_outlined,
-                  color: AppColors.primary,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _statCard(
-                  title: 'Status',
-                  value: attendanceController.attendanceStatus,
-                  suffix: '',
-                  icon: Icons.pending_actions_rounded,
-                  color: AppColors.warning,
-                ),
-              ),
-            ],
-          ),
-        ],
-      );
-    });
-  }
-
-  Widget _statCard({
-    required String title,
-    required String value,
-    required String suffix,
-    required IconData icon,
-    required Color color,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 31,
-                height: 31,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.10),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(icon, size: 16, color: color),
-              ),
-              const Spacer(),
-              const Icon(
-                Icons.more_horiz_rounded,
-                size: 18,
-                color: AppColors.border,
-              ),
-            ],
-          ),
-          const SizedBox(height: 13),
-          Text(
-            title,
-            style: GoogleFonts.inter(
-              fontSize: 10,
-              color: AppColors.textSecondary,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Flexible(
-                child: Text(
-                  value,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.inter(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              ),
-              if (suffix.isNotEmpty) ...[
-                const SizedBox(width: 4),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 2),
-                  child: Text(
-                    suffix,
-                    style: GoogleFonts.inter(
-                      fontSize: 9,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ),
-              ],
+                );
+              }),
             ],
           ),
         ],
@@ -890,53 +514,133 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildOverviewSection() {
+  Widget _buildAttendanceOverview() {
     return GestureDetector(
       onTap: _openAttendanceOverview,
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
           color: AppColors.white,
           borderRadius: BorderRadius.circular(24),
           border: Border.all(color: AppColors.border),
         ),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(
-              width: 74,
-              height: 74,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  SizedBox(
-                    width: 74,
-                    height: 74,
-                    child: CircularProgressIndicator(
-                      value: 0.72,
-                      strokeWidth: 7,
-                      backgroundColor: AppColors.border,
-                      valueColor: const AlwaysStoppedAnimation<Color>(
-                        AppColors.primary,
-                      ),
-                    ),
-                  ),
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '72%',
+                        'Attendance Overview',
                         style: GoogleFonts.inter(
-                          fontSize: 15,
+                          fontSize: 17,
                           fontWeight: FontWeight.w700,
                           color: AppColors.textPrimary,
                         ),
                       ),
+                      const SizedBox(height: 4),
                       Text(
-                        'month',
+                        "Today's attendance details",
                         style: GoogleFonts.inter(
-                          fontSize: 7,
+                          fontSize: 11,
                           color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  size: 28,
+                  color: AppColors.primary,
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: AppColors.border.withValues(alpha: 0.6),
+                ),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Obx(
+                          () => _overviewItem(
+                            icon: Icons.login_rounded,
+                            title: 'Check In',
+                            value: attendanceController.formatTime(
+                              attendanceController.checkInTime.value,
+                            ),
+                            subtitle:
+                                attendanceController.checkInTime.value == null
+                                    ? 'Not checked in'
+                                    : 'Office entry',
+                            color: AppColors.success,
+                          ),
+                        ),
+                      ),
+                      _verticalDivider(),
+                      Expanded(
+                        child: Obx(
+                          () => _overviewItem(
+                            icon: Icons.logout_rounded,
+                            title: 'Check Out',
+                            value: attendanceController.formatTime(
+                              attendanceController.checkOutTime.value,
+                            ),
+                            subtitle:
+                                attendanceController.checkOutTime.value == null
+                                    ? 'Not yet checked out'
+                                    : 'Office exit',
+                            color: Colors.redAccent,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  Divider(
+                    height: 1,
+                    thickness: 1,
+                    color: AppColors.border.withValues(alpha: 0.7),
+                  ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Obx(
+                          () => _overviewItem(
+                            icon: Icons.access_time_rounded,
+                            title: 'Work Time',
+                            value:
+                                attendanceController.formattedWorkingDuration,
+                            subtitle: 'Today',
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ),
+                      _verticalDivider(),
+                      Expanded(
+                        child: Obx(
+                          () => _overviewItem(
+                            icon: Icons.coffee_rounded,
+                            title: 'Break Time',
+                            value: attendanceController.formatElapsedDuration(
+                              attendanceController.totalBreakDuration,
+                            ),
+                            subtitle:
+                                attendanceController.activeBreak != null
+                                    ? 'Break running'
+                                    : 'Today',
+                            color: AppColors.warning,
+                          ),
                         ),
                       ),
                     ],
@@ -944,51 +648,25 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
             ),
-            const SizedBox(width: 17),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Attendance Overview',
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
-                    ),
+            const SizedBox(height: 13),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'View Attendance Details',
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primary,
                   ),
-                  const SizedBox(height: 5),
-                  Text(
-                    'View your attendance records and monthly progress.',
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.inter(
-                      fontSize: 10,
-                      height: 1.45,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: 9),
-                  Row(
-                    children: [
-                      Text(
-                        'View Details',
-                        style: GoogleFonts.inter(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      const Icon(
-                        Icons.arrow_forward_rounded,
-                        size: 13,
-                        color: AppColors.primary,
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+                ),
+                const SizedBox(width: 5),
+                const Icon(
+                  Icons.arrow_forward_rounded,
+                  size: 14,
+                  color: AppColors.primary,
+                ),
+              ],
             ),
           ],
         ),
@@ -996,51 +674,81 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _sectionTitle({
+  Widget _verticalDivider() {
+    return Container(
+      width: 1,
+      height: 108,
+      color: AppColors.border.withValues(alpha: 0.65),
+    );
+  }
+
+  Widget _overviewItem({
+    required IconData icon,
     required String title,
+    required String value,
     required String subtitle,
-    String? action,
-    VoidCallback? onTap,
+    required Color color,
   }) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: GoogleFonts.inter(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                subtitle,
-                style: GoogleFonts.inter(
-                  fontSize: 10,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-            ],
-          ),
-        ),
-        if (action != null)
-          GestureDetector(
-            onTap: onTap,
-            child: Text(
-              action,
-              style: GoogleFonts.inter(
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-                color: AppColors.primary,
-              ),
+    return Padding(
+      padding: const EdgeInsets.all(13),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.10),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              icon,
+              size: 19,
+              color: color,
             ),
           ),
-      ],
+          const SizedBox(width: 9),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  subtitle,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    fontSize: 9,
+                    color: color,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
