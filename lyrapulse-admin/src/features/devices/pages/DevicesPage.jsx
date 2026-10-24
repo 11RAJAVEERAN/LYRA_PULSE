@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Alert, Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, Paper, Stack, Switch, Table, TableBody, TableCell, TableHead, TableRow, TextField, Typography } from '@mui/material'
-import apiClient from '../../../services/apiClient'
+import apiClient, { BRANCH_CONTEXT_EVENT } from '../../../services/apiClient'
 
 const unwrap = (response) => response.data?.data ?? response.data
 
@@ -31,6 +31,10 @@ export function DevicesPage() {
     finally { setLoading(false) }
   }
   useEffect(() => { reload() }, [])
+  useEffect(() => {
+    window.addEventListener(BRANCH_CONTEXT_EVENT, reload)
+    return () => window.removeEventListener(BRANCH_CONTEXT_EVENT, reload)
+  }, [])
 
   useEffect(() => {
     if (!enrollment || ['SUCCESS', 'FAILED', 'EXPIRED', 'CANCELLED'].includes(enrollment.status)) return undefined

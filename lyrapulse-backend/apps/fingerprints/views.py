@@ -74,10 +74,14 @@ class EmployeeFingerprintEnrollmentStatusView(GenericAPIView):
     serializer_class = FingerprintEnrollmentStatusSerializer
 
     def get(self, request, employee_id, enrollment_id):
+        employee = get_object_or_404(
+            scope_queryset(Employee.objects.all(), request.user, "branch"),
+            pk=employee_id,
+        )
         enrollment = get_object_or_404(
             FingerprintEnrollment.objects.select_related("device"),
             pk=enrollment_id,
-            employee_id=employee_id,
+            employee=employee,
         )
         if enrollment.status in FingerprintEnrollment.ACTIVE_STATUSES and enrollment.expires_at <= timezone.now():
             FingerprintEnrollment.objects.filter(

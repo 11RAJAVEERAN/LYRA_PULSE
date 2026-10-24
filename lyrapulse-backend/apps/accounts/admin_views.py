@@ -70,6 +70,14 @@ class AdminUserSerializer(serializers.ModelSerializer):
             branches = attrs["allowed_branches"]
         else:
             branches = list(self.instance.allowed_branches.all()) if self.instance else []
+        actor = self.context["request"].user
+        if actor.role == User.Role.SUPERADMIN and not actor.has_global_scope:
+            if organization is not None and organization.pk != actor.organization_id:
+                raise serializers.ValidationError({"organization": "You can manage users only in your organization."})
+            organization = actor.organization
+            attrs["organization"] = organization
+            if any(branch.organization_id != actor.organization_id for branch in branches):
+                raise serializers.ValidationError({"branch_ids": "Branches must belong to your organization."})
         try:
             validate_scope(role, organization, branches, require_organization=False)
         except DjangoValidationError as exc:
@@ -157,12 +165,17 @@ class AdminUserListCreateView(SuperAdminOnlyMixin, ListCreateAPIView):
     serializer_class = AdminUserSerializer
 
     def get_queryset(self):
-        return (User.objects.filter(role__in=MANAGED_ROLES).select_related("organization")
-                .prefetch_related("allowed_branches").order_by("role", "phone_number"))
+        queryset = User.objects.filter(role__in=MANAGED_ROLES).select_related("organization")
+        if not self.request.user.has_global_scope:
+            queryset = queryset.filter(organization_id=self.request.user.organization_id)
+        return queryset.prefetch_related("allowed_branches").order_by("role", "phone_number")
 
 
 class AdminUserDetailView(SuperAdminOnlyMixin, RetrieveUpdateAPIView):
     serializer_class = AdminUserSerializer
 
     def get_queryset(self):
-        return User.objects.filter(role__in=MANAGED_ROLES).select_related("organization").prefetch_related("allowed_branches")
+        queryset = User.objects.filter(role__in=MANAGED_ROLES).select_related("organization")
+        if not self.request.user.has_global_scope:
+            queryset = queryset.filter(organization_id=self.request.user.organization_id)
+        return queryset.prefetch_related("allowed_branches")

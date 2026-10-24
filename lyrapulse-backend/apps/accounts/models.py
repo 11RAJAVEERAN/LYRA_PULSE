@@ -70,12 +70,16 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     @property
     def has_global_scope(self):
-        return self.role == self.Role.SUPERADMIN
+        # The application role controls actions; Django's trusted platform-superuser
+        # flag is the separate mechanism for cross-organization maintenance.
+        return self.is_superuser
 
     def scoped_branch_ids(self):
-        """Branch ids a non-SUPERADMIN may access: allowed branches that belong to the user's active organization."""
+        """Branch ids available to this user within their active organization."""
         if self.organization_id is None or not self.organization.is_active:
             return []
+        if self.role == self.Role.SUPERADMIN:
+            return list(self.organization.branches.values_list("id", flat=True))
         return list(self.allowed_branches.filter(organization_id=self.organization_id).values_list("id", flat=True))
 
     def clean(self):

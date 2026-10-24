@@ -37,7 +37,14 @@ class EmployeeManagementListCreateView(ListCreateAPIView):
 
     def get_queryset(self):
         queryset = Employee.objects.select_related("user", "branch", "department", "designation", "employee_type", "payroll_group").order_by("employee_code")
-        return scope_queryset(queryset, self.request.user, "branch")
+        queryset = scope_queryset(queryset, self.request.user, "branch")
+        branch_id = self.request.query_params.get("branch")
+        if branch_id:
+            try:
+                queryset = queryset.filter(branch_id=int(branch_id))
+            except (TypeError, ValueError):
+                queryset = queryset.none()
+        return queryset
 
     @extend_schema(responses={200: inline_serializer(name="EmployeeListResponse", fields={
         "success": serializers.BooleanField(),

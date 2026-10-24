@@ -16,6 +16,13 @@ from .services.role_permissions import ROLE_PERMISSION_CODES, ensure_role_group
 class ScopeValidationMixin:
     """Server-side check that allowed branches belong to the selected organization (not just dropdown filtering)."""
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if "organization" in self.fields:
+            self.fields["organization"].help_text = (
+                "Organization this account can manage. Only trusted internal platform superusers have global access."
+            )
+
     def clean_phone_number(self):
         value = self.cleaned_data["phone_number"]
         if self.instance.pk and "phone_number" not in self.changed_data:
