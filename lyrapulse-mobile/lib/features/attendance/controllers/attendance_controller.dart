@@ -1,4 +1,3 @@
-
 import 'dart:async';
 import 'dart:convert';
 
@@ -80,8 +79,7 @@ class AttendanceController extends GetxController {
   final RxList<Map<String, dynamic>> attendanceHistory =
       <Map<String, dynamic>>[].obs;
 
-  final RxList<BreakSession> breakSessions =
-      <BreakSession>[].obs;
+  final RxList<BreakSession> breakSessions = <BreakSession>[].obs;
 
   final RxBool isBreakLoading = true.obs;
 
@@ -129,8 +127,7 @@ class AttendanceController extends GetxController {
     return current.durationAt(DateTime.now());
   }
 
-  String get formattedBreakDuration =>
-      formatDuration(totalBreakDuration);
+  String get formattedBreakDuration => formatDuration(totalBreakDuration);
 
   String get formattedNetWorkingDuration =>
       formatDuration(workingDuration.value);
@@ -142,8 +139,7 @@ class AttendanceController extends GetxController {
     return 'Not Checked In';
   }
 
-  bool get isCheckedIn =>
-      checkInTime.value != null && !isCompleted;
+  bool get isCheckedIn => checkInTime.value != null && !isCompleted;
 
   bool get isCompleted =>
       checkInTime.value != null && checkOutTime.value != null;
@@ -164,13 +160,11 @@ class AttendanceController extends GetxController {
     final savedCheckOut = prefs.getString(_checkOutKey);
     final now = DateTime.now();
 
-    final parsedCheckIn = savedCheckIn == null
-        ? null
-        : DateTime.tryParse(savedCheckIn);
+    final parsedCheckIn =
+        savedCheckIn == null ? null : DateTime.tryParse(savedCheckIn);
 
-    final parsedCheckOut = savedCheckOut == null
-        ? null
-        : DateTime.tryParse(savedCheckOut);
+    final parsedCheckOut =
+        savedCheckOut == null ? null : DateTime.tryParse(savedCheckOut);
 
     if (parsedCheckIn != null && _sameDate(parsedCheckIn, now)) {
       checkInTime.value = parsedCheckIn;
@@ -266,8 +260,7 @@ class AttendanceController extends GetxController {
   }
 
   Future<Position> _getCurrentPosition() async {
-    final serviceEnabled =
-        await Geolocator.isLocationServiceEnabled();
+    final serviceEnabled = await Geolocator.isLocationServiceEnabled();
 
     if (!serviceEnabled) {
       throw Exception('Please turn on your device location.');
@@ -440,8 +433,7 @@ class AttendanceController extends GetxController {
 
     final now = DateTime.now();
 
-    if (checkInTime.value != null &&
-        _sameDate(checkInTime.value!, now)) {
+    if (checkInTime.value != null && _sameDate(checkInTime.value!, now)) {
       return;
     }
 
@@ -508,12 +500,10 @@ class AttendanceController extends GetxController {
 
     final breakMinutes = breakSessions.fold<int>(
       0,
-      (total, session) =>
-          total + session.durationAt(end).inMinutes,
+      (total, session) => total + session.durationAt(end).inMinutes,
     );
 
-    final elapsedMinutes =
-        end.difference(checkIn).inMinutes;
+    final elapsedMinutes = end.difference(checkIn).inMinutes;
 
     final netMinutes =
         (elapsedMinutes - breakMinutes).clamp(0, 100000000).toInt();
@@ -531,9 +521,8 @@ class AttendanceController extends GetxController {
       'status': checkOut == null ? 'Checked In' : 'Completed',
       'workingMinutes': netMinutes,
       'breakMinutes': breakMinutes,
-      'breakSessions': breakSessions
-          .map((session) => session.toJson())
-          .toList(),
+      'breakSessions':
+          breakSessions.map((session) => session.toJson()).toList(),
     };
 
     if (index >= 0) {
@@ -543,8 +532,8 @@ class AttendanceController extends GetxController {
     }
 
     attendanceHistory.sort(
-      (a, b) => (b['date']?.toString() ?? '')
-          .compareTo(a['date']?.toString() ?? ''),
+      (a, b) =>
+          (b['date']?.toString() ?? '').compareTo(a['date']?.toString() ?? ''),
     );
 
     final prefs = await SharedPreferences.getInstance();
@@ -567,16 +556,14 @@ class AttendanceController extends GetxController {
     final elapsed = end.difference(checkIn);
     final net = elapsed - totalBreakDuration;
 
-    workingDuration.value =
-        net.isNegative ? Duration.zero : net;
+    workingDuration.value = net.isNegative ? Duration.zero : net;
   }
 
   void _startTimer() {
     _stopTimer();
 
     // Keep ticking while either work attendance or a break is active.
-    if ((checkInTime.value == null ||
-            checkOutTime.value != null) &&
+    if ((checkInTime.value == null || checkOutTime.value != null) &&
         activeBreak == null) {
       return;
     }
@@ -596,9 +583,7 @@ class AttendanceController extends GetxController {
   }
 
   bool _sameDate(DateTime a, DateTime b) =>
-      a.year == b.year &&
-      a.month == b.month &&
-      a.day == b.day;
+      a.year == b.year && a.month == b.month && a.day == b.day;
 
   String _dateKey(DateTime date) {
     final year = date.year.toString().padLeft(4, '0');
@@ -620,8 +605,7 @@ class AttendanceController extends GetxController {
 
   String formatDuration(Duration duration) {
     final hours = duration.inHours.toString().padLeft(2, '0');
-    final minutes =
-        duration.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final minutes = duration.inMinutes.remainder(60).toString().padLeft(2, '0');
 
     return '${hours}h ${minutes}m';
   }
@@ -629,10 +613,8 @@ class AttendanceController extends GetxController {
   // Includes seconds so the active timer visibly counts upward.
   String formatElapsedDuration(Duration duration) {
     final hours = duration.inHours.toString().padLeft(2, '0');
-    final minutes =
-        duration.inMinutes.remainder(60).toString().padLeft(2, '0');
-    final seconds =
-        duration.inSeconds.remainder(60).toString().padLeft(2, '0');
+    final minutes = duration.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
 
     return '$hours:$minutes:$seconds';
   }
@@ -662,4 +644,3 @@ class AttendanceController extends GetxController {
     super.onClose();
   }
 }
-

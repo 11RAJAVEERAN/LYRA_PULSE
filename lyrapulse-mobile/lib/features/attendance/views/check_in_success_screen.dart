@@ -66,7 +66,7 @@ class CheckInSuccessScreen extends StatelessWidget {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: green.withOpacity(0.10),
+                      color: green.withValues(alpha: 0.10),
                       blurRadius: 25,
                       spreadRadius: 2,
                     ),
@@ -133,7 +133,7 @@ class CheckInSuccessScreen extends StatelessWidget {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: navy.withOpacity(0.05),
+                      color: navy.withValues(alpha: 0.05),
                       blurRadius: 20,
                       offset: const Offset(0, 8),
                     ),
@@ -392,9 +392,7 @@ class CheckInSuccessScreen extends StatelessWidget {
             size: 19,
           ),
         ),
-
         const SizedBox(width: 12),
-
         Expanded(
           child: Text(
             title,
@@ -405,7 +403,6 @@ class CheckInSuccessScreen extends StatelessWidget {
             ),
           ),
         ),
-
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -417,7 +414,6 @@ class CheckInSuccessScreen extends StatelessWidget {
                 fontWeight: FontWeight.w700,
               ),
             ),
-
             if (showCheck) ...[
               const SizedBox(width: 5),
               const Icon(
@@ -468,7 +464,7 @@ class CheckInSuccessScreen extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: navy.withOpacity(0.035),
+            color: navy.withValues(alpha: 0.035),
             blurRadius: 12,
             offset: const Offset(0, 5),
           ),
@@ -489,9 +485,7 @@ class CheckInSuccessScreen extends StatelessWidget {
               size: 19,
             ),
           ),
-
           const SizedBox(height: 8),
-
           Text(
             title,
             style: GoogleFonts.inter(
@@ -501,9 +495,7 @@ class CheckInSuccessScreen extends StatelessWidget {
               letterSpacing: 1,
             ),
           ),
-
           const SizedBox(height: 3),
-
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -544,7 +536,7 @@ class CheckInSuccessScreen extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: navy.withOpacity(0.04),
+            color: navy.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),

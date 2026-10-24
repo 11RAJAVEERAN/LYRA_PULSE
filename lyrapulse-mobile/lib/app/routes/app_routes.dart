@@ -17,8 +17,7 @@ abstract final class AppRoutes {
   // ATTENDANCE FLOW
   // ===============================================================
 
-  static const String locationVerification =
-      '/location-verification';
+  static const String locationVerification = '/location-verification';
 
   // ===============================================================
   // PERMISSION FLOW
@@ -26,29 +25,23 @@ abstract final class AppRoutes {
 
   // Step 1:
   // Home → Permission Start
-  static const String permissionStart =
-      '/permission-start';
+  static const String permissionStart = '/permission-start';
 
   // Step 2:
   // Permission Start → Permission Submitted
-  static const String permissionSubmitted =
-      '/permission-submitted';
+  static const String permissionSubmitted = '/permission-submitted';
 
   // Step 3:
   // Permission Submitted → Permission Return
-  static const String permissionReturn =
-      '/permission-return';
+  static const String permissionReturn = '/permission-return';
 
   // ===============================================================
   // BOTTOM NAVIGATION
   // ===============================================================
 
-  static const String attendance =
-      '/attendance';
+  static const String attendance = '/attendance';
 
-  static const String leave =
-      '/leave';
+  static const String leave = '/leave';
 
-  static const String profile =
-      '/profile';
+  static const String profile = '/profile';
 }

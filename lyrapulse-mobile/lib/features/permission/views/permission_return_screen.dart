@@ -206,8 +206,7 @@ class PermissionReturnScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.hexFF00CFFF
-                                .withOpacity(0.22),
+                            color: AppColors.hexFF00CFFF.withValues(alpha: 0.22),
                             blurRadius: 24,
                             offset: const Offset(0, 9),
                           ),
@@ -362,7 +361,7 @@ class PermissionReturnScreen extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.hexFF20DFFF.withOpacity(0.18),
+            color: AppColors.hexFF20DFFF.withValues(alpha: 0.18),
             blurRadius: 35,
             spreadRadius: 4,
           ),
@@ -374,7 +373,7 @@ class PermissionReturnScreen extends StatelessWidget {
           shape: BoxShape.circle,
           color: AppColors.hexFF0B3049,
           border: Border.all(
-            color: AppColors.hexFF20DFFF.withOpacity(0.35),
+            color: AppColors.hexFF20DFFF.withValues(alpha: 0.35),
           ),
         ),
         child: const Icon(
@@ -457,9 +456,7 @@ class PermissionReturnScreen extends StatelessWidget {
               ),
             ],
           ),
-
           const SizedBox(height: 15),
-
           Text(
             'Before you continue your attendance, LYRA Pulse needs to verify that you have returned to the office.',
             style: GoogleFonts.inter(
@@ -512,9 +509,7 @@ class PermissionReturnScreen extends StatelessWidget {
               ),
             ),
           ),
-
           const SizedBox(width: 11),
-
           Container(
             width: 38,
             height: 38,
@@ -528,9 +523,7 @@ class PermissionReturnScreen extends StatelessWidget {
               size: 19,
             ),
           ),
-
           const SizedBox(width: 11),
-
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -643,8 +636,8 @@ class PermissionReturnScreen extends StatelessWidget {
         shape: BoxShape.circle,
         gradient: RadialGradient(
           colors: [
-            color.withOpacity(0.12),
-            color.withOpacity(0.03),
+            color.withValues(alpha: 0.12),
+            color.withValues(alpha: 0.03),
             AppColors.transparent,
           ],
         ),

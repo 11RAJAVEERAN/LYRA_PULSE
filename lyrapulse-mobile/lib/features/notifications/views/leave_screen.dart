@@ -273,8 +273,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
             elevation: const WidgetStatePropertyAll<double>(0),
             shadowColor:
                 const WidgetStatePropertyAll<Color>(AppColors.transparent),
-            padding:
-                const WidgetStatePropertyAll<EdgeInsetsGeometry>(
+            padding: const WidgetStatePropertyAll<EdgeInsetsGeometry>(
               EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             ),
             shape: WidgetStatePropertyAll<OutlinedBorder>(
@@ -329,8 +328,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                     tabs[index],
                     style: textStyle(
                       size: 12,
-                      weight:
-                          isSelected ? FontWeight.w700 : FontWeight.w500,
+                      weight: isSelected ? FontWeight.w700 : FontWeight.w500,
                       color: isSelected ? navy : mutedText,
                     ),
                   ),
@@ -624,7 +622,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                       _fieldLabel('Leave Type'),
                       const SizedBox(height: 8),
                       DropdownButtonFormField<String>(
-                        value: selectedLeaveType,
+                        initialValue: selectedLeaveType,
                         decoration: _inputDecoration(
                           hint: 'Select leave type',
                           icon: Icons.event_note_rounded,
@@ -779,14 +777,11 @@ class _LeaveScreenState extends State<LeaveScreen> {
                                 const WidgetStatePropertyAll<Color>(
                               AppColors.white,
                             ),
-                            overlayColor:
-                                const WidgetStatePropertyAll<Color>(
+                            overlayColor: const WidgetStatePropertyAll<Color>(
                               AppColors.hexFF243F78,
                             ),
-                            elevation:
-                                const WidgetStatePropertyAll<double>(0),
-                            shadowColor:
-                                const WidgetStatePropertyAll<Color>(
+                            elevation: const WidgetStatePropertyAll<double>(0),
+                            shadowColor: const WidgetStatePropertyAll<Color>(
                               AppColors.transparent,
                             ),
                             shape: WidgetStatePropertyAll<OutlinedBorder>(

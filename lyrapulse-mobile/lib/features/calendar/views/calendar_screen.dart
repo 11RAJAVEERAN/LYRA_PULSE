@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -12,10 +11,9 @@ import '../widgets/calendar_view_toggle.dart';
 class CalendarScreen extends StatelessWidget {
   CalendarScreen({super.key});
 
-  final CalendarController controller =
-      Get.isRegistered<CalendarController>()
-          ? Get.find<CalendarController>()
-          : Get.put(CalendarController());
+  final CalendarController controller = Get.isRegistered<CalendarController>()
+      ? Get.find<CalendarController>()
+      : Get.put(CalendarController());
 
   static const Color backgroundColor = Color(0xFFF7F9FC);
   static const Color primaryColor = Color(0xFF1677B8);
@@ -39,16 +37,12 @@ class CalendarScreen extends StatelessWidget {
                     children: [
                       CalendarMonthHeader(controller: controller),
                       const SizedBox(height: 20),
-
                       if (controller.isCalendarView.value)
                         _buildCalendarContent()
                       else
                         _buildListContent(),
-
                       const SizedBox(height: 22),
-
                       _buildRegularizationInfo(),
-
                       const SizedBox(height: 18),
                     ],
                   ),

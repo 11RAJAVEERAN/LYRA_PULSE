@@ -1,4 +1,3 @@
-﻿
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -8,13 +7,11 @@ class BreakTrackingPanel extends StatefulWidget {
   const BreakTrackingPanel({super.key});
 
   @override
-  State<BreakTrackingPanel> createState() =>
-      _BreakTrackingPanelState();
+  State<BreakTrackingPanel> createState() => _BreakTrackingPanelState();
 }
 
 class _BreakTrackingPanelState extends State<BreakTrackingPanel> {
-  final AttendanceController controller =
-      Get.find<AttendanceController>();
+  final AttendanceController controller = Get.find<AttendanceController>();
 
   String selectedBreakType = 'Lunch';
   bool isExpanded = false;
@@ -32,8 +29,7 @@ class _BreakTrackingPanelState extends State<BreakTrackingPanel> {
     setState(() => isProcessing = true);
 
     try {
-      final message =
-          await controller.startBreak(selectedBreakType);
+      final message = await controller.startBreak(selectedBreakType);
 
       if (!mounted) return;
 
@@ -41,9 +37,8 @@ class _BreakTrackingPanelState extends State<BreakTrackingPanel> {
         message == null ? 'Break Check Out' : 'Break Error',
         message ?? '$selectedBreakType break timer started.',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: message == null
-            ? Colors.green.shade100
-            : Colors.red.shade100,
+        backgroundColor:
+            message == null ? Colors.green.shade100 : Colors.red.shade100,
         colorText: Colors.black87,
         duration: const Duration(seconds: 3),
       );
@@ -76,12 +71,10 @@ class _BreakTrackingPanelState extends State<BreakTrackingPanel> {
 
       Get.snackbar(
         message == null ? 'Break Check In' : 'Break Error',
-        message ??
-            'Break ended. Return time and location saved.',
+        message ?? 'Break ended. Return time and location saved.',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: message == null
-            ? Colors.green.shade100
-            : Colors.red.shade100,
+        backgroundColor:
+            message == null ? Colors.green.shade100 : Colors.red.shade100,
         colorText: Colors.black87,
         duration: const Duration(seconds: 4),
       );
@@ -244,7 +237,7 @@ class _BreakTrackingPanelState extends State<BreakTrackingPanel> {
                         const SizedBox(height: 12),
                       ] else ...[
                         DropdownButtonFormField<String>(
-                          value: selectedBreakType,
+                          initialValue: selectedBreakType,
                           decoration: const InputDecoration(
                             labelText: 'Break Type',
                             border: OutlineInputBorder(),
@@ -271,8 +264,7 @@ class _BreakTrackingPanelState extends State<BreakTrackingPanel> {
                         children: [
                           Expanded(
                             child: OutlinedButton.icon(
-                              onPressed: isProcessing ||
-                                      activeBreak == null
+                              onPressed: isProcessing || activeBreak == null
                                   ? null
                                   : _handleBreakCheckIn,
                               icon: const Icon(Icons.login_rounded),
@@ -282,8 +274,7 @@ class _BreakTrackingPanelState extends State<BreakTrackingPanel> {
                           const SizedBox(width: 10),
                           Expanded(
                             child: ElevatedButton.icon(
-                              onPressed: isProcessing ||
-                                      activeBreak != null
+                              onPressed: isProcessing || activeBreak != null
                                   ? null
                                   : _handleBreakCheckOut,
                               icon: isProcessing
@@ -348,9 +339,7 @@ class _BreakTrackingPanelState extends State<BreakTrackingPanel> {
                                       ),
                                     ),
                                     Text(
-                                      isActive
-                                          ? 'In Progress'
-                                          : 'Completed',
+                                      isActive ? 'In Progress' : 'Completed',
                                       style: TextStyle(
                                         fontSize: 12,
                                         color: isActive

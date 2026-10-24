@@ -1,4 +1,3 @@
-
 import 'package:get/get.dart';
 
 class CalendarController extends GetxController {
@@ -97,9 +96,18 @@ class CalendarController extends GetxController {
 
   String get monthTitle {
     const months = [
-      'January', 'February', 'March', 'April',
-      'May', 'June', 'July', 'August',
-      'September', 'October', 'November', 'December',
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
     ];
 
     final month = currentMonth.value;

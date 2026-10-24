@@ -233,8 +233,8 @@ class _SplashScreenState extends State<SplashScreen>
                 decoration: BoxDecoration(
                   gradient: RadialGradient(
                     colors: [
-                      AppColors.hexFF156FFF.withOpacity(0.13),
-                      AppColors.hexFF087DFF.withOpacity(0.05),
+                      AppColors.hexFF156FFF.withValues(alpha: 0.13),
+                      AppColors.hexFF087DFF.withValues(alpha: 0.05),
                       AppColors.transparent,
                     ],
                   ),
@@ -344,7 +344,7 @@ class _SplashScreenState extends State<SplashScreen>
                                       boxShadow: [
                                         BoxShadow(
                                           color: AppColors.hexFF008CFF
-                                              .withOpacity(opacity),
+                                              .withValues(alpha: opacity),
                                           blurRadius: 45,
                                           spreadRadius: 12,
                                         ),
@@ -409,7 +409,7 @@ class _SplashScreenState extends State<SplashScreen>
                           height: 1.05,
                           shadows: [
                             Shadow(
-                              color: AppColors.hexFF2D79FF.withOpacity(0.30),
+                              color: AppColors.hexFF2D79FF.withValues(alpha: 0.30),
                               blurRadius: 18,
                             ),
                           ],
@@ -485,8 +485,8 @@ class _SplashScreenState extends State<SplashScreen>
                                       boxShadow: [
                                         BoxShadow(
                                           color:
-                                              AppColors.hexFF159CFF.withOpacity(
-                                            opacity * 0.55,
+                                              AppColors.hexFF159CFF.withValues(
+                                            alpha: opacity * 0.55,
                                           ),
                                           blurRadius: 10,
                                         ),
@@ -527,8 +527,8 @@ class _SplashScreenState extends State<SplashScreen>
           shape: BoxShape.circle,
           gradient: RadialGradient(
             colors: [
-              color.withOpacity(opacity),
-              color.withOpacity(opacity * 0.35),
+              color.withValues(alpha: opacity),
+              color.withValues(alpha: opacity * 0.35),
               AppColors.transparent,
             ],
           ),
@@ -667,7 +667,7 @@ class _LyraLogoPainter extends CustomPainter {
 
     final Paint glowPaint = Paint()
       ..isAntiAlias = true
-      ..color = AppColors.hexFF008CFF.withOpacity(0.25)
+      ..color = AppColors.hexFF008CFF.withValues(alpha: 0.25)
       ..maskFilter = const MaskFilter.blur(
         BlurStyle.normal,
         13,
@@ -719,7 +719,7 @@ class _LyraLogoPainter extends CustomPainter {
 
     final Paint highlightPaint = Paint()
       ..isAntiAlias = true
-      ..color = AppColors.white.withOpacity(0.12);
+      ..color = AppColors.white.withValues(alpha: 0.12);
 
     final Path highlightPath = Path();
 
@@ -799,8 +799,8 @@ class _LogoArcPainter extends CustomPainter {
         endAngle: progress * math.pi * 2 + math.pi * 1.5,
         colors: [
           AppColors.transparent,
-          AppColors.hexFF197BFF.withOpacity(0.15),
-          AppColors.hexFF00D9FF.withOpacity(0.80),
+          AppColors.hexFF197BFF.withValues(alpha: 0.15),
+          AppColors.hexFF00D9FF.withValues(alpha: 0.80),
           AppColors.transparent,
         ],
         stops: const [
@@ -909,7 +909,7 @@ class _ParticlePainter extends CustomPainter {
               0.45;
 
       final Paint paint = Paint()
-        ..color = particle.color.withOpacity(opacity)
+        ..color = particle.color.withValues(alpha: opacity)
         ..maskFilter = const MaskFilter.blur(
           BlurStyle.normal,
           3,
@@ -1110,7 +1110,7 @@ class _PremiumWavePainter extends CustomPainter {
       final Paint paint = Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 0.45
-        ..color = AppColors.white.withOpacity(0.055);
+        ..color = AppColors.white.withValues(alpha: 0.055);
 
       canvas.drawPath(
         path,
@@ -1230,7 +1230,7 @@ class _PremiumWavePainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth
       ..strokeCap = StrokeCap.round
-      ..color = color.withOpacity(opacity);
+      ..color = color.withValues(alpha: opacity);
 
     canvas.drawPath(
       path,

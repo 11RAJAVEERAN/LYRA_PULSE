@@ -85,95 +85,69 @@ class _ProfileScreenState extends State<ProfileScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _profileHeader(),
-
               const SizedBox(height: 22),
-
               _sectionTitle('Personal Information'),
-
               const SizedBox(height: 12),
-
               _infoCard(
                 icon: Icons.badge_outlined,
                 title: 'Employee ID',
                 value: employeeId,
               ),
-
               const SizedBox(height: 10),
-
               _infoCard(
                 icon: Icons.phone_outlined,
                 title: 'Phone Number',
                 value: phoneNumber,
               ),
-
               const SizedBox(height: 10),
-
               _infoCard(
                 icon: Icons.email_outlined,
                 title: 'Email Address',
                 value: emailAddress,
               ),
-
               const SizedBox(height: 10),
-
               _infoCard(
                 icon: Icons.location_city_outlined,
                 title: 'Office Location',
                 value: officeLocation,
               ),
-
               const SizedBox(height: 24),
-
               _sectionTitle('Work Information'),
-
               const SizedBox(height: 12),
-
               _infoCard(
                 icon: Icons.work_outline_rounded,
                 title: 'Designation',
                 value: designation,
               ),
-
               const SizedBox(height: 10),
-
               _infoCard(
                 icon: Icons.business_outlined,
                 title: 'Department',
                 value: department,
               ),
-
               const SizedBox(height: 10),
-
               _infoCard(
                 icon: Icons.calendar_today_outlined,
                 title: 'Joining Date',
                 value: joiningDate,
               ),
-
               const SizedBox(height: 24),
-
               _sectionTitle('Account'),
-
               const SizedBox(height: 12),
-
               _actionCard(
                 icon: Icons.lock_outline_rounded,
                 title: 'Change Password',
                 subtitle: 'Update your account password',
                 onTap: _showChangePasswordDialog,
               ),
-
               const SizedBox(height: 10),
-
               _actionCard(
                 icon: Icons.notifications_none_rounded,
                 title: 'Notifications',
                 subtitle: 'Manage your notification preferences',
                 onTap: _showNotificationsDialog,
               ),
-
               const SizedBox(height: 10),
-
               _actionCard(
                 icon: Icons.logout_rounded,
                 title: 'Logout',
@@ -182,9 +156,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 titleColor: AppColors.redAccent,
                 onTap: _showLogoutDialog,
               ),
-
               const SizedBox(height: 25),
-
               const Center(
                 child: Text(
                   'LYRA PULSE',
@@ -196,9 +168,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 5),
-
               const Center(
                 child: Text(
                   'Powered by LYRATECH',
@@ -236,7 +206,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: navy.withOpacity(0.18),
+            color: navy.withValues(alpha: 0.18),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -248,10 +218,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             width: 72,
             height: 72,
             decoration: BoxDecoration(
-              color: AppColors.white.withOpacity(0.18),
+              color: AppColors.white.withValues(alpha: 0.18),
               shape: BoxShape.circle,
               border: Border.all(
-                color: AppColors.white.withOpacity(0.45),
+                color: AppColors.white.withValues(alpha: 0.45),
                 width: 2,
               ),
             ),
@@ -270,9 +240,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
             ),
           ),
-
           const SizedBox(width: 18),
-
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -285,9 +253,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-
                 const SizedBox(height: 5),
-
                 Text(
                   designation,
                   style: const TextStyle(
@@ -296,9 +262,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-
                 const SizedBox(height: 4),
-
                 Text(
                   employeeId,
                   style: const TextStyle(
@@ -310,14 +274,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ],
             ),
           ),
-
           Container(
             padding: const EdgeInsets.symmetric(
               horizontal: 10,
               vertical: 6,
             ),
             decoration: BoxDecoration(
-              color: AppColors.white.withOpacity(0.15),
+              color: AppColors.white.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(20),
             ),
             child: const Row(
@@ -397,9 +360,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               size: 22,
             ),
           ),
-
           const SizedBox(width: 14),
-
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -412,9 +373,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-
                 const SizedBox(height: 4),
-
                 Text(
                   value,
                   style: const TextStyle(
@@ -462,7 +421,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: iconColor.withOpacity(0.10),
+                color: iconColor.withValues(alpha: 0.10),
                 borderRadius: BorderRadius.circular(13),
               ),
               child: Icon(
@@ -471,9 +430,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 size: 22,
               ),
             ),
-
             const SizedBox(width: 14),
-
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -486,9 +443,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-
                   const SizedBox(height: 3),
-
                   Text(
                     subtitle,
                     style: const TextStyle(
@@ -500,7 +455,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ],
               ),
             ),
-
             const Icon(
               Icons.chevron_right_rounded,
               color: muted,
@@ -517,26 +471,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // ============================================================
 
   void _showEditProfileDialog() {
-    final employeeIdController =
-        TextEditingController(text: employeeId);
+    final employeeIdController = TextEditingController(text: employeeId);
 
-    final nameController =
-        TextEditingController(text: employeeName);
+    final nameController = TextEditingController(text: employeeName);
 
-    final phoneController =
-        TextEditingController(text: phoneNumber);
+    final phoneController = TextEditingController(text: phoneNumber);
 
-    final emailController =
-        TextEditingController(text: emailAddress);
+    final emailController = TextEditingController(text: emailAddress);
 
-    final locationController =
-        TextEditingController(text: officeLocation);
+    final locationController = TextEditingController(text: officeLocation);
 
-    final designationController =
-        TextEditingController(text: designation);
+    final designationController = TextEditingController(text: designation);
 
-    final departmentController =
-        TextEditingController(text: department);
+    final departmentController = TextEditingController(text: department);
 
     File? selectedImage = profileImage;
 
@@ -568,17 +515,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         height: 44,
                         decoration: BoxDecoration(
                           color: AppColors.hexFFF0F4FF,
-                          borderRadius:
-                              BorderRadius.circular(13),
+                          borderRadius: BorderRadius.circular(13),
                         ),
                         child: const Icon(
                           Icons.edit_outlined,
                           color: blue,
                         ),
                       ),
-
                       const SizedBox(width: 12),
-
                       const Expanded(
                         child: Text(
                           'Edit Profile',
@@ -589,7 +533,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                         ),
                       ),
-
                       IconButton(
                         onPressed: Get.back,
                         icon: const Icon(
@@ -616,11 +559,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               height: 92,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color:
-                                    AppColors.hexFFF0F4FF,
+                                color: AppColors.hexFFF0F4FF,
                                 border: Border.all(
-                                  color:
-                                      AppColors.hexFFE0E7F5,
+                                  color: AppColors.hexFFE0E7F5,
                                   width: 2,
                                 ),
                               ),
@@ -639,7 +580,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       ),
                               ),
                             ),
-
                             Positioned(
                               right: 0,
                               bottom: 0,
@@ -647,15 +587,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 onTap: () async {
                                   final XFile? pickedFile =
                                       await _imagePicker.pickImage(
-                                    source:
-                                        ImageSource.gallery,
+                                    source: ImageSource.gallery,
                                     imageQuality: 80,
                                   );
 
                                   if (pickedFile != null) {
                                     setDialogState(() {
-                                      selectedImage =
-                                          File(pickedFile.path);
+                                      selectedImage = File(pickedFile.path);
                                     });
                                   }
                                 },
@@ -680,9 +618,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                           ],
                         ),
-
                         const SizedBox(height: 8),
-
                         TextButton(
                           onPressed: () async {
                             final XFile? pickedFile =
@@ -693,8 +629,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                             if (pickedFile != null) {
                               setDialogState(() {
-                                selectedImage =
-                                    File(pickedFile.path);
+                                selectedImage = File(pickedFile.path);
                               });
                             }
                           },
@@ -758,8 +693,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     controller: emailController,
                     label: 'Email Address',
                     icon: Icons.email_outlined,
-                    keyboardType:
-                        TextInputType.emailAddress,
+                    keyboardType: TextInputType.emailAddress,
                   ),
 
                   const SizedBox(height: 14),
@@ -813,36 +747,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         // VALIDATION
                         // ------------------------------------------------
 
-                        if (employeeIdController.text
-                                .trim()
-                                .isEmpty ||
-                            nameController.text
-                                .trim()
-                                .isEmpty ||
-                            phoneController.text
-                                .trim()
-                                .isEmpty ||
-                            emailController.text
-                                .trim()
-                                .isEmpty ||
-                            locationController.text
-                                .trim()
-                                .isEmpty ||
-                            designationController.text
-                                .trim()
-                                .isEmpty ||
-                            departmentController.text
-                                .trim()
-                                .isEmpty) {
+                        if (employeeIdController.text.trim().isEmpty ||
+                            nameController.text.trim().isEmpty ||
+                            phoneController.text.trim().isEmpty ||
+                            emailController.text.trim().isEmpty ||
+                            locationController.text.trim().isEmpty ||
+                            designationController.text.trim().isEmpty ||
+                            departmentController.text.trim().isEmpty) {
                           Get.snackbar(
                             'Required Fields',
                             'Please fill all fields',
-                            snackPosition:
-                                SnackPosition.BOTTOM,
+                            snackPosition: SnackPosition.BOTTOM,
                             backgroundColor: navy,
                             colorText: AppColors.white,
-                            margin:
-                                const EdgeInsets.all(16),
+                            margin: const EdgeInsets.all(16),
                             borderRadius: 12,
                           );
                           return;
@@ -855,30 +773,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         setState(() {
                           profileImage = selectedImage;
 
-                          employeeId =
-                              employeeIdController.text
-                                  .trim();
+                          employeeId = employeeIdController.text.trim();
 
-                          employeeName =
-                              nameController.text.trim();
+                          employeeName = nameController.text.trim();
 
-                          phoneNumber =
-                              phoneController.text.trim();
+                          phoneNumber = phoneController.text.trim();
 
-                          emailAddress =
-                              emailController.text.trim();
+                          emailAddress = emailController.text.trim();
 
-                          officeLocation =
-                              locationController.text
-                                  .trim();
+                          officeLocation = locationController.text.trim();
 
-                          designation =
-                              designationController.text
-                                  .trim();
+                          designation = designationController.text.trim();
 
-                          department =
-                              departmentController.text
-                                  .trim();
+                          department = departmentController.text.trim();
                         });
 
                         // ------------------------------------------------
@@ -894,15 +801,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         Get.snackbar(
                           'Profile Updated',
                           'Your profile has been updated successfully.',
-                          snackPosition:
-                              SnackPosition.BOTTOM,
+                          snackPosition: SnackPosition.BOTTOM,
                           backgroundColor: green,
                           colorText: AppColors.white,
-                          margin:
-                              const EdgeInsets.all(16),
+                          margin: const EdgeInsets.all(16),
                           borderRadius: 12,
-                          duration:
-                              const Duration(seconds: 2),
+                          duration: const Duration(seconds: 2),
                         );
 
                         // ------------------------------------------------
@@ -923,8 +827,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         foregroundColor: AppColors.white,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(14),
                         ),
                       ),
                       child: const Text(
@@ -1008,20 +911,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // ============================================================
 
   void _showChangePasswordDialog() {
-    final currentPasswordController =
-        TextEditingController();
+    final currentPasswordController = TextEditingController();
 
-    final newPasswordController =
-        TextEditingController();
+    final newPasswordController = TextEditingController();
 
-    final confirmPasswordController =
-        TextEditingController();
+    final confirmPasswordController = TextEditingController();
 
     Get.dialog(
       Dialog(
         backgroundColor: AppColors.white,
-        insetPadding:
-            const EdgeInsets.symmetric(horizontal: 20),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 20),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),
         ),
@@ -1038,9 +937,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   fontWeight: FontWeight.w700,
                 ),
               ),
-
               const SizedBox(height: 20),
-
               TextField(
                 controller: currentPasswordController,
                 obscureText: true,
@@ -1051,9 +948,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 12),
-
               TextField(
                 controller: newPasswordController,
                 obscureText: true,
@@ -1064,9 +959,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 12),
-
               TextField(
                 controller: confirmPasswordController,
                 obscureText: true,
@@ -1077,9 +970,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 20),
-
               SizedBox(
                 width: double.infinity,
                 height: 50,
@@ -1090,13 +981,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       Get.snackbar(
                         'Password Error',
                         'New password and confirm password do not match.',
-                        snackPosition:
-                            SnackPosition.BOTTOM,
-                        backgroundColor:
-                            AppColors.redAccent,
+                        snackPosition: SnackPosition.BOTTOM,
+                        backgroundColor: AppColors.redAccent,
                         colorText: AppColors.white,
-                        margin:
-                            const EdgeInsets.all(16),
+                        margin: const EdgeInsets.all(16),
                       );
                       return;
                     }
@@ -1106,20 +994,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     Get.snackbar(
                       'Success',
                       'Password updated successfully.',
-                      snackPosition:
-                          SnackPosition.BOTTOM,
+                      snackPosition: SnackPosition.BOTTOM,
                       backgroundColor: green,
                       colorText: AppColors.white,
-                      margin:
-                          const EdgeInsets.all(16),
+                      margin: const EdgeInsets.all(16),
                     );
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: navy,
                     foregroundColor: AppColors.white,
                     shape: RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                   child: const Text(
@@ -1173,7 +1058,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       notificationsEnabled = value;
                     });
                   },
-                  activeColor: blue,
+                  activeThumbColor: blue,
                 ),
               ],
             ),

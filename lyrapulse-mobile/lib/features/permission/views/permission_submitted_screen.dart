@@ -23,7 +23,6 @@ class PermissionSubmittedScreen extends StatelessWidget {
                 AppColors.hexFF087BFF,
               ),
             ),
-
             Positioned(
               bottom: -200,
               left: -160,
@@ -32,7 +31,6 @@ class PermissionSubmittedScreen extends StatelessWidget {
                 AppColors.hexFF00D9FF,
               ),
             ),
-
             SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(
                 22,
@@ -46,13 +44,9 @@ class PermissionSubmittedScreen extends StatelessWidget {
                     alignment: Alignment.centerLeft,
                     child: _backButton(),
                   ),
-
                   const SizedBox(height: 70),
-
                   _successIcon(),
-
                   const SizedBox(height: 30),
-
                   Text(
                     'REQUEST SUBMITTED',
                     textAlign: TextAlign.center,
@@ -63,9 +57,7 @@ class PermissionSubmittedScreen extends StatelessWidget {
                       letterSpacing: 2,
                     ),
                   ),
-
                   const SizedBox(height: 10),
-
                   Text(
                     'PERMISSION PENDING',
                     style: GoogleFonts.inter(
@@ -75,9 +67,7 @@ class PermissionSubmittedScreen extends StatelessWidget {
                       letterSpacing: 2,
                     ),
                   ),
-
                   const SizedBox(height: 16),
-
                   Text(
                     'Your permission request has been submitted successfully. Please wait for approval.',
                     textAlign: TextAlign.center,
@@ -87,13 +77,9 @@ class PermissionSubmittedScreen extends StatelessWidget {
                       height: 1.6,
                     ),
                   ),
-
                   const SizedBox(height: 35),
-
                   _infoCard(),
-
                   const SizedBox(height: 28),
-
                   SizedBox(
                     width: double.infinity,
                     height: 55,
@@ -118,9 +104,7 @@ class PermissionSubmittedScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 15),
-
                   Text(
                     'You will be notified when your request is approved.',
                     textAlign: TextAlign.center,
@@ -129,9 +113,7 @@ class PermissionSubmittedScreen extends StatelessWidget {
                       fontSize: 9,
                     ),
                   ),
-
                   const SizedBox(height: 35),
-
                   Text(
                     'LYRA PULSE',
                     style: GoogleFonts.inter(
@@ -163,7 +145,7 @@ class PermissionSubmittedScreen extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.hexFF20DFFF.withOpacity(0.18),
+            color: AppColors.hexFF20DFFF.withValues(alpha: 0.18),
             blurRadius: 35,
             spreadRadius: 4,
           ),
@@ -287,8 +269,8 @@ class PermissionSubmittedScreen extends StatelessWidget {
         shape: BoxShape.circle,
         gradient: RadialGradient(
           colors: [
-            color.withOpacity(0.12),
-            color.withOpacity(0.03),
+            color.withValues(alpha: 0.12),
+            color.withValues(alpha: 0.03),
             AppColors.transparent,
           ],
         ),

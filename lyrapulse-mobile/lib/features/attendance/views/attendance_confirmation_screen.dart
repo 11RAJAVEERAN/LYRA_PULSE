@@ -1,4 +1,3 @@
-
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -131,8 +130,7 @@ class _AttendanceConfirmationScreenState
 
         Get.off(() => const CheckOutSuccessScreen());
       } else {
-        if (controller.checkInTime.value != null &&
-            controller.isCheckedIn) {
+        if (controller.checkInTime.value != null && controller.isCheckedIn) {
           throw Exception('You are already checked in.');
         }
 
@@ -173,9 +171,7 @@ class _AttendanceConfirmationScreenState
           );
         }
 
-        if (snapshot.hasError ||
-            !snapshot.hasData ||
-            snapshot.data!.isEmpty) {
+        if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
           return const Center(
             child: Text('Unable to display photo. Please retake.'),
           );
@@ -265,9 +261,7 @@ class _AttendanceConfirmationScreenState
                 width: double.infinity,
                 height: 54,
                 child: OutlinedButton.icon(
-                  onPressed: _isCapturing || _isSubmitting
-                      ? null
-                      : _takeSelfie,
+                  onPressed: _isCapturing || _isSubmitting ? null : _takeSelfie,
                   icon: const Icon(Icons.refresh),
                   label: const Text('Retake Photo'),
                   style: OutlinedButton.styleFrom(
@@ -284,9 +278,8 @@ class _AttendanceConfirmationScreenState
                 width: double.infinity,
                 height: 54,
                 child: ElevatedButton.icon(
-                  onPressed: _isCapturing || _isSubmitting
-                      ? null
-                      : _confirmPhoto,
+                  onPressed:
+                      _isCapturing || _isSubmitting ? null : _confirmPhoto,
                   icon: _isSubmitting
                       ? const SizedBox(
                           width: 20,

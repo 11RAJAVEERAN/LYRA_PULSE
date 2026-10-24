@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -19,22 +18,22 @@ class WelcomeHeader extends StatelessWidget {
     return Row(
       children: [
         // Profile icon - opens side drawer
-       // Drawer menu icon
-IconButton(
-  onPressed: onProfileTap,
-  style: IconButton.styleFrom(
-    backgroundColor: AppColors.accent,
-    foregroundColor: AppColors.white,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(14),
-    ),
-    fixedSize: const Size(50, 50),
-  ),
-  icon: const Icon(
-    Icons.menu_rounded,
-    size: 28,
-  ),
-),
+        // Drawer menu icon
+        IconButton(
+          onPressed: onProfileTap,
+          style: IconButton.styleFrom(
+            backgroundColor: AppColors.accent,
+            foregroundColor: AppColors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+            fixedSize: const Size(50, 50),
+          ),
+          icon: const Icon(
+            Icons.menu_rounded,
+            size: 28,
+          ),
+        ),
 
         const SizedBox(width: 12),
 

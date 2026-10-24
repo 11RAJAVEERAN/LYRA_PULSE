@@ -66,33 +66,19 @@ class _LeaveScreenState extends State<LeaveScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildHeader(),
-
               const SizedBox(height: 28),
-
               _buildBalanceTitle(),
-
               const SizedBox(height: 10),
-
               _buildBalanceCards(),
-
               const SizedBox(height: 28),
-
               _buildApplyButton(),
-
               const SizedBox(height: 28),
-
               _buildMyLeaveTitle(),
-
               const SizedBox(height: 10),
-
               _buildTabs(),
-
               const SizedBox(height: 16),
-
               ..._buildFilteredLeaves(),
-
               const SizedBox(height: 30),
-
               _buildFooter(),
             ],
           ),
@@ -122,7 +108,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.hexFF183B56.withOpacity(0.06),
+                  color: AppColors.hexFF183B56.withValues(alpha: 0.06),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),
@@ -135,9 +121,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
             ),
           ),
         ),
-
         const SizedBox(width: 14),
-
         Expanded(
           child: Text(
             'Leave',
@@ -148,7 +132,6 @@ class _LeaveScreenState extends State<LeaveScreen> {
             ),
           ),
         ),
-
         Container(
           width: 44,
           height: 44,
@@ -200,9 +183,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
             subtitle: 'Days Left',
           ),
         ),
-
         const SizedBox(width: 10),
-
         Expanded(
           child: _balanceCard(
             icon: Icons.medical_services_outlined,
@@ -211,9 +192,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
             subtitle: 'Days Left',
           ),
         ),
-
         const SizedBox(width: 10),
-
         Expanded(
           child: _balanceCard(
             icon: Icons.event_available_rounded,
@@ -243,7 +222,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.hexFF183B56.withOpacity(0.05),
+            color: AppColors.hexFF183B56.withValues(alpha: 0.05),
             blurRadius: 14,
             offset: const Offset(0, 5),
           ),
@@ -265,9 +244,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
               size: 19,
             ),
           ),
-
           const SizedBox(height: 6),
-
           Text(
             value,
             style: GoogleFonts.inter(
@@ -276,7 +253,6 @@ class _LeaveScreenState extends State<LeaveScreen> {
               fontWeight: FontWeight.w700,
             ),
           ),
-
           Text(
             title,
             style: GoogleFonts.inter(
@@ -285,7 +261,6 @@ class _LeaveScreenState extends State<LeaveScreen> {
               fontWeight: FontWeight.w600,
             ),
           ),
-
           Text(
             subtitle,
             style: GoogleFonts.inter(
@@ -309,15 +284,12 @@ class _LeaveScreenState extends State<LeaveScreen> {
       child: DecoratedBox(
         decoration: BoxDecoration(
           gradient: const LinearGradient(
-            colors: [
-              AppColors.primary,
-              AppColors.secondary
-            ],
+            colors: [AppColors.primary, AppColors.secondary],
           ),
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: AppColors.hexFF087BFF.withOpacity(0.20),
+              color: AppColors.hexFF087BFF.withValues(alpha: 0.20),
               blurRadius: 20,
               offset: const Offset(0, 8),
             ),
@@ -388,7 +360,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.hexFF183B56.withOpacity(0.04),
+            color: AppColors.hexFF183B56.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 3),
           ),
@@ -435,21 +407,15 @@ class _LeaveScreenState extends State<LeaveScreen> {
         duration: const Duration(milliseconds: 200),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: selected
-              ? AppColors.hexFFEAF4FF
-              : AppColors.transparent,
+          color: selected ? AppColors.hexFFEAF4FF : AppColors.transparent,
           borderRadius: BorderRadius.circular(10),
         ),
         child: Text(
           title,
           style: GoogleFonts.inter(
-            color: selected
-                ? AppColors.hexFF087BFF
-                : AppColors.hexFF7A8D9E,
+            color: selected ? AppColors.hexFF087BFF : AppColors.hexFF7A8D9E,
             fontSize: 9,
-            fontWeight: selected
-                ? FontWeight.w700
-                : FontWeight.w500,
+            fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
           ),
         ),
       ),
@@ -513,7 +479,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.hexFF183B56.withOpacity(0.045),
+            color: AppColors.hexFF183B56.withValues(alpha: 0.045),
             blurRadius: 14,
             offset: const Offset(0, 5),
           ),
@@ -538,13 +504,10 @@ class _LeaveScreenState extends State<LeaveScreen> {
                   size: 22,
                 ),
               ),
-
               const SizedBox(width: 12),
-
               Expanded(
                 child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       leave['type'] ?? '',
@@ -554,9 +517,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-
                     const SizedBox(height: 3),
-
                     Text(
                       leave['days'] ?? '',
                       style: GoogleFonts.inter(
@@ -567,25 +528,18 @@ class _LeaveScreenState extends State<LeaveScreen> {
                   ],
                 ),
               ),
-
               _statusBadge(
                 leave['status'] ?? '',
-                approved
-                    ? AppColors.hexFF13A67A
-                    : AppColors.hexFFE39A00,
+                approved ? AppColors.hexFF13A67A : AppColors.hexFFE39A00,
               ),
             ],
           ),
-
           const SizedBox(height: 16),
-
           const Divider(
             color: AppColors.hexFFE7EDF2,
             height: 1,
           ),
-
           const SizedBox(height: 14),
-
           Row(
             children: [
               Expanded(
@@ -604,9 +558,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
               ),
             ],
           ),
-
           const SizedBox(height: 12),
-
           _detailItem(
             icon: Icons.notes_rounded,
             title: 'Reason',
@@ -633,13 +585,10 @@ class _LeaveScreenState extends State<LeaveScreen> {
           color: AppColors.hexFF087BFF,
           size: 16,
         ),
-
         const SizedBox(width: 8),
-
         Expanded(
           child: Column(
-            crossAxisAlignment:
-                CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 title,
@@ -648,9 +597,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                   fontSize: 8,
                 ),
               ),
-
               const SizedBox(height: 2),
-
               Text(
                 value,
                 maxLines: 2,
@@ -682,10 +629,10 @@ class _LeaveScreenState extends State<LeaveScreen> {
         vertical: 6,
       ),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
+        color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(9),
         border: Border.all(
-          color: color.withOpacity(0.25),
+          color: color.withValues(alpha: 0.25),
         ),
       ),
       child: Text(
@@ -723,9 +670,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
             color: AppColors.hexFF087BFF,
             size: 35,
           ),
-
           const SizedBox(height: 12),
-
           Text(
             'No Leave Requests',
             style: GoogleFonts.inter(
@@ -734,9 +679,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
               fontWeight: FontWeight.w700,
             ),
           ),
-
           const SizedBox(height: 5),
-
           Text(
             'Your leave requests will appear here.',
             textAlign: TextAlign.center,
@@ -777,19 +720,16 @@ class ApplyLeaveDialog extends StatefulWidget {
   const ApplyLeaveDialog({super.key});
 
   @override
-  State<ApplyLeaveDialog> createState() =>
-      _ApplyLeaveDialogState();
+  State<ApplyLeaveDialog> createState() => _ApplyLeaveDialogState();
 }
 
-class _ApplyLeaveDialogState
-    extends State<ApplyLeaveDialog> {
+class _ApplyLeaveDialogState extends State<ApplyLeaveDialog> {
   String selectedLeave = 'Casual Leave';
 
   DateTime? fromDate;
   DateTime? toDate;
 
-  final TextEditingController reasonController =
-      TextEditingController();
+  final TextEditingController reasonController = TextEditingController();
 
   int get totalDays {
     if (fromDate == null || toDate == null) {
@@ -831,8 +771,7 @@ class _ApplyLeaveDialogState
   Future<void> _selectFromDate() async {
     final DateTime today = DateTime.now();
 
-    final DateTime? pickedDate =
-        await showDatePicker(
+    final DateTime? pickedDate = await showDatePicker(
       context: context,
       initialDate: fromDate ?? today,
       firstDate: today,
@@ -865,8 +804,7 @@ class _ApplyLeaveDialogState
     setState(() {
       fromDate = pickedDate;
 
-      if (toDate != null &&
-          toDate!.isBefore(pickedDate)) {
+      if (toDate != null && toDate!.isBefore(pickedDate)) {
         toDate = null;
       }
     });
@@ -891,8 +829,7 @@ class _ApplyLeaveDialogState
       return;
     }
 
-    final DateTime? pickedDate =
-        await showDatePicker(
+    final DateTime? pickedDate = await showDatePicker(
       context: context,
       initialDate: toDate ?? fromDate!,
       firstDate: fromDate!,
@@ -1029,7 +966,7 @@ class _ApplyLeaveDialogState
           ),
           boxShadow: [
             BoxShadow(
-              color: AppColors.hexFF183B56.withOpacity(0.12),
+              color: AppColors.hexFF183B56.withValues(alpha: 0.12),
               blurRadius: 30,
               offset: const Offset(0, 12),
             ),
@@ -1038,8 +975,7 @@ class _ApplyLeaveDialogState
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment:
-                CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // ==================================================
               // DIALOG HEADER
@@ -1057,11 +993,9 @@ class _ApplyLeaveDialogState
                       ),
                     ),
                   ),
-
                   InkWell(
                     onTap: () => Get.back(),
-                    borderRadius:
-                        BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(20),
                     child: const Padding(
                       padding: EdgeInsets.all(5),
                       child: Icon(
@@ -1085,7 +1019,7 @@ class _ApplyLeaveDialogState
               const SizedBox(height: 7),
 
               DropdownButtonFormField<String>(
-                value: selectedLeave,
+                initialValue: selectedLeave,
                 dropdownColor: AppColors.white,
                 style: GoogleFonts.inter(
                   color: AppColors.hexFF132B3F,
@@ -1163,7 +1097,6 @@ class _ApplyLeaveDialogState
 
               if (totalDays > 0) ...[
                 const SizedBox(height: 15),
-
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(
@@ -1172,8 +1105,7 @@ class _ApplyLeaveDialogState
                   ),
                   decoration: BoxDecoration(
                     color: AppColors.hexFFF0F8FF,
-                    borderRadius:
-                        BorderRadius.circular(13),
+                    borderRadius: BorderRadius.circular(13),
                     border: Border.all(
                       color: AppColors.hexFFD8ECFA,
                     ),
@@ -1185,29 +1117,22 @@ class _ApplyLeaveDialogState
                         color: AppColors.hexFF087BFF,
                         size: 18,
                       ),
-
                       const SizedBox(width: 9),
-
                       Text(
                         'Total Leave',
                         style: GoogleFonts.inter(
-                          color:
-                              AppColors.hexFF6D8190,
+                          color: AppColors.hexFF6D8190,
                           fontSize: 10,
                         ),
                       ),
-
                       const Spacer(),
-
                       Text(
                         '$totalDays '
                         '${totalDays == 1 ? 'Day' : 'Days'}',
                         style: GoogleFonts.inter(
-                          color:
-                              AppColors.hexFF087BFF,
+                          color: AppColors.hexFF087BFF,
                           fontSize: 11,
-                          fontWeight:
-                              FontWeight.w700,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ],
@@ -1233,8 +1158,7 @@ class _ApplyLeaveDialogState
                   fontSize: 11,
                 ),
                 decoration: _inputDecoration(
-                  hintText:
-                      'Enter reason for leave',
+                  hintText: 'Enter reason for leave',
                 ),
               ),
 
@@ -1249,16 +1173,12 @@ class _ApplyLeaveDialogState
                 height: 50,
                 child: ElevatedButton(
                   onPressed: _submitLeave,
-                  style:
-                      ElevatedButton.styleFrom(
-                    backgroundColor:
-                        AppColors.hexFF087BFF,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.hexFF087BFF,
                     foregroundColor: AppColors.white,
                     elevation: 0,
-                    shape:
-                        RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius.circular(14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
                     ),
                   ),
                   child: Text(
@@ -1312,12 +1232,9 @@ class _ApplyLeaveDialogState
         ),
         decoration: BoxDecoration(
           color: AppColors.surfaceMuted,
-          borderRadius:
-              BorderRadius.circular(13),
+          borderRadius: BorderRadius.circular(13),
           border: Border.all(
-            color: selected
-                ? AppColors.hexFF087BFF
-                : AppColors.hexFFDCE5EC,
+            color: selected ? AppColors.hexFF087BFF : AppColors.hexFFDCE5EC,
           ),
         ),
         child: Row(
@@ -1327,22 +1244,18 @@ class _ApplyLeaveDialogState
               color: AppColors.hexFF087BFF,
               size: 19,
             ),
-
             const SizedBox(width: 10),
-
             Expanded(
               child: Text(
                 text,
                 style: GoogleFonts.inter(
-                  color: selected
-                      ? AppColors.hexFF132B3F
-                      : AppColors.hexFF8A9BA8,
+                  color:
+                      selected ? AppColors.hexFF132B3F : AppColors.hexFF8A9BA8,
                   fontSize: 10,
                   fontWeight: FontWeight.w500,
                 ),
               ),
             ),
-
             const Icon(
               Icons.keyboard_arrow_down_rounded,
               color: AppColors.hexFF7D909E,
@@ -1369,28 +1282,24 @@ class _ApplyLeaveDialogState
       ),
       filled: true,
       fillColor: AppColors.surfaceMuted,
-      contentPadding:
-          const EdgeInsets.symmetric(
+      contentPadding: const EdgeInsets.symmetric(
         horizontal: 14,
         vertical: 14,
       ),
       border: OutlineInputBorder(
-        borderRadius:
-            BorderRadius.circular(13),
+        borderRadius: BorderRadius.circular(13),
         borderSide: const BorderSide(
           color: AppColors.hexFFDCE5EC,
         ),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius:
-            BorderRadius.circular(13),
+        borderRadius: BorderRadius.circular(13),
         borderSide: const BorderSide(
           color: AppColors.hexFFDCE5EC,
         ),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius:
-            BorderRadius.circular(13),
+        borderRadius: BorderRadius.circular(13),
         borderSide: const BorderSide(
           color: AppColors.hexFF087BFF,
         ),

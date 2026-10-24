@@ -81,7 +81,7 @@ class AttendanceOverviewScreen extends StatelessWidget {
                   border: Border.all(color: border),
                   boxShadow: [
                     BoxShadow(
-                      color: navy.withOpacity(0.05),
+                      color: navy.withValues(alpha: 0.05),
                       blurRadius: 20,
                       offset: const Offset(0, 8),
                     ),
@@ -108,8 +108,7 @@ class AttendanceOverviewScreen extends StatelessWidget {
                         const SizedBox(width: 12),
                         Expanded(
                           child: Column(
-                            crossAxisAlignment:
-                                CrossAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 'Today',
@@ -149,9 +148,7 @@ class AttendanceOverviewScreen extends StatelessWidget {
                         ),
                       ],
                     ),
-
                     const SizedBox(height: 20),
-
                     Row(
                       children: [
                         Expanded(
@@ -295,24 +292,19 @@ class AttendanceOverviewScreen extends StatelessWidget {
                         ),
                       ],
                     ),
-
                     const SizedBox(height: 13),
-
                     ClipRRect(
                       borderRadius: BorderRadius.circular(20),
                       child: LinearProgressIndicator(
                         value: 0.88,
                         minHeight: 9,
                         backgroundColor: AppColors.hexFFEAF0F5,
-                        valueColor:
-                            const AlwaysStoppedAnimation<Color>(
+                        valueColor: const AlwaysStoppedAnimation<Color>(
                           green,
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 10),
-
                     Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
@@ -341,8 +333,7 @@ class AttendanceOverviewScreen extends StatelessWidget {
                     Get.to(
                       () => const AttendanceHistoryScreen(),
                       transition: Transition.rightToLeft,
-                      duration:
-                          const Duration(milliseconds: 350),
+                      duration: const Duration(milliseconds: 350),
                     );
                   },
                   style: ElevatedButton.styleFrom(

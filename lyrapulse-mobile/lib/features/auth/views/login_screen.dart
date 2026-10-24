@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -45,16 +44,13 @@ class LoginScreen extends GetView<AuthController> {
                 : (776 * sy).clamp(0.0, double.infinity);
 
             return SingleChildScrollView(
-              keyboardDismissBehavior:
-                  ScrollViewKeyboardDismissBehavior.onDrag,
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
               physics: keyboardOpen
                   ? const ClampingScrollPhysics()
                   : const NeverScrollableScrollPhysics(),
               child: SizedBox(
                 width: size.width,
-                height: keyboardOpen
-                    ? availableHeight
-                    : contentHeight,
+                height: keyboardOpen ? availableHeight : contentHeight,
                 child: Stack(
                   children: [
                     // BACKGROUND
@@ -142,7 +138,7 @@ class LoginScreen extends GetView<AuthController> {
                       height: 48 * sy,
                       child: Container(
                         decoration: BoxDecoration(
-                          color: AppColors.white.withOpacity(0.92),
+                          color: AppColors.white.withValues(alpha: 0.92),
                           borderRadius: BorderRadius.circular(
                             8 * ((sx + sy) / 2),
                           ),
@@ -253,8 +249,8 @@ class LoginScreen extends GetView<AuthController> {
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppColors.hexFF4D45C9
-                                      .withOpacity(0.18),
+                                  color:
+                                      AppColors.hexFF4D45C9.withValues(alpha: 0.18),
                                   blurRadius: 12,
                                   offset: const Offset(0, 5),
                                 ),

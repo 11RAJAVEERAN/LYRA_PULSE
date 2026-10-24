@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -437,18 +436,14 @@ class _TypeButton extends StatelessWidget {
           children: [
             Icon(
               icon,
-              color: selected
-                  ? AppColors.hexFF1687D9
-                  : AppColors.hexFF718096,
+              color: selected ? AppColors.hexFF1687D9 : AppColors.hexFF718096,
               size: 22,
             ),
             const SizedBox(height: 6),
             Text(
               title,
               style: TextStyle(
-                color: selected
-                    ? AppColors.hexFF1687D9
-                    : AppColors.hexFF4A5568,
+                color: selected ? AppColors.hexFF1687D9 : AppColors.hexFF4A5568,
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
               ),
@@ -565,8 +560,7 @@ class _TimeBox extends StatelessWidget {
                       ? AppColors.hexFF172B4D
                       : AppColors.hexFFA0AEC0,
                   fontSize: 14,
-                  fontWeight:
-                      isSelected ? FontWeight.w600 : FontWeight.w400,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                 ),
               ),
             ),

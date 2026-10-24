@@ -38,7 +38,6 @@ class AttendanceDetailsScreen extends StatelessWidget {
                 AppColors.hexFF087BFF,
               ),
             ),
-
             Positioned(
               bottom: -220,
               left: -170,
@@ -47,7 +46,6 @@ class AttendanceDetailsScreen extends StatelessWidget {
                 AppColors.hexFF00D9FF,
               ),
             ),
-
             SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(
@@ -97,8 +95,7 @@ class AttendanceDetailsScreen extends StatelessWidget {
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: AppColors.hexFF20DDF7
-                                    .withOpacity(0.20),
+                                color: AppColors.hexFF20DDF7.withValues(alpha: 0.20),
                                 blurRadius: 25,
                                 spreadRadius: 3,
                               ),
@@ -109,17 +106,14 @@ class AttendanceDetailsScreen extends StatelessWidget {
                                 ? Image.network(
                                     imageUrl,
                                     fit: BoxFit.cover,
-                                    errorBuilder:
-                                        (context, error, stackTrace) {
+                                    errorBuilder: (context, error, stackTrace) {
                                       return _defaultPhoto();
                                     },
                                   )
                                 : _defaultPhoto(),
                           ),
                         ),
-
                         const SizedBox(height: 14),
-
                         Text(
                           employeeName,
                           style: GoogleFonts.inter(
@@ -128,9 +122,7 @@ class AttendanceDetailsScreen extends StatelessWidget {
                             fontWeight: FontWeight.w700,
                           ),
                         ),
-
                         const SizedBox(height: 4),
-
                         Text(
                           'Employee',
                           style: GoogleFonts.inter(
@@ -200,13 +192,11 @@ class AttendanceDetailsScreen extends StatelessWidget {
                                 value: checkIn,
                               ),
                             ),
-
                             Container(
                               width: 1,
                               height: 65,
                               color: AppColors.hexFF19425A,
                             ),
-
                             Expanded(
                               child: _timeDetail(
                                 icon: Icons.logout_rounded,
@@ -270,13 +260,10 @@ class AttendanceDetailsScreen extends StatelessWidget {
                             vertical: 9,
                           ),
                           decoration: BoxDecoration(
-                            color: _statusColor()
-                                .withOpacity(0.10),
-                            borderRadius:
-                                BorderRadius.circular(12),
+                            color: _statusColor().withValues(alpha: 0.10),
+                            borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: _statusColor()
-                                  .withOpacity(0.30),
+                              color: _statusColor().withValues(alpha: 0.30),
                             ),
                           ),
                           child: Row(
@@ -466,17 +453,11 @@ class AttendanceDetailsScreen extends StatelessWidget {
     }
 
     try {
-      final inParts = checkIn
-          .replaceAll('AM', '')
-          .replaceAll('PM', '')
-          .trim()
-          .split(':');
+      final inParts =
+          checkIn.replaceAll('AM', '').replaceAll('PM', '').trim().split(':');
 
-      final outParts = checkOut
-          .replaceAll('AM', '')
-          .replaceAll('PM', '')
-          .trim()
-          .split(':');
+      final outParts =
+          checkOut.replaceAll('AM', '').replaceAll('PM', '').trim().split(':');
 
       int inHour = int.parse(inParts[0]);
       int inMinute = int.parse(inParts[1]);
@@ -500,14 +481,11 @@ class AttendanceDetailsScreen extends StatelessWidget {
         outHour = 0;
       }
 
-      final startMinutes =
-          (inHour * 60) + inMinute;
+      final startMinutes = (inHour * 60) + inMinute;
 
-      final endMinutes =
-          (outHour * 60) + outMinute;
+      final endMinutes = (outHour * 60) + outMinute;
 
-      int difference =
-          endMinutes - startMinutes;
+      int difference = endMinutes - startMinutes;
 
       if (difference < 0) {
         difference += 24 * 60;
@@ -558,8 +536,8 @@ class AttendanceDetailsScreen extends StatelessWidget {
         shape: BoxShape.circle,
         gradient: RadialGradient(
           colors: [
-            color.withOpacity(0.11),
-            color.withOpacity(0.025),
+            color.withValues(alpha: 0.11),
+            color.withValues(alpha: 0.025),
             AppColors.transparent,
           ],
         ),
