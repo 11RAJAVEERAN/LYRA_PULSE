@@ -8,7 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../attendance/views/face_verification_screen.dart';
 
-
+import '../../attendance/views/location_verification_screen.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../attendance/controllers/attendance_controller.dart';
 import '../../calendar/views/calendar_screen.dart';
@@ -252,67 +252,96 @@ Future<void> _attendanceAction() async {
     return;
   }
 
-  try {
-    // Check whether location service is enabled.
-    final serviceEnabled =
-        await Geolocator.isLocationServiceEnabled();
+  await Get.to(
+    () => LocationVerificationScreen(
+      isCheckOut: checkingOut,
+    ),
+    transition: Transition.cupertino,
+  );
 
-    if (!serviceEnabled) {
-      Get.snackbar(
-        'Location Required',
-        'Please turn on your phone location.',
-        snackPosition: SnackPosition.BOTTOM,
-      );
-      return;
-    }
-
-    // Check and request location permission.
-    var permission = await Geolocator.checkPermission();
-
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-    }
-
-    if (permission == LocationPermission.denied ||
-        permission == LocationPermission.deniedForever) {
-      Get.snackbar(
-        'Permission Required',
-        'Allow location permission to continue.',
-        snackPosition: SnackPosition.BOTTOM,
-      );
-      return;
-    }
-
-    // Verify that the current GPS location can be obtained.
-    await Geolocator.getCurrentPosition(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high,
-      ),
-    );
-
-    if (!mounted) return;
-
-    // Skip the Location Verification page.
-    // Continue directly to face verification.
-    await Get.to(
-      () => FaceVerificationScreen(
-        isCheckOut: checkingOut,
-      ),
-      transition: Transition.rightToLeft,
-      duration: const Duration(milliseconds: 350),
-    );
-
-    if (mounted) {
-      setState(() {});
-    }
-  } catch (_) {
-    Get.snackbar(
-      'Location Error',
-      'Unable to verify your location. Please try again.',
-      snackPosition: SnackPosition.BOTTOM,
-    );
+  if (mounted) {
+    setState(() {});
   }
 }
+
+
+
+// Future<void> _attendanceAction() async {
+//   final checkingOut = _isCheckedIn;
+
+//   if (checkingOut && _checkInTime == null) {
+//     Get.snackbar(
+//       'Attendance',
+//       'Please check in before checking out.',
+//       snackPosition: SnackPosition.BOTTOM,
+//     );
+//     return;
+//   }
+
+
+
+
+//   try {
+//     // Check whether location service is enabled.
+//     final serviceEnabled =
+//         await Geolocator.isLocationServiceEnabled();
+
+//     if (!serviceEnabled) {
+//       Get.snackbar(
+//         'Location Required',
+//         'Please turn on your phone location.',
+//         snackPosition: SnackPosition.BOTTOM,
+//       );
+//       return;
+//     }
+
+//     // Check and request location permission.
+//     var permission = await Geolocator.checkPermission();
+
+//     if (permission == LocationPermission.denied) {
+//       permission = await Geolocator.requestPermission();
+//     }
+
+//     if (permission == LocationPermission.denied ||
+//         permission == LocationPermission.deniedForever) {
+//       Get.snackbar(
+//         'Permission Required',
+//         'Allow location permission to continue.',
+//         snackPosition: SnackPosition.BOTTOM,
+//       );
+//       return;
+//     }
+
+//     // Verify that the current GPS location can be obtained.
+//     await Geolocator.getCurrentPosition(
+//       locationSettings: const LocationSettings(
+//         accuracy: LocationAccuracy.high,
+//       ),
+//     );
+
+//     if (!mounted) return;
+
+//     // Skip the Location Verification page.
+//     // Continue directly to face verification.
+//     await Get.to(
+//       () => FaceVerificationScreen(
+//         isCheckOut: checkingOut,
+//       ),
+//       transition: Transition.rightToLeft,
+//       duration: const Duration(milliseconds: 350),
+//     );
+
+//     if (mounted) {
+//       setState(() {});
+//     }
+//   } catch (_) {
+//     Get.snackbar(
+//       'Location Error',
+//       'Unable to verify your location. Please try again.',
+//       snackPosition: SnackPosition.BOTTOM,
+//     );
+//   }
+// }
 
 
 

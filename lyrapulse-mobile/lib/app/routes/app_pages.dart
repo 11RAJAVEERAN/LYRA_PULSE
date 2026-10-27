@@ -73,8 +73,9 @@ abstract final class AppPages {
     // --------------------------------------------------
     GetPage(
       name: AppRoutes.locationVerification,
-      page: () => const LocationVerificationScreen(),
-    ),
+      page: () => const LocationVerificationScreen(
+      isCheckOut: false,
+),    ),
 
     // --------------------------------------------------
     // PERMISSION

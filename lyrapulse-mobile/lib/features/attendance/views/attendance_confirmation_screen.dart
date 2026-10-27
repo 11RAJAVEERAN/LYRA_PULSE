@@ -9,6 +9,8 @@ import '../controllers/attendance_controller.dart';
 import 'check_in_success_screen.dart';
 import 'check_out_success_screen.dart';
 
+// import '../widgets/attendance_popup.dart';
+
 class AttendanceConfirmationScreen extends StatefulWidget {
   final bool isCheckOut;
   final String photoPath;
