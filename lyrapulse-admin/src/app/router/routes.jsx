@@ -1,15 +1,23 @@
+
 import { Navigate } from 'react-router-dom'
+
 import { LoginPage } from '../../features/auth/pages/LoginPage'
 import { DashboardPage } from '../../features/dashboard/pages/DashboardPage'
 import { AttendancePage } from '../../features/attendance/pages/AttendancePage'
 import { EmployeesPage } from '../../features/employees/pages/EmployeesPage'
-import { ROUTES } from '../../constants/routes'
-import { ProtectedRoute } from './ProtectedRoute'
-import { AdminLayout } from '../../components/layout/AdminLayout'
 import { AdminUsersPage } from '../../features/adminUsers/pages/AdminUsersPage'
-import { SuperAdminRoute } from './SuperAdminRoute'
 import { DevicesPage } from '../../features/devices/pages/DevicesPage'
 import { AttendancePermissionsPage } from '../../features/attendancePermissions/pages/AttendancePermissionsPage'
+
+import { ROUTES } from '../../constants/routes'
+import { ProtectedRoute } from './ProtectedRoute'
+import { SuperAdminRoute } from './SuperAdminRoute'
+import { AdminLayout } from '../../components/layout/AdminLayout'
+
+// Reports pages
+import AttendanceMasterPage from '../../reports/AttendanceMasterPage'
+import DailyPunchReportPage from '../../reports/DailyPunchReportPage'
+import ShiftWiseReportPage from '../../reports/ShiftWiseReportPage'
 
 export const routes = [
   {
@@ -49,8 +57,27 @@ export const routes = [
           },
           {
             path: ROUTES.adminUsers,
-            element: <SuperAdminRoute><AdminUsersPage /></SuperAdminRoute>,
+            element: (
+              <SuperAdminRoute>
+                <AdminUsersPage />
+              </SuperAdminRoute>
+            ),
           },
+
+          // Reports
+          {
+            path: 'reports/attendance-master',
+            element: <AttendanceMasterPage />,
+          },
+          {
+            path: 'reports/daily-punch-report',
+            element: <DailyPunchReportPage />,
+          },
+          {
+            path: 'reports/shift-wise-report',
+            element: <ShiftWiseReportPage />,
+          },
+
           ...[
             ROUTES.leaves,
             ROUTES.branches,
@@ -62,6 +89,7 @@ export const routes = [
             path,
             element: <Navigate to={ROUTES.dashboard} replace />,
           })),
+
           {
             path: '*',
             element: <Navigate to={ROUTES.dashboard} replace />,
@@ -71,3 +99,4 @@ export const routes = [
     ],
   },
 ]
+
