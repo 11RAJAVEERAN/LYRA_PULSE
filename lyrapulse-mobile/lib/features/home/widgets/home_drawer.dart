@@ -62,7 +62,7 @@ class _HomeDrawerState extends State<HomeDrawer> {
                 child: Text(
                   'MENU',
                   style: GoogleFonts.inter(
-                    fontSize: 10,
+                    fontSize: 15,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 1.5,
                     color: AppColors.textSecondary,

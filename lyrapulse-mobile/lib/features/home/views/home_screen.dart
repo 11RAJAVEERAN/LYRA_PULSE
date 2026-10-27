@@ -427,7 +427,7 @@ onRefresh: () async {
     slivers: [
       SliverToBoxAdapter(child: _buildHeader()),
       SliverPadding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 112),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
         sliver: SliverList(
           delegate: SliverChildListDelegate([
             _buildDateSelector(),
@@ -437,7 +437,7 @@ onRefresh: () async {
             _buildSectionTitle(),
             const SizedBox(height: 10),
             _buildActivityCard(),
-            const SizedBox(height: 14),
+            const SizedBox(height: 8),
           ]),
         ),
       ),
@@ -523,7 +523,7 @@ onRefresh: () async {
                   'Welcome back',
                   style: GoogleFonts.inter(
                     fontSize: 13,
-                    color: AppColors.primary,
+                    color: AppColors.sidebarMuted,
                   ),
                 ),
                 const SizedBox(height: 3),
@@ -532,7 +532,7 @@ onRefresh: () async {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
-                    fontSize: 19,
+                    fontSize: 17,
                     fontWeight: FontWeight.w800,
                     color: AppColors.textPrimary,
                   ),
@@ -550,7 +550,7 @@ onRefresh: () async {
                 width: 46,
                 height: 46,
                 child: Icon(
-                  Icons.campaign_outlined,
+                  Icons.notifications,
                   color: AppColors.primary,
                   size: 24,
                 ),
@@ -1057,7 +1057,7 @@ onRefresh: () async {
     if (entries.isEmpty) {
       entries.add(
         Padding(
-          padding: const EdgeInsets.symmetric(vertical: 24),
+          padding: const EdgeInsets.symmetric(vertical: 8),
           child: Column(
             children: [
               Icon(
@@ -1131,15 +1131,15 @@ onRefresh: () async {
         children: [
           Expanded(
             child: Container(
-              height: 1.3,
+              height: 0.5,
               color: AppColors.breakDivider,
             ),
           ),
           Container(
-            constraints: const BoxConstraints(maxWidth: 220),
+            constraints: const BoxConstraints(maxWidth: 180),
             padding: const EdgeInsets.symmetric(
-              horizontal: 13,
-              vertical: 10,
+              horizontal: 8,
+              vertical: 5,
             ),
             decoration: BoxDecoration(
               color: AppColors.breakBackground,

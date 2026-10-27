@@ -93,34 +93,37 @@ class _LeaveScreenState extends State<LeaveScreen> {
 
   Widget _buildHeader() {
     return Row(
-      children: [
-        InkWell(
-          onTap: () => Get.back(),
-          borderRadius: BorderRadius.circular(14),
-          child: Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: AppColors.white,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: AppColors.hexFFE2EAF2,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.hexFF183B56.withValues(alpha: 0.06),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: const Icon(
-              Icons.arrow_back_rounded,
-              color: AppColors.hexFF183B56,
-              size: 21,
-            ),
-          ),
+     children: [
+  InkWell(
+    onTap: () {
+      Get.offAllNamed('/home');
+    },
+    borderRadius: BorderRadius.circular(14),
+    child: Container(
+      width: 44,
+      height: 44,
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: AppColors.hexFFE2EAF2,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.hexFF183B56.withValues(alpha: 0.06),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: const Icon(
+        Icons.arrow_back_rounded,
+        color: AppColors.hexFF183B56,
+        size: 21,
+      ),
+    ),
+  ),
+
         const SizedBox(width: 14),
         Expanded(
           child: Text(
@@ -132,22 +135,24 @@ class _LeaveScreenState extends State<LeaveScreen> {
             ),
           ),
         ),
-        Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: AppColors.hexFFEAF8FF,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: AppColors.hexFFD5EEF9,
-            ),
-          ),
-          child: const Icon(
-            Icons.event_available_rounded,
-            color: AppColors.hexFF087BFF,
-            size: 21,
-          ),
-        ),
+
+
+        // Container(
+        //   width: 44,
+        //   height: 44,
+        //   decoration: BoxDecoration(
+        //     color: AppColors.hexFFEAF8FF,
+        //     borderRadius: BorderRadius.circular(14),
+        //     border: Border.all(
+        //       color: AppColors.hexFFD5EEF9,
+        //     ),
+        //   ),
+        //   child: const Icon(
+        //     Icons.event_available_rounded,
+        //     color: AppColors.hexFF087BFF,
+        //     size: 21,
+        //   ),
+        // ),
       ],
     );
   }

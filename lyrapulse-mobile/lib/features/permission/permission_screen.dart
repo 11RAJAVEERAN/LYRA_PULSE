@@ -121,13 +121,15 @@ class _PermissionScreenState extends State<PermissionScreen> {
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          onPressed: () => Get.back(),
-          icon: const Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: AppColors.hexFF172B4D,
-            size: 20,
-          ),
-        ),
+  onPressed: () {
+    Get.offAllNamed('/home');
+  },
+  icon: const Icon(
+    Icons.arrow_back_ios_new_rounded,
+    color: AppColors.hexFF172B4D,
+    size: 20,
+  ),
+),
         title: const Text(
           'Request Permission',
           style: TextStyle(
