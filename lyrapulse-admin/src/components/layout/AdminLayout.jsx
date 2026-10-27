@@ -29,31 +29,41 @@ export function AdminLayout() {
   const sidebarContent = (
     <Sidebar
       collapsed={isMobile ? false : collapsed}
+      belowHeader={!isMobile}
       onToggle={!isMobile ? () => setCollapsed((value) => !value) : undefined}
       onNavigate={() => setSidebarOpen(false)}
     />
   )
 
   return (
-    <Box sx={{ display: 'flex', width: '100%', maxWidth: '100%', minHeight: '100vh', overflowX: 'clip', backgroundColor: 'background.default' }}>
-      {!isMobile ? (
-        <Box sx={{ flexShrink: 0 }}>{sidebarContent}</Box>
-      ) : (
-        <Drawer
-          variant="temporary"
-          open={sidebarOpen}
-          onClose={() => setSidebarOpen(false)}
-          ModalProps={{ keepMounted: true }}
-          slotProps={{ paper: { sx: { width: 272 } } }}
-        >
-          {sidebarContent}
-        </Drawer>
-      )}
+    <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%', maxWidth: '100%', minHeight: '100vh', overflowX: 'clip', backgroundColor: 'background.default' }}>
+      <Topbar
+        title={pageTitles[location.pathname] ?? 'LYRA PULSE'}
+        onMenu={() => setSidebarOpen(true)}
+        showMenu={isMobile}
+        collapsed={collapsed}
+        onToggle={!isMobile ? () => setCollapsed((value) => !value) : undefined}
+      />
 
-      <Box sx={{ flex: '1 1 0%', minWidth: 0, maxWidth: '100%' }}>
-        <Topbar title={pageTitles[location.pathname] ?? 'LYRA PULSE'} onMenu={() => setSidebarOpen(true)} showMenu={isMobile} />
-        <Box component="main" sx={{ width: '100%', minWidth: 0, maxWidth: 1600, mx: 'auto', p: { xs: 2, sm: 2.5, lg: 3 } }}>
-          <Outlet />
+      <Box sx={{ display: 'flex', flex: '1 1 auto', minHeight: 'calc(100vh - 72px)', minWidth: 0, maxWidth: '100%' }}>
+        {!isMobile ? (
+          <Box sx={{ width: collapsed ? 80 : 264, height: 'calc(100vh - 72px)', flexShrink: 0 }}>{sidebarContent}</Box>
+        ) : (
+          <Drawer
+            variant="temporary"
+            open={sidebarOpen}
+            onClose={() => setSidebarOpen(false)}
+            ModalProps={{ keepMounted: true }}
+            slotProps={{ paper: { sx: { width: 272 } } }}
+          >
+            {sidebarContent}
+          </Drawer>
+        )}
+
+        <Box sx={{ flex: '1 1 0%', minWidth: 0, maxWidth: '100%' }}>
+          <Box component="main" sx={{ width: '100%', minWidth: 0, maxWidth: 1600, mx: 'auto', p: { xs: 2, sm: 2.5, lg: 3 } }}>
+            <Outlet />
+          </Box>
         </Box>
       </Box>
     </Box>

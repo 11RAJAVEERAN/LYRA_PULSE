@@ -16,6 +16,7 @@ import {
   Typography,
 } from '@mui/material'
 import { ChevronDown, LogOut, Menu as MenuIcon } from 'lucide-react'
+import lyraPulseLogo from '../../assets/lyra-pulse-horizontal.png'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../features/auth/hooks/useAuth'
 import apiClient, {
@@ -26,7 +27,7 @@ import apiClient, {
 const unwrap = (response) => response.data?.data ?? response.data
 const EMPTY_BRANCHES = []
 
-export function Topbar({ onMenu, showMenu = false }) {
+export function Topbar({ onMenu, showMenu = false, collapsed = false, onToggle }) {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { currentUser, logout } = useAuth()
@@ -144,21 +145,49 @@ export function Topbar({ onMenu, showMenu = false }) {
         aria-label="Admin top navigation"
         sx={{
           minHeight: { xs: 64, md: 72 },
-          px: { xs: 1.5, md: 3 },
-          gap: { xs: 1, md: 2 },
+          pl: { xs: 1, md: 0 },
+          pr: { xs: 1, md: 3 },
+          gap: { xs: 0.5, md: 2 },
         }}
       >
-        {showMenu ? (
-          <IconButton
-            aria-label="Open navigation menu"
-            onClick={onMenu}
-            edge="start"
-            sx={{ color: 'text.primary' }}
-          >
-            <MenuIcon size={20} />
-          </IconButton>
-        ) : null}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.5, md: 1 }, width: { xs: 'auto', md: 264 }, flexShrink: 0, boxSizing: 'border-box', px: { xs: 0, md: 2 }, borderRight: { xs: 0, md: 1 }, borderColor: 'divider' }}>
+          {showMenu ? (
+            <IconButton
+              aria-label="Open navigation menu"
+              onClick={onMenu}
+              edge="start"
+              sx={{ color: 'text.primary', mr: { xs: 0, sm: 0.5 } }}
+            >
+              <MenuIcon size={20} />
+            </IconButton>
+          ) : null}
 
+          {onToggle ? (
+            <Tooltip title={collapsed ? 'Expand navigation' : 'Collapse navigation'}>
+              <IconButton
+                aria-label={collapsed ? 'Expand navigation' : 'Collapse navigation'}
+                onClick={onToggle}
+                edge="start"
+                sx={{ color: 'text.primary', flexShrink: 0, mr: 0.5 }}
+              >
+                <MenuIcon size={20} />
+              </IconButton>
+            </Tooltip>
+          ) : null}
+
+          <Box
+            component="img"
+            src={lyraPulseLogo}
+            alt="LYRA PULSE"
+            sx={{
+              display: 'block',
+              width: { xs: 130, sm: 150, md: 184 },
+              height: { xs: 27, sm: 30, md: 37 },
+              objectFit: 'contain',
+              flexShrink: 0,
+            }}
+          />
+        </Box>
         {branchesQuery.isLoading ? (
           <Box
             role="status"
@@ -206,7 +235,7 @@ export function Topbar({ onMenu, showMenu = false }) {
             IconComponent={ChevronDown}
             sx={{
               width: 'fit-content',
-              maxWidth: { xs: 160, sm: 300 },
+              maxWidth: { xs: 110, sm: 300 },
               minWidth: 0,
               height: 36,
               fontSize: 13,
@@ -251,7 +280,7 @@ export function Topbar({ onMenu, showMenu = false }) {
           <Tooltip title={branches.length ? branchLabel : 'No branch assigned'}>
             <Box
               sx={{
-                maxWidth: { xs: 160, sm: 300 },
+                maxWidth: { xs: 110, sm: 300 },
                 minWidth: 0,
                 minHeight: 36,
                 px: 1.5,
