@@ -10,6 +10,8 @@ import { AdminUsersPage } from '../../features/adminUsers/pages/AdminUsersPage'
 import { SuperAdminRoute } from './SuperAdminRoute'
 import { DevicesPage } from '../../features/devices/pages/DevicesPage'
 import { AttendancePermissionsPage } from '../../features/attendancePermissions/pages/AttendancePermissionsPage'
+import { DepartmentsPage } from '../../features/departments/pages/DepartmentsPage'
+import { DesignationsPage } from '../../features/designations/pages/DesignationsPage'
 
 export const routes = [
   {
@@ -48,14 +50,20 @@ export const routes = [
             element: <AttendancePermissionsPage />,
           },
           {
+            path: ROUTES.departments,
+            element: <DepartmentsPage />,
+          },
+          {
+            path: ROUTES.designations,
+            element: <DesignationsPage />,
+          },
+          {
             path: ROUTES.adminUsers,
             element: <SuperAdminRoute><AdminUsersPage /></SuperAdminRoute>,
           },
           ...[
             ROUTES.leaves,
             ROUTES.branches,
-            ROUTES.departments,
-            ROUTES.designations,
             ROUTES.reports,
             ROUTES.settings,
           ].map((path) => ({
@@ -71,3 +79,4 @@ export const routes = [
     ],
   },
 ]
+

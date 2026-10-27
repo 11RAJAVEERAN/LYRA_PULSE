@@ -10,6 +10,8 @@ urlpatterns = [
     path("api/v1/attendance/", include("apps.attendance.urls")),
     path("api/v1/devices/", include("apps.devices.urls")),
     path("api/v1/fingerprints/", include("apps.fingerprints.urls")),
+    path("api/v1/", include("apps.departments.urls")),
+    path("api/v1/", include("apps.designations.urls")),
     path("api/v1/", include("apps.employees.urls")),
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path("api/docs/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
@@ -17,3 +19,4 @@ urlpatterns = [
 
 if settings.DEBUG:  # development only; never serve user uploads through Django in production
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
