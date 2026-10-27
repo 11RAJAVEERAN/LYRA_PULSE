@@ -17,13 +17,11 @@ from apps.accounts.scope import scope_queryset
 from apps.common.responses import success_response
 
 from apps.branches.models import Branch
-from apps.departments.models import Department
-from apps.designations.models import Designation
 
 from .document_validation import validate_document_file
 from .models import Employee, EmployeeDocument, EmployeeType, PayrollGroup
 from .serializers import (
-    BranchOptionSerializer, DepartmentOptionSerializer, DesignationOptionSerializer,
+    BranchOptionSerializer,
     EmployeeDocumentSerializer, EmployeeManagementSerializer, EmployeeSerializer,
     EmployeeTypeOptionSerializer, PayrollGroupOptionSerializer,
 )
@@ -38,12 +36,13 @@ class EmployeeManagementListCreateView(ListCreateAPIView):
     def get_queryset(self):
         queryset = Employee.objects.select_related("user", "branch", "department", "designation", "employee_type", "payroll_group").order_by("employee_code")
         queryset = scope_queryset(queryset, self.request.user, "branch")
-        branch_id = self.request.query_params.get("branch")
-        if branch_id:
-            try:
-                queryset = queryset.filter(branch_id=int(branch_id))
-            except (TypeError, ValueError):
-                queryset = queryset.none()
+        for parameter, field in (("branch", "branch_id"), ("department", "department_id"), ("designation", "designation_id")):
+            value = self.request.query_params.get(parameter)
+            if value:
+                try:
+                    queryset = queryset.filter(**{field: int(value)})
+                except (TypeError, ValueError):
+                    queryset = queryset.none()
         return queryset
 
     @extend_schema(responses={200: inline_serializer(name="EmployeeListResponse", fields={
@@ -150,19 +149,6 @@ class BranchListView(ReadOnlyOptionListView):
     branch_lookup = "id"
     serializer_class = BranchOptionSerializer
 
-
-@option_list_schema("DepartmentListResponse", DepartmentOptionSerializer)
-class DepartmentListView(ReadOnlyOptionListView):
-    model = Department
-    branch_lookup = "branch"
-    serializer_class = DepartmentOptionSerializer
-
-
-@option_list_schema("DesignationListResponse", DesignationOptionSerializer)
-class DesignationListView(ReadOnlyOptionListView):
-    model = Designation
-    branch_lookup = "department__branch"
-    serializer_class = DesignationOptionSerializer
 
 
 class EmployeeFormAccessView(APIView):
@@ -298,3 +284,5 @@ class EmployeeDocumentDetailView(EmployeeDocumentMixin, APIView):
             document.delete()
             transaction.on_commit(lambda: file.storage.delete(file.name))
         return success_response(None, "Document removed successfully")
+
+

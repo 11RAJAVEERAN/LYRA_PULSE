@@ -272,3 +272,24 @@ class EmployeeDetailsFormTests(TestCase):
         document = EmployeeDocument.objects.get()
         with self.assertRaises(ValueError):
             document.file.url
+
+    def test_employee_branch_department_and_designation_must_match(self):
+        other_branch = Branch.objects.create(organization=self.org, name="Madurai", code="MDU")
+        other_department = Department.objects.create(name="Other Department", branch=other_branch)
+        other_designation = Designation.objects.create(name="Other Designation", department=other_department)
+
+        self.client.force_authenticate(user=self.superadmin)
+        invalid_create = self.client.post(
+            "/api/v1/employees/",
+            self.payload(department=other_department.pk),
+            format="json",
+        )
+        self.assertEqual(invalid_create.status_code, 400, invalid_create.data)
+
+        employee = self.create_employee()
+        invalid_update = self.client.patch(
+            f"/api/v1/employees/{employee['id']}/",
+            {"designation": other_designation.pk},
+            format="json",
+        )
+        self.assertEqual(invalid_update.status_code, 400, invalid_update.data)

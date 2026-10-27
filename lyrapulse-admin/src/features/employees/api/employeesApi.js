@@ -4,7 +4,7 @@ const unwrap = (response) => response.data?.data ?? response.data
 const list = (data) => (Array.isArray(data) ? data : [])
 
 export const employeesApi = {
-  list: async () => list(unwrap(await apiClient.get('/employees/'))),
+  list: async (params) => list(unwrap(await apiClient.get('/employees/', { params }))),
   get: async (id) => unwrap(await apiClient.get(`/employees/${id}/`)),
   create: async (payload) => unwrap(await apiClient.post('/employees/', payload)),
   update: async (id, payload) => unwrap(await apiClient.patch(`/employees/${id}/`, payload)),
