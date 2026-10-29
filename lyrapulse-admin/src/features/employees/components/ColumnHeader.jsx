@@ -26,6 +26,12 @@ const iconButtonSx = (active) => ({
   '&:hover': { bgcolor: active ? 'secondary.light' : 'action.hover', color: active ? 'secondary.main' : 'text.primary' },
 })
 
+// Header-only: inactive sort/filter icons stay muted until hovered or active, so the column label leads.
+const headIconSx = (active) => {
+  const base = iconButtonSx(active)
+  return { ...base, opacity: active ? 1 : 0.55, transition: 'opacity 150ms ease', '&:hover': { ...base['&:hover'], opacity: 1 }, '&:focus-visible': { opacity: 1 } }
+}
+
 const popoverPaperSx = { mt: 0.5, borderRadius: 2, border: '1px solid', borderColor: 'divider', overflow: 'hidden' }
 
 const emptyDraft = (column) => (column.filter === 'select' ? [] : column.filter === 'date' ? {} : '')
@@ -195,22 +201,22 @@ export function ColumnHeader({ column, sort, onSort, onSortTo, filterValue, onFi
 
   return (
     <TableCell aria-sort={direction === 'asc' ? 'ascending' : direction === 'desc' ? 'descending' : undefined} sx={headCellSx}>
-      <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
-        <span>{column.label}</span>
+      <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.25 }}>
+        <Box component="span" sx={{ mr: 0.75 }}>{column.label}</Box>
         {column.sort ? (
           <IconButton
             size="small"
             onClick={(event) => (multiSort ? setSortAnchor(event.currentTarget) : onSort(column.id))}
             aria-label={multiSort ? `Sort ${column.label} column` : `Sort by ${column.label}, next: ${nextSort}`}
             aria-haspopup={multiSort ? 'dialog' : undefined}
-            sx={iconButtonSx(Boolean(direction))}
+            sx={headIconSx(Boolean(direction))}
           >
             <SortIcon size={15} aria-hidden="true" />
           </IconButton>
         ) : null}
-        {column.sort && column.filter ? <Box aria-hidden="true" sx={{ width: '1px', height: 16, bgcolor: 'divider' }} /> : null}
+        {column.sort && column.filter ? <Box aria-hidden="true" sx={{ width: '1px', height: 14, mx: 0.25, bgcolor: 'divider' }} /> : null}
         {column.filter ? (
-          <IconButton size="small" onClick={(event) => setFilterAnchor(event.currentTarget)} aria-label={`Filter ${column.label}${filterActive ? ' (active)' : ''}`} aria-haspopup="dialog" sx={iconButtonSx(filterActive)}>
+          <IconButton size="small" onClick={(event) => setFilterAnchor(event.currentTarget)} aria-label={`Filter ${column.label}${filterActive ? ' (active)' : ''}`} aria-haspopup="dialog" sx={headIconSx(filterActive)}>
             <Funnel size={15} aria-hidden="true" />
           </IconButton>
         ) : null}

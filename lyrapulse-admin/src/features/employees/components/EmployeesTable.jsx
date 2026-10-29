@@ -28,7 +28,7 @@ const cells = {
     const designation = ctx.designations.get(String(row.designation))
     const department = ctx.departments.get(String(row.department))
     if (!designation) return dash
-    return <Box><Typography variant="body2">{designation}</Typography>{department ? <Secondary>{department}</Secondary> : null}</Box>
+    return <Box><Typography variant="body2" sx={{ color: 'text.primary', lineHeight: 1.35 }}>{designation}</Typography>{department ? <Secondary>{department}</Secondary> : null}</Box>
   },
   joining_date: (row) => formatDate(row.joining_date),
   status: (row) => <StatusChip label={row.is_active ? 'Active' : 'Inactive'} />,
@@ -66,7 +66,7 @@ export function EmployeesTable({ rows, allRows, columns, ctx, sort, onSort, onSo
         </TableHead>
         <TableBody>
           {rows.map((row) => (
-            <TableRow key={row.id} hover sx={{ '& td': { py: 1, px: 1.5, fontSize: '0.875rem' } }}>
+            <TableRow key={row.id} hover sx={{ height: 64, '& td': { py: 1.25, px: 1.5, fontSize: '0.875rem', verticalAlign: 'middle', whiteSpace: 'nowrap' } }}>
               {columns.map((column) => (
                 <TableCell key={column.id}>{cells[column.id](row, ctx)}</TableCell>
               ))}
