@@ -378,6 +378,9 @@ void _openPage(int index) {
   }
 }
 
+
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -471,7 +474,7 @@ onRefresh: () async {
 
     CalendarScreen(),
     LeaveScreen(),
-    const PermissionScreen(),
+   
   ],
 ),
       bottomNavigationBar: _buildBottomNavigation(),
@@ -495,25 +498,39 @@ onRefresh: () async {
       ),
       child: Row(
         children: [
-          Builder(
-            builder: (context) => Material(
-              color: AppColors.white.withValues(alpha: .78),
-              borderRadius: BorderRadius.circular(18),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(18),
-                onTap: () => Scaffold.of(context).openDrawer(),
-                child: const SizedBox(
-                  width: 46,
-                  height: 46,
-                  child: Icon(
-                    Icons.menu_rounded,
-                    color: AppColors.primary,
-                    size: 24,
-                  ),
-                ),
-              ),
-            ),
-          ),
+          // Builder(
+          //   builder: (context) => Material(
+          //     color: AppColors.white.withValues(alpha: .78),
+          //     borderRadius: BorderRadius.circular(18),
+          //     child: InkWell(
+          //       borderRadius: BorderRadius.circular(18),
+          //       onTap: () => Scaffold.of(context).openDrawer(),
+          //       child: const SizedBox(
+          //         width: 46,
+          //         height: 46,
+          //         child: Icon(
+          //           Icons.menu_rounded,
+          //           color: AppColors.primary,
+          //           size: 24,
+          //         ),
+          //       ),
+          //     ),
+          //   ),
+          // ),
+
+
+
+
+
+
+
+
+
+
+
+
+
+
           const SizedBox(width: 15),
           Expanded(
             child: Column(
@@ -813,8 +830,7 @@ onRefresh: () async {
 
   Widget _buildWorkingCard() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
-      decoration: BoxDecoration(
+padding: const EdgeInsets.fromLTRB(14, 12, 14, 11),      decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
         gradient: const LinearGradient(
           colors: [
@@ -861,7 +877,7 @@ onRefresh: () async {
                 
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 7),
               Obx(
                 () => FittedBox(
                   fit: BoxFit.scaleDown,
@@ -895,7 +911,7 @@ onRefresh: () async {
                   ),
                 ],
               ),
-              const SizedBox(height: 15),
+              const SizedBox(height: 10),
               Obx(
                 () => _infoRow(
                   Icons.coffee_rounded,
@@ -906,7 +922,7 @@ onRefresh: () async {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 10),
+                padding: const EdgeInsets.symmetric(vertical: 6),
                 child: Divider(
                   color: AppColors.white.withValues(alpha: .25),
                   height: 1,
@@ -928,13 +944,16 @@ onRefresh: () async {
     return Row(
       children: [
         Container(
-          width: 37,
-          height: 37,
+          width: 32,
+          height: 32,
           decoration: BoxDecoration(
             color: AppColors.white.withValues(alpha: .15),
             borderRadius: BorderRadius.circular(11),
           ),
-          child: Icon(icon, color: AppColors.white, size: 25),
+          child:
+          Icon(icon,
+           color: AppColors.white,
+            size: 20),
         ),
         const SizedBox(width: 14),
         Expanded(
@@ -987,7 +1006,7 @@ onRefresh: () async {
           style: GoogleFonts.inter(
             color: AppColors.textPrimary,
             fontSize: 15,
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w500,
           ),
         ),
       ],
@@ -1297,21 +1316,59 @@ Widget _buildBottomNavigation() {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           _navItem(
-            Icons.home_rounded, 
-          'Home', 0),
-
+            Icons.home_rounded,
+            'Home',
+            0,
+          ),
           _navItem(
             Icons.calendar_month_outlined,
             'Calendar',
             1,
           ),
           const SizedBox(width: 72),
-          _navItem(Icons.beach_access_outlined, 'Leave', 2),
           _navItem(
-            Icons.access_time_outlined,
-            'Permission',
-            3,
+            Icons.beach_access_outlined,
+            'Leave',
+            2,
           ),
+
+
+
+
+          // Drawer button replaces Permission
+       Builder(
+  builder: (drawerContext) => GestureDetector(
+    behavior: HitTestBehavior.opaque,
+    onTap: () {
+      Scaffold.of(drawerContext).openDrawer();
+    },
+    child: SizedBox(
+      width: 58,
+      height: 58,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.menu_rounded,
+            size: 22,
+            color: AppColors.textSecondary,
+          ),
+          const SizedBox(height: 3),
+          Text(
+            'Drawer',
+            style: GoogleFonts.inter(
+              fontSize: 9,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ],
+      ),
+    ),
+  ),
+),
+
+
         ],
       ),
     ),

@@ -1,9 +1,10 @@
 
 import 'dart:math' as math;
 
-import '../../../app/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+
+import '../../../app/theme/app_colors.dart';
 
 class HoldToConfirmButton extends StatefulWidget {
   final bool isCheckOut;
@@ -136,8 +137,8 @@ class _HoldToConfirmButtonState extends State<HoldToConfirmButton>
     final size = 88 + (eased * 94);
     final opacity = (1 - eased) * 0.72;
 
-    final waveColor = waveIndex.isEven ? AppColors.accent : AppColors.secondary;
-
+    final waveColor =
+        waveIndex.isEven ? AppColors.accent : AppColors.secondary;
     return Container(
       width: size,
       height: size,

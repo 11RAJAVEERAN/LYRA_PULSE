@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -12,6 +13,8 @@ class BottomNavBar extends StatelessWidget {
 
   final int selectedIndex;
   final ValueChanged<int> onChanged;
+
+  static const int drawerIndex = 4;
 
   static const List<_NavItem> _items = [
     _NavItem(
@@ -30,9 +33,9 @@ class BottomNavBar extends StatelessWidget {
       label: 'Leave',
     ),
     _NavItem(
-      icon: Icons.access_time_outlined,
-      selectedIcon: Icons.access_time_filled_rounded,
-      label: 'Permission',
+      icon: Icons.menu_rounded,
+      selectedIcon: Icons.menu_rounded,
+      label: 'Drawer',
     ),
   ];
 
@@ -79,11 +82,12 @@ class BottomNavBar extends StatelessWidget {
     required int index,
     required _NavItem item,
   }) {
-    final isSelected = selectedIndex == index;
+    final isDrawer = index == 3;
+    final isSelected = !isDrawer && selectedIndex == index;
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTap: () => onChanged(index),
+      onTap: () => onChanged(isDrawer ? drawerIndex : index),
       child: Center(
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 220),
@@ -109,7 +113,7 @@ class BottomNavBar extends StatelessWidget {
                     ? AppColors.primary
                     : AppColors.textSecondary,
               ),
-              if (isSelected) ...[
+              if (isSelected || isDrawer) ...[
                 const SizedBox(height: 3),
                 Text(
                   item.label,
@@ -118,7 +122,9 @@ class BottomNavBar extends StatelessWidget {
                   style: GoogleFonts.inter(
                     fontSize: 8,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.primary,
+                    color: isSelected
+                        ? AppColors.primary
+                        : AppColors.textSecondary,
                   ),
                 ),
               ],
