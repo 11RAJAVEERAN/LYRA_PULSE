@@ -8,9 +8,9 @@ export const typography = {
   h6: { fontSize: '1rem', fontWeight: 600, lineHeight: 1.5 },
   subtitle1: { fontSize: '1rem', fontWeight: 600, lineHeight: 1.5 },
   subtitle2: { fontSize: '0.875rem', fontWeight: 600, lineHeight: 1.45 },
-  body1: { fontSize: '0.9375rem', fontWeight: 500, lineHeight: 1.5 },
-  body2: { fontSize: '0.875rem', fontWeight: 500, lineHeight: 1.5 },
-  caption: { fontSize: '0.8125rem', fontWeight: 400, lineHeight: 1.5 },
+  body1: { fontSize: '0.9375rem', fontWeight: 450, lineHeight: 1.5 },
+  body2: { fontSize: '0.875rem', fontWeight: 450, lineHeight: 1.5 },
+  caption: { fontSize: '0.8125rem', fontWeight: 450, lineHeight: 1.5 },
   overline: { fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.08em', lineHeight: 1.5 },
   button: { fontSize: '0.875rem', fontWeight: 600, textTransform: 'none', lineHeight: 1.45 },
 }

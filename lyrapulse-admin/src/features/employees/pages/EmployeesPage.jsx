@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Alert, Box, Button, Card, Chip, Paper, Snackbar, Stack, TablePagination, Typography } from '@mui/material'
-import { Columns3 } from 'lucide-react'
+import { Columns3, UserPlus } from 'lucide-react'
 import { PageHeader } from '../../../components/common/PageHeader'
 import { SearchInput } from '../../../components/common/SearchInput'
 import { EmptyState } from '../../../components/common/EmptyState'
@@ -170,29 +170,28 @@ export function EmployeesPage() {
   }
 
   return (
-    <Box>
+    <Box sx={{ minWidth: 0, maxWidth: '100%' }}>
       <PageHeader
         title="Employees"
-        subtitle="Manage employee profiles, assignments, and account status."
       />
 
-      <Card sx={{ mb: 1.5 }}>
+      <Card sx={{ mb: 2 }}>
         <Box sx={{ p: { xs: 1.5, sm: 2 } }}>
           <Stack direction={{ xs: 'column', md: 'row' }} sx={{ gap: 1.5, alignItems: { md: 'center' }, justifyContent: 'space-between' }}>
             <Typography variant="h6" component="h2" sx={{ color: 'text.primary', whiteSpace: 'nowrap' }}>
-              Total Active Employees{' '}
               <Box component="span" sx={{ color: 'secondary.main', fontVariantNumeric: 'tabular-nums' }}>{loading && rows.length === 0 ? '…' : activeCount}</Box>
+              {' '}Active Employees
               {hasNarrowing && !loading ? (
                 <Typography component="span" variant="body2" color="text.secondary" sx={{ ml: 1, fontWeight: 400 }}>· {sorted.length} matching</Typography>
               ) : null}
             </Typography>
-            <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ gap: 1, alignItems: { sm: 'center' } }}>
-              <Box sx={{ width: { xs: '100%', sm: 300 } }}>
-                <SearchInput value={query} onChange={changeQuery} label="Search employees" placeholder="Search by name, code, phone, or email" />
+            <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ gap: 1, alignItems: { sm: 'center' }, flexWrap: { sm: 'wrap' }, minWidth: 0, maxWidth: '100%' }}>
+              <Box sx={{ width: { xs: '100%', sm: 320 }, maxWidth: '100%' }}>
+                <SearchInput value={query} onChange={changeQuery} label="Search employees" placeholder="Search employees..." />
               </Box>
               <Stack direction="row" sx={{ gap: 1 }}>
-                {canAdd ? <Button variant="contained" onClick={openCreate}>Add Employee</Button> : null}
                 <Button variant="outlined" startIcon={<Columns3 size={16} aria-hidden="true" />} onClick={() => setColumnsOpen(true)}>Edit Columns</Button>
+                {canAdd ? <Button variant="contained" startIcon={<UserPlus size={16} aria-hidden="true" />} onClick={openCreate}>Add Employee</Button> : null}
               </Stack>
             </Stack>
           </Stack>
@@ -217,7 +216,7 @@ export function EmployeesPage() {
       {pageError ? <ErrorState message={pageError} onRetry={loadEmployees} retrying={loading} /> : null}
       {optionsError ? <Alert severity="warning" sx={{ mb: 2 }}>Branch, department and designation names could not be loaded: {optionsError}</Alert> : null}
 
-      <Paper variant="outlined" sx={{ overflow: 'hidden', borderRadius: 2 }}>
+      <Paper variant="outlined" sx={{ overflow: 'hidden', minWidth: 0, maxWidth: '100%' }}>
         {loading && rows.length === 0 ? (
           <LoadingState label="Loading employees…" />
         ) : pageError && rows.length === 0 ? (
@@ -253,7 +252,7 @@ export function EmployeesPage() {
               onRowsPerPageChange={(event) => { setRowsPerPage(Number(event.target.value)); setPage(0) }}
               rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}
               labelRowsPerPage="Rows"
-              sx={{ borderTop: '1px solid', borderColor: 'divider', '& .MuiTablePagination-toolbar': { minHeight: 48 } }}
+              sx={{ borderTop: '1px solid', borderColor: 'divider', '& .MuiTablePagination-toolbar': { minHeight: 52, alignItems: 'center' }, '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows': { m: 0 } }}
               slotProps={{ select: { inputProps: { 'aria-label': 'Rows per page' } } }}
             />
           </>
