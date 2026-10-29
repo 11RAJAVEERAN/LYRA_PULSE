@@ -38,31 +38,46 @@ const navItems = [
 
 const isPathActive = (path, pathname) => Boolean(matchPath({ path, end: false }, pathname))
 
-const MOTION_MS = 200
+const MOTION_MS = 180
 
 const navButtonSx = (collapsed) => ({
-  minHeight: 44,
-  borderRadius: 1.5,
+  position: 'relative',
+  minHeight: 40,
+  borderRadius: 1,
   mb: 0.5,
   // Identical side padding in both states plus a centered icon in the rail keeps every icon on the same
   // x position when the sidebar is toggled (icon centre = 12px padding + 18px half of the 36px icon box).
   px: 1.5,
   justifyContent: collapsed ? 'center' : 'flex-start',
-  color: 'text.primary',
-  '& .MuiListItemIcon-root': { color: 'text.secondary' },
-  // Selected item: a soft brand-blue tint with a blue label, icon and edge marker.
+  color: 'text.secondary',
+  transition: 'background-color 150ms ease, color 150ms ease',
+  '& .MuiListItemIcon-root': { color: 'text.secondary', transition: 'color 150ms ease' },
+  '& .MuiListItemText-root': { ml: 0.5 },
+  '& .MuiListItemText-primary': { fontSize: '0.875rem', fontWeight: 500, lineHeight: 1.4286, letterSpacing: 0 },
+  // Selected item: a subtle translucent highlight plus a thin brand-blue indicator line on the left edge.
   '&.active': {
-    bgcolor: 'info.light',
-    color: 'info.dark',
+    bgcolor: 'action.selected',
+    color: 'text.primary',
     '& .MuiListItemIcon-root': { color: 'info.main' },
-    '& .MuiListItemText-primary': { fontWeight: 650 },
-    '&:before': { content: '""', position: 'absolute', left: 0, top: 8, bottom: 8, width: 3, borderRadius: 3, bgcolor: 'info.main' },
+    '& .MuiListItemText-primary': { fontWeight: 600 },
+    '&:before': { content: '""', position: 'absolute', left: 0, top: '50%', height: 22, transform: 'translateY(-50%)', width: 3, borderRadius: '0 3px 3px 0', bgcolor: 'info.main' },
   },
-  '&.active:hover': { bgcolor: 'info.light', color: 'info.dark' },
-  '&:hover': { bgcolor: 'action.hover', '& .MuiListItemIcon-root': { color: 'text.primary' } },
+  '&.active:hover': { bgcolor: 'action.selected' },
+  '&:hover': { bgcolor: 'action.hover', color: 'text.primary', '& .MuiListItemIcon-root': { color: 'text.primary' } },
   '&.active:hover .MuiListItemIcon-root': { color: 'info.main' },
   '&:active:not(.active)': { bgcolor: 'action.selected' },
   '&:focus-visible': { outline: '2px solid', outlineColor: 'info.main', outlineOffset: -2 },
+})
+
+// Vertical tree connector for the sub-menu: each row draws its share of the trunk plus a short horizontal branch,
+// and the last row stops the trunk at its branch so the tree ends in an elbow.
+const treeRowSx = (isLast) => ({
+  position: 'relative',
+  pl: 2.25,
+  py: 0.25,
+  '&:before': { content: '""', position: 'absolute', left: 0, top: 0, bottom: isLast ? '50%' : 0, width: 0, borderLeft: '1px solid', borderColor: 'divider' },
+  '&:after': { content: '""', position: 'absolute', left: 0, top: '50%', width: 12, height: 0, borderTop: '1px solid', borderColor: 'divider', transition: 'border-color 150ms ease' },
+  '&:has(.active):after': { borderColor: 'info.main' },
 })
 
 export function Sidebar({ collapsed, onToggle, onNavigate, belowHeader = false }) {
@@ -126,9 +141,9 @@ export function Sidebar({ collapsed, onToggle, onNavigate, belowHeader = false }
       sx={{
         // Inside the mobile drawer (which is slightly wider than 264px) the expanded sidebar fills it, so no dark strip shows beside the light surface.
         width: visuallyCollapsed ? 80 : { xs: '100%', md: 264 },
-        height: belowHeader ? 'calc(100vh - 72px)' : '100vh',
+        height: belowHeader ? 'calc(100vh - 68px)' : '100vh',
         position: belowHeader ? 'fixed' : 'sticky',
-        top: belowHeader ? 72 : 0,
+        top: belowHeader ? 68 : 0,
         left: belowHeader ? 0 : undefined,
         zIndex: isHovered && collapsed ? 1200 : 'auto',
         // Only the navigation list scrolls, and the rail stays inside the space below the global header.
@@ -136,6 +151,7 @@ export function Sidebar({ collapsed, onToggle, onNavigate, belowHeader = false }
         transition: reduceMotion ? 'none' : `width ${MOTION_MS}ms ease`,
         bgcolor: 'background.paper',
         color: 'text.primary',
+        fontFamily: (theme) => theme.typography.fontFamily,
         borderRight: 1,
         borderColor: 'divider',
         display: 'flex',
@@ -159,17 +175,17 @@ export function Sidebar({ collapsed, onToggle, onNavigate, belowHeader = false }
                 aria-label={visuallyCollapsed ? label : undefined}
                 sx={{
                   ...navButtonSx(visuallyCollapsed),
-                  // Parent of the current page: a soft tint, so only the child reads as the selected page.
-                  ...(childActive ? { bgcolor: 'action.selected', color: 'info.dark', '& .MuiListItemIcon-root': { color: 'info.main' } } : null),
+                  // Parent of the current page: no fill (only the child reads as the selected page), just a stronger label and brand icon.
+                  ...(childActive ? { color: 'text.primary', '& .MuiListItemIcon-root': { color: 'info.main' }, '& .MuiListItemText-primary': { fontWeight: 600 } } : null),
                 }}
               >
                 <ListItemIcon sx={{ color: 'inherit', minWidth: visuallyCollapsed ? 0 : 36, justifyContent: 'center' }}>
-                  <Icon size={18} aria-hidden="true" />
+                  <Icon size={20} aria-hidden="true" />
                 </ListItemIcon>
                 {!visuallyCollapsed ? (
                   <>
-                    <ListItemText primary={label} primaryTypographyProps={{ variant: 'body2', fontWeight: 550, noWrap: true }} />
-                    <ChevronRight size={16} aria-hidden="true" style={{ flexShrink: 0, transform: expanded ? 'rotate(90deg)' : 'none', transition: reduceMotion ? 'none' : `transform ${MOTION_MS}ms ease` }} />
+                    <ListItemText primary={label} primaryTypographyProps={{ variant: 'body2', noWrap: true }} />
+                    <ChevronRight size={16} aria-hidden="true" style={{ flexShrink: 0, transform: expanded ? 'rotate(90deg)' : 'none', color: 'inherit', transition: reduceMotion ? 'none' : `transform ${MOTION_MS}ms ease` }} />
                   </>
                 ) : null}
               </ListItemButton>
@@ -180,25 +196,29 @@ export function Sidebar({ collapsed, onToggle, onNavigate, belowHeader = false }
                 {visuallyCollapsed ? <Tooltip title={label} placement="right">{parent}</Tooltip> : parent}
                 {!visuallyCollapsed ? (
                   <Collapse in={expanded} timeout={motionMs} unmountOnExit id={groupId}>
-                    <Box sx={{ ml: 3, pl: 1, mb: 0.5, borderLeft: '1px solid', borderColor: 'divider' }}>
-                      {item.children.map((child) => (
-                        <ListItemButton
-                          key={child.path}
-                          component={NavLink}
-                          to={child.path}
-                          onClick={onNavigate}
-                          sx={{
-                            ...navButtonSx(false),
-                            minHeight: 38,
-                            mb: 0.25,
-                            pl: 1.75,
-                            // Child rows read one step lighter than their parent; the selected child regains weight.
-                            '& .MuiListItemText-primary': { fontSize: '0.8125rem' },
-                            '&.active .MuiListItemText-primary': { fontWeight: 650 },
-                          }}
-                        >
-                          <ListItemText primary={child.label} primaryTypographyProps={{ variant: 'body2', fontWeight: 550, noWrap: true }} />
-                        </ListItemButton>
+                    <Box sx={{ ml: '29px', mt: 0.25, mb: 1 }}>
+                      {item.children.map((child, index) => (
+                        <Box key={child.path} sx={treeRowSx(index === item.children.length - 1)}>
+                          <ListItemButton
+                            component={NavLink}
+                            to={child.path}
+                            onClick={onNavigate}
+                            sx={{
+                              ...navButtonSx(false),
+                              minHeight: 36,
+                              mb: 0,
+                              px: 1.5,
+                              '& .MuiListItemText-root': { ml: 0 },
+                              // Child rows read one step lighter than their parent; the selected child regains weight.
+                              '& .MuiListItemText-primary': { fontSize: '0.8125rem', fontWeight: 500 },
+                              '&.active .MuiListItemText-primary': { fontWeight: 600 },
+                              // The connector branch carries the selection marker for sub-items, so the edge indicator is dropped.
+                              '&.active:before': { display: 'none' },
+                            }}
+                          >
+                            <ListItemText primary={child.label} primaryTypographyProps={{ variant: 'body2', noWrap: true }} />
+                          </ListItemButton>
+                        </Box>
                       ))}
                     </Box>
                   </Collapse>
@@ -218,9 +238,9 @@ export function Sidebar({ collapsed, onToggle, onNavigate, belowHeader = false }
               sx={navButtonSx(visuallyCollapsed)}
             >
               <ListItemIcon sx={{ color: 'inherit', minWidth: visuallyCollapsed ? 0 : 36, justifyContent: 'center' }}>
-                <Icon size={18} aria-hidden="true" />
+                <Icon size={20} aria-hidden="true" />
               </ListItemIcon>
-              {!visuallyCollapsed ? <ListItemText primary={label} primaryTypographyProps={{ variant: 'body2', fontWeight: 550, noWrap: true }} /> : null}
+              {!visuallyCollapsed ? <ListItemText primary={label} primaryTypographyProps={{ variant: 'body2', noWrap: true }} /> : null}
             </ListItemButton>
           )
 

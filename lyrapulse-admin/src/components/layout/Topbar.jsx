@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   AppBar,
   Avatar,
+  Badge,
   Box,
   Button,
   CircularProgress,
@@ -15,9 +16,10 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material'
-import { ChevronDown, LogOut, Menu as MenuIcon } from 'lucide-react'
+import { Bell, ChevronDown, LogOut, Menu as MenuIcon, Moon, Sun } from 'lucide-react'
 import lyraPulseLogo from '../../assets/lyra-pulse-horizontal.png'
 import { useNavigate } from 'react-router-dom'
+import { useThemeMode } from '../../app/providers/ThemeProvider'
 import { useAuth } from '../../features/auth/hooks/useAuth'
 import apiClient, {
   BRANCH_CONTEXT_EVENT,
@@ -27,10 +29,39 @@ import apiClient, {
 const unwrap = (response) => response.data?.data ?? response.data
 const EMPTY_BRANCHES = []
 
+// There is no notifications API yet, so this only drives the unread dot on the bell. Wire it to real data when one exists.
+const HAS_UNREAD_NOTIFICATIONS = true
+
+// Shared look for the hotel/branch switcher: soft surface, 8px radius, hairline only on hover.
+const switcherSx = {
+  borderRadius: 1,
+  border: '1px solid transparent',
+  bgcolor: 'action.hover',
+  transition: 'background-color 150ms ease, border-color 150ms ease, box-shadow 150ms ease',
+}
+
+// 36x36 hit area around an 18-20px icon; only the hover state shows a background.
+const utilityButtonSx = {
+  width: 36,
+  height: 36,
+  borderRadius: 1,
+  color: 'text.secondary',
+  transition: 'background-color 150ms ease, color 150ms ease',
+  '&:hover': { bgcolor: 'action.hover', color: 'text.primary' },
+}
+
+// Presentation-only role label ("SUPERADMIN" -> "Super Admin"); the stored role value is never changed.
+const formatRole = (role) => {
+  const value = String(role ?? 'User').toLowerCase()
+  if (value === 'superadmin') return 'Super Admin'
+  return value.replace(/[_-]+/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase())
+}
+
 export function Topbar({ onMenu, showMenu = false, collapsed = false, onToggle }) {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { currentUser, logout } = useAuth()
+  const { mode, toggleMode } = useThemeMode()
   const [profileAnchor, setProfileAnchor] = useState(null)
   const [selectedBranch, setSelectedBranch] = useState(
     () => window.localStorage.getItem(SELECTED_BRANCH_KEY) ?? '',
@@ -144,14 +175,13 @@ export function Topbar({ onMenu, showMenu = false, collapsed = false, onToggle }
       <Toolbar
         aria-label="Admin top navigation"
         sx={{
-          minHeight: { xs: 64, md: 72 },
+          minHeight: { xs: 64, md: 68 },
           pl: { xs: 1, md: 0 },
           pr: { xs: 1, md: 3 },
           gap: { xs: 0.5, md: 2 },
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.5, md: 1 }, width: { xs: 'auto', md: 264 }, flexShrink: 0, boxSizing: 'border-box', px: { xs: 0, md: 2 }, borderRight: { xs: 0, md: 1 }, borderColor: 'divider' }}>
-          {showMenu ? (
+<Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.5, md: 1 }, width: { xs: 'auto', md: 264 }, flexShrink: 0, boxSizing: 'border-box', px: { xs: 0, md: 1 }, borderRight: { xs: 0, md: '1px solid rgba(0, 0, 0, 0.06)' } }}>          {showMenu ? (
             <IconButton
               aria-label="Open navigation menu"
               onClick={onMenu}
@@ -168,7 +198,7 @@ export function Topbar({ onMenu, showMenu = false, collapsed = false, onToggle }
                 aria-label={collapsed ? 'Expand navigation' : 'Collapse navigation'}
                 onClick={onToggle}
                 edge="start"
-                sx={{ color: 'text.primary', flexShrink: 0, mr: 0.5 }}
+                sx={{ color: 'text.secondary', flexShrink: 0, width: 36, height: 36, '&:hover': { bgcolor: 'action.hover', color: 'text.primary' } }}
               >
                 <MenuIcon size={20} />
               </IconButton>
@@ -176,17 +206,27 @@ export function Topbar({ onMenu, showMenu = false, collapsed = false, onToggle }
           ) : null}
 
           <Box
-            component="img"
-            src={lyraPulseLogo}
-            alt="LYRA PULSE"
             sx={{
-              display: 'block',
-              width: { xs: 130, sm: 150, md: 184 },
-              height: { xs: 27, sm: 30, md: 37 },
-              objectFit: 'contain',
+              display: 'flex',
+              alignItems: 'center',
               flexShrink: 0,
+              // The logo artwork has a white background, so in dark mode it sits on a soft light tile.
+              ...(mode === 'dark' ? { bgcolor: 'common.white', borderRadius: 1, px: 1, py: 0.5 } : null),
             }}
-          />
+          >
+            <Box
+              component="img"
+              src={lyraPulseLogo}
+              alt="LYRA PULSE"
+              sx={{
+                display: 'block',
+                width: { xs: 119, sm: 139, md: 159 },
+                height: { xs: 24, sm: 28, md: 32 },
+                objectFit: 'contain',
+                flexShrink: 0,
+              }}
+            />
+          </Box>
         </Box>
         {branchesQuery.isLoading ? (
           <Box
@@ -233,30 +273,31 @@ export function Topbar({ onMenu, showMenu = false, collapsed = false, onToggle }
             disableUnderline
             inputProps={{ 'aria-label': 'Select authorized branch' }}
             IconComponent={ChevronDown}
+            MenuProps={{ anchorOrigin: { vertical: 'bottom', horizontal: 'left' }, transformOrigin: { vertical: 'top', horizontal: 'left' } }}
             sx={{
+              ...switcherSx,
               width: 'fit-content',
               maxWidth: { xs: 110, sm: 300 },
               minWidth: 0,
-              height: 36,
+              height: 40,
               fontSize: 13,
-              lineHeight: 1.3,
+              fontWeight: 500,
+              lineHeight: '40px',
               color: 'text.primary',
-              border: '1px solid',
-              borderColor: 'divider',
-              borderRadius: 999,
-              bgcolor: 'background.paper',
-              '&:hover': { bgcolor: 'action.hover' },
+              '&:hover': { borderColor: 'divider' },
               '&.Mui-focused': {
-                outline: '2px solid',
-                outlineColor: 'info.main',
-                outlineOffset: 1,
+                borderColor: 'info.main',
+                bgcolor: 'background.paper',
+                boxShadow: (theme) => `0 0 0 3px ${theme.palette.action.focus}`,
               },
               '& .MuiSelect-select': {
-                height: 36,
+                height: 40,
                 minHeight: '0 !important',
                 boxSizing: 'border-box',
-                display: 'flex',
-                alignItems: 'center',
+                display: 'block',
+                overflow: 'hidden',
+                whiteSpace: 'nowrap',
+                textOverflow: 'ellipsis',
                 py: 0,
                 pl: 1.5,
                 pr: '32px !important',
@@ -264,7 +305,8 @@ export function Topbar({ onMenu, showMenu = false, collapsed = false, onToggle }
               '& .MuiSelect-icon': {
                 width: 16,
                 height: 16,
-                right: 8,
+                right: 10,
+                color: 'text.secondary',
               },
             }}
           >
@@ -280,22 +322,19 @@ export function Topbar({ onMenu, showMenu = false, collapsed = false, onToggle }
           <Tooltip title={branches.length ? branchLabel : 'No branch assigned'}>
             <Box
               sx={{
+                ...switcherSx,
                 maxWidth: { xs: 110, sm: 300 },
                 minWidth: 0,
-                minHeight: 36,
+                minHeight: 40,
                 px: 1.5,
                 display: 'flex',
                 alignItems: 'center',
-                border: '1px solid',
-                borderColor: 'divider',
-                borderRadius: 999,
-                bgcolor: 'background.paper',
               }}
             >
               <Typography
                 variant="body2"
                 color="text.primary"
-                sx={{ fontSize: 13, lineHeight: 1.3 }}
+                sx={{ fontSize: 13, fontWeight: 500, lineHeight: 1.3 }}
                 noWrap
               >
                 {branches.length
@@ -308,10 +347,36 @@ export function Topbar({ onMenu, showMenu = false, collapsed = false, onToggle }
 
         <Box sx={{ flex: 1 }} />
 
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0 }}>
+          <Tooltip title="Notifications">
+            <IconButton aria-label="Notifications" sx={utilityButtonSx}>
+              <Badge
+                variant="dot"
+                color="error"
+                invisible={!HAS_UNREAD_NOTIFICATIONS}
+                overlap="circular"
+                sx={{ '& .MuiBadge-badge': { top: 3, right: 3, width: 7, height: 7, minWidth: 7, padding: 0, boxShadow: (theme) => `0 0 0 2px ${theme.palette.background.paper}` } }}
+              >
+                <Bell size={20} aria-hidden="true" />
+              </Badge>
+            </IconButton>
+          </Tooltip>
+
+          <Tooltip title={mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
+            <IconButton
+              aria-label={mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+              onClick={toggleMode}
+              sx={utilityButtonSx}
+            >
+              {mode === 'dark' ? <Sun size={20} aria-hidden="true" /> : <Moon size={20} aria-hidden="true" />}
+            </IconButton>
+          </Tooltip>
+        </Box>
+
         <Divider
           orientation="vertical"
           flexItem
-          sx={{ mx: { xs: 0, sm: 1 } }}
+          sx={{ mx: { xs: 0.25, sm: 1 }, my: 2.5 }}
         />
 
         <Button
@@ -319,15 +384,19 @@ export function Topbar({ onMenu, showMenu = false, collapsed = false, onToggle }
           aria-haspopup="menu"
           aria-expanded={Boolean(profileAnchor)}
           onClick={(event) => setProfileAnchor(event.currentTarget)}
-          endIcon={<ChevronDown size={16} />}
+          endIcon={<ChevronDown size={16} aria-hidden="true" />}
           sx={{
             minWidth: 0,
-            minHeight: 36,
+            minHeight: 40,
             py: 0,
             px: { xs: 0.5, sm: 1 },
-            gap: 0.75,
+            gap: 1.25,
+            borderRadius: 1,
             color: 'text.primary',
             textTransform: 'none',
+            transition: 'background-color 150ms ease',
+            '&:hover': { bgcolor: 'action.hover' },
+            '& .MuiButton-endIcon': { ml: 0, color: 'text.secondary' },
           }}
         >
           <Avatar
@@ -337,6 +406,7 @@ export function Topbar({ onMenu, showMenu = false, collapsed = false, onToggle }
               width: 36,
               height: 36,
               fontSize: 14,
+              fontWeight: 600,
             }}
           >
             {initials}
@@ -348,16 +418,16 @@ export function Topbar({ onMenu, showMenu = false, collapsed = false, onToggle }
               textAlign: 'left',
             }}
           >
-            <Typography variant="body2" sx={{ fontWeight: 650 }} noWrap>
+            <Typography variant="body2" sx={{ fontWeight: 600, lineHeight: 1.4286 }} noWrap>
               {displayName}
             </Typography>
             <Typography
               variant="caption"
               color="text.secondary"
-              sx={{ textTransform: 'capitalize' }}
+              sx={{ display: 'block', lineHeight: 1.5 }}
               noWrap
             >
-              {(user?.role ?? 'User').toLowerCase()}
+              {formatRole(user?.role)}
             </Typography>
           </Box>
         </Button>
