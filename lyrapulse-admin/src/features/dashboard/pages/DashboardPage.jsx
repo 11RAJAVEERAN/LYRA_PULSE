@@ -1,45 +1,60 @@
-import { Box, ButtonBase, Card, CardContent, Grid, Skeleton, Typography } from '@mui/material'
-import { Activity, CalendarCheck2, ChevronRight, Clock3, FileText, UserPlus, Users } from 'lucide-react'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import {
+  Avatar, Box, ButtonBase, Card, CardContent, Grid, Skeleton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, alpha,
+} from '@mui/material'
+import { Activity, CalendarCheck2, ChevronRight, Clock3, FileText, Inbox, UserPlus, Users } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { AttendanceChart } from '../../../components/charts/AttendanceChart'
-import { EmptyState } from '../../../components/common/EmptyState'
 import { ErrorState } from '../../../components/common/ErrorState'
 import { PageHeader } from '../../../components/common/PageHeader'
+import { StatusChip } from '../../../components/common/StatusChip'
 import { authService } from '../../../services/authService'
+import { attendanceApi } from '../../attendance/api/attendanceApi'
+import { ATTENDANCE_REFRESH_MS, attendanceKeys } from '../../attendance/hooks/useAttendanceQueries'
 import { attendanceErrorMessage } from '../../attendance/utils/errors'
-import { formatDate } from '../../attendance/utils/format'
-import { useAuth } from '../../auth/hooks/useAuth'
+import { NO_VALUE, formatDate, formatTime, initials } from '../../attendance/utils/format'
 import { StatsCard } from '../components/StatsCard'
 import { useDashboardAttendance } from '../hooks/useDashboardAttendance'
 
 const UNAVAILABLE = '—'
+const RECENT_ATTENDANCE_LIMIT = 5
 
-// Leave figures have no backend source yet, so each tile renders an unavailable placeholder.
-const leaveTiles = [
-  { label: 'Total Requests', description: 'This month', tone: 'info' },
-  { label: 'Pending', description: 'Needs review', tone: 'warning' },
-  { label: 'Approved', description: 'This month', tone: 'success' },
-  { label: 'Rejected', description: 'This month', tone: 'error' },
-]
+// Shared spacing for every Dashboard row and card.
+const GRID_SPACING = 2.5
 
-function SectionCard({ title, subtitle, action, children, sx }) {
+function SectionCard({ title, action, children }) {
   return (
-    <Card sx={{ height: '100%', ...sx }}>
-      <CardContent sx={{ p: { xs: 2, md: 3 } }}>
-        <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 2, mb: 2.5 }}>
-          <Box sx={{ minWidth: 0 }}>
-            <Typography variant="h6" component="h2" sx={{ fontWeight: 700 }}>
-              {title}
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.4 }}>
-              {subtitle}
-            </Typography>
-          </Box>
+    <Card sx={{ height: '100%' }}>
+      <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 }, height: '100%', display: 'flex', flexDirection: 'column', boxSizing: 'border-box' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, mb: 2, minHeight: 24 }}>
+          <Typography variant="h6" component="h2">
+            {title}
+          </Typography>
           {action}
         </Box>
         {children}
       </CardContent>
     </Card>
+  )
+}
+
+// Light, centred placeholder used when a section has nothing to show (or no data source yet).
+function CompactEmpty({ icon: Icon, title, description }) {
+  return (
+    <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 0.75, py: 3, px: 2, textAlign: 'center' }}>
+      <Box
+        aria-hidden="true"
+        sx={{ display: 'grid', placeItems: 'center', width: 40, height: 40, borderRadius: 1, backgroundColor: 'action.hover', color: 'text.secondary', mb: 0.5 }}
+      >
+        <Icon size={20} />
+      </Box>
+      <Typography variant="body2" sx={{ fontWeight: 600 }}>
+        {title}
+      </Typography>
+      <Typography variant="caption" color="text.secondary" sx={{ maxWidth: 320 }}>
+        {description}
+      </Typography>
+    </Box>
   )
 }
 
@@ -54,54 +69,126 @@ function QuickAction({ label, description, icon: Icon, to, disabledReason }) {
         alignItems: 'center',
         justifyContent: 'space-between',
         width: '100%',
-        p: 1.5,
-        borderRadius: 1.5,
+        px: 1.5,
+        py: 1.25,
+        borderRadius: 1,
         border: 1,
         borderColor: 'divider',
         backgroundColor: 'background.paper',
         textAlign: 'left',
-        transition: 'background-color 0.2s ease, border-color 0.2s ease',
-        '&:hover': { backgroundColor: 'action.hover', borderColor: 'info.main' },
-        '&.Mui-focusVisible': { outline: 3, outlineStyle: 'solid', outlineColor: 'info.main', outlineOffset: 2 },
-        '&.Mui-disabled': { opacity: 0.6 },
+        color: 'text.primary',
+        transition: 'background-color 150ms ease, border-color 150ms ease',
+        '&:hover': { backgroundColor: 'action.hover' },
+        '&.Mui-focusVisible': { outline: 2, outlineStyle: 'solid', outlineColor: 'info.main', outlineOffset: 2 },
+        '&.Mui-disabled': { backgroundColor: 'transparent' },
       }}
     >
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 0 }}>
         <Box
           aria-hidden="true"
-          sx={{
+          sx={(theme) => ({
             display: 'grid',
             placeItems: 'center',
-            width: 38,
-            height: 38,
+            width: 36,
+            height: 36,
             flexShrink: 0,
-            borderRadius: 1.5,
-            backgroundColor: 'info.light',
-            color: 'info.main',
-          }}
+            borderRadius: 1,
+            backgroundColor: disabled ? theme.palette.action.hover : alpha(theme.palette.info.main, 0.1),
+            color: disabled ? theme.palette.text.disabled : theme.palette.info.main,
+          })}
         >
           <Icon size={18} />
         </Box>
         <Box sx={{ minWidth: 0 }}>
-          <Typography variant="body2" sx={{ fontWeight: 700 }}>
+          <Typography variant="body2" sx={{ fontWeight: 600, color: disabled ? 'text.secondary' : 'text.primary' }} noWrap>
             {label}
           </Typography>
-          <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+          <Typography variant="caption" color={disabled ? 'text.disabled' : 'text.secondary'} sx={{ display: 'block' }} noWrap>
             {disabled ? disabledReason : description}
           </Typography>
         </Box>
       </Box>
-      {disabled ? null : <ChevronRight size={17} aria-hidden="true" />}
+      {disabled ? null : <ChevronRight size={16} aria-hidden="true" style={{ flexShrink: 0 }} />}
     </ButtonBase>
   )
 }
 
+function RecentAttendanceTable({ rows }) {
+  return (
+    <TableContainer sx={{ border: 0, borderRadius: 0 }}>
+      <Table size="small" sx={{ minWidth: 440 }} aria-label="Recent attendance">
+        <TableHead>
+          <TableRow>
+            <TableCell>Employee</TableCell>
+            <TableCell>Check-in</TableCell>
+            <TableCell>Check-out</TableCell>
+            <TableCell>Status</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {rows.map((row) => {
+            const { employee } = row
+            return (
+              <TableRow key={`${employee.id}-${row.attendance_date}`}>
+                <TableCell sx={{ py: 1.25 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, minWidth: 0 }}>
+                    <Avatar src={employee.profile_photo ?? undefined} alt="" sx={{ width: 32, height: 32, fontSize: 12 }}>
+                      {initials(employee.name)}
+                    </Avatar>
+                    <Typography variant="body2" sx={{ fontWeight: 500 }} noWrap>
+                      {employee.name}
+                    </Typography>
+                  </Box>
+                </TableCell>
+                <TableCell sx={{ py: 1.25, whiteSpace: 'nowrap' }}>
+                  <Typography variant="body2">{formatTime(row.check_in_at)}</Typography>
+                </TableCell>
+                <TableCell sx={{ py: 1.25, whiteSpace: 'nowrap' }}>
+                  <Typography variant="body2" color={row.check_out_at ? 'text.primary' : 'text.secondary'}>
+                    {row.check_out_at ? formatTime(row.check_out_at) : NO_VALUE}
+                  </Typography>
+                </TableCell>
+                <TableCell sx={{ py: 1.25 }}>
+                  <StatusChip label={row.status === 'PRESENT' ? 'Present' : 'Absent'} />
+                </TableCell>
+              </TableRow>
+            )
+          })}
+        </TableBody>
+      </Table>
+    </TableContainer>
+  )
+}
+
+function RecentAttendanceSkeleton() {
+  return (
+    <Box aria-label="Loading recent attendance" sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+      {Array.from({ length: RECENT_ATTENDANCE_LIMIT }, (_, index) => (
+        <Skeleton key={index} variant="rounded" height={36} />
+      ))}
+    </Box>
+  )
+}
+
 export function DashboardPage() {
-  const { currentUser } = useAuth()
   // Real attendance data from the Attendance Admin summary API; `today` refetches silently every 5 seconds and the
   // existing figures stay on screen while it does. Only the first load shows the skeletons.
   const { today, trend, trendLoading } = useDashboardAttendance()
   const summary = today.data
+
+  // Latest check-ins for the server's "today" (taken from the summary response), newest first. Same endpoint,
+  // service and polling cadence as the Attendance page; it only starts once the summary has returned its date.
+  const recent = useQuery({
+    queryKey: attendanceKeys.list({ date: summary?.date, status: 'present', ordering: '-check_in', page: 1, page_size: RECENT_ATTENDANCE_LIMIT }),
+    queryFn: ({ signal }) =>
+      attendanceApi.list({ date: summary.date, status: 'present', ordering: '-check_in', page: 1, page_size: RECENT_ATTENDANCE_LIMIT }, signal),
+    enabled: Boolean(summary?.date),
+    placeholderData: keepPreviousData,
+    refetchInterval: ATTENDANCE_REFRESH_MS,
+    refetchOnWindowFocus: true,
+    staleTime: 0,
+  })
+  const recentRows = recent.data?.results ?? []
 
   const sessionUser = authService.getCurrentUser()
   const can = (codename) => sessionUser?.role === 'SUPERADMIN' || Boolean(sessionUser?.permissions?.includes(codename))
@@ -115,8 +202,8 @@ export function DashboardPage() {
       disabledReason: can('employees.add_employee') ? undefined : 'You do not have permission to add employees',
     },
     { label: 'Review Attendance', description: "Check today's attendance", icon: CalendarCheck2, to: '/attendance' },
-    { label: 'Approve Leave', description: 'Review pending leave requests', icon: Clock3, disabledReason: 'Leave management is not available yet' },
-    { label: 'Generate Report', description: 'Create attendance report', icon: FileText, disabledReason: 'Reports are not available yet' },
+    { label: 'Approve Leave', description: 'Review pending leave requests', icon: Clock3, disabledReason: 'Coming soon' },
+    { label: 'Generate Report', description: 'Create attendance report', icon: FileText, disabledReason: 'Coming soon' },
   ]
 
   const totalSubtitle = (() => {
@@ -124,14 +211,15 @@ export function DashboardPage() {
     return today.isError ? 'Unavailable right now' : 'Loading attendance data'
   })()
 
+  const recentLoading = recent.isPending && !today.isError
+
   return (
     <Box>
-      <PageHeader title="Dashboard" subtitle={`Welcome back, ${currentUser?.name ?? 'LyraTech Admin'}`} />
-
+      
       {today.isError && !summary ? <ErrorState message={attendanceErrorMessage(today.error)} onRetry={() => today.refetch()} retrying={today.isFetching} /> : null}
 
-      <Grid container spacing={2.5} sx={{ mb: 3 }}>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+      <Grid container spacing={GRID_SPACING} sx={{ mb: GRID_SPACING }}>
+        <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
           <StatsCard
             title="Total Employees"
             value={summary ? summary.total_employees : UNAVAILABLE}
@@ -141,7 +229,7 @@ export function DashboardPage() {
             loading={today.isLoading}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
           <StatsCard
             title="Present Today"
             value={summary ? summary.present : UNAVAILABLE}
@@ -151,37 +239,44 @@ export function DashboardPage() {
             loading={today.isLoading}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
           <StatsCard
             title="Absent Today"
             value={summary ? summary.absent : UNAVAILABLE}
             subtitle="No check-in recorded"
             icon={<Clock3 size={18} />}
-            tone="warning"
+            tone="error"
             loading={today.isLoading}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
           <StatsCard
             title="On Leave"
             value={UNAVAILABLE}
-            subtitle="Leave data is not available yet"
+            subtitle="Leave data unavailable"
             icon={<CalendarCheck2 size={18} />}
-            tone="error"
+            tone="secondary"
           />
         </Grid>
       </Grid>
 
-      <Grid container spacing={2.5} sx={{ mb: 3 }}>
+      <Grid container spacing={GRID_SPACING} sx={{ mb: GRID_SPACING }}>
         <Grid size={{ xs: 12, lg: 8 }}>
-          <SectionCard title="Attendance Overview" subtitle="Employee attendance for the last 7 days">
+          <SectionCard
+            title="Attendance Overview"
+            action={
+              <Typography variant="caption" color="text.secondary">
+                Last 7 days
+              </Typography>
+            }
+          >
             {trend ? (
               <AttendanceChart data={trend} />
             ) : trendLoading ? (
-              <Skeleton variant="rounded" height={285} aria-label="Loading attendance overview" />
+              <Skeleton variant="rounded" height={280} aria-label="Loading attendance overview" />
             ) : (
-              <EmptyState
-                compact
+              <CompactEmpty
+                icon={Activity}
                 title="Attendance data is unavailable"
                 description="The daily attendance for the last 7 days could not be loaded. Please try again."
               />
@@ -190,64 +285,50 @@ export function DashboardPage() {
         </Grid>
 
         <Grid size={{ xs: 12, lg: 4 }}>
-          <SectionCard
-            title="Leave Requests"
-            subtitle="Monthly leave overview"
-            action={
-              <Box
-                aria-hidden="true"
-                sx={{ display: 'grid', placeItems: 'center', width: 36, height: 36, flexShrink: 0, borderRadius: 1.5, backgroundColor: 'info.light', color: 'info.main' }}
-              >
-                <CalendarCheck2 size={18} />
-              </Box>
-            }
-          >
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.5 }}>
-              {leaveTiles.map((tile) => (
-                <Box
-                  key={tile.label}
-                  sx={(theme) => ({
-                    p: 1.7,
-                    borderRadius: 1.5,
-                    backgroundColor: theme.palette[tile.tone].light,
-                    border: 1,
-                    borderColor: 'divider',
-                  })}
-                >
-                  <Typography sx={{ fontSize: 11, fontWeight: 600, color: 'text.secondary' }}>{tile.label}</Typography>
-                  <Typography
-                    aria-label={`${tile.label}: unavailable`}
-                    sx={(theme) => ({ mt: 0.5, fontSize: 24, lineHeight: 1.1, fontWeight: 700, color: theme.palette[tile.tone].main })}
-                  >
-                    {UNAVAILABLE}
-                  </Typography>
-                  <Typography sx={{ mt: 0.5, fontSize: 10, color: 'text.secondary' }}>{tile.description}</Typography>
-                </Box>
-              ))}
-            </Box>
-            <Box sx={{ mt: 2, pt: 1.5, borderTop: 1, borderColor: 'divider' }}>
-              <Typography sx={{ fontSize: 11, color: 'text.secondary' }}>
-                Leave data is not available yet because the backend has no leave API.
-              </Typography>
-            </Box>
+          <SectionCard title="Leave Requests">
+            <CompactEmpty
+              icon={CalendarCheck2}
+              title="Leave data unavailable"
+              description="Leave information will appear when the feature is available."
+            />
           </SectionCard>
         </Grid>
       </Grid>
 
-      <Grid container spacing={2.5}>
+      <Grid container spacing={GRID_SPACING}>
         <Grid size={{ xs: 12, lg: 7 }}>
-          <SectionCard title="Recent Attendance" subtitle="Latest employee activity">
-            <EmptyState
-              compact
-              title="No attendance activity to show"
-              description="Recent check-ins will appear here once an attendance API is available."
-            />
+          <SectionCard
+            title="Recent Attendance"
+            action={
+              <Typography
+                component={Link}
+                to="/attendance"
+                variant="caption"
+                sx={{ color: 'info.main', fontWeight: 500, textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}
+              >
+                View all
+              </Typography>
+            }
+          >
+            {recentLoading ? (
+              <RecentAttendanceSkeleton />
+            ) : recent.isError && !recent.data ? (
+              <ErrorState message={attendanceErrorMessage(recent.error)} onRetry={() => recent.refetch()} retrying={recent.isFetching} />
+            ) : recentRows.length > 0 ? (
+              <RecentAttendanceTable rows={recentRows} />
+            ) : (
+              <CompactEmpty
+                icon={Inbox}
+                title="No attendance activity to show"
+                description="Recent attendance activity will appear here."
+              />
+            )}
           </SectionCard>
         </Grid>
 
         <Grid size={{ xs: 12, lg: 5 }}>
-          <SectionCard title="Quick Actions" subtitle="Common admin activities">
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.2 }}>
+          <SectionCard title="Quick Actions">
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
               {quickActions.map((action) => (
                 <QuickAction key={action.label} {...action} />
               ))}

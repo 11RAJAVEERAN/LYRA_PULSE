@@ -45,9 +45,9 @@ export function AdminLayout() {
         onToggle={!isMobile ? () => setCollapsed((value) => !value) : undefined}
       />
 
-      <Box sx={{ display: 'flex', flex: '1 1 auto', minHeight: 'calc(100vh - 72px)', minWidth: 0, maxWidth: '100%' }}>
+      <Box sx={{ display: 'flex', flex: '1 1 auto', minHeight: 'calc(100vh - 68px)', minWidth: 0, maxWidth: '100%' }}>
         {!isMobile ? (
-          <Box sx={{ width: collapsed ? 80 : 264, height: 'calc(100vh - 72px)', flexShrink: 0 }}>{sidebarContent}</Box>
+          <Box sx={{ width: collapsed ? 80 : 264, height: 'calc(100vh - 68px)', flexShrink: 0 }}>{sidebarContent}</Box>
         ) : (
           <Drawer
             variant="temporary"
@@ -61,7 +61,7 @@ export function AdminLayout() {
         )}
 
         <Box sx={{ flex: '1 1 0%', minWidth: 0, maxWidth: '100%' }}>
-          <Box component="main" sx={{ width: '100%', minWidth: 0, maxWidth: 1600, mx: 'auto', p: { xs: 2, sm: 2.5, lg: 3 } }}>
+          <Box component="main" sx={{ width: '100%', minWidth: 0, maxWidth: 1600, mx: 'auto', px: { xs: 2, sm: 2.5, lg: 3 }, pt: { xs: 2, sm: 2.5, lg: 3 }, pb: { xs: 3, lg: 4 } }}>
             <Outlet />
           </Box>
         </Box>

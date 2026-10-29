@@ -12,7 +12,7 @@ export const headCellSx = {
   bgcolor: 'info.light',
   color: 'primary.main',
   fontSize: '0.8125rem',
-  fontWeight: 650,
+  fontWeight: 600,
   letterSpacing: 0,
   textTransform: 'none',
   borderBottom: '1px solid',
