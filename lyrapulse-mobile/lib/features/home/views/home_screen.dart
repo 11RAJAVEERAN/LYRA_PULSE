@@ -1,23 +1,21 @@
-
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
 
+
+import 'package:google_fonts/google_fonts.dart';
+import '../../../app/theme/app_colors.dart';
 import 'package:geolocator/geolocator.dart';
-import '../../attendance/views/face_verification_screen.dart';
 
 import '../../attendance/views/location_verification_screen.dart';
-import '../../../app/theme/app_colors.dart';
 import '../../attendance/controllers/attendance_controller.dart';
+
 import '../../calendar/views/calendar_screen.dart';
 import '../../leave/views/leave_screen.dart';
 import '../../notification/views/notification_screen.dart';
-import '../../permission/permission_screen.dart';
 import '../../profile/views/profile_screen.dart';
-
 import '../widgets/hold_to_confirm_button.dart';
+import '../../menu/views/menu_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -38,12 +36,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
 
    int _selectedIndex = 0;
-
-
-
-
-@override
-void initState() {
+ @override
+  void initState() {
   super.initState();
 
   if (Get.isRegistered<AttendanceController>()) {
@@ -51,7 +45,6 @@ void initState() {
   } else {
     attendanceController = Get.put(AttendanceController());
   }
-
   _clockTimer = Timer.periodic(
     const Duration(seconds: 1),
     (_) {
@@ -70,9 +63,7 @@ Future<void> _checkLocationService() async {
       await Geolocator.isLocationServiceEnabled();
 
   if (!mounted || isEnabled) return;
-
-
-await showModalBottomSheet<void>(
+  await showModalBottomSheet<void>(
   context: context,
   isDismissible: false,
   enableDrag: false,
@@ -264,89 +255,6 @@ Future<void> _attendanceAction() async {
   }
 }
 
-
-
-// Future<void> _attendanceAction() async {
-//   final checkingOut = _isCheckedIn;
-
-//   if (checkingOut && _checkInTime == null) {
-//     Get.snackbar(
-//       'Attendance',
-//       'Please check in before checking out.',
-//       snackPosition: SnackPosition.BOTTOM,
-//     );
-//     return;
-//   }
-
-
-
-
-//   try {
-//     // Check whether location service is enabled.
-//     final serviceEnabled =
-//         await Geolocator.isLocationServiceEnabled();
-
-//     if (!serviceEnabled) {
-//       Get.snackbar(
-//         'Location Required',
-//         'Please turn on your phone location.',
-//         snackPosition: SnackPosition.BOTTOM,
-//       );
-//       return;
-//     }
-
-//     // Check and request location permission.
-//     var permission = await Geolocator.checkPermission();
-
-//     if (permission == LocationPermission.denied) {
-//       permission = await Geolocator.requestPermission();
-//     }
-
-//     if (permission == LocationPermission.denied ||
-//         permission == LocationPermission.deniedForever) {
-//       Get.snackbar(
-//         'Permission Required',
-//         'Allow location permission to continue.',
-//         snackPosition: SnackPosition.BOTTOM,
-//       );
-//       return;
-//     }
-
-//     // Verify that the current GPS location can be obtained.
-//     await Geolocator.getCurrentPosition(
-//       locationSettings: const LocationSettings(
-//         accuracy: LocationAccuracy.high,
-//       ),
-//     );
-
-//     if (!mounted) return;
-
-//     // Skip the Location Verification page.
-//     // Continue directly to face verification.
-//     await Get.to(
-//       () => FaceVerificationScreen(
-//         isCheckOut: checkingOut,
-//       ),
-//       transition: Transition.rightToLeft,
-//       duration: const Duration(milliseconds: 350),
-//     );
-
-//     if (mounted) {
-//       setState(() {});
-//     }
-//   } catch (_) {
-//     Get.snackbar(
-//       'Location Error',
-//       'Unable to verify your location. Please try again.',
-//       snackPosition: SnackPosition.BOTTOM,
-//     );
-//   }
-// }
-
-
-
-
-
 void _selectTab(int index) {
   if (!mounted) return;
 
@@ -385,7 +293,7 @@ void _openPage(int index) {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      drawer: _buildDrawer(),
+      // drawer: _buildDrawer(),
 
       body: IndexedStack(
   index: _selectedIndex,
@@ -449,25 +357,6 @@ onRefresh: () async {
 )
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
         ],
       ),
     ),
@@ -498,46 +387,13 @@ onRefresh: () async {
       ),
       child: Row(
         children: [
-          // Builder(
-          //   builder: (context) => Material(
-          //     color: AppColors.white.withValues(alpha: .78),
-          //     borderRadius: BorderRadius.circular(18),
-          //     child: InkWell(
-          //       borderRadius: BorderRadius.circular(18),
-          //       onTap: () => Scaffold.of(context).openDrawer(),
-          //       child: const SizedBox(
-          //         width: 46,
-          //         height: 46,
-          //         child: Icon(
-          //           Icons.menu_rounded,
-          //           color: AppColors.primary,
-          //           size: 24,
-          //         ),
-          //       ),
-          //     ),
-          //   ),
-          // ),
-
-
-
-
-
-
-
-
-
-
-
-
-
-
           const SizedBox(width: 15),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Welcome back',
+                  'Welcome',
                   style: GoogleFonts.inter(
                     fontSize: 13,
                     color: AppColors.sidebarMuted,
@@ -1250,53 +1106,6 @@ padding: const EdgeInsets.fromLTRB(14, 12, 14, 11),      decoration: BoxDecorati
     );
   }
 
-  // Widget _buildLocationCard() {
-    // return Container(
-    //   padding: const EdgeInsets.all(13),
-    //   decoration: BoxDecoration(
-    //     color: Colors.white,
-    //     borderRadius: BorderRadius.circular(20),
-    //     border: Border.all(color: AppColors.border),
-    //   ),
-      // child: Row(
-      //   children: [
-      //     const Icon(
-      //       Icons.location_on_outlined,
-      //       color: AppColors.black,
-      //       size: 20,
-      //     ),
-      //     const SizedBox(width: 12),
-      //     Expanded(
-      //       child: Column(
-      //         crossAxisAlignment: CrossAxisAlignment.start,
-              // children: [
-              //   Text(
-              //     'Location verification',
-              //     style: GoogleFonts.inter(
-              //       fontWeight: FontWeight.w500,
-              //       color: AppColors.black,
-              //     ),
-              //   ),
-                // const SizedBox(height: 4),
-                // Text(
-                //   'Your location is checked during attendance',
-                //   style: GoogleFonts.inter(
-                //     fontSize: 10,
-                //     color: AppColors.textSecondary,
-                //   ),
-                // ),
-          //     ],
-          //   ),
-          // ),
-  //         const Icon(
-  //           Icons.verified_user_outlined,
-  //           color: Color(0xFF16A36A),
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
-
 Widget _buildAttendanceButton() {
   return HoldToConfirmButton(
     isCheckOut: _isCheckedIn,
@@ -1332,16 +1141,13 @@ Widget _buildBottomNavigation() {
             2,
           ),
 
-
-
-
           // Drawer button replaces Permission
        Builder(
   builder: (drawerContext) => GestureDetector(
     behavior: HitTestBehavior.opaque,
-    onTap: () {
-      Scaffold.of(drawerContext).openDrawer();
-    },
+   onTap: () {
+  Get.to(() => const MenuScreen());
+},
     child: SizedBox(
       width: 58,
       height: 58,
@@ -1355,7 +1161,7 @@ Widget _buildBottomNavigation() {
           ),
           const SizedBox(height: 3),
           Text(
-            'Drawer',
+            'Menu',
             style: GoogleFonts.inter(
               fontSize: 9,
               fontWeight: FontWeight.w600,
@@ -1425,120 +1231,121 @@ Widget _navItem(
 
 
 
-  Widget _buildDrawer() {
-    return Drawer(
-      backgroundColor: AppColors.white,
-      child: SafeArea(
-        child: Column(
-          children: [
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(22, 28, 22, 25),
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    AppColors.primaryDark,
-                    AppColors.primary,
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const CircleAvatar(
-                    radius: 31,
-                    backgroundColor: AppColors.white24,
-                    child: Icon(
-                      Icons.person_rounded,
-                      color: AppColors.white,
-                      size: 34,
-                    ),
-                  ),
-                  const SizedBox(height: 13),
-                  Text(
-                    'Madhavan',
-                    style: GoogleFonts.inter(
-                      color: AppColors.white,
-                      fontSize: 21,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Employee',
-                    style: GoogleFonts.inter(
-                      color: AppColors.white70,
-                      fontSize: 13,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            _drawerItem(
-              Icons.home_outlined,
-              'Home',
-              () => Get.back(),
-            ),
+
+  // Widget _buildDrawer() {
+  //   return Drawer(
+  //     backgroundColor: AppColors.white,
+  //     child: SafeArea(
+  //       child: Column(
+  //         children: [
+  //           Container(
+  //             width: double.infinity,
+  //             padding: const EdgeInsets.fromLTRB(22, 28, 22, 25),
+  //             decoration: const BoxDecoration(
+  //               gradient: LinearGradient(
+  //                 colors: [
+  //                   AppColors.primaryDark,
+  //                   AppColors.primary,
+  //                 ],
+  //                 begin: Alignment.topLeft,
+  //                 end: Alignment.bottomRight,
+  //               ),
+  //             ),
+  //             child: Column(
+  //               crossAxisAlignment: CrossAxisAlignment.start,
+  //               children: [
+  //                 const CircleAvatar(
+  //                   radius: 31,
+  //                   backgroundColor: AppColors.white24,
+  //                   child: Icon(
+  //                     Icons.person_rounded,
+  //                     color: AppColors.white,
+  //                     size: 34,
+  //                   ),
+  //                 ),
+  //                 const SizedBox(height: 13),
+  //                 Text(
+  //                   'Madhavan',
+  //                   style: GoogleFonts.inter(
+  //                     color: AppColors.white,
+  //                     fontSize: 21,
+  //                     fontWeight: FontWeight.w800,
+  //                   ),
+  //                 ),
+  //                 const SizedBox(height: 4),
+  //                 Text(
+  //                   'Employee',
+  //                   style: GoogleFonts.inter(
+  //                     color: AppColors.white70,
+  //                     fontSize: 13,
+  //                   ),
+  //                 ),
+  //               ],
+  //             ),
+  //           ),
+  //           _drawerItem(
+  //             Icons.home_outlined,
+  //             'Home',
+  //             () => Get.back(),
+  //           ),
 
             
-            _drawerItem(
-              Icons.calendar_month_outlined,
-              'Attendance Calendar',
-              () {
-                Get.back();
-                _openPage(0);
-              },
-            ),
-            _drawerItem(
-              Icons.beach_access_outlined,
-              'Leave',
-              () {
-                Get.back();
-                _openPage(1);
-              },
-            ),
-            _drawerItem(
-              Icons.request_quote_outlined,
-              'Permission',
-              () {
-                Get.back();
-                _openPage(2);
-              },
-            ),
-            _drawerItem(
-              Icons.notifications_none_rounded,
-              'Notifications',
-              () {
-                Get.back();
-                _openPage(3);
-              },
-            ),
-            _drawerItem(
-              Icons.person_outline_rounded,
-              'Profile',
-              () {
-                Get.back();
-                _openPage(4);
-              },
-            ),
-            const Spacer(),
-            _drawerItem(
-              Icons.logout_rounded,
-              'Logout',
-              () {
-                Get.back();
-                Get.offAllNamed('/login');
-              },
-              color: AppColors.attendanceOut,
-            ),
-            const SizedBox(height: 15),
-          ],
-        ),
-      ),
-    );
-  }
+  //           _drawerItem(
+  //             Icons.calendar_month_outlined,
+  //             'Attendance Calendar',
+  //             () {
+  //               Get.back();
+  //               _openPage(0);
+  //             },
+  //           ),
+  //           _drawerItem(
+  //             Icons.beach_access_outlined,
+  //             'Leave',
+  //             () {
+  //               Get.back();
+  //               _openPage(1);
+  //             },
+  //           ),
+  //           _drawerItem(
+  //             Icons.request_quote_outlined,
+  //             'Permission',
+  //             () {
+  //               Get.back();
+  //               _openPage(2);
+  //             },
+  //           ),
+  //           _drawerItem(
+  //             Icons.notifications_none_rounded,
+  //             'Notifications',
+  //             () {
+  //               Get.back();
+  //               _openPage(3);
+  //             },
+  //           ),
+  //           _drawerItem(
+  //             Icons.person_outline_rounded,
+  //             'Profile',
+  //             () {
+  //               Get.back();
+  //               _openPage(4);
+  //             },
+  //           ),
+  //           const Spacer(),
+  //           _drawerItem(
+  //             Icons.logout_rounded,
+  //             'Logout',
+  //             () {
+  //               Get.back();
+  //               Get.offAllNamed('/login');
+  //             },
+  //             color: AppColors.attendanceOut,
+  //           ),
+  //           const SizedBox(height: 15),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
 
   Widget _drawerItem(
     IconData icon,
