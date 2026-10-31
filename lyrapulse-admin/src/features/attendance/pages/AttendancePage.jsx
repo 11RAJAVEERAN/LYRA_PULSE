@@ -75,7 +75,6 @@ export function AttendancePage() {
     <Box>
       <PageHeader
         title="Attendance"
-        subtitle="Track and manage employee attendance records"
         action={(
           <AttendancePeriodControls
             range={range} onPeriodChange={changePeriod} onCustomRange={changeCustomRange}

@@ -12,6 +12,8 @@ import { DevicesPage } from '../../features/devices/pages/DevicesPage'
 import { AttendancePermissionsPage } from '../../features/attendancePermissions/pages/AttendancePermissionsPage'
 import { DepartmentsPage } from '../../features/departments/pages/DepartmentsPage'
 import { DesignationsPage } from '../../features/designations/pages/DesignationsPage'
+import { ShiftsPage } from '../../features/shifts/pages/ShiftsPage'
+import { ShiftAssignmentsPage } from '../../features/shifts/pages/ShiftAssignmentsPage'
 
 export const routes = [
   {
@@ -41,6 +43,8 @@ export const routes = [
             path: ROUTES.attendance,
             element: <AttendancePage />,
           },
+          { path: ROUTES.shifts, element: <ShiftsPage /> },
+          { path: ROUTES.shiftAssignments, element: <ShiftAssignmentsPage /> },
           {
             path: ROUTES.devices,
             element: <DevicesPage />,

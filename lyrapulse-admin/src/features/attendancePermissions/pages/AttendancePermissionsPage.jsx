@@ -59,7 +59,7 @@ export function AttendancePermissionsPage() {
 
   return (
     <Box>
-      <PageHeader title="Attendance Permission" subtitle="Control how employees can record attendance." />
+      <PageHeader title="Attendance Permission" />
       <Alert severity="info" sx={{ mb: 2 }}>Auto Punch Out settings are stored here. Automatic checkout needs a scheduler and shift end-time integration, which this project does not currently provide.</Alert>
       <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
         <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} alignItems={{ md: 'center' }}>

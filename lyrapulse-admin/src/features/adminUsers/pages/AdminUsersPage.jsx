@@ -86,7 +86,7 @@ export function AdminUsersPage() {
 
   return (
     <Box>
-      <PageHeader title="Admin users" subtitle="Manage administrator, HR, and manager access." />
+      <PageHeader title="Admin users"  />
 
       {error ? <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert> : null}
       {queryError ? <ErrorState message={getErrorMessage(queryError)} onRetry={() => refetch()} retrying={isFetching} /> : null}

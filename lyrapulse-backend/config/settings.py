@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     "apps.devices",
     "apps.fingerprints",
     "apps.attendance",
+    "apps.shifts",
 ]
 
 MIDDLEWARE = [
@@ -105,10 +106,12 @@ SPECTACULAR_SETTINGS = {
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
 }
-CORS_ALLOWED_ORIGINS = [origin.strip() for origin in os.getenv(
-    "CORS_ALLOWED_ORIGINS",
-    "http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000",
-).split(",") if origin.strip()]
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
 # Lets the admin web app (a different origin) read the CSV filename on attendance export downloads.
 CORS_EXPOSE_HEADERS = ["Content-Disposition"]
 SECURE_CONTENT_TYPE_NOSNIFF = True

@@ -5,6 +5,8 @@ export const ROUTES = {
   employeeCreate: '/employees/create',
   employeeDetails: '/employees/:id',
   attendance: '/attendance',
+  shifts: '/shifts',
+  shiftAssignments: '/shift-assignments',
   attendanceDetails: '/attendance/:id',
   leaves: '/leaves',
   permissions: '/permissions',
