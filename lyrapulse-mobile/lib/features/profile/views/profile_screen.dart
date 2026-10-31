@@ -2,305 +2,172 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:image_picker/image_picker.dart';
-import '../../../app/theme/app_colors.dart';
+import 'package:google_fonts/google_fonts.dart';
 
-class ProfileScreen extends StatefulWidget {
+import '../../../app/theme/app_colors.dart';
+import '../controllers/profile_controller.dart';
+
+class ProfileScreen extends GetView<ProfileController> {
   const ProfileScreen({super.key});
 
-  @override
-  State<ProfileScreen> createState() => _ProfileScreenState();
-}
-
-class _ProfileScreenState extends State<ProfileScreen> {
-  static const Color navy = AppColors.hexFF102B63;
-  static const Color blue = AppColors.hexFF4779D9;
-  static const Color purple = AppColors.hexFF6254E8;
-  static const Color green = AppColors.hexFF0BA875;
-  static const Color background = AppColors.hexFFF5F7FD;
-  static const Color muted = AppColors.hexFF8491AA;
-
-  final ImagePicker _imagePicker = ImagePicker();
-
-  File? profileImage;
-
-  String employeeId = 'LYRA001';
-  String employeeName = 'Angel';
-  String phoneNumber = '+91 98765 43210';
-  String emailAddress = 'employee@lyratech.com';
-  String officeLocation = 'Cuddalore';
-  String designation = 'Software Developer';
-  String department = 'Technology';
-
-  static const String joiningDate = '10 January 2025';
+  static const Color navy = Color(0xFF172554);
+  static const Color background = Color(0xFFF4F6FA);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: background,
-
-      // ==========================================================
-      // APP BAR
-      // ==========================================================
-
       appBar: AppBar(
-        backgroundColor: background,
+        backgroundColor: Colors.white,
         elevation: 0,
-        centerTitle: false,
-        title: const Text(
-          'My Profile',
-          style: TextStyle(
+        centerTitle: true,
+        leading: IconButton(
+          onPressed: Get.back,
+          icon: const Icon(
+            Icons.arrow_back_ios_new,
             color: navy,
-            fontSize: 24,
+            size: 20,
+          ),
+        ),
+        title: Text(
+          'My Profile',
+          style: GoogleFonts.inter(
+            color: navy,
+            fontSize: 19,
             fontWeight: FontWeight.w700,
           ),
         ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 18),
-            child: IconButton(
-              onPressed: _showEditProfileDialog,
-              icon: const Icon(
-                Icons.edit_outlined,
-                color: navy,
-              ),
-            ),
-          ),
-        ],
       ),
-
-      // ==========================================================
-      // BODY
-      // ==========================================================
-
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(
-            20,
-            8,
-            20,
-            30,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _profileHeader(),
-              const SizedBox(height: 22),
-              _sectionTitle('Personal Information'),
-              const SizedBox(height: 12),
-              _infoCard(
-                icon: Icons.badge_outlined,
-                title: 'Employee ID',
-                value: employeeId,
-              ),
-              const SizedBox(height: 10),
-              _infoCard(
-                icon: Icons.phone_outlined,
-                title: 'Phone Number',
-                value: phoneNumber,
-              ),
-              const SizedBox(height: 10),
-              _infoCard(
-                icon: Icons.email_outlined,
-                title: 'Email Address',
-                value: emailAddress,
-              ),
-              const SizedBox(height: 10),
-              _infoCard(
-                icon: Icons.location_city_outlined,
-                title: 'Office Location',
-                value: officeLocation,
-              ),
-              const SizedBox(height: 24),
-              _sectionTitle('Work Information'),
-              const SizedBox(height: 12),
-              _infoCard(
-                icon: Icons.work_outline_rounded,
-                title: 'Designation',
-                value: designation,
-              ),
-              const SizedBox(height: 10),
-              _infoCard(
-                icon: Icons.business_outlined,
-                title: 'Department',
-                value: department,
-              ),
-              const SizedBox(height: 10),
-              _infoCard(
-                icon: Icons.calendar_today_outlined,
-                title: 'Joining Date',
-                value: joiningDate,
-              ),
-              const SizedBox(height: 24),
-              _sectionTitle('Account'),
-              const SizedBox(height: 12),
-              _actionCard(
-                icon: Icons.lock_outline_rounded,
-                title: 'Change Password',
-                subtitle: 'Update your account password',
-                onTap: _showChangePasswordDialog,
-              ),
-              const SizedBox(height: 10),
-              _actionCard(
-                icon: Icons.notifications_none_rounded,
-                title: 'Notifications',
-                subtitle: 'Manage your notification preferences',
-                onTap: _showNotificationsDialog,
-              ),
-              const SizedBox(height: 10),
-              _actionCard(
-                icon: Icons.logout_rounded,
-                title: 'Logout',
-                subtitle: 'Sign out from your account',
-                iconColor: AppColors.redAccent,
-                titleColor: AppColors.redAccent,
-                onTap: _showLogoutDialog,
-              ),
-              const SizedBox(height: 25),
-              const Center(
-                child: Text(
-                  'LYRA PULSE',
-                  style: TextStyle(
-                    color: muted,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 2,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 5),
-              const Center(
-                child: Text(
-                  'Powered by LYRATECH',
-                  style: TextStyle(
-                    color: muted,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            ],
-          ),
+      body: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        child: Column(
+          children: [
+            _profileHeader(),
+            const SizedBox(height: 22),
+            _profileTabs(),
+            const SizedBox(height: 18),
+            _profileDetails(),
+            const SizedBox(height: 20),
+            _editButton(),
+            const SizedBox(height: 35),
+          ],
         ),
       ),
     );
   }
 
-  // ============================================================
   // PROFILE HEADER
-  // ============================================================
-
   Widget _profileHeader() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(22),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
+      padding: const EdgeInsets.fromLTRB(20, 30, 20, 28),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
           colors: [
-            AppColors.hexFF102B63,
-            AppColors.hexFF4779D9,
+            Color(0xFF101D49),
+            Color(0xFF263D85),
+            Color(0xFF4F46A5),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: navy.withValues(alpha: 0.18),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
+        borderRadius: BorderRadius.vertical(
+          bottom: Radius.circular(28),
+        ),
       ),
-      child: Row(
+      child: Column(
         children: [
-          Container(
-            width: 72,
-            height: 72,
-            decoration: BoxDecoration(
-              color: AppColors.white.withValues(alpha: 0.18),
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: AppColors.white.withValues(alpha: 0.45),
-                width: 2,
+          Stack(
+            children: [
+              Obx(
+                () => CircleAvatar(
+                  radius: 52,
+                  backgroundColor: Colors.white,
+                  child: CircleAvatar(
+                    radius: 48,
+                    backgroundColor: const Color(0xFFE0E7FF),
+                    backgroundImage: controller.selectedImagePath.value.isEmpty
+                        ? null
+                        : FileImage(
+                            File(controller.selectedImagePath.value),
+                          ),
+                    child: controller.selectedImagePath.value.isEmpty
+                        ? const Icon(
+                            Icons.person,
+                            size: 58,
+                            color: Color(0xFF334A91),
+                          )
+                        : null,
+                  ),
+                ),
+              ),
+              Positioned(
+                right: 2,
+                bottom: 2,
+                child: GestureDetector(
+                  onTap: controller.pickProfileImage,
+                  child: Container(
+                    padding: const EdgeInsets.all(9),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF06B6D4),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Colors.white,
+                        width: 2,
+                      ),
+                    ),
+                    child: const Icon(
+                      Icons.camera_alt_outlined,
+                      color: Colors.white,
+                      size: 18,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Obx(
+            () => Text(
+              controller.fullName.value,
+              style: GoogleFonts.inter(
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
               ),
             ),
-            child: ClipOval(
-              child: profileImage != null
-                  ? Image.file(
-                      profileImage!,
-                      width: 72,
-                      height: 72,
-                      fit: BoxFit.cover,
-                    )
-                  : const Icon(
-                      Icons.person_rounded,
-                      size: 38,
-                      color: AppColors.white,
-                    ),
+          ),
+          const SizedBox(height: 6),
+          Obx(
+            () => Text(
+              'Employee ID: ${controller.employeeId.value}',
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                color: Colors.white70,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
-          const SizedBox(width: 18),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  employeeName,
-                  style: const TextStyle(
-                    color: AppColors.white,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  designation,
-                  style: const TextStyle(
-                    color: AppColors.white70,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  employeeId,
-                  style: const TextStyle(
-                    color: AppColors.white60,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
+          const SizedBox(height: 14),
           Container(
             padding: const EdgeInsets.symmetric(
-              horizontal: 10,
-              vertical: 6,
+              horizontal: 15,
+              vertical: 7,
             ),
             decoration: BoxDecoration(
-              color: AppColors.white.withValues(alpha: 0.15),
+              color: Colors.white.withOpacity(0.14),
               borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.white24),
             ),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.verified_rounded,
-                  color: AppColors.white,
-                  size: 14,
+            child: Obx(
+              () => Text(
+                controller.designation.value,
+                style: GoogleFonts.inter(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
                 ),
-                SizedBox(width: 4),
-                Text(
-                  'Active',
-                  style: TextStyle(
-                    color: AppColors.white,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ],
@@ -308,830 +175,249 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // ============================================================
-  // SECTION TITLE
-  // ============================================================
-
-  Widget _sectionTitle(String title) {
-    return Text(
-      title,
-      style: const TextStyle(
-        color: navy,
-        fontSize: 17,
-        fontWeight: FontWeight.w700,
+  // PROFILE TABS
+  Widget _profileTabs() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Obx(
+        () => Container(
+          padding: const EdgeInsets.all(5),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              _tabButton('Personal Info', 0),
+              _tabButton('Professional Info', 1),
+            ],
+          ),
+        ),
       ),
     );
   }
 
-  // ============================================================
-  // INFO CARD
-  // ============================================================
+  Widget _tabButton(String title, int index) {
+    final selected = controller.selectedTab.value == index;
+
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => controller.changeTab(index),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 13),
+          decoration: BoxDecoration(
+            color: selected ? navy : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Text(
+            title,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: selected ? Colors.white : Colors.grey.shade600,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // PROFILE DETAILS
+  Widget _profileDetails() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Obx(
+        () {
+          if (controller.selectedTab.value == 0) {
+            return _infoCard(
+              title: 'Personal Information',
+              items: [
+                _InfoItem(
+                  icon: Icons.person_outline,
+                  title: 'Full Name',
+                  value: controller.fullName.value,
+                ),
+                _InfoItem(
+                  icon: Icons.phone_outlined,
+                  title: 'Phone Number',
+                  value: controller.phoneNumber.value,
+                ),
+                _InfoItem(
+                  icon: Icons.location_on_outlined,
+                  title: 'Address',
+                  value: controller.address.value,
+                ),
+              ],
+            );
+          }
+
+          return _infoCard(
+            title: 'Professional Information',
+            items: [
+              _InfoItem(
+                icon: Icons.badge_outlined,
+                title: 'Employee ID',
+                value: controller.employeeId.value,
+              ),
+              _InfoItem(
+                icon: Icons.apartment_outlined,
+                title: 'Organization',
+                value: controller.organization.value,
+              ),
+              _InfoItem(
+                icon: Icons.work_outline,
+                title: 'Designation',
+                value: controller.designation.value,
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
 
   Widget _infoCard({
-    required IconData icon,
     required String title,
-    required String value,
+    required List<_InfoItem> items,
   }) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 15,
-      ),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppColors.hexFFE8ECF5,
-        ),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.035),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: AppColors.hexFFF0F4FF,
-              borderRadius: BorderRadius.circular(13),
-            ),
-            child: Icon(
-              icon,
-              color: blue,
-              size: 22,
+          Text(
+            title,
+            style: GoogleFonts.inter(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: navy,
             ),
           ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          const SizedBox(height: 18),
+          ...List.generate(items.length, (index) {
+            final item = items[index];
+
+            return Column(
               children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: muted,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                  ),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEEF2FF),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        item.icon,
+                        color: const Color(0xFF334A91),
+                        size: 21,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item.title,
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              color: Colors.grey.shade500,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 5),
+                          Text(
+                            item.value,
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              color: const Color(0xFF172B3A),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    color: navy,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
+                if (index != items.length - 1)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    child: Divider(
+                      color: Colors.grey.shade100,
+                      height: 1,
+                    ),
                   ),
-                ),
               ],
-            ),
-          ),
+            );
+          }),
         ],
       ),
     );
   }
 
-  // ============================================================
-  // ACTION CARD
-  // ============================================================
-
-  Widget _actionCard({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required VoidCallback onTap,
-    Color iconColor = purple,
-    Color titleColor = navy,
-  }) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(16),
-      onTap: onTap,
-      child: Container(
+  // EDIT BUTTON
+  Widget _editButton() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: SizedBox(
         width: double.infinity,
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: AppColors.hexFFE8ECF5,
+        height: 54,
+        child: ElevatedButton.icon(
+          onPressed: controller.openEditProfile,
+          icon: const Icon(Icons.edit_outlined),
+          label: Text(
+            'Edit Profile',
+            style: GoogleFonts.inter(
+              fontWeight: FontWeight.w700,
+              fontSize: 15,
+            ),
           ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: iconColor.withValues(alpha: 0.10),
-                borderRadius: BorderRadius.circular(13),
-              ),
-              child: Icon(
-                icon,
-                color: iconColor,
-                size: 22,
-              ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      color: titleColor,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    subtitle,
-                    style: const TextStyle(
-                      color: muted,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const Icon(
-              Icons.chevron_right_rounded,
-              color: muted,
-              size: 22,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ============================================================
-  // EDIT PROFILE DIALOG
-  // ============================================================
-
-  void _showEditProfileDialog() {
-    final employeeIdController = TextEditingController(text: employeeId);
-
-    final nameController = TextEditingController(text: employeeName);
-
-    final phoneController = TextEditingController(text: phoneNumber);
-
-    final emailController = TextEditingController(text: emailAddress);
-
-    final locationController = TextEditingController(text: officeLocation);
-
-    final designationController = TextEditingController(text: designation);
-
-    final departmentController = TextEditingController(text: department);
-
-    File? selectedImage = profileImage;
-
-    Get.dialog(
-      StatefulBuilder(
-        builder: (context, setDialogState) {
-          return Dialog(
-            backgroundColor: AppColors.white,
-            insetPadding: const EdgeInsets.symmetric(
-              horizontal: 20,
-            ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primaryBlue,
+            foregroundColor: Colors.white,
+            elevation: 0,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(15),
             ),
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(22),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // ==================================================
-                  // TITLE
-                  // ==================================================
-
-                  Row(
-                    children: [
-                      Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: AppColors.hexFFF0F4FF,
-                          borderRadius: BorderRadius.circular(13),
-                        ),
-                        child: const Icon(
-                          Icons.edit_outlined,
-                          color: blue,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      const Expanded(
-                        child: Text(
-                          'Edit Profile',
-                          style: TextStyle(
-                            color: navy,
-                            fontSize: 20,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: Get.back,
-                        icon: const Icon(
-                          Icons.close_rounded,
-                          color: muted,
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // ==================================================
-                  // PROFILE PICTURE
-                  // ==================================================
-
-                  Center(
-                    child: Column(
-                      children: [
-                        Stack(
-                          children: [
-                            Container(
-                              width: 92,
-                              height: 92,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: AppColors.hexFFF0F4FF,
-                                border: Border.all(
-                                  color: AppColors.hexFFE0E7F5,
-                                  width: 2,
-                                ),
-                              ),
-                              child: ClipOval(
-                                child: selectedImage != null
-                                    ? Image.file(
-                                        selectedImage!,
-                                        width: 92,
-                                        height: 92,
-                                        fit: BoxFit.cover,
-                                      )
-                                    : const Icon(
-                                        Icons.person_rounded,
-                                        size: 48,
-                                        color: blue,
-                                      ),
-                              ),
-                            ),
-                            Positioned(
-                              right: 0,
-                              bottom: 0,
-                              child: InkWell(
-                                onTap: () async {
-                                  final XFile? pickedFile =
-                                      await _imagePicker.pickImage(
-                                    source: ImageSource.gallery,
-                                    imageQuality: 80,
-                                  );
-
-                                  if (pickedFile != null) {
-                                    setDialogState(() {
-                                      selectedImage = File(pickedFile.path);
-                                    });
-                                  }
-                                },
-                                child: Container(
-                                  width: 34,
-                                  height: 34,
-                                  decoration: BoxDecoration(
-                                    color: navy,
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: AppColors.white,
-                                      width: 2,
-                                    ),
-                                  ),
-                                  child: const Icon(
-                                    Icons.camera_alt_rounded,
-                                    color: AppColors.white,
-                                    size: 17,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        TextButton(
-                          onPressed: () async {
-                            final XFile? pickedFile =
-                                await _imagePicker.pickImage(
-                              source: ImageSource.gallery,
-                              imageQuality: 80,
-                            );
-
-                            if (pickedFile != null) {
-                              setDialogState(() {
-                                selectedImage = File(pickedFile.path);
-                              });
-                            }
-                          },
-                          child: const Text(
-                            'Change Profile Picture',
-                            style: TextStyle(
-                              color: blue,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 10),
-
-                  // ==================================================
-                  // EMPLOYEE ID
-                  // ==================================================
-
-                  _editField(
-                    controller: employeeIdController,
-                    label: 'Employee ID',
-                    icon: Icons.badge_outlined,
-                  ),
-
-                  const SizedBox(height: 14),
-
-                  // ==================================================
-                  // NAME
-                  // ==================================================
-
-                  _editField(
-                    controller: nameController,
-                    label: 'Full Name',
-                    icon: Icons.person_outline_rounded,
-                  ),
-
-                  const SizedBox(height: 14),
-
-                  // ==================================================
-                  // PHONE
-                  // ==================================================
-
-                  _editField(
-                    controller: phoneController,
-                    label: 'Phone Number',
-                    icon: Icons.phone_outlined,
-                    keyboardType: TextInputType.phone,
-                  ),
-
-                  const SizedBox(height: 14),
-
-                  // ==================================================
-                  // EMAIL
-                  // ==================================================
-
-                  _editField(
-                    controller: emailController,
-                    label: 'Email Address',
-                    icon: Icons.email_outlined,
-                    keyboardType: TextInputType.emailAddress,
-                  ),
-
-                  const SizedBox(height: 14),
-
-                  // ==================================================
-                  // OFFICE LOCATION
-                  // ==================================================
-
-                  _editField(
-                    controller: locationController,
-                    label: 'Office Location',
-                    icon: Icons.location_city_outlined,
-                  ),
-
-                  const SizedBox(height: 14),
-
-                  // ==================================================
-                  // DESIGNATION
-                  // ==================================================
-
-                  _editField(
-                    controller: designationController,
-                    label: 'Designation',
-                    icon: Icons.work_outline_rounded,
-                  ),
-
-                  const SizedBox(height: 14),
-
-                  // ==================================================
-                  // DEPARTMENT
-                  // ==================================================
-
-                  _editField(
-                    controller: departmentController,
-                    label: 'Department',
-                    icon: Icons.business_outlined,
-                  ),
-
-                  const SizedBox(height: 22),
-
-                  // ==================================================
-                  // SAVE CHANGES
-                  // ==================================================
-
-                  SizedBox(
-                    width: double.infinity,
-                    height: 52,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        // ------------------------------------------------
-                        // VALIDATION
-                        // ------------------------------------------------
-
-                        if (employeeIdController.text.trim().isEmpty ||
-                            nameController.text.trim().isEmpty ||
-                            phoneController.text.trim().isEmpty ||
-                            emailController.text.trim().isEmpty ||
-                            locationController.text.trim().isEmpty ||
-                            designationController.text.trim().isEmpty ||
-                            departmentController.text.trim().isEmpty) {
-                          Get.snackbar(
-                            'Required Fields',
-                            'Please fill all fields',
-                            snackPosition: SnackPosition.BOTTOM,
-                            backgroundColor: navy,
-                            colorText: AppColors.white,
-                            margin: const EdgeInsets.all(16),
-                            borderRadius: 12,
-                          );
-                          return;
-                        }
-
-                        // ------------------------------------------------
-                        // SAVE PROFILE DATA
-                        // ------------------------------------------------
-
-                        setState(() {
-                          profileImage = selectedImage;
-
-                          employeeId = employeeIdController.text.trim();
-
-                          employeeName = nameController.text.trim();
-
-                          phoneNumber = phoneController.text.trim();
-
-                          emailAddress = emailController.text.trim();
-
-                          officeLocation = locationController.text.trim();
-
-                          designation = designationController.text.trim();
-
-                          department = departmentController.text.trim();
-                        });
-
-                        // ------------------------------------------------
-                        // CLOSE EDIT PROFILE DIALOG
-                        // ------------------------------------------------
-
-                        Get.back();
-
-                        // ------------------------------------------------
-                        // SUCCESS MESSAGE
-                        // ------------------------------------------------
-
-                        Get.snackbar(
-                          'Profile Updated',
-                          'Your profile has been updated successfully.',
-                          snackPosition: SnackPosition.BOTTOM,
-                          backgroundColor: green,
-                          colorText: AppColors.white,
-                          margin: const EdgeInsets.all(16),
-                          borderRadius: 12,
-                          duration: const Duration(seconds: 2),
-                        );
-
-                        // ------------------------------------------------
-                        // GO TO HOME SCREEN
-                        // ------------------------------------------------
-
-                        Future.delayed(
-                          const Duration(seconds: 2),
-                          () {
-                            if (mounted) {
-                              Get.offAllNamed('/home');
-                            }
-                          },
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: navy,
-                        foregroundColor: AppColors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                      child: const Text(
-                        'Save Changes',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  // ============================================================
-  // EDIT FIELD
-  // ============================================================
-
-  Widget _editField({
-    required TextEditingController controller,
-    required String label,
-    required IconData icon,
-    TextInputType? keyboardType,
-  }) {
-    return TextField(
-      controller: controller,
-      keyboardType: keyboardType,
-      style: const TextStyle(
-        color: navy,
-        fontSize: 14,
-        fontWeight: FontWeight.w600,
-      ),
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: const TextStyle(
-          color: muted,
-          fontSize: 13,
-        ),
-        prefixIcon: Icon(
-          icon,
-          color: blue,
-          size: 21,
-        ),
-        filled: true,
-        fillColor: AppColors.hexFFF7F9FD,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 14,
-          vertical: 15,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(
-            color: AppColors.hexFFE8ECF5,
-          ),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(
-            color: AppColors.hexFFE8ECF5,
-          ),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(
-            color: blue,
-            width: 1.5,
           ),
         ),
       ),
     );
   }
+}
 
-  // ============================================================
-  // CHANGE PASSWORD
-  // ============================================================
+class _InfoItem {
+  final IconData icon;
+  final String title;
+  final String value;
 
-  void _showChangePasswordDialog() {
-    final currentPasswordController = TextEditingController();
-
-    final newPasswordController = TextEditingController();
-
-    final confirmPasswordController = TextEditingController();
-
-    Get.dialog(
-      Dialog(
-        backgroundColor: AppColors.white,
-        insetPadding: const EdgeInsets.symmetric(horizontal: 20),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(22),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'Change Password',
-                style: TextStyle(
-                  color: navy,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 20),
-              TextField(
-                controller: currentPasswordController,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'Current Password',
-                  prefixIcon: Icon(
-                    Icons.lock_outline_rounded,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: newPasswordController,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'New Password',
-                  prefixIcon: Icon(
-                    Icons.lock_outline_rounded,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: confirmPasswordController,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'Confirm Password',
-                  prefixIcon: Icon(
-                    Icons.lock_outline_rounded,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: () {
-                    if (newPasswordController.text !=
-                        confirmPasswordController.text) {
-                      Get.snackbar(
-                        'Password Error',
-                        'New password and confirm password do not match.',
-                        snackPosition: SnackPosition.BOTTOM,
-                        backgroundColor: AppColors.redAccent,
-                        colorText: AppColors.white,
-                        margin: const EdgeInsets.all(16),
-                      );
-                      return;
-                    }
-
-                    Get.back();
-
-                    Get.snackbar(
-                      'Success',
-                      'Password updated successfully.',
-                      snackPosition: SnackPosition.BOTTOM,
-                      backgroundColor: green,
-                      colorText: AppColors.white,
-                      margin: const EdgeInsets.all(16),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: navy,
-                    foregroundColor: AppColors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text(
-                    'Update Password',
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ============================================================
-  // NOTIFICATIONS
-  // ============================================================
-
-  void _showNotificationsDialog() {
-    bool notificationsEnabled = true;
-
-    Get.dialog(
-      StatefulBuilder(
-        builder: (context, setDialogState) {
-          return AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            title: const Text(
-              'Notifications',
-              style: TextStyle(
-                color: navy,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            content: Row(
-              children: [
-                const Expanded(
-                  child: Text(
-                    'Attendance and permission notifications',
-                    style: TextStyle(
-                      color: muted,
-                      fontSize: 13,
-                    ),
-                  ),
-                ),
-                Switch(
-                  value: notificationsEnabled,
-                  onChanged: (value) {
-                    setDialogState(() {
-                      notificationsEnabled = value;
-                    });
-                  },
-                  activeThumbColor: blue,
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: Get.back,
-                child: const Text(
-                  'Done',
-                  style: TextStyle(
-                    color: navy,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-
-  // ============================================================
-  // LOGOUT
-  // ============================================================
-
-  void _showLogoutDialog() {
-    Get.dialog(
-      AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        title: const Text(
-          'Logout',
-          style: TextStyle(
-            color: navy,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        content: const Text(
-          'Are you sure you want to logout?',
-          style: TextStyle(
-            color: muted,
-            fontSize: 14,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: Get.back,
-            child: const Text(
-              'Cancel',
-              style: TextStyle(
-                color: muted,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Get.back();
-
-              Get.offAllNamed('/login');
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: navy,
-              foregroundColor: AppColors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-            child: const Text('Logout'),
-          ),
-        ],
-      ),
-    );
-  }
+  const _InfoItem({
+    required this.icon,
+    required this.title,
+    required this.value,
+  });
 }

@@ -1,19 +1,23 @@
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../features/auth/controllers/auth_controller.dart';
 import '../../features/auth/views/login_screen.dart';
 import '../../features/auth/views/otp_screen.dart';
+
 import '../../features/home/views/home_screen.dart';
 import '../../features/splash/views/splash_screen.dart';
+
 import '../../features/attendance/views/location_verification_screen.dart';
 
-// Permission
+import '../../features/profile/views/profile_screen.dart';
+import '../../features/profile/bindings/profile_binding.dart';
+
 import '../../features/permission/permission_screen.dart';
 import '../../features/permission/views/permission_submitted_screen.dart';
 import '../../features/permission/views/permission_return_screen.dart';
 
-// Leave
 import '../../features/leave/views/leave_screen.dart';
 
 import 'app_routes.dart';
@@ -21,9 +25,8 @@ import '../theme/app_colors.dart';
 
 abstract final class AppPages {
   static final List<GetPage<dynamic>> pages = [
-    // --------------------------------------------------
+
     // SPLASH
-    // --------------------------------------------------
     GetPage(
       name: AppRoutes.initial,
       page: () => const SplashScreen(),
@@ -34,9 +37,7 @@ abstract final class AppPages {
       page: () => const SplashScreen(),
     ),
 
-    // --------------------------------------------------
     // LOGIN
-    // --------------------------------------------------
     GetPage(
       name: AppRoutes.login,
       page: () => const LoginScreen(),
@@ -47,9 +48,7 @@ abstract final class AppPages {
       }),
     ),
 
-    // --------------------------------------------------
     // OTP
-    // --------------------------------------------------
     GetPage(
       name: AppRoutes.otp,
       page: () => const OtpScreen(),
@@ -60,50 +59,37 @@ abstract final class AppPages {
       }),
     ),
 
-    // --------------------------------------------------
     // HOME
-    // --------------------------------------------------
     GetPage(
       name: AppRoutes.home,
       page: () => HomeScreen(),
     ),
 
-    // --------------------------------------------------
     // LOCATION VERIFICATION
-    // --------------------------------------------------
     GetPage(
       name: AppRoutes.locationVerification,
       page: () => const LocationVerificationScreen(
-      isCheckOut: false,
-),    ),
+        isCheckOut: false,
+      ),
+    ),
 
-    // --------------------------------------------------
     // PERMISSION
-    // --------------------------------------------------
     GetPage(
       name: AppRoutes.permissionStart,
       page: () => const PermissionScreen(),
     ),
 
-    // --------------------------------------------------
-    // PERMISSION SUBMITTED
-    // --------------------------------------------------
     GetPage(
       name: AppRoutes.permissionSubmitted,
       page: () => const PermissionSubmittedScreen(),
     ),
 
-    // --------------------------------------------------
-    // PERMISSION RETURN
-    // --------------------------------------------------
     GetPage(
       name: AppRoutes.permissionReturn,
       page: () => const PermissionReturnScreen(),
     ),
 
-    // --------------------------------------------------
     // ATTENDANCE
-    // --------------------------------------------------
     GetPage(
       name: AppRoutes.attendance,
       page: () => const _PlaceholderPage(
@@ -112,30 +98,22 @@ abstract final class AppPages {
       ),
     ),
 
-    // --------------------------------------------------
     // LEAVE
-    // --------------------------------------------------
     GetPage(
       name: AppRoutes.leave,
       page: () => const LeaveScreen(),
     ),
 
-    // --------------------------------------------------
     // PROFILE
-    // --------------------------------------------------
     GetPage(
-      name: AppRoutes.profile,
-      page: () => const _PlaceholderPage(
-        title: 'Profile',
-        icon: Icons.person_outline_rounded,
-      ),
+      name: '/profile',
+      page: () => const ProfileScreen(),
+      binding: ProfileBinding(),
     ),
   ];
 }
 
-// ======================================================
 // PLACEHOLDER PAGE
-// ======================================================
 
 class _PlaceholderPage extends StatelessWidget {
   const _PlaceholderPage({

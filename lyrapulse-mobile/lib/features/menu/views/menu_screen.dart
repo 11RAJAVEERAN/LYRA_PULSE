@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -35,11 +36,15 @@ class MenuScreen extends StatelessWidget {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(18, 24, 18, 30),
           children: [
+            // Profile
             MenuProfileCard(
               employeeName: 'Madhavan',
               employeeId: '118',
-              onTap: controller.openProfile,
+              onTap: () {
+                Get.toNamed('/profile');
+              },
             ),
+
             const SizedBox(height: 28),
 
             // Schedule
@@ -58,6 +63,7 @@ class MenuScreen extends StatelessWidget {
                 ),
               ],
             ),
+
             const SizedBox(height: 26),
 
             // Pay & Benefits
@@ -83,10 +89,13 @@ class MenuScreen extends StatelessWidget {
                   icon: Icons.folder_open_outlined,
                   title: 'Mediclaim',
                   badgeText: 'Coming Soon',
-                  onTap: () => controller.showComingSoon('Mediclaim'),
+                  onTap: () {
+                    controller.showComingSoon('Mediclaim');
+                  },
                 ),
               ],
             ),
+
             const SizedBox(height: 26),
 
             // Documents
@@ -96,37 +105,122 @@ class MenuScreen extends StatelessWidget {
                 MenuOptionTile(
                   icon: Icons.folder_outlined,
                   title: 'My Documents',
-                  onTap: () => controller.showComingSoon('My Documents'),
+                  onTap: () {
+                    controller.showComingSoon('My Documents');
+                  },
                 ),
                 MenuOptionTile(
                   icon: Icons.policy_outlined,
                   title: 'Company Policies',
-                  onTap: () =>
-                      controller.showComingSoon('Company Policies'),
+                  onTap: () {
+                    controller.showComingSoon('Company Policies');
+                  },
                 ),
               ],
             ),
+
             const SizedBox(height: 26),
 
-            // Account
+            // Settings
             MenuSection(
-              title: 'Account',
+              title: 'Settings',
               children: [
                 MenuOptionTile(
-                  icon: Icons.notifications_none_rounded,
-                  title: 'Notifications',
-                  onTap: controller.openNotifications,
+                  icon: Icons.language_rounded,
+                  title: 'App Language',
+                  onTap: () {
+                    controller.showComingSoon('App Language');
+                  },
                 ),
                 MenuOptionTile(
-                  icon: Icons.logout_rounded,
-                  title: 'Logout',
-                  onTap: controller.logout,
+                  icon: Icons.palette_outlined,
+                  title: 'App Theme',
+                  onTap: () {
+                    controller.showComingSoon('App Theme');
+                  },
+                ),
+                MenuOptionTile(
+                  icon: Icons.system_update_rounded,
+                  title: 'Check for Updates',
+                  onTap: () {
+                    controller.showComingSoon('Check for Updates');
+                  },
                 ),
               ],
             ),
+
+            const SizedBox(height: 26),
+
+            // // Account
+            // MenuSection(
+            //   title: 'Account',
+            //   children: [
+            //     MenuOptionTile(
+            //       icon: Icons.notifications_none_rounded,
+            //       title: 'Notifications',
+            //       onTap: controller.openNotifications,
+            //     ),
+            //   ],
+            // ),
+
+            // const SizedBox(height: 22),
+
+            // Logout Button
+            _buildLogoutButton(controller),
+
+            const SizedBox(height: 10),
           ],
         ),
       ),
     );
   }
+Widget _buildLogoutButton(LyraMenuController controller) {
+  return InkWell(
+    borderRadius: BorderRadius.circular(16),
+    onTap: () {
+      Get.defaultDialog(
+        title: 'Logout',
+        middleText: 'Are you sure you want to logout?',
+        textCancel: 'Cancel',
+        textConfirm: 'Logout',
+        confirmTextColor: Colors.white,
+        buttonColor: const Color(0xFFDC2626),
+        onConfirm: () {
+          Get.back();
+          controller.logout();
+        },
+      );
+    },
+    child: Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 17),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFEEEE),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: const Color(0xFFFECACA),
+        ),
+      ),
+      child: const Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.logout_rounded,
+            color: Color(0xFFDC2626),
+            size: 21,
+          ),
+          SizedBox(width: 10),
+          Text(
+            'Logout',
+            style: TextStyle(
+              color: Color(0xFFDC2626),
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
 }
