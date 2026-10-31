@@ -13,9 +13,7 @@ import { Box, Collapse, List, ListItemButton, ListItemIcon, ListItemText, Toolti
 import { useState } from 'react'
 import { NavLink, matchPath, useLocation } from 'react-router-dom'
 
-// Departments, Designations and Attendance Permission live under the Employees group.
-// Their destinations are unchanged. "Attendance Permission" reuses the existing /permissions route
-// (the only permission-related route in the project) instead of introducing a new URL.
+// Departments and Designations live under the Employees group. Attendance Permission keeps its existing route.
 const navItems = [
   { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
   {
@@ -25,15 +23,22 @@ const navItems = [
       { label: 'Employees', path: '/employees' },
       { label: 'Departments', path: '/departments' },
       { label: 'Designations', path: '/designations' },
+    ],
+  },
+  {
+    label: 'Attendance', icon: CalendarCheck2,
+    children: [
+      { label: 'Attendance', path: '/attendance' },
+      { label: 'Shifts', path: '/shifts', permission: 'shifts.view_shift' },
+      { label: 'Shift Assignments', path: '/shift-assignments', permission: 'shifts.view_shift' },
       { label: 'Attendance Permission', path: '/permissions' },
     ],
   },
-  { label: 'Attendance', path: '/attendance', icon: CalendarCheck2 },
   { label: 'Leaves', path: '/leaves', icon: NotebookPen },
   { label: 'Branches', path: '/branches', icon: Building2 },
   { label: 'Devices', path: '/devices', icon: BadgeCheck },
   { label: 'Reports', path: '/reports', icon: ClipboardList },
-  { label: 'Admin users', path: '/admin-users', icon: UserCog, superadminOnly: true },
+  { label: 'Admin Users', path: '/admin-users', icon: UserCog, superadminOnly: true },
 ]
 
 const isPathActive = (path, pathname) => Boolean(matchPath({ path, end: false }, pathname))
@@ -94,7 +99,9 @@ export function Sidebar({ collapsed, onToggle, onNavigate, belowHeader = false }
   const canSee = ({ superadminOnly, path }) => {
     if (superadminOnly) return user?.role === 'SUPERADMIN'
     if (path === '/employees') return user?.role === 'SUPERADMIN' || user?.permissions?.includes('employees.view_employee')
+    if (path === '/attendance') return user?.role === 'SUPERADMIN' || user?.permissions?.includes('employees.view_employee')
     if (path === '/permissions') return user?.role === 'SUPERADMIN' || user?.role === 'ADMIN'
+    if (path === '/shifts' || path === '/shift-assignments') return user?.role === 'SUPERADMIN' || user?.permissions?.includes('shifts.view_shift')
     return user?.role === 'SUPERADMIN'
   }
 

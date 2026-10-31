@@ -4,9 +4,15 @@ from django.contrib.auth.models import Group, Permission
 User = get_user_model()
 
 ROLE_PERMISSION_CODES = {
-    User.Role.ADMIN: {"employees.view_employee", "employees.add_employee", "employees.change_employee"},
-    User.Role.HR: {"employees.view_employee", "employees.add_employee", "employees.change_employee"},
-    User.Role.MANAGER: {"employees.view_employee"},
+    User.Role.ADMIN: {
+        "employees.view_employee", "employees.add_employee", "employees.change_employee",
+        "shifts.view_shift", "shifts.manage_shifts", "shifts.view_shiftassignment", "shifts.assign_shiftassignment",
+    },
+    User.Role.HR: {
+        "employees.view_employee", "employees.add_employee", "employees.change_employee",
+        "shifts.view_shift", "shifts.manage_shifts", "shifts.view_shiftassignment", "shifts.assign_shiftassignment",
+    },
+    User.Role.MANAGER: {"employees.view_employee", "shifts.view_shift", "shifts.view_shiftassignment"},
 }
 
 

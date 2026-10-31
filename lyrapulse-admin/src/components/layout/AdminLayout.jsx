@@ -8,6 +8,8 @@ const pageTitles = {
   '/dashboard': 'Dashboard',
   '/employees': 'Employees',
   '/attendance': 'Attendance',
+  '/shifts': 'Shifts',
+  '/shift-assignments': 'Shift Assignments',
   '/admin-users': 'Admin users',
   '/leaves': 'Leaves',
   '/permissions': 'Permissions',

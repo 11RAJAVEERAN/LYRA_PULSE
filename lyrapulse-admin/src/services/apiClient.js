@@ -21,7 +21,10 @@ apiClient.interceptors.request.use((config) => {
     config.headers.Authorization = `Bearer ${token}`
   }
 
-  if (config.method?.toLowerCase() === 'get') {
+  const skipBranchContext = config.skipBranchContext
+  delete config.skipBranchContext
+
+  if (!skipBranchContext && config.method?.toLowerCase() === 'get') {
     const path = (config.url ?? '').replace(apiConfig.baseUrl, '').split('?')[0].replace(/^\//, '')
     const branchScopedPath = path === 'employees/' || path === 'devices/'
       || path.startsWith('attendance/admin/') || path === 'attendance/admin/'
