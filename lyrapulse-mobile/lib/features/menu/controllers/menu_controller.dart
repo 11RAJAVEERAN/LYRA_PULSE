@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../profile/views/profile_screen.dart';
+import '../../../app/theme/app_colors.dart';
 import '../../notification/views/notification_screen.dart';
 import '../views/upcoming_shifts_screen.dart';
 import '../views/holidays_screen.dart';
@@ -13,16 +13,19 @@ import '../views/arrears_screen.dart';
 class LyraMenuController extends GetxController {
   final RxString selectedMenu = 'Menu'.obs;
 
+  // Profile
   void openProfile() {
     selectedMenu.value = 'My Profile';
-   Get.toNamed('/profile');
+    Get.toNamed('/profile');
   }
 
+  // Notifications
   void openNotifications() {
     selectedMenu.value = 'Notifications';
     Get.to(() => NotificationScreen());
   }
 
+  // Schedule
   void openUpcomingShifts() {
     selectedMenu.value = 'Upcoming Shifts';
     Get.to(() => const UpcomingShiftsScreen());
@@ -33,6 +36,7 @@ class LyraMenuController extends GetxController {
     Get.to(() => const HolidaysScreen());
   }
 
+  // Pay & Benefits
   void openPayslips() {
     selectedMenu.value = 'Payslips';
     Get.to(() => const PayslipsScreen());
@@ -48,37 +52,39 @@ class LyraMenuController extends GetxController {
     Get.to(() => const ArrearsScreen());
   }
 
+  // Settings
+
+  void openAppLanguage() {
+    selectedMenu.value = 'App Language';
+    showComingSoon('App Language');
+  }
+
+  void openAppTheme() {
+    selectedMenu.value = 'App Theme';
+    showComingSoon('App Theme');
+  }
+
+  void checkForUpdates() {
+    selectedMenu.value = 'Check for Updates';
+    showComingSoon('Check for Updates');
+  }
+
+  // Coming Soon
   void showComingSoon(String feature) {
     Get.snackbar(
       feature,
       '$feature will be available soon.',
       snackPosition: SnackPosition.BOTTOM,
       margin: const EdgeInsets.all(16),
-      backgroundColor: const Color(0xFF172554),
-      colorText: Colors.white,
+      backgroundColor: AppColors.primary,
+      colorText: AppColors.surface,
       duration: const Duration(seconds: 2),
     );
   }
 
+  // Logout
+  // Confirmation dialog is handled in MenuScreen.
   void logout() {
-    Get.dialog(
-      AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to logout?'),
-        actions: [
-          TextButton(
-            onPressed: Get.back,
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Get.back();
-              Get.offAllNamed('/login');
-            },
-            child: const Text('Logout'),
-          ),
-        ],
-      ),
-    );
+    Get.offAllNamed('/login');
   }
 }

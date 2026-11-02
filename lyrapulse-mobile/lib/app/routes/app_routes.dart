@@ -41,7 +41,9 @@ abstract final class AppRoutes {
 
   static const String attendance = '/attendance';
 
-  static const String leave = '/leave';
+static const String leave = '/leave';
+
+static const String applyLeave = '/apply-leave';
 
   static const String profile = '/profile';
 }

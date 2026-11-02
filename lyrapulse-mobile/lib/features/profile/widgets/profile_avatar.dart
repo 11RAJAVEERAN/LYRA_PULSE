@@ -15,7 +15,7 @@ class ProfileAvatar extends GetView<ProfileController> {
     return Container(
       width: double.infinity,
       height: 220,
-      color: const Color(0xFFE3F2FD),
+      color: AppColors.infoSurface,
       child: Center(
         child: Obx(() {
           final localPath = controller.selectedImagePath.value;
@@ -34,7 +34,7 @@ class ProfileAvatar extends GetView<ProfileController> {
                 height: 145,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.blueGrey.shade300,
+                  color: AppColors.borderStrong,
                   border: Border.all(
                     color: AppColors.accent,
                     width: 4,
@@ -49,7 +49,7 @@ class ProfileAvatar extends GetView<ProfileController> {
                 child: imageProvider == null
                     ? const Icon(
                         Icons.person,
-                        color: Colors.white,
+                        color: AppColors.surface,
                         size: 100,
                       )
                     : null,
@@ -58,14 +58,14 @@ class ProfileAvatar extends GetView<ProfileController> {
                 right: -5,
                 bottom: -5,
                 child: Material(
-                  color: Colors.white,
+                  color: AppColors.surface,
                   shape: const CircleBorder(),
                   elevation: 4,
                   child: IconButton(
                     onPressed: controller.pickProfileImage,
                     icon: const Icon(
                       Icons.edit_outlined,
-                      color: Colors.blue,
+                      color: AppColors.primaryBlue,
                     ),
                   ),
                 ),

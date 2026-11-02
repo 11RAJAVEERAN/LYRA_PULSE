@@ -2,6 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+
+import '../../features/home/bindings/home_binding.dart';
 import '../../features/auth/controllers/auth_controller.dart';
 import '../../features/auth/views/login_screen.dart';
 import '../../features/auth/views/otp_screen.dart';
@@ -18,8 +20,9 @@ import '../../features/permission/permission_screen.dart';
 import '../../features/permission/views/permission_submitted_screen.dart';
 import '../../features/permission/views/permission_return_screen.dart';
 
-import '../../features/leave/views/leave_screen.dart';
-
+import 'package:lyrapulse_mobile/features/leave/bindings/leave_binding.dart';
+import 'package:lyrapulse_mobile/features/leave/views/leave_screen.dart';
+import 'package:lyrapulse_mobile/features/leave/views/apply_leave_screen.dart';
 import 'app_routes.dart';
 import '../theme/app_colors.dart';
 
@@ -60,10 +63,11 @@ abstract final class AppPages {
     ),
 
     // HOME
-    GetPage(
-      name: AppRoutes.home,
-      page: () => HomeScreen(),
-    ),
+   GetPage(
+  name: AppRoutes.home,
+  page: () => const HomeScreen(),
+  binding: HomeBinding(),
+),
 
     // LOCATION VERIFICATION
     GetPage(
@@ -99,14 +103,21 @@ abstract final class AppPages {
     ),
 
     // LEAVE
-    GetPage(
-      name: AppRoutes.leave,
-      page: () => const LeaveScreen(),
-    ),
+   GetPage(
+  name: AppRoutes.leave,
+  page: () => const LeaveScreen(),
+  binding: LeaveBinding(),
+),
+
+GetPage(
+  name: AppRoutes.applyLeave,
+  page: () => const ApplyLeaveScreen(),
+  binding: LeaveBinding(),
+),
 
     // PROFILE
     GetPage(
-      name: '/profile',
+      name: AppRoutes.profile,
       page: () => const ProfileScreen(),
       binding: ProfileBinding(),
     ),
@@ -127,21 +138,21 @@ class _PlaceholderPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.hexFF04111F,
+      backgroundColor: AppColors.textPrimary,
       appBar: AppBar(
-        backgroundColor: AppColors.hexFF04111F,
+        backgroundColor: AppColors.textPrimary,
         elevation: 0,
         leading: IconButton(
           onPressed: Get.back,
           icon: const Icon(
             Icons.arrow_back_rounded,
-            color: AppColors.white,
+            color: AppColors.surface,
           ),
         ),
         title: Text(
           title,
           style: const TextStyle(
-            color: AppColors.white,
+            color: AppColors.surface,
             fontSize: 18,
             fontWeight: FontWeight.w700,
           ),
@@ -150,7 +161,7 @@ class _PlaceholderPage extends StatelessWidget {
       body: Center(
         child: Icon(
           icon,
-          color: AppColors.hexFF20DFFF,
+          color: AppColors.accent,
           size: 60,
         ),
       ),

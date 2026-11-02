@@ -12,7 +12,7 @@ class AppLogo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final titleStyle = (compact ? AppTextStyles.title : AppTextStyles.headline)
-        .copyWith(color: onDark ? AppColors.white : AppColors.textPrimary);
+        .copyWith(color: onDark ? AppColors.surface : AppColors.textPrimary);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -25,7 +25,7 @@ class AppLogo extends StatelessWidget {
                 colors: [AppColors.primary, AppColors.secondary]),
           ),
           child: Icon(Icons.bolt_rounded,
-              color: AppColors.white, size: compact ? 20 : 25),
+              color: AppColors.surface, size: compact ? 20 : 25),
         ),
         const SizedBox(width: 10),
         Text('Lyra Pulse', style: titleStyle),

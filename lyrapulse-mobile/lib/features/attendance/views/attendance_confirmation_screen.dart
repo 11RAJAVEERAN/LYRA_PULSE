@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import '../../../app/theme/app_colors.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -36,8 +37,6 @@ class _AttendanceConfirmationScreenState
   bool _isSubmitting = false;
   String? _errorMessage;
 
-  static const Color primary = Color(0xFF2196F3);
-  static const Color background = Color(0xFFF4F8FC);
 
   @override
   void initState() {
@@ -169,7 +168,7 @@ class _AttendanceConfirmationScreenState
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(
-            child: CircularProgressIndicator(color: primary),
+            child: CircularProgressIndicator(color: AppColors.primaryBlue),
           );
         }
 
@@ -200,11 +199,11 @@ class _AttendanceConfirmationScreenState
     final action = widget.isCheckOut ? 'Check Out' : 'Check In';
 
     return Scaffold(
-      backgroundColor: background,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text('$action Selfie'),
-        backgroundColor: const Color(0xFF42A5F5),
-        foregroundColor: Colors.white,
+        backgroundColor: AppColors.primaryBlue,
+        foregroundColor: AppColors.surface,
         elevation: 0,
       ),
       body: SafeArea(
@@ -219,30 +218,30 @@ class _AttendanceConfirmationScreenState
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF17365D),
+                  color: AppColors.textPrimary,
                 ),
               ),
               const SizedBox(height: 8),
               const Text(
                 'Make sure your face is clearly visible before continuing.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.black54),
+                style: TextStyle(color: AppColors.primaryDark),
               ),
               const SizedBox(height: 24),
               Expanded(
                 child: Container(
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.surface,
                     borderRadius: BorderRadius.circular(24),
                     border: Border.all(
-                      color: const Color(0xFFD8E8F8),
+                      color: AppColors.border,
                     ),
                   ),
                   clipBehavior: Clip.antiAlias,
                   child: _isCapturing
                       ? const Center(
-                          child: CircularProgressIndicator(color: primary),
+                          child: CircularProgressIndicator(color: AppColors.primaryBlue),
                         )
                       : _buildPhotoPreview(),
                 ),
@@ -253,7 +252,7 @@ class _AttendanceConfirmationScreenState
                   _errorMessage!,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
-                    color: Colors.red,
+                    color: AppColors.error,
                     fontSize: 13,
                   ),
                 ),
@@ -267,8 +266,8 @@ class _AttendanceConfirmationScreenState
                   icon: const Icon(Icons.refresh),
                   label: const Text('Retake Photo'),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: primary,
-                    side: const BorderSide(color: primary),
+                    foregroundColor: AppColors.primaryBlue,
+                    side: const BorderSide(color: AppColors.primaryBlue),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
@@ -288,7 +287,7 @@ class _AttendanceConfirmationScreenState
                           height: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: Colors.white,
+                            color: AppColors.surface,
                           ),
                         )
                       : const Icon(Icons.check_circle_outline),
@@ -296,9 +295,9 @@ class _AttendanceConfirmationScreenState
                     _isSubmitting ? 'Please wait...' : 'Confirm Photo',
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: primary,
-                    foregroundColor: Colors.white,
-                    disabledBackgroundColor: Colors.grey.shade300,
+                    backgroundColor: AppColors.primaryBlue,
+                    foregroundColor: AppColors.surface,
+                    disabledBackgroundColor: AppColors.borderStrong,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),

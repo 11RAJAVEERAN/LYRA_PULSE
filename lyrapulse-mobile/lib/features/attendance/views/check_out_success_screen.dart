@@ -5,20 +5,12 @@ import '../../../app/theme/app_colors.dart';
 class CheckOutSuccessScreen extends StatelessWidget {
   const CheckOutSuccessScreen({super.key});
 
-  static const Color background = AppColors.hexFFF7FAFE;
-  static const Color navy = AppColors.hexFF19356C;
-  static const Color blue = AppColors.hexFF3978E8;
-  static const Color skyBlue = AppColors.hexFF38BDF8;
-  static const Color green = AppColors.hexFF18A66A;
-  static const Color textDark = AppColors.hexFF172B4D;
-  static const Color textGrey = AppColors.hexFF718096;
-
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
-      backgroundColor: background,
+      backgroundColor: AppColors.surfaceMuted,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -34,11 +26,12 @@ class CheckOutSuccessScreen extends StatelessWidget {
                       width: 44,
                       height: 44,
                       decoration: BoxDecoration(
-                        color: AppColors.white,
+                        color: AppColors.surface,
                         borderRadius: BorderRadius.circular(14),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.black.withValues(alpha: 0.05),
+                            color:
+                                AppColors.primaryDark.withValues(alpha: 0.05),
                             blurRadius: 12,
                             offset: const Offset(0, 4),
                           ),
@@ -51,7 +44,7 @@ class CheckOutSuccessScreen extends StatelessWidget {
                         icon: const Icon(
                           Icons.arrow_back_ios_new_rounded,
                           size: 18,
-                          color: navy,
+                          color: AppColors.primary,
                         ),
                       ),
                     ),
@@ -62,7 +55,7 @@ class CheckOutSuccessScreen extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
-                            color: navy,
+                            color: AppColors.primary,
                           ),
                         ),
                       ),
@@ -78,24 +71,24 @@ class CheckOutSuccessScreen extends StatelessWidget {
                   width: 118,
                   height: 118,
                   decoration: BoxDecoration(
-                    color: green.withValues(alpha: 0.10),
+                    color: AppColors.success.withValues(alpha: 0.10),
                     shape: BoxShape.circle,
                   ),
                   child: Container(
                     margin: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: green.withValues(alpha: 0.15),
+                      color: AppColors.success.withValues(alpha: 0.15),
                       shape: BoxShape.circle,
                     ),
                     child: Container(
                       margin: const EdgeInsets.all(14),
                       decoration: const BoxDecoration(
-                        color: green,
+                        color: AppColors.success,
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
                         Icons.check_rounded,
-                        color: AppColors.white,
+                        color: AppColors.surface,
                         size: 42,
                       ),
                     ),
@@ -112,7 +105,7 @@ class CheckOutSuccessScreen extends StatelessWidget {
                     fontSize: 23,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 0.5,
-                    color: textDark,
+                    color: AppColors.primary,
                   ),
                 ),
 
@@ -124,7 +117,7 @@ class CheckOutSuccessScreen extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 14,
                     height: 1.5,
-                    color: textGrey,
+                    color: AppColors.textSecondary,
                   ),
                 ),
 
@@ -135,11 +128,11 @@ class CheckOutSuccessScreen extends StatelessWidget {
                   width: double.infinity,
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: AppColors.white,
+                    color: AppColors.surface,
                     borderRadius: BorderRadius.circular(22),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.black.withValues(alpha: 0.045),
+                        color: AppColors.primaryDark.withValues(alpha: 0.045),
                         blurRadius: 20,
                         offset: const Offset(0, 8),
                       ),
@@ -153,12 +146,13 @@ class CheckOutSuccessScreen extends StatelessWidget {
                             width: 48,
                             height: 48,
                             decoration: BoxDecoration(
-                              color: blue.withValues(alpha: 0.10),
+                              color:
+                                  AppColors.primaryBlue.withValues(alpha: 0.10),
                               borderRadius: BorderRadius.circular(15),
                             ),
                             child: const Icon(
                               Icons.person_rounded,
-                              color: blue,
+                              color: AppColors.primaryBlue,
                               size: 25,
                             ),
                           ),
@@ -172,7 +166,7 @@ class CheckOutSuccessScreen extends StatelessWidget {
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w700,
-                                    color: textDark,
+                                    color: AppColors.primary,
                                   ),
                                 ),
                                 SizedBox(height: 4),
@@ -180,7 +174,7 @@ class CheckOutSuccessScreen extends StatelessWidget {
                                   'Employee ID: LYRA001',
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: textGrey,
+                                    color: AppColors.textSecondary,
                                   ),
                                 ),
                               ],
@@ -192,7 +186,7 @@ class CheckOutSuccessScreen extends StatelessWidget {
                               vertical: 6,
                             ),
                             decoration: BoxDecoration(
-                              color: green.withValues(alpha: 0.10),
+                              color: AppColors.success.withValues(alpha: 0.10),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: const Text(
@@ -200,7 +194,7 @@ class CheckOutSuccessScreen extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w800,
-                                color: green,
+                                color: AppColors.success,
                               ),
                             ),
                           ),
@@ -211,7 +205,7 @@ class CheckOutSuccessScreen extends StatelessWidget {
 
                       Divider(
                         height: 1,
-                        color: AppColors.grey.shade200,
+                        color: AppColors.border,
                       ),
 
                       const SizedBox(height: 20),
@@ -239,10 +233,10 @@ class CheckOutSuccessScreen extends StatelessWidget {
                         icon: Icons.location_on_rounded,
                         title: 'Location',
                         value: 'Verified',
-                        iconColor: skyBlue,
-                        titleColor: skyBlue,
-                        iconBackgroundColor: AppColors.hex1F38BDF8,
-                        valueColor: green,
+                        iconColor: AppColors.accent,
+                        titleColor: AppColors.accent,
+                        iconBackgroundColor: AppColors.infoSurface,
+                        valueColor: AppColors.success,
                       ),
 
                       const SizedBox(height: 16),
@@ -252,7 +246,7 @@ class CheckOutSuccessScreen extends StatelessWidget {
                         icon: Icons.face_rounded,
                         title: 'Face Verification',
                         value: 'Verified',
-                        valueColor: green,
+                        valueColor: AppColors.success,
                       ),
                     ],
                   ),
@@ -268,17 +262,17 @@ class CheckOutSuccessScreen extends StatelessWidget {
                     vertical: 14,
                   ),
                   decoration: BoxDecoration(
-                    color: green.withValues(alpha: 0.07),
+                    color: AppColors.success.withValues(alpha: 0.07),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: green.withValues(alpha: 0.15),
+                      color: AppColors.success.withValues(alpha: 0.15),
                     ),
                   ),
                   child: const Row(
                     children: [
                       Icon(
                         Icons.verified_user_rounded,
-                        color: green,
+                        color: AppColors.success,
                         size: 21,
                       ),
                       SizedBox(width: 11),
@@ -289,7 +283,7 @@ class CheckOutSuccessScreen extends StatelessWidget {
                             fontSize: 12,
                             height: 1.4,
                             fontWeight: FontWeight.w600,
-                            color: textDark,
+                            color: AppColors.primary,
                           ),
                         ),
                       ),
@@ -308,8 +302,8 @@ class CheckOutSuccessScreen extends StatelessWidget {
                       Get.until((route) => route.isFirst);
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: navy,
-                      foregroundColor: AppColors.white,
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: AppColors.surface,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
@@ -334,7 +328,7 @@ class CheckOutSuccessScreen extends StatelessWidget {
                     fontSize: 11,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 2.2,
-                    color: navy,
+                    color: AppColors.primary,
                   ),
                 ),
 
@@ -344,7 +338,7 @@ class CheckOutSuccessScreen extends StatelessWidget {
                   'Secure Attendance System',
                   style: TextStyle(
                     fontSize: 10,
-                    color: textGrey,
+                    color: AppColors.textSecondary,
                   ),
                 ),
 
@@ -373,9 +367,9 @@ class _InfoRow extends StatelessWidget {
     required this.title,
     required this.value,
     this.valueColor,
-    this.iconColor = AppColors.hexFF3978E8,
-    this.titleColor = AppColors.hexFF718096,
-    this.iconBackgroundColor = AppColors.hexFFF1F5FB,
+    this.iconColor = AppColors.primaryBlue,
+    this.titleColor = AppColors.textSecondary,
+    this.iconBackgroundColor = AppColors.hover,
   });
 
   @override
@@ -411,7 +405,7 @@ class _InfoRow extends StatelessWidget {
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w700,
-            color: valueColor ?? AppColors.hexFF19356C,
+            color: valueColor ?? AppColors.primary,
           ),
         ),
       ],

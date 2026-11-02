@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../app/theme/app_colors.dart';
 import '../controllers/calendar_controller.dart';
 
 class AttendanceCalendarGrid extends StatelessWidget {
@@ -12,43 +13,43 @@ class AttendanceCalendarGrid extends StatelessWidget {
   Color _statusColor(String status) {
     switch (status) {
       case 'present':
-        return const Color(0xFFDDF5E6);
+        return AppColors.successBackground;
       case 'absent':
-        return const Color(0xFFFCE3E4);
+        return AppColors.errorBackground;
       case 'leave':
-        return const Color(0xFFEDE5FC);
+        return AppColors.secondarySoft;
       case 'halfDay':
-        return const Color(0xFFFFF0D5);
+        return AppColors.warningBackground;
       case 'weekOff':
-        return const Color(0xFFEEF2F5);
+        return AppColors.surfaceMuted;
       case 'holiday':
-        return const Color(0xFFDDF4F5);
+        return AppColors.infoSurface;
       case 'late':
       case 'punchError':
-        return const Color(0xFFFFF0D5);
+        return AppColors.warningBackground;
       default:
-        return const Color(0xFFF7F9FB);
+        return AppColors.surfaceMuted;
     }
   }
 
   Color _textColor(String status) {
     switch (status) {
       case 'present':
-        return const Color(0xFF168347);
+        return AppColors.successDark;
       case 'absent':
-        return const Color(0xFFC82D38);
+        return AppColors.errorDark;
       case 'leave':
-        return const Color(0xFF7845CF);
+        return AppColors.secondaryDark;
       case 'halfDay':
       case 'late':
       case 'punchError':
-        return const Color(0xFFAD7400);
+        return AppColors.warningDark;
       case 'holiday':
-        return const Color(0xFF087F8C);
+        return AppColors.accent;
       case 'weekOff':
-        return const Color(0xFF788592);
+        return AppColors.textSecondary;
       default:
-        return const Color(0xFF233246);
+        return AppColors.textSecondary;
     }
   }
 
@@ -71,7 +72,7 @@ class AttendanceCalendarGrid extends StatelessWidget {
                   child: Text(
                     day,
                     style: TextStyle(
-                      color: Color(0xFF84909C),
+                      color: AppColors.textSecondary,
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                     ),
@@ -117,14 +118,14 @@ class AttendanceCalendarGrid extends StatelessWidget {
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 160),
                 decoration: BoxDecoration(
-                  color: selected ? const Color(0xFFE7F3FF) : baseColor,
+                  color: selected ? AppColors.infoSurface : baseColor,
                   borderRadius: BorderRadius.circular(9),
                   border: Border.all(
                     color: selected
-                        ? const Color(0xFF1684B8)
+                        ? AppColors.primaryBlue
                         : isToday
-                            ? const Color(0xFF1684B8)
-                            : const Color(0xFFE1E7ED),
+                            ? AppColors.primaryBlue
+                            : AppColors.border,
                     width: selected || isToday ? 1.8 : 1,
                   ),
                 ),
@@ -139,7 +140,7 @@ class AttendanceCalendarGrid extends StatelessWidget {
                               ? FontWeight.w700
                               : FontWeight.w500,
                           color: selected
-                              ? const Color(0xFF1677B8)
+                              ? AppColors.primaryBlue
                               : baseTextColor,
                         ),
                       ),
@@ -154,7 +155,7 @@ class AttendanceCalendarGrid extends StatelessWidget {
                               ? Icons.access_time_rounded
                               : Icons.warning_amber_rounded,
                           size: 11,
-                          color: const Color(0xFFE69A0A),
+                          color: AppColors.warning,
                         ),
                       ),
                   ],

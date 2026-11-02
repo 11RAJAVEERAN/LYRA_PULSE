@@ -43,7 +43,7 @@ abstract final class AppTextStyles {
   static final TextStyle button = GoogleFonts.inter(
     fontSize: 15,
     fontWeight: FontWeight.w700,
-    color: AppColors.white,
+    color: AppColors.surface,
   );
 
   static final TextTheme textTheme = ThemeData()

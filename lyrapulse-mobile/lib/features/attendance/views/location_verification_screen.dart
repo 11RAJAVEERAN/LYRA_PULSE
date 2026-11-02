@@ -174,8 +174,8 @@ class _LocationVerificationScreenState
         'Location Error',
         'Please enable GPS and try again.',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red.shade50,
-        colorText: Colors.red.shade900,
+        backgroundColor: AppColors.errorBackground,
+        colorText: AppColors.errorDark,
         margin: const EdgeInsets.all(16),
       );
     } finally {
@@ -210,7 +210,7 @@ class _LocationVerificationScreenState
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
+                foregroundColor: AppColors.surface,
               ),
               onPressed: () async {
                 Navigator.of(dialogContext).pop();
@@ -247,7 +247,7 @@ class _LocationVerificationScreenState
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
+                foregroundColor: AppColors.surface,
               ),
               onPressed: () async {
                 Navigator.of(dialogContext).pop();
@@ -293,9 +293,9 @@ class _LocationVerificationScreenState
     final primary = AppColors.primary;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FB),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.surface,
         foregroundColor: AppColors.primary,
         elevation: 0,
         title: Text(
@@ -330,7 +330,7 @@ class _LocationVerificationScreenState
                             : Icons.location_off_rounded,
                     size: 56,
                     color: isOutsideOffice
-                        ? Colors.red
+                        ? AppColors.error
                         : primary,
                   ),
                 ),
@@ -359,7 +359,7 @@ class _LocationVerificationScreenState
                 style: GoogleFonts.inter(
                   fontSize: 14,
                   height: 1.6,
-                  color: Color(0xFF64748B),
+                  color: AppColors.textSecondary,
                 ),
               ),
 
@@ -368,10 +368,10 @@ class _LocationVerificationScreenState
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.surface,
                   borderRadius: BorderRadius.circular(22),
                   border: Border.all(
-                    color: const Color(0xFFE2E8F0),
+                    color: AppColors.border,
                   ),
                 ),
                 child: Column(
@@ -391,7 +391,7 @@ class _LocationVerificationScreenState
                             style: GoogleFonts.inter(
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
-                              color: const Color(0xFF0F172A),
+                              color: AppColors.textPrimary,
                             ),
                           ),
                         ),
@@ -435,10 +435,10 @@ class _LocationVerificationScreenState
                         color: isLoading
                             ? primary.withValues(alpha: 0.07)
                             : locationVerified
-                                ? Colors.green.withValues(alpha: 0.08)
+                                ? AppColors.success.withValues(alpha: 0.08)
                                 : isOutsideOffice
-                                    ? Colors.red.withValues(alpha: 0.07)
-                                    : Colors.orange.withValues(alpha: 0.08),
+                                    ? AppColors.error.withValues(alpha: 0.07)
+                                    : AppColors.warning.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: Row(
@@ -459,10 +459,10 @@ class _LocationVerificationScreenState
                                   ? Icons.check_circle_rounded
                                   : Icons.info_rounded,
                               color: locationVerified
-                                  ? Colors.green
+                                  ? AppColors.success
                                   : isOutsideOffice
-                                      ? Colors.red
-                                      : Colors.orange,
+                                      ? AppColors.error
+                                      : AppColors.warning,
                             ),
 
                           const SizedBox(width: 12),
@@ -480,7 +480,7 @@ class _LocationVerificationScreenState
                                 fontSize: 13,
                                 height: 1.5,
                                 fontWeight: FontWeight.w600,
-                                color: const Color(0xFF334155),
+                                color: AppColors.textPrimary,
                               ),
                             ),
                           ),
@@ -504,8 +504,8 @@ class _LocationVerificationScreenState
                   style: ElevatedButton.styleFrom(
                     backgroundColor: primary,
                     disabledBackgroundColor:
-                        Colors.grey.shade300,
-                    foregroundColor: Colors.white,
+                        AppColors.borderStrong,
+                    foregroundColor: AppColors.surface,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
@@ -517,7 +517,7 @@ class _LocationVerificationScreenState
                           width: 22,
                           child: CircularProgressIndicator(
                             strokeWidth: 2.5,
-                            color: Colors.white,
+                            color: AppColors.surface,
                           ),
                         )
                       : Row(
@@ -565,7 +565,7 @@ class _LocationVerificationScreenState
                 style: GoogleFonts.inter(
                   fontSize: 11,
                   height: 1.5,
-                  color: const Color(0xFF94A3B8),
+                  color: AppColors.borderStrong,
                 ),
               ),
             ],
@@ -599,7 +599,7 @@ class _LocationVerificationScreenState
                 title,
                 style: GoogleFonts.inter(
                   fontSize: 12,
-                  color: const Color(0xFF64748B),
+                  color: AppColors.textSecondary,
                 ),
               ),
               const SizedBox(height: 4),

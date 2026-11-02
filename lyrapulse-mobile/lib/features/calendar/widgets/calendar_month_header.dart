@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../app/theme/app_colors.dart';
 import '../controllers/calendar_controller.dart';
 
 class CalendarMonthHeader extends StatelessWidget {
@@ -24,7 +25,7 @@ class CalendarMonthHeader extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 21,
                 fontWeight: FontWeight.w700,
-                color: Color(0xFF182638),
+                color: AppColors.textPrimary,
               ),
             ),
           ),
@@ -42,7 +43,7 @@ class CalendarMonthHeader extends StatelessWidget {
     required VoidCallback onTap,
   }) {
     return Material(
-      color: const Color(0xFFF0F8FC),
+      color: AppColors.infoSurface,
       borderRadius: BorderRadius.circular(30),
       child: InkWell(
         onTap: onTap,
@@ -52,7 +53,7 @@ class CalendarMonthHeader extends StatelessWidget {
           height: 46,
           child: Icon(
             icon,
-            color: const Color(0xFF1684B8),
+            color: AppColors.primaryBlue,
             size: 29,
           ),
         ),

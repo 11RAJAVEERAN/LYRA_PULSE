@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../app/theme/app_colors.dart';
@@ -32,12 +31,12 @@ class MenuSection extends StatelessWidget {
         ),
         Container(
           decoration: BoxDecoration(
-            color: AppColors.white,
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(22),
             border: Border.all(color: AppColors.border),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.025),
+                color: AppColors.textPrimary.withValues(alpha: 0.025),
                 blurRadius: 14,
                 offset: const Offset(0, 4),
               ),
@@ -54,7 +53,7 @@ class MenuSection extends StatelessWidget {
                       child: Divider(
                         height: 1,
                         thickness: 0.7,
-                        color: Color(0xFFE9EDF2),
+                        color: AppColors.border,
                       ),
                     ),
                   children[i],

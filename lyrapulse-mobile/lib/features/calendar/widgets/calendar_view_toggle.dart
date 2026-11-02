@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../app/theme/app_colors.dart';
 import '../controllers/calendar_controller.dart';
 
 class CalendarViewToggle extends StatelessWidget {
@@ -14,7 +15,7 @@ class CalendarViewToggle extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: const Color(0xFFF0F3F8),
+        color: AppColors.surfaceMuted,
         borderRadius: BorderRadius.circular(18),
       ),
       child: Row(
@@ -48,12 +49,12 @@ class CalendarViewToggle extends StatelessWidget {
         width: 48,
         height: 44,
         decoration: BoxDecoration(
-          color: selected ? Colors.white : Colors.transparent,
+          color: selected ? AppColors.surface : AppColors.surface,
           borderRadius: BorderRadius.circular(15),
           boxShadow: selected
               ? [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.06),
+                    color: AppColors.primaryDark.withValues(alpha: 0.06),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -62,7 +63,7 @@ class CalendarViewToggle extends StatelessWidget {
         ),
         child: Icon(
           icon,
-          color: selected ? const Color(0xFF1677B8) : const Color(0xFF8B96A5),
+          color: selected ? AppColors.primaryBlue : AppColors.textSecondary,
           size: 23,
         ),
       ),

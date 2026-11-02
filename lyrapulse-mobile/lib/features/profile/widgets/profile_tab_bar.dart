@@ -1,6 +1,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../../app/theme/app_colors.dart';
 import '../controllers/profile_controller.dart';
@@ -29,12 +30,12 @@ class ProfileTabBar extends GetView<ProfileController> {
         child: Container(
           height: 65,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.surface,
             border: Border(
               bottom: BorderSide(
                 color: selected
                     ? AppColors.primaryBlue
-                    : Colors.transparent,
+                    : AppColors.surface,
                 width: 3,
               ),
             ),
@@ -42,14 +43,14 @@ class ProfileTabBar extends GetView<ProfileController> {
           child: Center(
             child: Text(
               title,
-              style: TextStyle(
+              style: GoogleFonts.inter(
                 fontSize: 16,
                 fontWeight: selected
                     ? FontWeight.w700
                     : FontWeight.w500,
                 color: selected
                     ? AppColors.textPrimary
-                    : Colors.blueGrey.shade300,
+                    : AppColors.textSecondary,
               ),
             ),
           ),

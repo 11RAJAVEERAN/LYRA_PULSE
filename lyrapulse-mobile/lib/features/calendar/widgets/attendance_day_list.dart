@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../app/theme/app_colors.dart';
 import '../controllers/calendar_controller.dart';
 
 class AttendanceDayList extends StatelessWidget {
@@ -12,21 +13,21 @@ class AttendanceDayList extends StatelessWidget {
   Color _statusColor(String status) {
     switch (status) {
       case 'present':
-        return const Color(0xFF20A45A);
+        return AppColors.success;
       case 'absent':
-        return const Color(0xFFD93640);
+        return AppColors.error;
       case 'leave':
-        return const Color(0xFF8956E8);
+        return AppColors.secondary;
       case 'halfDay':
       case 'late':
       case 'punchError':
-        return const Color(0xFFE69A0A);
+        return AppColors.warning;
       case 'holiday':
-        return const Color(0xFF168F9B);
+        return AppColors.accent;
       case 'weekOff':
-        return const Color(0xFF66788A);
+        return AppColors.textSecondary;
       default:
-        return const Color(0xFF9BA5B1);
+        return AppColors.textSecondary;
     }
   }
 
@@ -39,7 +40,7 @@ class AttendanceDayList extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(28),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(18),
         ),
         child: const Column(
@@ -47,13 +48,13 @@ class AttendanceDayList extends StatelessWidget {
             Icon(
               Icons.event_available_rounded,
               size: 42,
-              color: Color(0xFF9BA5B1),
+              color: AppColors.textSecondary,
             ),
             SizedBox(height: 10),
             Text(
               'No attendance records found',
               style: TextStyle(
-                color: Color(0xFF66788A),
+                color: AppColors.textSecondary,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -75,7 +76,7 @@ class AttendanceDayList extends StatelessWidget {
         return Padding(
           padding: const EdgeInsets.only(bottom: 10),
           child: Material(
-            color: Colors.white,
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(16),
             child: InkWell(
               onTap: () => controller.selectDate(day),
@@ -86,8 +87,8 @@ class AttendanceDayList extends StatelessWidget {
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                     color: selected
-                        ? const Color(0xFF1684B8)
-                        : const Color(0xFFEDF0F4),
+                        ? AppColors.primaryBlue
+                        : AppColors.border,
                   ),
                 ),
                 child: Row(
@@ -115,7 +116,7 @@ class AttendanceDayList extends StatelessWidget {
                             controller.weekdayShort(date),
                             style: const TextStyle(
                               fontSize: 11,
-                              color: Color(0xFF748091),
+                              color: AppColors.textSecondary,
                             ),
                           ),
                         ],
@@ -131,7 +132,7 @@ class AttendanceDayList extends StatelessWidget {
                             style: const TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w700,
-                              color: Color(0xFF202D3C),
+                              color: AppColors.textPrimary,
                             ),
                           ),
                           const SizedBox(height: 5),
@@ -139,7 +140,7 @@ class AttendanceDayList extends StatelessWidget {
                             '${controller.monthTitle} • ${controller.weekdayShort(date)}',
                             style: const TextStyle(
                               fontSize: 11,
-                              color: Color(0xFF8A95A2),
+                              color: AppColors.textSecondary,
                             ),
                           ),
                         ],

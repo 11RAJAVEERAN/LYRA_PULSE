@@ -10,14 +10,6 @@ class NotificationScreen extends StatefulWidget {
 }
 
 class _NotificationScreenState extends State<NotificationScreen> {
-  static const Color navy = AppColors.hexFF102B63;
-  static const Color blue = AppColors.hexFF4779D9;
-  static const Color purple = AppColors.hexFF6254E8;
-  static const Color green = AppColors.hexFF0BA875;
-  static const Color red = AppColors.hexFFE94B60;
-  static const Color orange = AppColors.hexFFF29D38;
-  static const Color background = AppColors.hexFFF5F7FD;
-  static const Color muted = AppColors.hexFF8491AA;
 
   final List<_NotificationItem> _notifications = [
     _NotificationItem(
@@ -25,7 +17,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
       message: 'Please remember to mark your attendance for today.',
       time: '09:15 AM',
       icon: Icons.access_time_rounded,
-      color: blue,
+      color: AppColors.primaryBlue,
       isRead: false,
     ),
     _NotificationItem(
@@ -33,7 +25,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
       message: 'Your check-in attendance was successfully recorded.',
       time: '09:28 AM',
       icon: Icons.check_circle_outline_rounded,
-      color: green,
+      color: AppColors.success,
       isRead: false,
     ),
     _NotificationItem(
@@ -41,7 +33,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
       message: 'Your permission request has been approved.',
       time: 'Yesterday',
       icon: Icons.event_available_rounded,
-      color: purple,
+      color: AppColors.secondary,
       isRead: true,
     ),
     _NotificationItem(
@@ -49,7 +41,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
       message: 'Your leave request is currently under review.',
       time: 'Yesterday',
       icon: Icons.beach_access_rounded,
-      color: orange,
+      color: AppColors.warning,
       isRead: true,
     ),
     _NotificationItem(
@@ -57,7 +49,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
       message: 'Your employee profile was successfully updated.',
       time: '02 Oct 2026',
       icon: Icons.person_outline_rounded,
-      color: blue,
+      color: AppColors.primaryBlue,
       isRead: true,
     ),
   ];
@@ -91,7 +83,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: background,
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -113,7 +105,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
       child: Row(
         children: [
           Material(
-            color: AppColors.white,
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(14),
             child: InkWell(
               onTap: () => Navigator.pop(context),
@@ -123,7 +115,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                 width: 46,
                 child: Icon(
                   Icons.arrow_back_rounded,
-                  color: navy,
+                  color: AppColors.primary,
                   size: 23,
                 ),
               ),
@@ -139,7 +131,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                   style: GoogleFonts.inter(
                     fontSize: 22,
                     fontWeight: FontWeight.w700,
-                    color: navy,
+                    color: AppColors.primary,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -151,7 +143,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
-                    color: muted,
+                    color: AppColors.borderStrong,
                   ),
                 ),
               ],
@@ -165,7 +157,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                 style: GoogleFonts.inter(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: blue,
+                  color: AppColors.primaryBlue,
                 ),
               ),
             ),
@@ -185,7 +177,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
         return Padding(
           padding: const EdgeInsets.only(bottom: 12),
           child: Material(
-            color: AppColors.white,
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(20),
             child: InkWell(
               onTap: () => _markAsRead(index),
@@ -196,8 +188,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color: item.isRead
-                        ? AppColors.hexFFE8EDF6
-                        : blue.withValues(alpha: 0.18),
+                        ? AppColors.surfaceBorder
+                        : AppColors.primaryBlue.withValues(alpha: 0.18),
                   ),
                 ),
                 child: Row(
@@ -232,7 +224,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                                     fontWeight: item.isRead
                                         ? FontWeight.w600
                                         : FontWeight.w700,
-                                    color: navy,
+                                    color: AppColors.primary,
                                   ),
                                 ),
                               ),
@@ -242,7 +234,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                                 style: GoogleFonts.inter(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w500,
-                                  color: muted,
+                                  color: AppColors.borderStrong,
                                 ),
                               ),
                             ],
@@ -254,7 +246,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                               fontSize: 11.5,
                               height: 1.5,
                               fontWeight: FontWeight.w400,
-                              color: muted,
+                              color: AppColors.borderStrong,
                             ),
                           ),
                         ],
@@ -267,7 +259,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                         height: 7,
                         width: 7,
                         decoration: const BoxDecoration(
-                          color: red,
+                          color: AppColors.error,
                           shape: BoxShape.circle,
                         ),
                       ),
@@ -293,13 +285,13 @@ class _NotificationScreenState extends State<NotificationScreen> {
               height: 90,
               width: 90,
               decoration: BoxDecoration(
-                color: blue.withValues(alpha: 0.10),
+                color: AppColors.primaryBlue.withValues(alpha: 0.10),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
                 Icons.notifications_none_rounded,
                 size: 42,
-                color: blue,
+                color: AppColors.primaryBlue,
               ),
             ),
             const SizedBox(height: 20),
@@ -308,7 +300,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
               style: GoogleFonts.inter(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
-                color: navy,
+                color: AppColors.primary,
               ),
             ),
             const SizedBox(height: 7),
@@ -317,7 +309,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
               textAlign: TextAlign.center,
               style: GoogleFonts.inter(
                 fontSize: 12,
-                color: muted,
+                color: AppColors.borderStrong,
               ),
             ),
           ],

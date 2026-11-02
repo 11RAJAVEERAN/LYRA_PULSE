@@ -23,16 +23,16 @@ class LoginScreen extends GetView<AuthController> {
 
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
-        statusBarColor: AppColors.transparent,
+        statusBarColor: AppColors.surface,
         statusBarIconBrightness: Brightness.dark,
         statusBarBrightness: Brightness.light,
-        systemNavigationBarColor: AppColors.hexFFF8FBFF,
+        systemNavigationBarColor: AppColors.surfaceMuted,
         systemNavigationBarIconBrightness: Brightness.dark,
       ),
     );
 
     return Scaffold(
-      backgroundColor: AppColors.hexFFF7FAFE,
+      backgroundColor: AppColors.surfaceMuted,
       resizeToAvoidBottomInset: true,
       body: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
@@ -61,9 +61,9 @@ class LoginScreen extends GetView<AuthController> {
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
                             colors: [
-                              AppColors.hexFFF8FBFF,
-                              AppColors.hexFFF6FAFF,
-                              AppColors.hexFFF9FCFF,
+                              AppColors.surfaceMuted,
+                              AppColors.surfaceMuted,
+                              AppColors.surfaceMuted,
                             ],
                           ),
                         ),
@@ -91,7 +91,7 @@ class LoginScreen extends GetView<AuthController> {
                         'Lyra Pulse',
                         textAlign: TextAlign.center,
                         style: GoogleFonts.inter(
-                          color: AppColors.hexFF11295E,
+                          color: AppColors.primary,
                           fontSize: 28 * ((sx + sy) / 2),
                           fontWeight: FontWeight.w700,
                           letterSpacing: -0.7,
@@ -109,7 +109,7 @@ class LoginScreen extends GetView<AuthController> {
                         'Employee Login',
                         textAlign: TextAlign.center,
                         style: GoogleFonts.inter(
-                          color: AppColors.hexFF29436F,
+                          color: AppColors.primary,
                           fontSize: 12 * ((sx + sy) / 2),
                           fontWeight: FontWeight.w400,
                         ),
@@ -123,7 +123,7 @@ class LoginScreen extends GetView<AuthController> {
                       child: Text(
                         'Phone Number',
                         style: GoogleFonts.inter(
-                          color: AppColors.hexFF29477B,
+                          color: AppColors.primary,
                           fontSize: 12 * ((sx + sy) / 2),
                           fontWeight: FontWeight.w600,
                         ),
@@ -138,12 +138,12 @@ class LoginScreen extends GetView<AuthController> {
                       height: 48 * sy,
                       child: Container(
                         decoration: BoxDecoration(
-                          color: AppColors.white.withValues(alpha: 0.92),
+                          color: AppColors.surface.withValues(alpha: 0.92),
                           borderRadius: BorderRadius.circular(
                             8 * ((sx + sy) / 2),
                           ),
                           border: Border.all(
-                            color: AppColors.hexFFD6E2F2,
+                            color: AppColors.border,
                             width: 1,
                           ),
                         ),
@@ -160,7 +160,7 @@ class LoginScreen extends GetView<AuthController> {
                                   Text(
                                     '+91',
                                     style: GoogleFonts.inter(
-                                      color: AppColors.hexFF34517E,
+                                      color: AppColors.textSecondary,
                                       fontSize: 11 * ((sx + sy) / 2),
                                       fontWeight: FontWeight.w500,
                                     ),
@@ -169,7 +169,7 @@ class LoginScreen extends GetView<AuthController> {
                                   Icon(
                                     Icons.keyboard_arrow_down_rounded,
                                     size: 15 * ((sx + sy) / 2),
-                                    color: AppColors.hexFF577296,
+                                    color: AppColors.textSecondary,
                                   ),
                                 ],
                               ),
@@ -179,7 +179,7 @@ class LoginScreen extends GetView<AuthController> {
                             Container(
                               width: 1,
                               height: 24 * sy,
-                              color: AppColors.hexFFDCE6F2,
+                              color: AppColors.border,
                             ),
 
                             // PHONE INPUT
@@ -193,7 +193,7 @@ class LoginScreen extends GetView<AuthController> {
                                   FilteringTextInputFormatter.digitsOnly,
                                 ],
                                 style: GoogleFonts.inter(
-                                  color: AppColors.hexFF1C3764,
+                                  color: AppColors.primary,
                                   fontSize: 14 * ((sx + sy) / 2),
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -202,7 +202,7 @@ class LoginScreen extends GetView<AuthController> {
                                   border: InputBorder.none,
                                   hintText: 'Enter your phone number',
                                   hintStyle: GoogleFonts.inter(
-                                    color: AppColors.hexFFA0B0C7,
+                                    color: AppColors.borderStrong,
                                     fontSize: 10.5 * ((sx + sy) / 2),
                                     fontWeight: FontWeight.w400,
                                   ),
@@ -225,7 +225,7 @@ class LoginScreen extends GetView<AuthController> {
                       right: 26 * sx,
                       height: 46 * sy,
                       child: Material(
-                        color: AppColors.transparent,
+                        color: AppColors.surface,
                         child: InkWell(
                           borderRadius: BorderRadius.circular(
                             8 * ((sx + sy) / 2),
@@ -243,14 +243,14 @@ class LoginScreen extends GetView<AuthController> {
                                 begin: Alignment.centerLeft,
                                 end: Alignment.centerRight,
                                 colors: [
-                                  AppColors.hexFF4139B5,
-                                  AppColors.hexFF5D55DF,
+                                  AppColors.secondaryDark,
+                                  AppColors.secondary,
                                 ],
                               ),
                               boxShadow: [
                                 BoxShadow(
                                   color:
-                                      AppColors.hexFF4D45C9.withValues(alpha: 0.18),
+                                      AppColors.secondaryDark.withValues(alpha: 0.18),
                                   blurRadius: 12,
                                   offset: const Offset(0, 5),
                                 ),
@@ -260,7 +260,7 @@ class LoginScreen extends GetView<AuthController> {
                               child: Text(
                                 'Login',
                                 style: GoogleFonts.inter(
-                                  color: AppColors.white,
+                                  color: AppColors.surface,
                                   fontSize: 12 * ((sx + sy) / 2),
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -281,7 +281,7 @@ class LoginScreen extends GetView<AuthController> {
                           'POWERED BY LYRATECH',
                           textAlign: TextAlign.center,
                           style: GoogleFonts.inter(
-                            color: AppColors.hexFF94A7C0,
+                            color: AppColors.borderStrong,
                             fontSize: 8 * ((sx + sy) / 2),
                             fontWeight: FontWeight.w500,
                             letterSpacing: 1.3,
@@ -347,8 +347,8 @@ class _LoginBottomWavePainter extends CustomPainter {
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
         colors: [
-          AppColors.hex221C82FF,
-          AppColors.hex121D6DFF,
+          AppColors.surfaceBorder,
+          AppColors.infoSurface,
         ],
       ).createShader(Rect.fromLTWH(0, 0, w, h));
 
@@ -381,8 +381,8 @@ class _LoginBottomWavePainter extends CustomPainter {
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
         colors: [
-          AppColors.hex171B78FF,
-          AppColors.hex081B65FF,
+          AppColors.secondarySoft,
+          AppColors.surfaceMuted,
         ],
       ).createShader(Rect.fromLTWH(0, 0, w, h));
 

@@ -20,7 +20,7 @@ class MenuOptionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.white,
+      color: AppColors.surface,
       child: InkWell(
         onTap: onTap,
         child: Padding(
@@ -34,13 +34,13 @@ class MenuOptionTile extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5F9),
+                  color: AppColors.hover,
                   borderRadius: BorderRadius.circular(15),
                 ),
                 child: Icon(
                   icon,
                   size: 25,
-                  color: const Color(0xFF526579),
+                  color: AppColors.textSecondary,
                 ),
               ),
               const SizedBox(width: 15),
@@ -67,7 +67,7 @@ class MenuOptionTile extends StatelessWidget {
                   child: Text(
                     badgeText!,
                     style: GoogleFonts.inter(
-                      color: AppColors.white,
+                      color: AppColors.surface,
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
                     ),
@@ -77,7 +77,7 @@ class MenuOptionTile extends StatelessWidget {
                 const Icon(
                   Icons.chevron_right_rounded,
                   size: 27,
-                  color: Color(0xFF8795A1),
+                  color: AppColors.textSecondary,
                 ),
             ],
           ),

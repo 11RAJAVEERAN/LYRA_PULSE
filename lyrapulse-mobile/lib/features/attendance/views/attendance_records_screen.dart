@@ -6,32 +6,21 @@ import '../../../app/theme/app_colors.dart';
 class AttendanceRecordsScreen extends StatelessWidget {
   const AttendanceRecordsScreen({super.key});
 
-  static const Color navy = AppColors.hexFF19356C;
-  static const Color blue = AppColors.hexFF3978E8;
-  static const Color green = AppColors.hexFF18A66A;
-  static const Color orange = AppColors.hexFFF39A35;
-  static const Color red = AppColors.hexFFE94B60;
-  static const Color purple = AppColors.hexFF6254E8;
 
-  static const Color background = AppColors.hexFFF7FAFE;
-  static const Color border = AppColors.hexFFE3EAF3;
-  static const Color primaryText = AppColors.hexFF172B4D;
-  static const Color secondaryText = AppColors.hexFF65758B;
-  static const Color lightText = AppColors.hexFF8A99AA;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: background,
+      backgroundColor: AppColors.surfaceMuted,
       appBar: AppBar(
-        backgroundColor: background,
+        backgroundColor: AppColors.surfaceMuted,
         elevation: 0,
-        surfaceTintColor: AppColors.transparent,
+        surfaceTintColor: AppColors.surface,
         leading: IconButton(
           onPressed: () => Get.back(),
           icon: const Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: navy,
+            color: AppColors.primary,
             size: 20,
           ),
         ),
@@ -39,7 +28,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
         title: Text(
           'Attendance Records',
           style: GoogleFonts.inter(
-            color: navy,
+            color: AppColors.primary,
             fontSize: 18,
             fontWeight: FontWeight.w700,
           ),
@@ -63,8 +52,8 @@ class AttendanceRecordsScreen extends StatelessWidget {
                 day: 'Monday',
                 month: 'October 2026',
                 status: 'Present',
-                statusColor: green,
-                statusBackground: AppColors.hexFFE5F8F0,
+                statusColor: AppColors.success,
+                statusBackground: AppColors.surfaceBorder,
                 checkIn: '09:28 AM',
                 checkOut: '06:12 PM',
                 workingHours: '08h 44m',
@@ -77,8 +66,8 @@ class AttendanceRecordsScreen extends StatelessWidget {
                 day: 'Friday',
                 month: 'October 2026',
                 status: 'Late',
-                statusColor: orange,
-                statusBackground: AppColors.hexFFFFF1DF,
+                statusColor: AppColors.warning,
+                statusBackground: AppColors.warningBackground,
                 checkIn: '09:47 AM',
                 checkOut: '06:15 PM',
                 workingHours: '08h 28m',
@@ -91,8 +80,8 @@ class AttendanceRecordsScreen extends StatelessWidget {
                 day: 'Thursday',
                 month: 'October 2026',
                 status: 'Absent',
-                statusColor: red,
-                statusBackground: AppColors.hexFFFFE9ED,
+                statusColor: AppColors.error,
+                statusBackground: AppColors.errorBackground,
                 checkIn: '--:--',
                 checkOut: '--:--',
                 workingHours: '--',
@@ -105,8 +94,8 @@ class AttendanceRecordsScreen extends StatelessWidget {
                 day: 'Wednesday',
                 month: 'October 2026',
                 status: 'Present',
-                statusColor: green,
-                statusBackground: AppColors.hexFFE5F8F0,
+                statusColor: AppColors.success,
+                statusBackground: AppColors.surfaceBorder,
                 checkIn: '09:31 AM',
                 checkOut: '06:05 PM',
                 workingHours: '08h 34m',
@@ -132,7 +121,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
     return Text(
       'View your complete attendance history',
       style: GoogleFonts.inter(
-        color: secondaryText,
+        color: AppColors.textSecondary,
         fontSize: 11,
         fontWeight: FontWeight.w400,
       ),
@@ -147,14 +136,14 @@ class AttendanceRecordsScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(22),
         border: Border.all(
-          color: border,
+          color: AppColors.border,
         ),
         boxShadow: [
           BoxShadow(
-            color: navy.withValues(alpha: 0.035),
+            color: AppColors.primary.withValues(alpha: 0.035),
             blurRadius: 18,
             offset: const Offset(0, 5),
           ),
@@ -174,7 +163,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
                 ),
                 child: const Icon(
                   Icons.calendar_month_rounded,
-                  color: blue,
+                  color: AppColors.primaryBlue,
                   size: 23,
                 ),
               ),
@@ -186,7 +175,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
                     Text(
                       'October 2026',
                       style: GoogleFonts.inter(
-                        color: primaryText,
+                        color: AppColors.primary,
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
                       ),
@@ -194,7 +183,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
                     Text(
                       'Monthly attendance summary',
                       style: GoogleFonts.inter(
-                        color: lightText,
+                        color: AppColors.borderStrong,
                         fontSize: 9,
                       ),
                     ),
@@ -207,13 +196,13 @@ class AttendanceRecordsScreen extends StatelessWidget {
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.hexFFF0F3FF,
+                  color: AppColors.secondarySoft,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
                   '88%',
                   style: GoogleFonts.inter(
-                    color: purple,
+                    color: AppColors.secondary,
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                   ),
@@ -224,7 +213,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
           const SizedBox(height: 18),
           const Divider(
             height: 1,
-            color: AppColors.hexFFEDF0F5,
+            color: AppColors.surfaceBorder,
           ),
           const SizedBox(height: 16),
           Row(
@@ -233,7 +222,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
                 child: _summaryItem(
                   value: '22',
                   label: 'Present',
-                  color: green,
+                  color: AppColors.success,
                 ),
               ),
               _verticalDivider(),
@@ -241,7 +230,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
                 child: _summaryItem(
                   value: '2',
                   label: 'Absent',
-                  color: red,
+                  color: AppColors.error,
                 ),
               ),
               _verticalDivider(),
@@ -249,7 +238,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
                 child: _summaryItem(
                   value: '3',
                   label: 'Late',
-                  color: orange,
+                  color: AppColors.warning,
                 ),
               ),
               _verticalDivider(),
@@ -257,7 +246,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
                 child: _summaryItem(
                   value: '1',
                   label: 'Leave',
-                  color: purple,
+                  color: AppColors.secondary,
                 ),
               ),
             ],
@@ -290,7 +279,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
         Text(
           label,
           style: GoogleFonts.inter(
-            color: secondaryText,
+            color: AppColors.textSecondary,
             fontSize: 8,
             fontWeight: FontWeight.w500,
           ),
@@ -307,7 +296,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
     return Container(
       height: 30,
       width: 1,
-      color: AppColors.hexFFE9EDF4,
+      color: AppColors.surfaceBorder,
     );
   }
 
@@ -325,7 +314,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
               Text(
                 'Attendance History',
                 style: GoogleFonts.inter(
-                  color: navy,
+                  color: AppColors.primary,
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
                 ),
@@ -334,7 +323,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
               Text(
                 'Your daily attendance records',
                 style: GoogleFonts.inter(
-                  color: lightText,
+                  color: AppColors.borderStrong,
                   fontSize: 9,
                 ),
               ),
@@ -347,24 +336,24 @@ class AttendanceRecordsScreen extends StatelessWidget {
             vertical: 8,
           ),
           decoration: BoxDecoration(
-            color: AppColors.white,
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(11),
             border: Border.all(
-              color: border,
+              color: AppColors.border,
             ),
           ),
           child: Row(
             children: [
               const Icon(
                 Icons.filter_list_rounded,
-                color: blue,
+                color: AppColors.primaryBlue,
                 size: 17,
               ),
               const SizedBox(width: 5),
               Text(
                 'Filter',
                 style: GoogleFonts.inter(
-                  color: navy,
+                  color: AppColors.primary,
                   fontSize: 9,
                   fontWeight: FontWeight.w600,
                 ),
@@ -394,7 +383,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
     required bool faceVerified,
   }) {
     return Material(
-      color: AppColors.white,
+      color: AppColors.surface,
       borderRadius: BorderRadius.circular(20),
       child: InkWell(
         onTap: () {
@@ -415,14 +404,14 @@ class AttendanceRecordsScreen extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppColors.white,
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: border,
+              color: AppColors.border,
             ),
             boxShadow: [
               BoxShadow(
-                color: navy.withValues(alpha: 0.025),
+                color: AppColors.primary.withValues(alpha: 0.025),
                 blurRadius: 14,
                 offset: const Offset(0, 4),
               ),
@@ -437,7 +426,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
                     height: 55,
                     width: 55,
                     decoration: BoxDecoration(
-                      color: AppColors.hexFFF1F4FA,
+                      color: AppColors.hover,
                       borderRadius: BorderRadius.circular(15),
                     ),
                     child: Column(
@@ -446,7 +435,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
                         Text(
                           date,
                           style: GoogleFonts.inter(
-                            color: navy,
+                            color: AppColors.primary,
                             fontSize: 19,
                             height: 1,
                             fontWeight: FontWeight.w700,
@@ -456,7 +445,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
                         Text(
                           'OCT',
                           style: GoogleFonts.inter(
-                            color: lightText,
+                            color: AppColors.borderStrong,
                             fontSize: 7,
                             fontWeight: FontWeight.w600,
                             letterSpacing: 0.7,
@@ -475,7 +464,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
                         Text(
                           day,
                           style: GoogleFonts.inter(
-                            color: primaryText,
+                            color: AppColors.primary,
                             fontSize: 13,
                             fontWeight: FontWeight.w700,
                           ),
@@ -484,7 +473,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
                         Text(
                           month,
                           style: GoogleFonts.inter(
-                            color: lightText,
+                            color: AppColors.borderStrong,
                             fontSize: 9,
                           ),
                         ),
@@ -528,7 +517,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
               const SizedBox(height: 15),
               const Divider(
                 height: 1,
-                color: AppColors.hexFFEDF0F5,
+                color: AppColors.surfaceBorder,
               ),
               const SizedBox(height: 14),
               Row(
@@ -538,13 +527,13 @@ class AttendanceRecordsScreen extends StatelessWidget {
                       icon: Icons.login_rounded,
                       label: 'Check In',
                       value: checkIn,
-                      color: blue,
+                      color: AppColors.primaryBlue,
                     ),
                   ),
                   Container(
                     height: 40,
                     width: 1,
-                    color: AppColors.hexFFE9EDF4,
+                    color: AppColors.surfaceBorder,
                   ),
                   Expanded(
                     child: Padding(
@@ -555,7 +544,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
                         icon: Icons.logout_rounded,
                         label: 'Check Out',
                         value: checkOut,
-                        color: purple,
+                        color: AppColors.secondary,
                       ),
                     ),
                   ),
@@ -566,14 +555,14 @@ class AttendanceRecordsScreen extends StatelessWidget {
                 children: [
                   const Icon(
                     Icons.schedule_rounded,
-                    color: green,
+                    color: AppColors.success,
                     size: 16,
                   ),
                   const SizedBox(width: 6),
                   Text(
                     'Working Hours',
                     style: GoogleFonts.inter(
-                      color: secondaryText,
+                      color: AppColors.textSecondary,
                       fontSize: 9,
                     ),
                   ),
@@ -581,7 +570,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
                   Text(
                     workingHours,
                     style: GoogleFonts.inter(
-                      color: primaryText,
+                      color: AppColors.primary,
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
                     ),
@@ -596,7 +585,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
                       _verificationBadge(
                         icon: Icons.location_on_rounded,
                         label: 'Location Verified',
-                        color: green,
+                        color: AppColors.success,
                       ),
                     if (locationVerified && faceVerified)
                       const SizedBox(width: 7),
@@ -604,12 +593,12 @@ class AttendanceRecordsScreen extends StatelessWidget {
                       _verificationBadge(
                         icon: Icons.face_rounded,
                         label: 'Face Verified',
-                        color: blue,
+                        color: AppColors.primaryBlue,
                       ),
                     const Spacer(),
                     const Icon(
                       Icons.arrow_forward_ios_rounded,
-                      color: lightText,
+                      color: AppColors.borderStrong,
                       size: 13,
                     ),
                   ],
@@ -655,7 +644,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
               Text(
                 label,
                 style: GoogleFonts.inter(
-                  color: lightText,
+                  color: AppColors.borderStrong,
                   fontSize: 8,
                 ),
               ),
@@ -663,7 +652,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
               Text(
                 value,
                 style: GoogleFonts.inter(
-                  color: primaryText,
+                  color: AppColors.primary,
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
                 ),
@@ -740,7 +729,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
           28,
         ),
         decoration: const BoxDecoration(
-          color: AppColors.white,
+          color: AppColors.surface,
           borderRadius: BorderRadius.vertical(
             top: Radius.circular(28),
           ),
@@ -754,7 +743,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
                 height: 4,
                 width: 42,
                 decoration: BoxDecoration(
-                  color: AppColors.hexFFDDE3EC,
+                  color: AppColors.border,
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
@@ -765,14 +754,14 @@ class AttendanceRecordsScreen extends StatelessWidget {
                     height: 52,
                     width: 52,
                     decoration: BoxDecoration(
-                      color: AppColors.hexFFF1F4FA,
+                      color: AppColors.hover,
                       borderRadius: BorderRadius.circular(15),
                     ),
                     child: Center(
                       child: Text(
                         date,
                         style: GoogleFonts.inter(
-                          color: navy,
+                          color: AppColors.primary,
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
                         ),
@@ -787,7 +776,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
                         Text(
                           day,
                           style: GoogleFonts.inter(
-                            color: navy,
+                            color: AppColors.primary,
                             fontSize: 15,
                             fontWeight: FontWeight.w700,
                           ),
@@ -795,7 +784,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
                         Text(
                           month,
                           style: GoogleFonts.inter(
-                            color: secondaryText,
+                            color: AppColors.textSecondary,
                             fontSize: 9,
                           ),
                         ),
@@ -827,35 +816,35 @@ class AttendanceRecordsScreen extends StatelessWidget {
                 icon: Icons.login_rounded,
                 title: 'Check In',
                 value: checkIn,
-                color: blue,
+                color: AppColors.primaryBlue,
               ),
               const SizedBox(height: 12),
               _detailRow(
                 icon: Icons.logout_rounded,
                 title: 'Check Out',
                 value: checkOut,
-                color: purple,
+                color: AppColors.secondary,
               ),
               const SizedBox(height: 12),
               _detailRow(
                 icon: Icons.schedule_rounded,
                 title: 'Working Hours',
                 value: workingHours,
-                color: green,
+                color: AppColors.success,
               ),
               const SizedBox(height: 12),
               _detailRow(
                 icon: Icons.location_on_rounded,
                 title: 'Location Verification',
                 value: locationVerified ? 'Verified' : 'Not Available',
-                color: locationVerified ? green : red,
+                color: locationVerified ? AppColors.success : AppColors.error,
               ),
               const SizedBox(height: 12),
               _detailRow(
                 icon: Icons.face_rounded,
                 title: 'Face Verification',
                 value: faceVerified ? 'Verified' : 'Not Available',
-                color: faceVerified ? green : red,
+                color: faceVerified ? AppColors.success : AppColors.error,
               ),
               const SizedBox(height: 22),
               SizedBox(
@@ -864,8 +853,8 @@ class AttendanceRecordsScreen extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: () => Get.back(),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: navy,
-                    foregroundColor: AppColors.white,
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: AppColors.surface,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
@@ -901,7 +890,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.hexFFF8FAFD,
+        color: AppColors.surfaceMuted,
         borderRadius: BorderRadius.circular(13),
       ),
       child: Row(
@@ -924,7 +913,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
             child: Text(
               title,
               style: GoogleFonts.inter(
-                color: secondaryText,
+                color: AppColors.textSecondary,
                 fontSize: 10,
               ),
             ),
@@ -932,7 +921,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
           Text(
             value,
             style: GoogleFonts.inter(
-              color: primaryText,
+              color: AppColors.primary,
               fontSize: 10,
               fontWeight: FontWeight.w700,
             ),
@@ -950,10 +939,10 @@ class AttendanceRecordsScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.hexFFEEF5FF,
+        color: AppColors.infoSurface,
         borderRadius: BorderRadius.circular(15),
         border: Border.all(
-          color: AppColors.hexFFDCE9FF,
+          color: AppColors.border,
         ),
       ),
       child: Row(
@@ -962,12 +951,12 @@ class AttendanceRecordsScreen extends StatelessWidget {
             height: 34,
             width: 34,
             decoration: BoxDecoration(
-              color: AppColors.white,
+              color: AppColors.surface,
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(
               Icons.info_outline_rounded,
-              color: blue,
+              color: AppColors.primaryBlue,
               size: 19,
             ),
           ),
@@ -976,7 +965,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
             child: Text(
               'Attendance records are securely maintained and can be verified using location and face verification.',
               style: GoogleFonts.inter(
-                color: secondaryText,
+                color: AppColors.textSecondary,
                 fontSize: 9,
                 height: 1.5,
               ),
@@ -997,7 +986,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
         'LYRA PULSE  •  CONNECT · TRACK · GROW',
         textAlign: TextAlign.center,
         style: GoogleFonts.inter(
-          color: lightText,
+          color: AppColors.borderStrong,
           fontSize: 8,
           letterSpacing: 1.1,
           fontWeight: FontWeight.w600,

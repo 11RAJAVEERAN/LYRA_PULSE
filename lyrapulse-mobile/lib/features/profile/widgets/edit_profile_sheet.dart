@@ -1,7 +1,8 @@
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 
+import '../../../app/theme/app_colors.dart';
 import '../controllers/profile_controller.dart';
 
 class EditProfileSheet extends GetView<ProfileController> {
@@ -17,7 +18,7 @@ class EditProfileSheet extends GetView<ProfileController> {
         bottom: MediaQuery.of(context).viewInsets.bottom + 25,
       ),
       decoration: const BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.vertical(
           top: Radius.circular(25),
         ),
@@ -32,17 +33,18 @@ class EditProfileSheet extends GetView<ProfileController> {
                 width: 45,
                 height: 5,
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
+                  color: AppColors.borderStrong,
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
             ),
             const SizedBox(height: 20),
-            const Text(
+            Text(
               'Edit Profile',
-              style: TextStyle(
+              style: GoogleFonts.inter(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
               ),
             ),
             const SizedBox(height: 22),
@@ -63,16 +65,15 @@ class EditProfileSheet extends GetView<ProfileController> {
                 width: double.infinity,
                 height: 52,
                 child: ElevatedButton(
-                  onPressed: controller.isSaving.value
-                      ? null
-                      : controller.saveProfile,
+                  onPressed:
+                      controller.isSaving.value ? null : controller.saveProfile,
                   child: controller.isSaving.value
                       ? const CircularProgressIndicator(
-                          color: Colors.white,
+                          color: AppColors.surface,
                         )
-                      : const Text(
+                      : Text(
                           'Save Changes',
-                          style: TextStyle(fontSize: 16),
+                          style: GoogleFonts.inter(fontSize: 16),
                         ),
                 ),
               );

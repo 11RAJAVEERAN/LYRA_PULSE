@@ -32,7 +32,7 @@ class _HoldToConfirmButtonState extends State<HoldToConfirmButton>
   static const _waveDuration = Duration(milliseconds: 1100);
 
   Color get _buttonColor => widget.isCheckOut
-      ? AppColors.orange
+      ? AppColors.warning
       : AppColors.success;
 
   @override

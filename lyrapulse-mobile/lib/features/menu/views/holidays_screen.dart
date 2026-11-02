@@ -12,8 +12,8 @@ class HolidaysScreen extends StatelessWidget {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Holidays'),
-        backgroundColor: AppColors.white,
-        surfaceTintColor: AppColors.white,
+        backgroundColor: AppColors.surface,
+        surfaceTintColor: AppColors.surface,
       ),
       body: Center(
         child: Padding(

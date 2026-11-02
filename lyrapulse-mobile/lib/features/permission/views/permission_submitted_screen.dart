@@ -11,7 +11,7 @@ class PermissionSubmittedScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.hexFF04111F,
+      backgroundColor: AppColors.textPrimary,
       body: SafeArea(
         child: Stack(
           children: [
@@ -20,7 +20,7 @@ class PermissionSubmittedScreen extends StatelessWidget {
               right: -140,
               child: _glow(
                 390,
-                AppColors.hexFF087BFF,
+                AppColors.primaryBlue,
               ),
             ),
             Positioned(
@@ -28,7 +28,7 @@ class PermissionSubmittedScreen extends StatelessWidget {
               left: -160,
               child: _glow(
                 420,
-                AppColors.hexFF00D9FF,
+                AppColors.accent,
               ),
             ),
             SingleChildScrollView(
@@ -51,7 +51,7 @@ class PermissionSubmittedScreen extends StatelessWidget {
                     'REQUEST SUBMITTED',
                     textAlign: TextAlign.center,
                     style: GoogleFonts.inter(
-                      color: AppColors.white,
+                      color: AppColors.surface,
                       fontSize: 25,
                       fontWeight: FontWeight.w800,
                       letterSpacing: 2,
@@ -61,7 +61,7 @@ class PermissionSubmittedScreen extends StatelessWidget {
                   Text(
                     'PERMISSION PENDING',
                     style: GoogleFonts.inter(
-                      color: AppColors.hexFF20DFFF,
+                      color: AppColors.accent,
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 2,
@@ -72,7 +72,7 @@ class PermissionSubmittedScreen extends StatelessWidget {
                     'Your permission request has been submitted successfully. Please wait for approval.',
                     textAlign: TextAlign.center,
                     style: GoogleFonts.inter(
-                      color: AppColors.hexFF8198AC,
+                      color: AppColors.borderStrong,
                       fontSize: 11,
                       height: 1.6,
                     ),
@@ -88,8 +88,8 @@ class PermissionSubmittedScreen extends StatelessWidget {
                         Get.offAllNamed(AppRoutes.home);
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.hexFF176DFF,
-                        foregroundColor: AppColors.white,
+                        backgroundColor: AppColors.primaryBlue,
+                        foregroundColor: AppColors.surface,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
@@ -109,7 +109,7 @@ class PermissionSubmittedScreen extends StatelessWidget {
                     'You will be notified when your request is approved.',
                     textAlign: TextAlign.center,
                     style: GoogleFonts.inter(
-                      color: AppColors.hexFF536D83,
+                      color: AppColors.textSecondary,
                       fontSize: 9,
                     ),
                   ),
@@ -117,7 +117,7 @@ class PermissionSubmittedScreen extends StatelessWidget {
                   Text(
                     'LYRA PULSE',
                     style: GoogleFonts.inter(
-                      color: AppColors.hexFF38566D,
+                      color: AppColors.textSecondary,
                       fontSize: 8,
                       fontWeight: FontWeight.w600,
                       letterSpacing: 2.5,
@@ -138,14 +138,14 @@ class PermissionSubmittedScreen extends StatelessWidget {
       height: 110,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: AppColors.hexFF08253A,
+        color: AppColors.primaryDark,
         border: Border.all(
-          color: AppColors.hexFF20DFFF,
+          color: AppColors.accent,
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.hexFF20DFFF.withValues(alpha: 0.18),
+            color: AppColors.accent.withValues(alpha: 0.18),
             blurRadius: 35,
             spreadRadius: 4,
           ),
@@ -153,7 +153,7 @@ class PermissionSubmittedScreen extends StatelessWidget {
       ),
       child: const Icon(
         Icons.check_circle_outline_rounded,
-        color: AppColors.hexFF20DFFF,
+        color: AppColors.accent,
         size: 58,
       ),
     );
@@ -164,10 +164,10 @@ class PermissionSubmittedScreen extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: AppColors.hexCC071A2D,
+        color: AppColors.primary,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: AppColors.hexFF16435F,
+          color: AppColors.primary,
         ),
       ),
       child: Column(
@@ -205,12 +205,12 @@ class PermissionSubmittedScreen extends StatelessWidget {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: AppColors.hexFF0A2941,
+            color: AppColors.primaryDark,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(
             icon,
-            color: AppColors.hexFF25DDF7,
+            color: AppColors.accent,
             size: 20,
           ),
         ),
@@ -219,7 +219,7 @@ class PermissionSubmittedScreen extends StatelessWidget {
           child: Text(
             title,
             style: GoogleFonts.inter(
-              color: AppColors.hexFF8EA5B7,
+              color: AppColors.borderStrong,
               fontSize: 10,
             ),
           ),
@@ -227,7 +227,7 @@ class PermissionSubmittedScreen extends StatelessWidget {
         Text(
           value,
           style: GoogleFonts.inter(
-            color: AppColors.white,
+            color: AppColors.surface,
             fontSize: 10,
             fontWeight: FontWeight.w700,
           ),
@@ -241,17 +241,17 @@ class PermissionSubmittedScreen extends StatelessWidget {
       width: 44,
       height: 44,
       decoration: BoxDecoration(
-        color: AppColors.hexFF0A2136,
+        color: AppColors.primaryDark,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: AppColors.hexFF1D4564,
+          color: AppColors.primary,
         ),
       ),
       child: IconButton(
         onPressed: Get.back,
         icon: const Icon(
           Icons.arrow_back_rounded,
-          color: AppColors.white,
+          color: AppColors.surface,
           size: 21,
         ),
       ),
@@ -271,7 +271,7 @@ class PermissionSubmittedScreen extends StatelessWidget {
           colors: [
             color.withValues(alpha: 0.12),
             color.withValues(alpha: 0.03),
-            AppColors.transparent,
+            AppColors.surface,
           ],
         ),
       ),

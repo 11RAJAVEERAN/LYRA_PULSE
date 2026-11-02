@@ -26,7 +26,7 @@ class AttendanceDetailsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.hexFF04111F,
+      backgroundColor: AppColors.textPrimary,
       body: SafeArea(
         child: Stack(
           children: [
@@ -35,7 +35,7 @@ class AttendanceDetailsScreen extends StatelessWidget {
               right: -150,
               child: _glow(
                 390,
-                AppColors.hexFF087BFF,
+                AppColors.primaryBlue,
               ),
             ),
             Positioned(
@@ -43,7 +43,7 @@ class AttendanceDetailsScreen extends StatelessWidget {
               left: -170,
               child: _glow(
                 420,
-                AppColors.hexFF00D9FF,
+                AppColors.accent,
               ),
             ),
             SingleChildScrollView(
@@ -66,7 +66,7 @@ class AttendanceDetailsScreen extends StatelessWidget {
                         child: Text(
                           'Attendance Details',
                           style: GoogleFonts.inter(
-                            color: AppColors.white,
+                            color: AppColors.surface,
                             fontSize: 21,
                             fontWeight: FontWeight.w700,
                           ),
@@ -89,13 +89,13 @@ class AttendanceDetailsScreen extends StatelessWidget {
                             shape: BoxShape.circle,
                             gradient: const LinearGradient(
                               colors: [
-                                AppColors.hexFF087BFF,
-                                AppColors.hexFF20DDF7,
+                                AppColors.primaryBlue,
+                                AppColors.accent,
                               ],
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: AppColors.hexFF20DDF7.withValues(alpha: 0.20),
+                                color: AppColors.accent.withValues(alpha: 0.20),
                                 blurRadius: 25,
                                 spreadRadius: 3,
                               ),
@@ -117,7 +117,7 @@ class AttendanceDetailsScreen extends StatelessWidget {
                         Text(
                           employeeName,
                           style: GoogleFonts.inter(
-                            color: AppColors.white,
+                            color: AppColors.surface,
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
                           ),
@@ -126,7 +126,7 @@ class AttendanceDetailsScreen extends StatelessWidget {
                         Text(
                           'Employee',
                           style: GoogleFonts.inter(
-                            color: AppColors.hexFF718AA0,
+                            color: AppColors.textSecondary,
                             fontSize: 11,
                           ),
                         ),
@@ -141,10 +141,10 @@ class AttendanceDetailsScreen extends StatelessWidget {
                     width: double.infinity,
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: AppColors.hexCC071A2D,
+                      color: AppColors.primary,
                       borderRadius: BorderRadius.circular(22),
                       border: Border.all(
-                        color: AppColors.hexFF16435F,
+                        color: AppColors.primary,
                       ),
                     ),
                     child: Column(
@@ -164,7 +164,7 @@ class AttendanceDetailsScreen extends StatelessWidget {
                               child: Text(
                                 _formattedDate(),
                                 style: GoogleFonts.inter(
-                                  color: AppColors.white,
+                                  color: AppColors.surface,
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -176,7 +176,7 @@ class AttendanceDetailsScreen extends StatelessWidget {
                         const SizedBox(height: 24),
 
                         const Divider(
-                          color: AppColors.hexFF16384F,
+                          color: AppColors.primary,
                           height: 1,
                         ),
 
@@ -195,7 +195,7 @@ class AttendanceDetailsScreen extends StatelessWidget {
                             Container(
                               width: 1,
                               height: 65,
-                              color: AppColors.hexFF19425A,
+                              color: AppColors.primary,
                             ),
                             Expanded(
                               child: _timeDetail(
@@ -210,7 +210,7 @@ class AttendanceDetailsScreen extends StatelessWidget {
                         const SizedBox(height: 24),
 
                         const Divider(
-                          color: AppColors.hexFF16384F,
+                          color: AppColors.primary,
                           height: 1,
                         ),
 
@@ -232,7 +232,7 @@ class AttendanceDetailsScreen extends StatelessWidget {
                             Text(
                               _calculateWorkingHours(),
                               style: GoogleFonts.inter(
-                                color: AppColors.white,
+                                color: AppColors.surface,
                                 fontSize: 18,
                                 fontWeight: FontWeight.w700,
                               ),
@@ -243,7 +243,7 @@ class AttendanceDetailsScreen extends StatelessWidget {
                         const SizedBox(height: 24),
 
                         const Divider(
-                          color: AppColors.hexFF16384F,
+                          color: AppColors.primary,
                           height: 1,
                         ),
 
@@ -299,7 +299,7 @@ class AttendanceDetailsScreen extends StatelessWidget {
                     child: Text(
                       'LYRA PULSE',
                       style: GoogleFonts.inter(
-                        color: AppColors.hexFF38566D,
+                        color: AppColors.textSecondary,
                         fontSize: 8,
                         fontWeight: FontWeight.w600,
                         letterSpacing: 3,
@@ -321,10 +321,10 @@ class AttendanceDetailsScreen extends StatelessWidget {
 
   Widget _defaultPhoto() {
     return Container(
-      color: AppColors.hexFF0A2941,
+      color: AppColors.primaryDark,
       child: const Icon(
         Icons.person_rounded,
-        color: AppColors.hexFF25DDF7,
+        color: AppColors.accent,
         size: 55,
       ),
     );
@@ -336,7 +336,7 @@ class AttendanceDetailsScreen extends StatelessWidget {
 
   Widget _backButton() {
     return Material(
-      color: AppColors.transparent,
+      color: AppColors.surface,
       child: InkWell(
         onTap: Get.back,
         borderRadius: BorderRadius.circular(14),
@@ -344,15 +344,15 @@ class AttendanceDetailsScreen extends StatelessWidget {
           width: 44,
           height: 44,
           decoration: BoxDecoration(
-            color: AppColors.hexFF0A2136,
+            color: AppColors.primaryDark,
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: AppColors.hexFF194663,
+              color: AppColors.primary,
             ),
           ),
           child: const Icon(
             Icons.arrow_back_rounded,
-            color: AppColors.white,
+            color: AppColors.surface,
             size: 21,
           ),
         ),
@@ -368,7 +368,7 @@ class AttendanceDetailsScreen extends StatelessWidget {
     return Text(
       text,
       style: GoogleFonts.inter(
-        color: AppColors.hexFF718AA0,
+        color: AppColors.textSecondary,
         fontSize: 9,
         fontWeight: FontWeight.w700,
         letterSpacing: 1.8,
@@ -385,12 +385,12 @@ class AttendanceDetailsScreen extends StatelessWidget {
       width: 42,
       height: 42,
       decoration: BoxDecoration(
-        color: AppColors.hexFF0A2941,
+        color: AppColors.primaryDark,
         borderRadius: BorderRadius.circular(13),
       ),
       child: Icon(
         icon,
-        color: AppColors.hexFF25DDF7,
+        color: AppColors.accent,
         size: 20,
       ),
     );
@@ -409,14 +409,14 @@ class AttendanceDetailsScreen extends StatelessWidget {
       children: [
         Icon(
           icon,
-          color: AppColors.hexFF25DDF7,
+          color: AppColors.accent,
           size: 21,
         ),
         const SizedBox(height: 8),
         Text(
           title,
           style: GoogleFonts.inter(
-            color: AppColors.hexFF718AA0,
+            color: AppColors.textSecondary,
             fontSize: 8,
             fontWeight: FontWeight.w600,
             letterSpacing: 1,
@@ -426,7 +426,7 @@ class AttendanceDetailsScreen extends StatelessWidget {
         Text(
           value,
           style: GoogleFonts.inter(
-            color: AppColors.white,
+            color: AppColors.surface,
             fontSize: 14,
             fontWeight: FontWeight.w700,
           ),
@@ -508,16 +508,16 @@ class AttendanceDetailsScreen extends StatelessWidget {
   Color _statusColor() {
     switch (status.toLowerCase()) {
       case 'present':
-        return AppColors.hexFF25DDF7;
+        return AppColors.accent;
 
       case 'absent':
-        return AppColors.hexFFFF6B7A;
+        return AppColors.error;
 
       case 'leave':
-        return AppColors.hexFFFFC857;
+        return AppColors.warning;
 
       default:
-        return AppColors.hexFF25DDF7;
+        return AppColors.accent;
     }
   }
 
@@ -538,7 +538,7 @@ class AttendanceDetailsScreen extends StatelessWidget {
           colors: [
             color.withValues(alpha: 0.11),
             color.withValues(alpha: 0.025),
-            AppColors.transparent,
+            AppColors.surface,
           ],
         ),
       ),

@@ -160,7 +160,7 @@ class _SplashScreenState extends State<SplashScreen>
             : 12;
 
     return Scaffold(
-      backgroundColor: AppColors.hexFF020A22,
+      backgroundColor: AppColors.textPrimary,
       body: Stack(
         fit: StackFit.expand,
         children: [
@@ -175,10 +175,10 @@ class _SplashScreenState extends State<SplashScreen>
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    AppColors.hexFF071A43,
-                    AppColors.hexFF061535,
-                    AppColors.hexFF020A22,
-                    AppColors.hexFF02081C,
+                    AppColors.primaryDark,
+                    AppColors.primaryDark,
+                    AppColors.textPrimary,
+                    AppColors.textPrimary,
                   ],
                   stops: [
                     0.0,
@@ -200,7 +200,7 @@ class _SplashScreenState extends State<SplashScreen>
             left: -120,
             child: _ambientGlow(
               size: isTablet ? 430 : 330,
-              color: AppColors.hexFF006EFF,
+              color: AppColors.primaryBlue,
               opacity: 0.20,
             ),
           ),
@@ -214,7 +214,7 @@ class _SplashScreenState extends State<SplashScreen>
             right: -150,
             child: _ambientGlow(
               size: isTablet ? 380 : 300,
-              color: AppColors.hexFF174BFF,
+              color: AppColors.primaryBlue,
               opacity: 0.13,
             ),
           ),
@@ -233,9 +233,9 @@ class _SplashScreenState extends State<SplashScreen>
                 decoration: BoxDecoration(
                   gradient: RadialGradient(
                     colors: [
-                      AppColors.hexFF156FFF.withValues(alpha: 0.13),
-                      AppColors.hexFF087DFF.withValues(alpha: 0.05),
-                      AppColors.transparent,
+                      AppColors.primaryBlue.withValues(alpha: 0.13),
+                      AppColors.primaryBlue.withValues(alpha: 0.05),
+                      AppColors.surface,
                     ],
                   ),
                 ),
@@ -343,7 +343,7 @@ class _SplashScreenState extends State<SplashScreen>
                                       shape: BoxShape.circle,
                                       boxShadow: [
                                         BoxShadow(
-                                          color: AppColors.hexFF008CFF
+                                          color: AppColors.primaryBlue
                                               .withValues(alpha: opacity),
                                           blurRadius: 45,
                                           spreadRadius: 12,
@@ -402,14 +402,14 @@ class _SplashScreenState extends State<SplashScreen>
                         'Lyra Pulse',
                         textAlign: TextAlign.center,
                         style: GoogleFonts.inter(
-                          color: AppColors.hexFFF7FAFF,
+                          color: AppColors.surfaceMuted,
                           fontSize: titleSize,
                           fontWeight: FontWeight.w700,
                           letterSpacing: -0.6,
                           height: 1.05,
                           shadows: [
                             Shadow(
-                              color: AppColors.hexFF2D79FF.withValues(alpha: 0.30),
+                              color: AppColors.primaryBlue.withValues(alpha: 0.30),
                               blurRadius: 18,
                             ),
                           ],
@@ -429,7 +429,7 @@ class _SplashScreenState extends State<SplashScreen>
                         'WORK BETTER TOGETHER',
                         textAlign: TextAlign.center,
                         style: GoogleFonts.inter(
-                          color: AppColors.hexFFB9D3F7,
+                          color: AppColors.border,
                           fontSize: taglineSize,
                           fontWeight: FontWeight.w400,
                           letterSpacing: 2.2,
@@ -478,14 +478,14 @@ class _SplashScreenState extends State<SplashScreen>
                                         begin: Alignment.topCenter,
                                         end: Alignment.bottomCenter,
                                         colors: [
-                                          AppColors.hexFF69B7FF,
-                                          AppColors.hexFF087DFF,
+                                          AppColors.borderStrong,
+                                          AppColors.primaryBlue,
                                         ],
                                       ),
                                       boxShadow: [
                                         BoxShadow(
                                           color:
-                                              AppColors.hexFF159CFF.withValues(
+                                              AppColors.accent.withValues(
                                             alpha: opacity * 0.55,
                                           ),
                                           blurRadius: 10,
@@ -529,7 +529,7 @@ class _SplashScreenState extends State<SplashScreen>
             colors: [
               color.withValues(alpha: opacity),
               color.withValues(alpha: opacity * 0.35),
-              AppColors.transparent,
+              AppColors.surface,
             ],
           ),
         ),
@@ -667,7 +667,7 @@ class _LyraLogoPainter extends CustomPainter {
 
     final Paint glowPaint = Paint()
       ..isAntiAlias = true
-      ..color = AppColors.hexFF008CFF.withValues(alpha: 0.25)
+      ..color = AppColors.primaryBlue.withValues(alpha: 0.25)
       ..maskFilter = const MaskFilter.blur(
         BlurStyle.normal,
         13,
@@ -688,10 +688,10 @@ class _LyraLogoPainter extends CustomPainter {
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
         colors: [
-          AppColors.hexFF6D72FF,
-          AppColors.hexFF328CFF,
-          AppColors.hexFF087DFF,
-          AppColors.hexFF00BFFF,
+          AppColors.secondary,
+          AppColors.primaryBlue,
+          AppColors.primaryBlue,
+          AppColors.accent,
         ],
         stops: [
           0.0,
@@ -719,7 +719,7 @@ class _LyraLogoPainter extends CustomPainter {
 
     final Paint highlightPaint = Paint()
       ..isAntiAlias = true
-      ..color = AppColors.white.withValues(alpha: 0.12);
+      ..color = AppColors.surface.withValues(alpha: 0.12);
 
     final Path highlightPath = Path();
 
@@ -798,10 +798,10 @@ class _LogoArcPainter extends CustomPainter {
         startAngle: progress * math.pi * 2,
         endAngle: progress * math.pi * 2 + math.pi * 1.5,
         colors: [
-          AppColors.transparent,
-          AppColors.hexFF197BFF.withValues(alpha: 0.15),
-          AppColors.hexFF00D9FF.withValues(alpha: 0.80),
-          AppColors.transparent,
+          AppColors.surface,
+          AppColors.primaryBlue.withValues(alpha: 0.15),
+          AppColors.accent.withValues(alpha: 0.80),
+          AppColors.surface,
         ],
         stops: const [
           0.0,
@@ -850,42 +850,42 @@ class _ParticlePainter extends CustomPainter {
         y: 0.28,
         radius: 1.3,
         speed: 0.8,
-        color: AppColors.hexFF159CFF,
+        color: AppColors.accent,
       ),
       _Particle(
         x: 0.82,
         y: 0.34,
         radius: 1.1,
         speed: 0.6,
-        color: AppColors.hexFF6B5CFF,
+        color: AppColors.secondary,
       ),
       _Particle(
         x: 0.20,
         y: 0.47,
         radius: 0.9,
         speed: 0.7,
-        color: AppColors.hexFF00CFFF,
+        color: AppColors.accent,
       ),
       _Particle(
         x: 0.76,
         y: 0.53,
         radius: 1.4,
         speed: 0.5,
-        color: AppColors.hexFF4E72FF,
+        color: AppColors.primaryBlue,
       ),
       _Particle(
         x: 0.34,
         y: 0.62,
         radius: 0.8,
         speed: 0.9,
-        color: AppColors.hexFF8C6BFF,
+        color: AppColors.secondary,
       ),
       _Particle(
         x: 0.90,
         y: 0.66,
         radius: 0.9,
         speed: 0.75,
-        color: AppColors.hexFF00BFFF,
+        color: AppColors.accent,
       ),
     ];
 
@@ -982,9 +982,9 @@ class _PremiumWavePainter extends CustomPainter {
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
         colors: [
-          AppColors.hex50105CFF,
-          AppColors.hex30116EFF,
-          AppColors.hex00105CFF,
+          AppColors.border,
+          AppColors.border,
+          AppColors.surface,
         ],
       ),
     );
@@ -1005,9 +1005,9 @@ class _PremiumWavePainter extends CustomPainter {
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
         colors: [
-          AppColors.hex45136EFF,
-          AppColors.hex2513A4FF,
-          AppColors.hex000B4EFF,
+          AppColors.border,
+          AppColors.surfaceBorder,
+          AppColors.surface,
         ],
       ),
     );
@@ -1028,9 +1028,9 @@ class _PremiumWavePainter extends CustomPainter {
         begin: Alignment.topRight,
         end: Alignment.bottomLeft,
         colors: [
-          AppColors.hex605D28E8,
-          AppColors.hex383E2DB8,
-          AppColors.hex00131C62,
+          AppColors.border,
+          AppColors.border,
+          AppColors.surface,
         ],
       ),
     );
@@ -1047,7 +1047,7 @@ class _PremiumWavePainter extends CustomPainter {
       amplitude: 17,
       frequency: 1.2,
       phase: 0.4,
-      color: AppColors.hexFF087DFF,
+      color: AppColors.primaryBlue,
       opacity: 0.65,
       strokeWidth: 1.2,
     );
@@ -1060,7 +1060,7 @@ class _PremiumWavePainter extends CustomPainter {
       amplitude: 19,
       frequency: 1.5,
       phase: 2.0,
-      color: AppColors.hexFF00CFFF,
+      color: AppColors.accent,
       opacity: 0.45,
       strokeWidth: 1.0,
     );
@@ -1073,7 +1073,7 @@ class _PremiumWavePainter extends CustomPainter {
       amplitude: 20,
       frequency: 1.4,
       phase: 3.2,
-      color: AppColors.hexFF8062FF,
+      color: AppColors.secondary,
       opacity: 0.55,
       strokeWidth: 1.1,
     );
@@ -1110,7 +1110,7 @@ class _PremiumWavePainter extends CustomPainter {
       final Paint paint = Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 0.45
-        ..color = AppColors.white.withValues(alpha: 0.055);
+        ..color = AppColors.surface.withValues(alpha: 0.055);
 
       canvas.drawPath(
         path,

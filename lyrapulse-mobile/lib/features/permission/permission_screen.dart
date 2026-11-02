@@ -71,8 +71,8 @@ class _PermissionScreenState extends State<PermissionScreen> {
         'Reason Required',
         'Please enter the reason for your permission.',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: AppColors.white,
-        colorText: AppColors.hexFF172B4D,
+        backgroundColor: AppColors.surface,
+        colorText: AppColors.primary,
         margin: const EdgeInsets.all(16),
         borderRadius: 14,
       );
@@ -84,8 +84,8 @@ class _PermissionScreenState extends State<PermissionScreen> {
         'Start Time Required',
         'Please select your permission start time.',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: AppColors.white,
-        colorText: AppColors.hexFF172B4D,
+        backgroundColor: AppColors.surface,
+        colorText: AppColors.primary,
         margin: const EdgeInsets.all(16),
         borderRadius: 14,
       );
@@ -97,8 +97,8 @@ class _PermissionScreenState extends State<PermissionScreen> {
         'Return Time Required',
         'Please select your expected return time.',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: AppColors.white,
-        colorText: AppColors.hexFF172B4D,
+        backgroundColor: AppColors.surface,
+        colorText: AppColors.primary,
         margin: const EdgeInsets.all(16),
         borderRadius: 14,
       );
@@ -115,9 +115,9 @@ class _PermissionScreenState extends State<PermissionScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.hexFFF7FAFE,
+      backgroundColor: AppColors.surfaceMuted,
       appBar: AppBar(
-        backgroundColor: AppColors.hexFFF7FAFE,
+        backgroundColor: AppColors.surfaceMuted,
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
@@ -126,14 +126,14 @@ class _PermissionScreenState extends State<PermissionScreen> {
   },
   icon: const Icon(
     Icons.arrow_back_ios_new_rounded,
-    color: AppColors.hexFF172B4D,
+    color: AppColors.primary,
     size: 20,
   ),
 ),
         title: const Text(
           'Request Permission',
           style: TextStyle(
-            color: AppColors.hexFF172B4D,
+            color: AppColors.primary,
             fontSize: 19,
             fontWeight: FontWeight.w700,
           ),
@@ -150,7 +150,7 @@ class _PermissionScreenState extends State<PermissionScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
-                  color: AppColors.hexFFEAF6FF,
+                  color: AppColors.infoSurface,
                   borderRadius: BorderRadius.circular(18),
                 ),
                 child: Row(
@@ -159,12 +159,12 @@ class _PermissionScreenState extends State<PermissionScreen> {
                       width: 50,
                       height: 50,
                       decoration: BoxDecoration(
-                        color: AppColors.white,
+                        color: AppColors.surface,
                         borderRadius: BorderRadius.circular(15),
                       ),
                       child: const Icon(
                         Icons.directions_walk_rounded,
-                        color: AppColors.hexFF1687D9,
+                        color: AppColors.primaryBlue,
                         size: 27,
                       ),
                     ),
@@ -176,7 +176,7 @@ class _PermissionScreenState extends State<PermissionScreen> {
                           Text(
                             'Office Permission',
                             style: TextStyle(
-                              color: AppColors.hexFF172B4D,
+                              color: AppColors.primary,
                               fontSize: 16,
                               fontWeight: FontWeight.w800,
                             ),
@@ -185,7 +185,7 @@ class _PermissionScreenState extends State<PermissionScreen> {
                           Text(
                             'Request permission before leaving the office.',
                             style: TextStyle(
-                              color: AppColors.hexFF718096,
+                              color: AppColors.textSecondary,
                               fontSize: 12,
                               height: 1.4,
                             ),
@@ -203,7 +203,7 @@ class _PermissionScreenState extends State<PermissionScreen> {
               const Text(
                 'Permission Type',
                 style: TextStyle(
-                  color: AppColors.hexFF172B4D,
+                  color: AppColors.primary,
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
                 ),
@@ -259,7 +259,7 @@ class _PermissionScreenState extends State<PermissionScreen> {
               const Text(
                 'Reason',
                 style: TextStyle(
-                  color: AppColors.hexFF172B4D,
+                  color: AppColors.primary,
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
                 ),
@@ -279,7 +279,7 @@ class _PermissionScreenState extends State<PermissionScreen> {
               const Text(
                 'Permission Start Time',
                 style: TextStyle(
-                  color: AppColors.hexFF172B4D,
+                  color: AppColors.primary,
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
                 ),
@@ -298,7 +298,7 @@ class _PermissionScreenState extends State<PermissionScreen> {
               const Text(
                 'Expected Return Time',
                 style: TextStyle(
-                  color: AppColors.hexFF172B4D,
+                  color: AppColors.primary,
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
                 ),
@@ -317,7 +317,7 @@ class _PermissionScreenState extends State<PermissionScreen> {
               const Text(
                 'Additional Note',
                 style: TextStyle(
-                  color: AppColors.hexFF172B4D,
+                  color: AppColors.primary,
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
                 ),
@@ -338,7 +338,7 @@ class _PermissionScreenState extends State<PermissionScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(15),
                 decoration: BoxDecoration(
-                  color: AppColors.hexFFF0F9F4,
+                  color: AppColors.successBackground,
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: const Row(
@@ -346,7 +346,7 @@ class _PermissionScreenState extends State<PermissionScreen> {
                   children: [
                     Icon(
                       Icons.info_outline_rounded,
-                      color: AppColors.hexFF22A06B,
+                      color: AppColors.success,
                       size: 21,
                     ),
                     SizedBox(width: 10),
@@ -355,7 +355,7 @@ class _PermissionScreenState extends State<PermissionScreen> {
                         'Your permission request will be sent for approval. '
                         'Please return to the office within the approved time.',
                         style: TextStyle(
-                          color: AppColors.hexFF246B4A,
+                          color: AppColors.successDark,
                           fontSize: 12,
                           height: 1.5,
                         ),
@@ -375,9 +375,9 @@ class _PermissionScreenState extends State<PermissionScreen> {
                   onPressed: _submitPermission,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
+                    foregroundColor: AppColors.surface,
                     disabledBackgroundColor: AppColors.disabled,
-                    disabledForegroundColor: Colors.white,
+                    disabledForegroundColor: AppColors.surface,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(15),
@@ -386,7 +386,7 @@ class _PermissionScreenState extends State<PermissionScreen> {
                   child: const Text(
                     'Submit Permission',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: AppColors.surface,
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
                     ),
@@ -426,10 +426,10 @@ class _TypeButton extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         height: 72,
         decoration: BoxDecoration(
-          color: selected ? AppColors.hexFFE8F5FF : AppColors.white,
+          color: selected ? AppColors.infoSurface : AppColors.surface,
           borderRadius: BorderRadius.circular(15),
           border: Border.all(
-            color: selected ? AppColors.hexFF1687D9 : AppColors.border,
+            color: selected ? AppColors.primaryBlue : AppColors.border,
             width: selected ? 1.5 : 1,
           ),
         ),
@@ -438,14 +438,14 @@ class _TypeButton extends StatelessWidget {
           children: [
             Icon(
               icon,
-              color: selected ? AppColors.hexFF1687D9 : AppColors.hexFF718096,
+              color: selected ? AppColors.primaryBlue : AppColors.textSecondary,
               size: 22,
             ),
             const SizedBox(height: 6),
             Text(
               title,
               style: TextStyle(
-                color: selected ? AppColors.hexFF1687D9 : AppColors.hexFF4A5568,
+                color: selected ? AppColors.primaryBlue : AppColors.textSecondary,
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
               ),
@@ -478,7 +478,7 @@ class _InputBox extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(15),
         border: Border.all(color: AppColors.border),
       ),
@@ -486,13 +486,13 @@ class _InputBox extends StatelessWidget {
         controller: controller,
         maxLines: maxLines,
         style: const TextStyle(
-          color: AppColors.hexFF172B4D,
+          color: AppColors.primary,
           fontSize: 14,
         ),
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: const TextStyle(
-            color: AppColors.hexFFA0AEC0,
+            color: AppColors.borderStrong,
             fontSize: 13,
           ),
           prefixIcon: Padding(
@@ -503,7 +503,7 @@ class _InputBox extends StatelessWidget {
             ),
             child: Icon(
               icon,
-              color: AppColors.hexFF8A98A9,
+              color: AppColors.borderStrong,
               size: 21,
             ),
           ),
@@ -542,7 +542,7 @@ class _TimeBox extends StatelessWidget {
         height: 55,
         padding: const EdgeInsets.symmetric(horizontal: 15),
         decoration: BoxDecoration(
-          color: AppColors.white,
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(15),
           border: Border.all(color: AppColors.border),
         ),
@@ -550,7 +550,7 @@ class _TimeBox extends StatelessWidget {
           children: [
             Icon(
               icon,
-              color: AppColors.hexFF1687D9,
+              color: AppColors.primaryBlue,
               size: 21,
             ),
             const SizedBox(width: 12),
@@ -559,8 +559,8 @@ class _TimeBox extends StatelessWidget {
                 value,
                 style: TextStyle(
                   color: isSelected
-                      ? AppColors.hexFF172B4D
-                      : AppColors.hexFFA0AEC0,
+                      ? AppColors.primary
+                      : AppColors.borderStrong,
                   fontSize: 14,
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                 ),
@@ -568,7 +568,7 @@ class _TimeBox extends StatelessWidget {
             ),
             const Icon(
               Icons.access_time_rounded,
-              color: AppColors.hexFF8A98A9,
+              color: AppColors.borderStrong,
               size: 20,
             ),
           ],

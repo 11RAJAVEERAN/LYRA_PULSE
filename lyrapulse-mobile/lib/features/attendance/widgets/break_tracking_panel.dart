@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../app/theme/app_colors.dart';
 import 'package:get/get.dart';
 
 import '../controllers/attendance_controller.dart';
@@ -38,8 +39,8 @@ class _BreakTrackingPanelState extends State<BreakTrackingPanel> {
         message ?? '$selectedBreakType break timer started.',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor:
-            message == null ? Colors.green.shade100 : Colors.red.shade100,
-        colorText: Colors.black87,
+            message == null ? AppColors.successBackground : AppColors.errorBackground,
+        colorText: AppColors.primaryDark,
         duration: const Duration(seconds: 3),
       );
     } catch (e) {
@@ -49,8 +50,8 @@ class _BreakTrackingPanelState extends State<BreakTrackingPanel> {
         'Break Error',
         e.toString().replaceFirst('Exception: ', ''),
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red.shade100,
-        colorText: Colors.black87,
+        backgroundColor: AppColors.errorBackground,
+        colorText: AppColors.primaryDark,
       );
     } finally {
       if (mounted) {
@@ -74,8 +75,8 @@ class _BreakTrackingPanelState extends State<BreakTrackingPanel> {
         message ?? 'Break ended. Return time and location saved.',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor:
-            message == null ? Colors.green.shade100 : Colors.red.shade100,
-        colorText: Colors.black87,
+            message == null ? AppColors.successBackground : AppColors.errorBackground,
+        colorText: AppColors.primaryDark,
         duration: const Duration(seconds: 4),
       );
     } catch (e) {
@@ -85,8 +86,8 @@ class _BreakTrackingPanelState extends State<BreakTrackingPanel> {
         'Break Error',
         e.toString().replaceFirst('Exception: ', ''),
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red.shade100,
-        colorText: Colors.black87,
+        backgroundColor: AppColors.errorBackground,
+        colorText: AppColors.primaryDark,
       );
     } finally {
       if (mounted) {
@@ -111,7 +112,7 @@ class _BreakTrackingPanelState extends State<BreakTrackingPanel> {
         elevation: 2,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(18),
-          side: BorderSide(color: Colors.blue.shade100),
+          side: BorderSide(color: AppColors.infoSurface),
         ),
         child: Column(
           children: [
@@ -127,12 +128,12 @@ class _BreakTrackingPanelState extends State<BreakTrackingPanel> {
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: Colors.blue.shade50,
+                        color: AppColors.infoSurface,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(
                         Icons.coffee_rounded,
-                        color: Colors.blue,
+                        color: AppColors.primaryBlue,
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -152,7 +153,7 @@ class _BreakTrackingPanelState extends State<BreakTrackingPanel> {
                             'Manage your break check-in and check-out',
                             style: TextStyle(
                               fontSize: 12,
-                              color: Colors.grey,
+                              color: AppColors.textSecondary,
                             ),
                           ),
                         ],
@@ -162,7 +163,7 @@ class _BreakTrackingPanelState extends State<BreakTrackingPanel> {
                       const Icon(
                         Icons.circle,
                         size: 10,
-                        color: Colors.orange,
+                        color: AppColors.warning,
                       ),
                     const SizedBox(width: 8),
                     Icon(
@@ -190,7 +191,7 @@ class _BreakTrackingPanelState extends State<BreakTrackingPanel> {
                         Text(
                           '${activeBreak.type} Break in Progress',
                           style: const TextStyle(
-                            color: Colors.orange,
+                            color: AppColors.warning,
                             fontWeight: FontWeight.bold,
                             fontSize: 15,
                           ),
@@ -205,7 +206,7 @@ class _BreakTrackingPanelState extends State<BreakTrackingPanel> {
                           width: double.infinity,
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
-                            color: Colors.orange.shade50,
+                            color: AppColors.warningBackground,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Column(
@@ -307,7 +308,7 @@ class _BreakTrackingPanelState extends State<BreakTrackingPanel> {
                           padding: EdgeInsets.symmetric(vertical: 8),
                           child: Text(
                             'No breaks recorded today.',
-                            style: TextStyle(color: Colors.grey),
+                            style: TextStyle(color: AppColors.textSecondary),
                           ),
                         )
                       else
@@ -319,10 +320,10 @@ class _BreakTrackingPanelState extends State<BreakTrackingPanel> {
                             margin: const EdgeInsets.only(bottom: 10),
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: Colors.blue.shade50,
+                              color: AppColors.infoSurface,
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
-                                color: Colors.blue.shade100,
+                                color: AppColors.infoSurface,
                               ),
                             ),
                             child: Column(
@@ -343,8 +344,8 @@ class _BreakTrackingPanelState extends State<BreakTrackingPanel> {
                                       style: TextStyle(
                                         fontSize: 12,
                                         color: isActive
-                                            ? Colors.orange.shade800
-                                            : Colors.green.shade800,
+                                            ? AppColors.warningDark
+                                            : AppColors.successDark,
                                         fontWeight: FontWeight.w600,
                                       ),
                                     ),
@@ -385,7 +386,7 @@ class _BreakTrackingPanelState extends State<BreakTrackingPanel> {
                                     const Text(
                                       'Location not available',
                                       style: TextStyle(
-                                        color: Colors.grey,
+                                        color: AppColors.textSecondary,
                                       ),
                                     ),
                                 ],

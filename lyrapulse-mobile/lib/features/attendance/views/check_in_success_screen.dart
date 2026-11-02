@@ -10,21 +10,12 @@ class CheckInSuccessScreen extends StatelessWidget {
   // COLORS
   // ===============================================================
 
-  static const Color background = AppColors.hexFFF7FAFE;
-  static const Color navy = AppColors.hexFF19356C;
-  static const Color green = AppColors.hexFF18A66A;
-  static const Color lightGreen = AppColors.hexFFEAF8F2;
-  static const Color greenBorder = AppColors.hexFFCBEBD9;
 
-  static const Color primaryText = AppColors.hexFF172B4D;
-  static const Color secondaryText = AppColors.hexFF65758B;
-  static const Color lightText = AppColors.hexFF8A99AA;
-  static const Color border = AppColors.hexFFE3EAF3;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: background,
+      backgroundColor: AppColors.surfaceMuted,
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
@@ -59,14 +50,14 @@ class CheckInSuccessScreen extends StatelessWidget {
                 height: 112,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: lightGreen,
+                  color: AppColors.successBackground,
                   border: Border.all(
-                    color: greenBorder,
+                    color: AppColors.border,
                     width: 1.5,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: green.withValues(alpha: 0.10),
+                      color: AppColors.success.withValues(alpha: 0.10),
                       blurRadius: 25,
                       spreadRadius: 2,
                     ),
@@ -76,11 +67,11 @@ class CheckInSuccessScreen extends StatelessWidget {
                   margin: const EdgeInsets.all(12),
                   decoration: const BoxDecoration(
                     shape: BoxShape.circle,
-                    color: green,
+                    color: AppColors.success,
                   ),
                   child: const Icon(
                     Icons.check_rounded,
-                    color: AppColors.white,
+                    color: AppColors.surface,
                     size: 52,
                   ),
                 ),
@@ -96,7 +87,7 @@ class CheckInSuccessScreen extends StatelessWidget {
                 'CHECK IN SUCCESSFUL',
                 textAlign: TextAlign.center,
                 style: GoogleFonts.inter(
-                  color: primaryText,
+                  color: AppColors.primary,
                   fontSize: 24,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 0.5,
@@ -109,7 +100,7 @@ class CheckInSuccessScreen extends StatelessWidget {
                 'Your attendance has been recorded successfully.',
                 textAlign: TextAlign.center,
                 style: GoogleFonts.inter(
-                  color: secondaryText,
+                  color: AppColors.textSecondary,
                   fontSize: 11,
                   fontWeight: FontWeight.w400,
                   height: 1.6,
@@ -126,14 +117,14 @@ class CheckInSuccessScreen extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
-                  color: AppColors.white,
+                  color: AppColors.surface,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: border,
+                    color: AppColors.border,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: navy.withValues(alpha: 0.05),
+                      color: AppColors.primary.withValues(alpha: 0.05),
                       blurRadius: 20,
                       offset: const Offset(0, 8),
                     ),
@@ -149,17 +140,17 @@ class CheckInSuccessScreen extends StatelessWidget {
                         vertical: 13,
                       ),
                       decoration: BoxDecoration(
-                        color: lightGreen,
+                        color: AppColors.successBackground,
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
-                          color: greenBorder,
+                          color: AppColors.border,
                         ),
                       ),
                       child: Row(
                         children: [
                           const Icon(
                             Icons.verified_rounded,
-                            color: green,
+                            color: AppColors.success,
                             size: 20,
                           ),
                           const SizedBox(width: 10),
@@ -167,7 +158,7 @@ class CheckInSuccessScreen extends StatelessWidget {
                             child: Text(
                               'Attendance Verified',
                               style: GoogleFonts.inter(
-                                color: green,
+                                color: AppColors.success,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
                               ),
@@ -175,7 +166,7 @@ class CheckInSuccessScreen extends StatelessWidget {
                           ),
                           const Icon(
                             Icons.check_circle_rounded,
-                            color: green,
+                            color: AppColors.success,
                             size: 18,
                           ),
                         ],
@@ -216,7 +207,7 @@ class CheckInSuccessScreen extends StatelessWidget {
                       icon: Icons.location_on_outlined,
                       title: 'Location',
                       value: 'Verified',
-                      valueColor: green,
+                      valueColor: AppColors.success,
                       showCheck: true,
                     ),
 
@@ -227,7 +218,7 @@ class CheckInSuccessScreen extends StatelessWidget {
                       icon: Icons.face_outlined,
                       title: 'Face Verification',
                       value: 'Verified',
-                      valueColor: green,
+                      valueColor: AppColors.success,
                       showCheck: true,
                     ),
                   ],
@@ -274,8 +265,8 @@ class CheckInSuccessScreen extends StatelessWidget {
                     Get.until((route) => route.isFirst);
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: navy,
-                    foregroundColor: AppColors.white,
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: AppColors.surface,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
@@ -287,7 +278,7 @@ class CheckInSuccessScreen extends StatelessWidget {
                       Text(
                         'Done',
                         style: GoogleFonts.inter(
-                          color: AppColors.white,
+                          color: AppColors.surface,
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
                         ),
@@ -295,7 +286,7 @@ class CheckInSuccessScreen extends StatelessWidget {
                       const SizedBox(width: 9),
                       const Icon(
                         Icons.arrow_forward_rounded,
-                        color: AppColors.white,
+                        color: AppColors.surface,
                         size: 20,
                       ),
                     ],
@@ -314,7 +305,7 @@ class CheckInSuccessScreen extends StatelessWidget {
                 children: [
                   const Icon(
                     Icons.shield_outlined,
-                    color: green,
+                    color: AppColors.success,
                     size: 15,
                   ),
                   const SizedBox(width: 7),
@@ -323,7 +314,7 @@ class CheckInSuccessScreen extends StatelessWidget {
                       'Attendance details are securely verified',
                       textAlign: TextAlign.center,
                       style: GoogleFonts.inter(
-                        color: secondaryText,
+                        color: AppColors.textSecondary,
                         fontSize: 9,
                         fontWeight: FontWeight.w500,
                       ),
@@ -341,7 +332,7 @@ class CheckInSuccessScreen extends StatelessWidget {
               Text(
                 'LYRA PULSE',
                 style: GoogleFonts.inter(
-                  color: lightText,
+                  color: AppColors.borderStrong,
                   fontSize: 8,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 3,
@@ -353,7 +344,7 @@ class CheckInSuccessScreen extends StatelessWidget {
               Text(
                 'SECURE ATTENDANCE',
                 style: GoogleFonts.inter(
-                  color: lightText,
+                  color: AppColors.borderStrong,
                   fontSize: 7,
                   fontWeight: FontWeight.w500,
                   letterSpacing: 1.5,
@@ -374,7 +365,7 @@ class CheckInSuccessScreen extends StatelessWidget {
     required IconData icon,
     required String title,
     required String value,
-    Color valueColor = primaryText,
+    Color valueColor = AppColors.primary,
     bool showCheck = false,
   }) {
     return Row(
@@ -383,12 +374,12 @@ class CheckInSuccessScreen extends StatelessWidget {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: AppColors.hexFFF1F5FA,
+            color: AppColors.hover,
             borderRadius: BorderRadius.circular(11),
           ),
           child: Icon(
             icon,
-            color: navy,
+            color: AppColors.primary,
             size: 19,
           ),
         ),
@@ -397,7 +388,7 @@ class CheckInSuccessScreen extends StatelessWidget {
           child: Text(
             title,
             style: GoogleFonts.inter(
-              color: secondaryText,
+              color: AppColors.textSecondary,
               fontSize: 10.5,
               fontWeight: FontWeight.w500,
             ),
@@ -418,7 +409,7 @@ class CheckInSuccessScreen extends StatelessWidget {
               const SizedBox(width: 5),
               const Icon(
                 Icons.check_circle_rounded,
-                color: green,
+                color: AppColors.success,
                 size: 15,
               ),
             ],
@@ -436,7 +427,7 @@ class CheckInSuccessScreen extends StatelessWidget {
     return const Padding(
       padding: EdgeInsets.symmetric(vertical: 11),
       child: Divider(
-        color: border,
+        color: AppColors.border,
         height: 1,
       ),
     );
@@ -457,14 +448,14 @@ class CheckInSuccessScreen extends StatelessWidget {
         vertical: 14,
       ),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: greenBorder,
+          color: AppColors.border,
         ),
         boxShadow: [
           BoxShadow(
-            color: navy.withValues(alpha: 0.035),
+            color: AppColors.primary.withValues(alpha: 0.035),
             blurRadius: 12,
             offset: const Offset(0, 5),
           ),
@@ -477,11 +468,11 @@ class CheckInSuccessScreen extends StatelessWidget {
             height: 40,
             decoration: const BoxDecoration(
               shape: BoxShape.circle,
-              color: lightGreen,
+              color: AppColors.successBackground,
             ),
             child: Icon(
               icon,
-              color: green,
+              color: AppColors.success,
               size: 19,
             ),
           ),
@@ -489,7 +480,7 @@ class CheckInSuccessScreen extends StatelessWidget {
           Text(
             title,
             style: GoogleFonts.inter(
-              color: secondaryText,
+              color: AppColors.textSecondary,
               fontSize: 8,
               fontWeight: FontWeight.w700,
               letterSpacing: 1,
@@ -501,14 +492,14 @@ class CheckInSuccessScreen extends StatelessWidget {
             children: [
               const Icon(
                 Icons.check_circle_rounded,
-                color: green,
+                color: AppColors.success,
                 size: 13,
               ),
               const SizedBox(width: 4),
               Text(
                 subtitle,
                 style: GoogleFonts.inter(
-                  color: green,
+                  color: AppColors.success,
                   fontSize: 9,
                   fontWeight: FontWeight.w600,
                 ),
@@ -529,14 +520,14 @@ class CheckInSuccessScreen extends StatelessWidget {
       width: 42,
       height: 42,
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(13),
         border: Border.all(
-          color: border,
+          color: AppColors.border,
         ),
         boxShadow: [
           BoxShadow(
-            color: navy.withValues(alpha: 0.04),
+            color: AppColors.primary.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -546,7 +537,7 @@ class CheckInSuccessScreen extends StatelessWidget {
         onPressed: () => Get.back(),
         icon: const Icon(
           Icons.arrow_back_rounded,
-          color: navy,
+          color: AppColors.primary,
           size: 20,
         ),
       ),
@@ -564,10 +555,10 @@ class CheckInSuccessScreen extends StatelessWidget {
         vertical: 7,
       ),
       decoration: BoxDecoration(
-        color: lightGreen,
+        color: AppColors.successBackground,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: greenBorder,
+          color: AppColors.border,
         ),
       ),
       child: Row(
@@ -577,14 +568,14 @@ class CheckInSuccessScreen extends StatelessWidget {
             height: 6,
             decoration: const BoxDecoration(
               shape: BoxShape.circle,
-              color: green,
+              color: AppColors.success,
             ),
           ),
           const SizedBox(width: 6),
           Text(
             'SECURE',
             style: GoogleFonts.inter(
-              color: green,
+              color: AppColors.success,
               fontSize: 8,
               fontWeight: FontWeight.w700,
               letterSpacing: 1,

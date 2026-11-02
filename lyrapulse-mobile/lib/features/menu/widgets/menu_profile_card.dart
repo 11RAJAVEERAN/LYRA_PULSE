@@ -18,7 +18,7 @@ class MenuProfileCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.white,
+      color: AppColors.surface,
       borderRadius: BorderRadius.circular(22),
       child: InkWell(
         onTap: onTap,
@@ -30,7 +30,7 @@ class MenuProfileCard extends StatelessWidget {
             border: Border.all(color: AppColors.border),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.035),
+                color: AppColors.textPrimary.withValues(alpha: 0.035),
                 blurRadius: 18,
                 offset: const Offset(0, 5),
               ),
