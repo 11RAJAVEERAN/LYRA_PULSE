@@ -451,9 +451,14 @@ class R307:
         if self.debug:
             self._log("TX packet (%d bytes): %s" % (len(frame), self._hex(frame)))
         try:
-            self.uart.write(frame)
+            written = self.uart.write(frame)
         except OSError as exc:
             raise R307CommunicationError("UART write failed: %s" % exc)
+        if written != len(frame):
+            raise R307CommunicationError(
+                "UART write incomplete: wrote %s of %s bytes"
+                % (written, len(frame))
+            )
 
     def _execute_command(self, command_id, payload=b"", expect_response=True):
         if self._command_active:

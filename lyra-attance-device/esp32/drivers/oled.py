@@ -83,7 +83,7 @@ class OledDisplay:
         self._show_lines(["WiFi", "Connected"])
 
     def show_ready(self):
-        self._show_lines(["LYRA TECH", "READY", "Place finger"])
+        self._show_lines(["LYRA TECH", "READY", "Touch sensor", "Place finger"])
 
     def show_welcome(self):
         self._show_lines(["WELCOME"])

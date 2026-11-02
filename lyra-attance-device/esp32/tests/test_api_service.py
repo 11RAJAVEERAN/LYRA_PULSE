@@ -25,6 +25,8 @@ class FakeRequests:
     def __init__(self):
         self.post_arguments = None
         self.post_count = 0
+        self.get_arguments = None
+        self.get_count = 0
 
     def post(self, url, data=None, headers=None, timeout=None):
         self.post_count += 1
@@ -36,8 +38,68 @@ class FakeRequests:
         }
         return FakeResponse()
 
+    def get(self, url, headers=None, timeout=None):
+        self.get_count += 1
+        self.get_arguments = {
+            "url": url,
+            "headers": headers,
+            "timeout": timeout,
+        }
+        return FakeResponse()
+
 
 class DeviceResultRequestTests(unittest.TestCase):
+    def test_enrollment_poll_is_bounded_and_not_retried(self):
+        fake_requests = FakeRequests()
+        previous_requests = api_service.requests
+        api_service.requests = fake_requests
+        try:
+            client = AttendanceAPIClient(
+                base_url="http://backend",
+                timeout=10,
+                retry_count=2,
+            )
+            result = client.poll_enrollment("LYRA-DEVICE-001")
+        finally:
+            api_service.requests = previous_requests
+
+        self.assertTrue(result["success"])
+        self.assertEqual(fake_requests.get_count, 1)
+        self.assertEqual(
+            fake_requests.get_arguments["url"],
+            "http://backend/api/v1/devices/LYRA-DEVICE-001/enrollment/pending/",
+        )
+        self.assertEqual(fake_requests.get_arguments["timeout"], 0.5)
+
+    def test_enrollment_poll_timeout_returns_failure_without_retrying(self):
+        class TimeoutRequests:
+            def __init__(self):
+                self.get_count = 0
+                self.timeout = None
+
+            def get(self, _url, headers=None, timeout=None):
+                self.get_count += 1
+                self.timeout = timeout
+                raise OSError("request timed out")
+
+        fake_requests = TimeoutRequests()
+        previous_requests = api_service.requests
+        api_service.requests = fake_requests
+        try:
+            client = AttendanceAPIClient(
+                base_url="http://backend",
+                timeout=10,
+                retry_count=2,
+            )
+            result = client.poll_enrollment("LYRA-DEVICE-001")
+        finally:
+            api_service.requests = previous_requests
+
+        self.assertFalse(result["success"])
+        self.assertEqual(fake_requests.get_count, 1)
+        self.assertEqual(fake_requests.timeout, 0.5)
+        self.assertIn("timed out", result["error"])
+
     def test_result_post_uses_urequests_compatible_data_argument(self):
         fake_requests = FakeRequests()
         previous_requests = api_service.requests

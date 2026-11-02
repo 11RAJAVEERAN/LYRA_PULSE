@@ -4,7 +4,7 @@ import time
 
 from config import FINGERPRINT_COOLDOWN, FINGER_REMOVAL_SETTLE_SECONDS
 from drivers.oled import OledDisplay
-from drivers.r307 import R307, R307CommunicationError, R307PacketError
+from drivers.r307 import R307, R307PacketError
 from hardware.buzzer import Buzzer
 from hardware.status_led import StatusLed
 from hardware.touch_sensor import TouchSensor
@@ -41,6 +41,7 @@ def run_enrollment(command, device_id, api_client, fingerprint_service, oled, bu
         buzzer.success_beep()
         led.green_on()
     except EnrollmentError as exc:
+        cancelled = exc.error_code == "SCAN_CANCELLED"
         sensor_faulted = exc.error_code in (
             "SENSOR_TIMEOUT",
             "SENSOR_COMMUNICATION_ERROR",
@@ -54,7 +55,11 @@ def run_enrollment(command, device_id, api_client, fingerprint_service, oled, bu
         )
         if not response.get("success"):
             log("ENROLL", "Could not record enrollment failure with the server")
-        if sensor_faulted:
+        if cancelled:
+            buzzer.off()
+            led.ready_status()
+            oled.show_ready()
+        elif sensor_faulted:
             oled.show_sensor_error()
             led.sensor_error()
             buzzer.off()
@@ -94,9 +99,8 @@ def run_attendance_scan(
         else:
             image_ready = fingerprint_service.wait_for_finger(on_wait=on_wait)
         if image_ready is not True:
-            raise R307CommunicationError(
-                "GetImage did not confirm a captured image; conversion skipped"
-            )
+            log("FINGER", "Touch ended before image capture; returning to ready")
+            return False
         finger_detected = True
         oled.show_finger_detected()
         log("SCAN", "state=CONVERTING_IMAGE")
@@ -109,7 +113,7 @@ def run_attendance_scan(
         if fingerprint_slot is None:
             log("SCAN", "state=MATCH_FAILURE")
             led.match_failed()
-            buzzer.beep_twice()
+            buzzer.attendance_mismatch_beep()
             show_feedback(oled, "show_not_found")
             time.sleep(0.5)
             return
@@ -152,19 +156,21 @@ def run_attendance_scan(
             return
         name = name.strip()
         attendance_status = data["status"]
+        score = getattr(fingerprint_service, "last_match_score", None)
         log(
             "API",
-            "HTTP %s resolved slot %s to %s: %s"
+            "HTTP %s resolved slot %s score=%s to %s: %s"
             % (
                 response.get("http_status", "success"),
                 fingerprint_slot,
+                score,
                 name,
                 attendance_status,
             ),
         )
         log("SCAN", "state=MATCH_SUCCESS")
         led.match_success()
-        buzzer.beep_once()
+        buzzer.attendance_success_beep()
         show_feedback(
             oled,
             "show_attendance_success",
@@ -231,9 +237,10 @@ def main():
     api_client = AttendanceAPIClient()
     fingerprint_service = FingerprintService(r307, touch_sensor)
 
-    oled.show_startup()
+    oled.show_welcome()
+    time.sleep(2)
     buzzer.off()
-    led.ready_status()
+    led.all_leds_off()
 
     sensor_ready = False
     sensor_retry_delay_seconds = 2
@@ -242,8 +249,6 @@ def main():
         r307.begin()
         sensor_ready = True
         log("R307", "Sensor initialized")
-        led.ready_status()
-        oled.show_ready()
     except R307PacketError as exc:  # pragma: no cover - hardware may not be attached during test
         log("SENSOR", "Temporary initialization failure (%s)" % exc.__class__.__name__)
         led.sensor_error()
@@ -251,7 +256,7 @@ def main():
 
     if not wifi.ensure_connected():
         oled.show_api_error()
-        led.ready_status()
+        led.api_error()
         log("WIFI ERROR", "Connection failed; device will retry")
 
     while True:
@@ -264,7 +269,7 @@ def main():
                     time.sleep(1)
                 else:
                     oled.show_api_error()
-                    led.ready_status()
+                    led.api_error()
                     time.sleep(1)
                     continue
 

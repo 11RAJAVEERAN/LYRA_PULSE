@@ -18,10 +18,13 @@ AuthUser = get_user_model()
 class EmployeeSerializer(serializers.ModelSerializer):
     phone_number = serializers.CharField(source="user.phone_number", read_only=True)
     name = serializers.CharField(source="user.full_name", read_only=True)
+    role = serializers.CharField(source="user.role", read_only=True)
+    branch_id = serializers.IntegerField(read_only=True, allow_null=True)
+    branch_name = serializers.CharField(source="branch.name", read_only=True, allow_null=True)
 
     class Meta:
         model = Employee
-        fields = ("id", "employee_code", "phone_number", "name", "branch", "department", "designation", "joining_date", "profile_photo", "date_of_birth", "gender", "emergency_contact", "address", "is_active")
+        fields = ("id", "employee_code", "phone_number", "name", "role", "branch", "branch_id", "branch_name", "department", "designation", "joining_date", "profile_photo", "date_of_birth", "gender", "emergency_contact", "address", "is_active")
 
 
 class EmployeeRegistrationResponseSerializer(serializers.ModelSerializer):

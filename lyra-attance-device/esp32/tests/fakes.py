@@ -5,11 +5,14 @@ import types
 class FakePin:
     OUT = 1
     IN = 0
+    PULL_UP = 2
+    PULL_DOWN = 3
     instances = {}
 
-    def __init__(self, pin, mode=None):
+    def __init__(self, pin, mode=None, pull=None):
         self.pin = pin
         self.mode = mode
+        self.pull = pull
         self.state = 0
         self.history = []
         FakePin.instances[pin] = self

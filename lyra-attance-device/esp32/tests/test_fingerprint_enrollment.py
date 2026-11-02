@@ -9,7 +9,7 @@ from services.fingerprint_service import EnrollmentError, FingerprintService
 class FakeSensor:
     def __init__(self, duplicate=None, verification=None):
         self.images = [True, False, True, False, True]
-        self.image_error = None
+        self.conversion_error = None
         self.duplicate = duplicate
         self.verification = verification or {"fingerprint_id": 1, "score": 512}
         self.search_count = 0
@@ -21,14 +21,14 @@ class FakeSensor:
         self.slot_error = None
 
     def get_image(self):
-        if self.image_error is not None:
-            raise self.image_error
         if self.images.pop(0):
             return True
         raise R307FingerError("No finger")
 
     def image_to_template(self, buffer_id):
         self.converted_buffers.append(buffer_id)
+        if self.conversion_error is not None:
+            raise self.conversion_error
 
     def search(self, **kwargs):
         self.search_count += 1
@@ -64,12 +64,48 @@ class FakeDisplay:
         self.success_slot = slot
 
 
-class FakeAPI:
+class EnrollmentTouchSensor:
+    active_level = 0
+
     def __init__(self):
+        self.events = [True, True]
+        self.active = False
+        self.release_calls = 0
+
+    def poll_touch_edge(self):
+        if not self.events:
+            return False
+        detected = self.events.pop(0)
+        self.active = detected
+        return detected
+
+    def is_active(self):
+        return self.active
+
+    def current_level(self):
+        return 0 if self.active else 1
+
+    def is_released_debounced(self):
+        return not self.active
+
+    def wait_for_release(self, timeout_seconds=None):
+        self.release_calls += 1
+        self.active = False
+        return True
+
+    def reset_baseline(self):
+        self.active = False
+
+
+class FakeAPI:
+    def __init__(self, response=None):
         self.statuses = []
+        self.response = response
 
     def report_enrollment_status(self, device_id, enrollment_id, status, fingerprint_slot=None):
         self.statuses.append((status, fingerprint_slot))
+        if self.response is not None:
+            return self.response
         return {
             "success": True,
             "data": {"status": status, "fingerprint_slot": fingerprint_slot},
@@ -79,11 +115,12 @@ class FakeAPI:
 class FingerprintEnrollmentFlowTests(unittest.TestCase):
     def setUp(self):
         self.sensor = FakeSensor()
-        self.service = FingerprintService(self.sensor)
+        self.touch = EnrollmentTouchSensor()
+        self.service = FingerprintService(self.sensor, self.touch)
         self.display = FakeDisplay()
         self.api = FakeAPI()
 
-    def test_reports_success_only_after_third_scan_confirms_stored_slot(self):
+    def test_reports_success_after_two_scans_model_creation_and_slot_storage(self):
         command = {"action": "ENROLL_FINGERPRINT", "enrollment_id": "enroll-1"}
 
         slot = self.service.enroll_from_command(
@@ -94,7 +131,7 @@ class FingerprintEnrollmentFlowTests(unittest.TestCase):
         )
 
         self.assertEqual(slot, 1)
-        self.assertEqual(self.sensor.converted_buffers, [1, 2, 1])
+        self.assertEqual(self.sensor.converted_buffers, [1, 2])
         self.assertTrue(self.sensor.model_created)
         self.assertEqual(self.sensor.stored, [(1, 1)])
         self.assertEqual(self.sensor.slot_probe_buffers, [2])
@@ -107,11 +144,16 @@ class FingerprintEnrollmentFlowTests(unittest.TestCase):
             ],
         )
         self.assertEqual(self.display.success_slot, 1)
+        self.assertEqual(
+            self.display.prompts,
+            ["Place finger 1/2", "Same finger 2/2"],
+        )
         self.assertTrue(self.service._awaiting_removal)
+        self.assertEqual(self.touch.release_calls, 1)
 
-    def test_different_fingerprint_on_third_scan_never_reports_success(self):
-        self.sensor.verification = {"fingerprint_id": 23, "score": 900}
-        command = {"action": "ENROLL_FINGERPRINT", "enrollment_id": "enroll-2"}
+    def test_server_rejection_prevents_enrollment_success_feedback(self):
+        self.api = FakeAPI({"success": False, "response": {"message": "rejected"}})
+        command = {"action": "ENROLL_FINGERPRINT", "enrollment_id": "enroll-rejected"}
 
         with self.assertRaises(EnrollmentError) as error:
             self.service.enroll_from_command(
@@ -121,7 +163,7 @@ class FingerprintEnrollmentFlowTests(unittest.TestCase):
                 "LYRA-DEVICE-001",
             )
 
-        self.assertEqual(error.exception.error_code, "SLOT_VERIFICATION_FAILED")
+        self.assertEqual(error.exception.error_code, "DEVICE_API_ERROR")
         self.assertNotIn("SUCCESS", [status for status, _ in self.api.statuses])
         self.assertIsNone(self.display.success_slot)
 
@@ -147,8 +189,8 @@ class FingerprintEnrollmentFlowTests(unittest.TestCase):
             ],
         )
 
-    def test_sensor_image_error_is_wrapped_in_micro_python_compatible_error(self):
-        self.sensor.image_error = R307ImageError("Image acquisition failed: 2")
+    def test_sensor_conversion_error_is_reported_without_storing_a_template(self):
+        self.sensor.conversion_error = R307ImageError("Image conversion failed")
         command = {"action": "ENROLL_FINGERPRINT", "enrollment_id": "enroll-image-error"}
 
         with self.assertRaises(EnrollmentError) as error:
@@ -160,7 +202,8 @@ class FingerprintEnrollmentFlowTests(unittest.TestCase):
             )
 
         self.assertEqual(error.exception.error_code, "IMAGE_CAPTURE_FAILED")
-        self.assertEqual(str(error.exception), "Image acquisition failed: 2")
+        self.assertEqual(str(error.exception), "Image conversion failed")
+        self.assertFalse(self.sensor.stored)
 
     def test_model_generation_error_is_classified_and_preserves_sensor_status(self):
         self.sensor.model_error = R307TemplateError("Model generation failed: 10")
