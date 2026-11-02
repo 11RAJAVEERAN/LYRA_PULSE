@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 
 import 'views/permission_submitted_screen.dart';
@@ -130,9 +131,9 @@ class _PermissionScreenState extends State<PermissionScreen> {
     size: 20,
   ),
 ),
-        title: const Text(
+        title: Text(
           'Request Permission',
-          style: TextStyle(
+          style: GoogleFonts.inter(
             color: AppColors.primary,
             fontSize: 19,
             fontWeight: FontWeight.w700,
@@ -169,13 +170,13 @@ class _PermissionScreenState extends State<PermissionScreen> {
                       ),
                     ),
                     const SizedBox(width: 14),
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             'Office Permission',
-                            style: TextStyle(
+                            style: GoogleFonts.inter(
                               color: AppColors.primary,
                               fontSize: 16,
                               fontWeight: FontWeight.w800,
@@ -184,7 +185,7 @@ class _PermissionScreenState extends State<PermissionScreen> {
                           SizedBox(height: 5),
                           Text(
                             'Request permission before leaving the office.',
-                            style: TextStyle(
+                            style: GoogleFonts.inter(
                               color: AppColors.textSecondary,
                               fontSize: 12,
                               height: 1.4,
@@ -200,9 +201,9 @@ class _PermissionScreenState extends State<PermissionScreen> {
               const SizedBox(height: 25),
 
               // Permission Type
-              const Text(
+              Text(
                 'Permission Type',
-                style: TextStyle(
+                style: GoogleFonts.inter(
                   color: AppColors.primary,
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
@@ -256,9 +257,9 @@ class _PermissionScreenState extends State<PermissionScreen> {
               const SizedBox(height: 24),
 
               // Reason
-              const Text(
+              Text(
                 'Reason',
-                style: TextStyle(
+                style: GoogleFonts.inter(
                   color: AppColors.primary,
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
@@ -276,9 +277,9 @@ class _PermissionScreenState extends State<PermissionScreen> {
               const SizedBox(height: 24),
 
               // Start Time
-              const Text(
+              Text(
                 'Permission Start Time',
-                style: TextStyle(
+                style: GoogleFonts.inter(
                   color: AppColors.primary,
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
@@ -295,9 +296,9 @@ class _PermissionScreenState extends State<PermissionScreen> {
               const SizedBox(height: 24),
 
               // Return Time
-              const Text(
+              Text(
                 'Expected Return Time',
-                style: TextStyle(
+                style: GoogleFonts.inter(
                   color: AppColors.primary,
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
@@ -314,9 +315,9 @@ class _PermissionScreenState extends State<PermissionScreen> {
               const SizedBox(height: 24),
 
               // Optional Note
-              const Text(
+              Text(
                 'Additional Note',
-                style: TextStyle(
+                style: GoogleFonts.inter(
                   color: AppColors.primary,
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
@@ -341,7 +342,7 @@ class _PermissionScreenState extends State<PermissionScreen> {
                   color: AppColors.successBackground,
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: const Row(
+                child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Icon(
@@ -354,7 +355,7 @@ class _PermissionScreenState extends State<PermissionScreen> {
                       child: Text(
                         'Your permission request will be sent for approval. '
                         'Please return to the office within the approved time.',
-                        style: TextStyle(
+                        style: GoogleFonts.inter(
                           color: AppColors.successDark,
                           fontSize: 12,
                           height: 1.5,
@@ -383,9 +384,9 @@ class _PermissionScreenState extends State<PermissionScreen> {
                       borderRadius: BorderRadius.circular(15),
                     ),
                   ),
-                  child: const Text(
+                  child: Text(
                     'Submit Permission',
-                    style: TextStyle(
+                    style: GoogleFonts.inter(
                       color: AppColors.surface,
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
@@ -444,7 +445,7 @@ class _TypeButton extends StatelessWidget {
             const SizedBox(height: 6),
             Text(
               title,
-              style: TextStyle(
+              style: GoogleFonts.inter(
                 color: selected ? AppColors.primaryBlue : AppColors.textSecondary,
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
@@ -485,13 +486,13 @@ class _InputBox extends StatelessWidget {
       child: TextField(
         controller: controller,
         maxLines: maxLines,
-        style: const TextStyle(
+        style:  GoogleFonts.inter(
           color: AppColors.primary,
           fontSize: 14,
         ),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: const TextStyle(
+          hintStyle:  GoogleFonts.inter(
             color: AppColors.borderStrong,
             fontSize: 13,
           ),
@@ -557,7 +558,7 @@ class _TimeBox extends StatelessWidget {
             Expanded(
               child: Text(
                 value,
-                style: TextStyle(
+                style: GoogleFonts.inter(
                   color: isSelected
                       ? AppColors.primary
                       : AppColors.borderStrong,

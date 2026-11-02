@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../app/theme/app_colors.dart';
 import 'package:get/get.dart';
 
@@ -52,6 +53,8 @@ final LeaveService _service = Get.find<LeaveService>();
     if (startDate.value == null || endDate.value == null) {
       return 0;
     }
+
+
 
     final days =
         endDate.value!.difference(startDate.value!).inDays + 1;
@@ -244,9 +247,9 @@ class LeaveSuccessContent extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 20),
-        const Text(
+        Text(
           'Leave Applied!',
-          style: TextStyle(
+          style: GoogleFonts.inter(
             fontSize: 21,
             fontWeight: FontWeight.bold,
           ),

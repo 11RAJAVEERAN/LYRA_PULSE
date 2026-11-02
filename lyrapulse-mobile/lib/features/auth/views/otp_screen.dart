@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
@@ -184,9 +185,9 @@ class _OtpScreenState extends State<OtpScreen> {
                                 ),
                               ),
                               SizedBox(height: compact ? 12 : 20),
-                              const Text(
+                              Text(
                                 'LYRA PULSE',
-                                style: TextStyle(
+                                style: GoogleFonts.inter(
                                   color: AppColors.primaryDark,
                                   fontSize: 21,
                                   fontWeight: FontWeight.w800,
@@ -218,20 +219,20 @@ class _OtpScreenState extends State<OtpScreen> {
                                 ),
                               ),
                               SizedBox(height: compact ? 16 : 22),
-                              const Text(
+                              Text(
                                 'Verify Your Number',
                                 textAlign: TextAlign.center,
-                                style: TextStyle(
+                                style: GoogleFonts.inter(
                                   fontSize: 25,
                                   fontWeight: FontWeight.w800,
                                   color: AppColors.primaryDark,
                                 ),
                               ),
                               const SizedBox(height: 10),
-                              const Text(
+                              Text(
                                 'Enter the 6-digit OTP to continue.',
                                 textAlign: TextAlign.center,
-                                style: TextStyle(
+                                style: GoogleFonts.inter(
                                   color: AppColors.borderStrong,
                                   fontSize: 14,
                                 ),
@@ -256,7 +257,7 @@ class _OtpScreenState extends State<OtpScreen> {
                                     ),
                                   ],
                                 ),
-                                child: const Row(
+                                child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Icon(
@@ -267,7 +268,7 @@ class _OtpScreenState extends State<OtpScreen> {
                                     SizedBox(width: 10),
                                     Text(
                                       '+91 ••••••3210',
-                                      style: TextStyle(
+                                      style: GoogleFonts.inter(
                                         color: AppColors.primaryDark,
                                         fontSize: 14,
                                         fontWeight: FontWeight.w600,
@@ -320,7 +321,7 @@ class _OtpScreenState extends State<OtpScreen> {
                                                 1,
                                               ),
                                             ],
-                                            style: const TextStyle(
+                                            style:  GoogleFonts.inter(
                                               color: AppColors.primaryDark,
                                               fontSize: 21,
                                               fontWeight: FontWeight.w700,
@@ -396,13 +397,13 @@ class _OtpScreenState extends State<OtpScreen> {
                                               color: AppColors.surface,
                                             ),
                                           )
-                                        : const Row(
+                                        : Row(
                                             mainAxisAlignment:
                                                 MainAxisAlignment.center,
                                             children: [
                                               Text(
                                                 'Verify OTP',
-                                                style: TextStyle(
+                                                style: GoogleFonts.inter(
                                                   fontSize: 16,
                                                   color: AppColors.surface,
                                                   fontWeight: FontWeight.w700,
@@ -423,9 +424,9 @@ class _OtpScreenState extends State<OtpScreen> {
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  const Text(
+                                  Text(
                                     "Didn't receive the code? ",
-                                    style: TextStyle(
+                                    style: GoogleFonts.inter(
                                       color: AppColors.borderStrong,
                                       fontSize: 12,
                                     ),
@@ -439,7 +440,7 @@ class _OtpScreenState extends State<OtpScreen> {
                                           seconds == 0
                                               ? 'Resend OTP'
                                               : 'Resend in 00:${seconds.toString().padLeft(2, '0')}',
-                                          style: TextStyle(
+                                          style: GoogleFonts.inter(
                                             color:
                                                 seconds == 0 ? AppColors.secondary : AppColors.borderStrong,
                                             fontSize: 12,
@@ -452,7 +453,7 @@ class _OtpScreenState extends State<OtpScreen> {
                                 ],
                               ),
                               SizedBox(height: compact ? 18 : 24),
-                              const Row(
+                              Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Icon(
@@ -465,7 +466,7 @@ class _OtpScreenState extends State<OtpScreen> {
                                     child: Text(
                                       'Your verification helps keep your account secure.',
                                       textAlign: TextAlign.center,
-                                      style: TextStyle(
+                                      style: GoogleFonts.inter(
                                         color: AppColors.borderStrong,
                                         fontSize: 11,
                                       ),
@@ -496,9 +497,9 @@ class _OtpScreenState extends State<OtpScreen> {
                           color: AppColors.border,
                         ),
                         const SizedBox(width: 10),
-                        const Text(
+                        Text(
                           'POWERED BY LYRA TECH',
-                          style: TextStyle(
+                          style: GoogleFonts.inter(
                             color: AppColors.borderStrong,
                             fontSize: 10,
                             fontWeight: FontWeight.w600,

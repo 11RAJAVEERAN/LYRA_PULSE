@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/widgets/app_text_field.dart';
 
@@ -14,9 +15,9 @@ class PhoneInput extends StatelessWidget {
       hintText: 'Enter your phone number',
       keyboardType: TextInputType.phone,
       maxLength: 10,
-      prefix: const Padding(
+      prefix: Padding(
         padding: EdgeInsets.only(left: 18, right: 8),
-        child: Text('+91', style: TextStyle(fontWeight: FontWeight.w600)),
+        child: Text('+91', style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
       ),
     );
   }

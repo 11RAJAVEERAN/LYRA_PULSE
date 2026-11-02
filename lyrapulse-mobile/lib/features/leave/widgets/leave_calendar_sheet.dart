@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../app/theme/app_colors.dart';
 import 'package:get/get.dart';
 
@@ -31,9 +32,9 @@ class LeaveCalendarSheet extends GetView<LeaveController> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'Select Leave Dates',
-                    style: TextStyle(
+                    style: GoogleFonts.inter(
                       fontSize: 19,
                       fontWeight: FontWeight.bold,
                     ),
@@ -54,7 +55,7 @@ class LeaveCalendarSheet extends GetView<LeaveController> {
                   ),
                   Text(
                     '${_monthName(month.month)} ${month.year}',
-                    style: const TextStyle(
+                    style:  GoogleFonts.inter(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
@@ -73,7 +74,7 @@ class LeaveCalendarSheet extends GetView<LeaveController> {
                         child: Center(
                           child: Text(
                             day,
-                            style: const TextStyle(
+                            style:  GoogleFonts.inter(
                               color: AppColors.textSecondary,
                               fontWeight: FontWeight.w600,
                               fontSize: 12,
@@ -144,7 +145,7 @@ class LeaveCalendarSheet extends GetView<LeaveController> {
                         ),
                         child: Text(
                           '$day',
-                          style: TextStyle(
+                          style: GoogleFonts.inter(
                             color: selected
                                 ? AppColors.surface
                                 : isPast
@@ -170,7 +171,7 @@ class LeaveCalendarSheet extends GetView<LeaveController> {
                 child: Text(
                   'Start: ${_formatDate(controller.startDate.value)}'
                   '   |   End: ${_formatDate(controller.endDate.value)}',
-                  style: const TextStyle(fontSize: 12),
+                  style:  GoogleFonts.inter(fontSize: 12),
                 ),
               ),
               const SizedBox(height: 15),

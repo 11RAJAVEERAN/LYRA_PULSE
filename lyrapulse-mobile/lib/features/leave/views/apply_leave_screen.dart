@@ -1,7 +1,9 @@
+
 import 'package:flutter/material.dart';
-import '../../../app/theme/app_colors.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 
+import '../../../app/theme/app_colors.dart';
 import '../controllers/leave_controller.dart';
 import '../widgets/leave_balance_card.dart';
 import '../widgets/leave_calendar_sheet.dart';
@@ -17,9 +19,9 @@ class ApplyLeaveScreen extends GetView<LeaveController> {
         backgroundColor: AppColors.surface,
         elevation: 0,
         foregroundColor: AppColors.textPrimary,
-        title: const Text(
+        title: Text(
           'Apply Leave',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: GoogleFonts.inter(fontWeight: FontWeight.bold),
         ),
       ),
       body: SingleChildScrollView(
@@ -35,9 +37,9 @@ class ApplyLeaveScreen extends GetView<LeaveController> {
 
             Obx(
               () => DropdownButtonFormField<String>(
-  initialValue: controller.selectedLeaveType.value.isEmpty
-      ? null
-      : controller.selectedLeaveType.value,
+                initialValue: controller.selectedLeaveType.value.isEmpty
+                    ? null
+                    : controller.selectedLeaveType.value,
                 decoration: _decoration(
                   'Select Leave Type',
                   Icons.category_outlined,
@@ -91,15 +93,15 @@ class ApplyLeaveScreen extends GetView<LeaveController> {
                               start == null
                                   ? 'Select Start & End Date'
                                   : '${_date(start)} - ${end == null ? 'Select End Date' : _date(end)}',
-                              style: const TextStyle(
+                              style: GoogleFonts.inter(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
                             const SizedBox(height: 5),
-                            const Text(
+                            Text(
                               'Tap to open calendar',
-                              style: TextStyle(
+                              style: GoogleFonts.inter(
                                 fontSize: 11,
                                 color: AppColors.textSecondary,
                               ),
@@ -118,43 +120,45 @@ class ApplyLeaveScreen extends GetView<LeaveController> {
             _heading('Applying Leave For'),
             const SizedBox(height: 10),
 
-            Obx(
-              () => Container(
-                padding: const EdgeInsets.all(15),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: AppColors.border),
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        _durationOption('Full Day'),
-                        const SizedBox(width: 10),
-                        _durationOption('Half Day'),
-                      ],
-                    ),
-                    const SizedBox(height: 14),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'Total Leave Days',
-                          style: TextStyle(color: AppColors.textSecondary),
+            Container(
+              padding: const EdgeInsets.all(15),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppColors.border),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      _durationOption('Full Day'),
+                      const SizedBox(width: 10),
+                      _durationOption('Half Day'),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Total Leave Days',
+                        style: GoogleFonts.inter(
+                          color: AppColors.textSecondary,
                         ),
-                        Text(
+                      ),
+                      Obx(
+                        () => Text(
                           '${controller.calculatedDays} Days',
-                          style: const TextStyle(
+                          style: GoogleFonts.inter(
                             color: AppColors.primaryBlue,
                             fontSize: 17,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                      ],
-                    ),
-                  ],
-                ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
 
@@ -165,7 +169,9 @@ class ApplyLeaveScreen extends GetView<LeaveController> {
             TextField(
               controller: controller.reasonController,
               maxLines: 4,
-              onChanged: (value) => controller.reason.value = value,
+              onChanged: (value) {
+                controller.reason.value = value;
+              },
               decoration: _decoration(
                 'Enter your leave reason...',
                 Icons.edit_note,
@@ -177,15 +183,16 @@ class ApplyLeaveScreen extends GetView<LeaveController> {
             const SizedBox(height: 12),
 
             Obx(() {
-              final exceeds = controller.selectedLeaveType.value.isNotEmpty &&
+              final exceeds =
+                  controller.selectedLeaveType.value.isNotEmpty &&
                   controller.selectedLeaveType.value != 'LWP' &&
                   controller.calculatedDays >
                       controller.selectedLeaveBalance;
 
               return exceeds
-                  ? const Text(
+                  ? Text(
                       'Insufficient leave balance.',
-                      style: TextStyle(
+                      style: GoogleFonts.inter(
                         color: AppColors.error,
                         fontSize: 12,
                       ),
@@ -216,9 +223,9 @@ class ApplyLeaveScreen extends GetView<LeaveController> {
                       ? const CircularProgressIndicator(
                           color: AppColors.surface,
                         )
-                      : const Text(
+                      : Text(
                           'Confirm Apply',
-                          style: TextStyle(
+                          style: GoogleFonts.inter(
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
                           ),
@@ -226,6 +233,7 @@ class ApplyLeaveScreen extends GetView<LeaveController> {
                 ),
               ),
             ),
+
             const SizedBox(height: 25),
           ],
         ),
@@ -233,10 +241,53 @@ class ApplyLeaveScreen extends GetView<LeaveController> {
     );
   }
 
+  Widget _durationOption(String value) {
+    return Expanded(
+      child: Obx(() {
+        final selected = controller.selectedDuration.value == value;
+
+        return GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () {
+            controller.selectDuration(value);
+          },
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            decoration: BoxDecoration(
+              color: selected
+                  ? AppColors.infoSurface
+                  : AppColors.surface,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: selected
+                    ? AppColors.primaryBlue
+                    : AppColors.borderStrong,
+                width: selected ? 1.5 : 1,
+              ),
+            ),
+            child: Center(
+              child: Text(
+                value,
+                style: GoogleFonts.inter(
+                  color: selected
+                      ? AppColors.primaryBlue
+                      : AppColors.textSecondary,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+          ),
+        );
+      }),
+    );
+  }
+
   Widget _heading(String title) {
     return Text(
       title,
-      style: const TextStyle(
+      style: GoogleFonts.inter(
         fontSize: 15,
         fontWeight: FontWeight.bold,
         color: AppColors.textPrimary,
@@ -258,42 +309,6 @@ class ApplyLeaveScreen extends GetView<LeaveController> {
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
         borderSide: const BorderSide(color: AppColors.border),
-      ),
-    );
-  }
-
-  Widget _durationOption(String value) {
-    final selected = controller.selectedDuration.value == value;
-
-    return Expanded(
-      child: InkWell(
-        onTap: () => controller.selectDuration(value),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            color: selected
-                ? AppColors.infoSurface
-                : AppColors.surface,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: selected
-                  ? AppColors.primaryBlue
-                  : AppColors.borderStrong,
-            ),
-          ),
-          child: Center(
-            child: Text(
-              value,
-              style: TextStyle(
-                color: selected
-                    ? AppColors.primaryBlue
-                    : AppColors.textSecondary,
-                fontWeight: FontWeight.w600,
-                fontSize: 12,
-              ),
-            ),
-          ),
-        ),
       ),
     );
   }

@@ -15,8 +15,8 @@ class CalendarViewToggle extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: AppColors.surfaceMuted,
-        borderRadius: BorderRadius.circular(18),
+        // color: AppColors.surfaceMuted,
+        // borderRadius: BorderRadius.circular(18),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -49,7 +49,7 @@ class CalendarViewToggle extends StatelessWidget {
         width: 48,
         height: 44,
         decoration: BoxDecoration(
-          color: selected ? AppColors.surface : AppColors.surface,
+          // color: selected ? AppColors.surface : AppColors.surface,
           borderRadius: BorderRadius.circular(15),
           boxShadow: selected
               ? [

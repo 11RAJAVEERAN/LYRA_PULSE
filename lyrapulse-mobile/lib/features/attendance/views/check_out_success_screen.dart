@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 import '../../../app/theme/app_colors.dart';
 
@@ -48,11 +49,11 @@ class CheckOutSuccessScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const Expanded(
+                    Expanded(
                       child: Center(
                         child: Text(
                           'Attendance',
-                          style: TextStyle(
+                          style: GoogleFonts.inter(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
                             color: AppColors.primary,
@@ -98,10 +99,10 @@ class CheckOutSuccessScreen extends StatelessWidget {
                 const SizedBox(height: 28),
 
                 // TITLE
-                const Text(
+                Text(
                   'CHECK OUT SUCCESSFUL',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
+                  style: GoogleFonts.inter(
                     fontSize: 23,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 0.5,
@@ -111,10 +112,10 @@ class CheckOutSuccessScreen extends StatelessWidget {
 
                 const SizedBox(height: 10),
 
-                const Text(
+                Text(
                   'Your attendance has been successfully\nchecked out for today.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
+                  style: GoogleFonts.inter(
                     fontSize: 14,
                     height: 1.5,
                     color: AppColors.textSecondary,
@@ -157,13 +158,13 @@ class CheckOutSuccessScreen extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: 14),
-                          const Expanded(
+                          Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
                                   'Employee',
-                                  style: TextStyle(
+                                  style: GoogleFonts.inter(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w700,
                                     color: AppColors.primary,
@@ -172,7 +173,7 @@ class CheckOutSuccessScreen extends StatelessWidget {
                                 SizedBox(height: 4),
                                 Text(
                                   'Employee ID: LYRA001',
-                                  style: TextStyle(
+                                  style: GoogleFonts.inter(
                                     fontSize: 12,
                                     color: AppColors.textSecondary,
                                   ),
@@ -189,9 +190,9 @@ class CheckOutSuccessScreen extends StatelessWidget {
                               color: AppColors.success.withValues(alpha: 0.10),
                               borderRadius: BorderRadius.circular(20),
                             ),
-                            child: const Text(
+                            child: Text(
                               'PRESENT',
-                              style: TextStyle(
+                              style: GoogleFonts.inter(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w800,
                                 color: AppColors.success,
@@ -268,7 +269,7 @@ class CheckOutSuccessScreen extends StatelessWidget {
                       color: AppColors.success.withValues(alpha: 0.15),
                     ),
                   ),
-                  child: const Row(
+                  child: Row(
                     children: [
                       Icon(
                         Icons.verified_user_rounded,
@@ -279,7 +280,7 @@ class CheckOutSuccessScreen extends StatelessWidget {
                       Expanded(
                         child: Text(
                           'Your location and face were verified securely.',
-                          style: TextStyle(
+                          style: GoogleFonts.inter(
                             fontSize: 12,
                             height: 1.4,
                             fontWeight: FontWeight.w600,
@@ -309,9 +310,9 @@ class CheckOutSuccessScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(16),
                       ),
                     ),
-                    child: const Text(
+                    child: Text(
                       'Done',
-                      style: TextStyle(
+                      style: GoogleFonts.inter(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
                       ),
@@ -322,9 +323,9 @@ class CheckOutSuccessScreen extends StatelessWidget {
                 const SizedBox(height: 28),
 
                 // FOOTER
-                const Text(
+                Text(
                   'LYRA PULSE',
-                  style: TextStyle(
+                  style: GoogleFonts.inter(
                     fontSize: 11,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 2.2,
@@ -334,9 +335,9 @@ class CheckOutSuccessScreen extends StatelessWidget {
 
                 const SizedBox(height: 6),
 
-                const Text(
+                Text(
                   'Secure Attendance System',
-                  style: TextStyle(
+                  style: GoogleFonts.inter(
                     fontSize: 10,
                     color: AppColors.textSecondary,
                   ),
@@ -393,7 +394,7 @@ class _InfoRow extends StatelessWidget {
         Expanded(
           child: Text(
             title,
-            style: TextStyle(
+            style: GoogleFonts.inter(
               fontSize: 13,
               fontWeight: FontWeight.w500,
               color: titleColor,
@@ -402,7 +403,7 @@ class _InfoRow extends StatelessWidget {
         ),
         Text(
           value,
-          style: TextStyle(
+          style: GoogleFonts.inter(
             fontSize: 13,
             fontWeight: FontWeight.w700,
             color: valueColor ?? AppColors.primary,

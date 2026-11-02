@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../app/theme/app_colors.dart';
 
 class LeaveStatusChip extends StatelessWidget {
@@ -43,7 +44,7 @@ class LeaveStatusChip extends StatelessWidget {
       ),
       child: Text(
         status,
-        style: TextStyle(
+        style: GoogleFonts.inter(
           color: color,
           fontSize: 11,
           fontWeight: FontWeight.w700,

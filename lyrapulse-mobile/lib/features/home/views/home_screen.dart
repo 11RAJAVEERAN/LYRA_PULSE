@@ -2,10 +2,13 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
+
 import '../../../app/theme/app_colors.dart';
+
 import '../../attendance/controllers/attendance_controller.dart';
 import '../../attendance/views/location_verification_screen.dart';
 import '../../calendar/views/calendar_screen.dart';
@@ -15,7 +18,6 @@ import '../../profile/views/profile_screen.dart';
 import '../../menu/views/menu_screen.dart';
 
 import '../../leave/bindings/leave_binding.dart';
-import '../../leave/controllers/leave_controller.dart';
 
 import '../widgets/hold_to_confirm_button.dart';
 import '../widgets/home_header.dart';
@@ -43,40 +45,37 @@ class _HomeScreenState extends State<HomeScreen> {
 
   int _selectedIndex = 0;
 
+  bool _isExitDialogOpen = false;
 
+  @override
+  void initState() {
+    super.initState();
 
+    LeaveBinding().dependencies();
 
-@override
-void initState() {
-  super.initState();
+    if (Get.isRegistered<AttendanceController>()) {
+      attendanceController = Get.find<AttendanceController>();
+    } else {
+      attendanceController = Get.put(AttendanceController());
+    }
 
-  // Register Leave dependencies before IndexedStack builds.
-  LeaveBinding().dependencies();
+    _clockTimer = Timer.periodic(
+      const Duration(seconds: 1),
+      (_) {
+        if (mounted) {
+          setState(() {
+            _now = DateTime.now();
+          });
+        }
+      },
+    );
 
-  if (Get.isRegistered<AttendanceController>()) {
-    attendanceController = Get.find<AttendanceController>();
-  } else {
-    attendanceController = Get.put(AttendanceController());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkLocationService();
+    });
   }
 
-  _clockTimer = Timer.periodic(
-    const Duration(seconds: 1),
-    (_) {
-      if (mounted) {
-        setState(() => _now = DateTime.now());
-      }
-    },
-  );
-
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-    _checkLocationService();
-  });
-}
-
-
-
-
-
+  // LOCATION SERVICE CHECK
 
   Future<void> _checkLocationService() async {
     final isEnabled =
@@ -112,7 +111,9 @@ void initState() {
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
+
                 const SizedBox(height: 24),
+
                 Container(
                   width: 68,
                   height: 68,
@@ -126,27 +127,33 @@ void initState() {
                     size: 50,
                   ),
                 ),
+
                 const SizedBox(height: 18),
-                const Text(
+
+                Text(
                   'Location is turned off',
-                  style: TextStyle(
+                  style: GoogleFonts.inter(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: AppColors.textPrimary,
                   ),
                 ),
+
                 const SizedBox(height: 10),
+
                 Text(
                   'Please turn on your location to use '
                   'Lyra Pulse attendance features.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
+                  style: GoogleFonts.inter(
                     fontSize: 12,
                     height: 1.5,
                     color: AppColors.textSecondary,
                   ),
                 ),
+
                 const SizedBox(height: 24),
+
                 SizedBox(
                   width: double.infinity,
                   height: 50,
@@ -163,9 +170,9 @@ void initState() {
                       await Geolocator.openLocationSettings();
                     },
                     icon: const Icon(Icons.location_on_rounded),
-                    label: const Text(
+                    label: Text(
                       'Turn On Location',
-                      style: TextStyle(
+                      style: GoogleFonts.inter(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
                       ),
@@ -180,17 +187,114 @@ void initState() {
     );
   }
 
+  // BACK BUTTON HANDLING
+
+  void _handleHomeBack() {
+    if (_isExitDialogOpen) return;
+
+    // Calendar / Leave tab-ல் இருந்தால் முதலில் Home tab.
+    if (_selectedIndex != 0) {
+      setState(() {
+        _selectedIndex = 0;
+      });
+      return;
+    }
+
+    // Home screen-ல் Exit confirmation.
+    _showExitDialog();
+  }
+
+  void _showExitDialog() {
+    if (_isExitDialogOpen) return;
+
+    _isExitDialogOpen = true;
+
+    Get.dialog(
+      PopScope(
+        canPop: false,
+        child: AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Text(
+            'Exit Lyra Pulse?',
+            style: GoogleFonts.inter(
+              fontSize: 19,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          content: Text(
+            'Are you sure you want to exit the app?',
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Get.back();
+                _isExitDialogOpen = false;
+              },
+              child: Text(
+                'Cancel',
+                style: GoogleFonts.inter(
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+
+            ElevatedButton(
+              onPressed: () {
+                SystemNavigator.pop();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryBlue,
+                foregroundColor: AppColors.surface,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: Text(
+                'Exit',
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      barrierDismissible: false,
+    ).then((_) {
+      _isExitDialogOpen = false;
+    });
+  }
+
   @override
   void dispose() {
     _clockTimer?.cancel();
     super.dispose();
   }
 
+  // DATE FUNCTIONS
+
   String _monthName(int month) {
     const months = [
-      'January', 'February', 'March', 'April',
-      'May', 'June', 'July', 'August',
-      'September', 'October', 'November', 'December',
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
     ];
 
     return months[month - 1];
@@ -198,7 +302,13 @@ void initState() {
 
   String get _dateLabel {
     const weekdays = [
-      'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun',
+      'Mon',
+      'Tue',
+      'Wed',
+      'Thu',
+      'Fri',
+      'Sat',
+      'Sun',
     ];
 
     return '${weekdays[_selectedDate.weekday - 1]}, '
@@ -207,15 +317,7 @@ void initState() {
         '${_selectedDate.year}';
   }
 
-  String _time(DateTime? value) {
-    if (value == null) return '--:-- --';
-
-    final hour = value.hour % 12 == 0 ? 12 : value.hour % 12;
-    final minute = value.minute.toString().padLeft(2, '0');
-    final period = value.hour >= 12 ? 'PM' : 'AM';
-
-    return '$hour:$minute $period';
-  }
+  // ATTENDANCE
 
   bool get _isCheckedIn => attendanceController.isCheckedIn;
 
@@ -246,6 +348,8 @@ void initState() {
     }
   }
 
+  // BOTTOM NAVIGATION
+
   void _selectTab(int index) {
     if (!mounted) return;
 
@@ -259,141 +363,187 @@ void initState() {
       case 0:
         _selectTab(0);
         break;
+
       case 1:
         _selectTab(1);
         break;
+
       case 2:
         _selectTab(2);
         break;
+
       case 3:
         _selectTab(3);
         break;
+
       case 4:
         Get.to(() => ProfileScreen());
         break;
+
       case 5:
         Get.to(() => NotificationScreen());
         break;
     }
   }
 
+  // MAIN UI
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: [
-          SafeArea(
-            bottom: false,
-            child: Stack(
-              children: [
-                Positioned(
-                  top: -100,
-                  right: -80,
-                  child: Container(
-                    width: 240,
-                    height: 240,
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryBlue.withValues(alpha: .03),
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                ),
-                RefreshIndicator(
-                  color: AppColors.primary,
-                  backgroundColor: AppColors.surface,
-                  strokeWidth: 3,
-                  displacement: 45,
-                  onRefresh: () async {
-                    await Future.delayed(
-                      const Duration(milliseconds: 800),
-                    );
+    return PopScope<Object?>(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
 
-                    if (mounted) setState(() {});
-                  },
-                  child: CustomScrollView(
-                    physics: const ClampingScrollPhysics(
-                      parent: AlwaysScrollableScrollPhysics(),
+        _handleHomeBack();
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+
+        body: IndexedStack(
+          index: _selectedIndex,
+          children: [
+            SafeArea(
+              bottom: false,
+              child: Stack(
+                children: [
+                  Positioned(
+                    top: -100,
+                    right: -80,
+                    child: Container(
+                      width: 240,
+                      height: 240,
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryBlue.withValues(alpha: .03),
+                        shape: BoxShape.circle,
+                      ),
                     ),
-                    slivers: [
-                      SliverToBoxAdapter(
-                        child: HomeHeader(
-                          onNotificationTap: () => _openPage(5),
-                        ),
-                      ),
-                      SliverPadding(
-                        padding: const EdgeInsets.fromLTRB(
-                          16, 12, 16, 12,
-                        ),
-                        sliver: SliverList(
-                          delegate: SliverChildListDelegate([
-                            HomeDateCalendar(
-                              dateLabel: _dateLabel,
-                              selectedDate: _selectedDate,
-                              displayedMonth: _displayedMonth,
-                              showCalendar: _showMonthlyCalendar,
-                              onToggle: () {
-                                setState(() {
-                                  _showMonthlyCalendar =
-                                      !_showMonthlyCalendar;
-                                  _displayedMonth = DateTime(
-                                    _selectedDate.year,
-                                    _selectedDate.month,
-                                  );
-                                });
-                              },
-                              onMonthChanged: (date) {
-                                setState(() {
-                                  _displayedMonth = date;
-                                });
-                              },
-                              onDateSelected: (date) {
-                                setState(() {
-                                  _selectedDate = date;
-                                  _showMonthlyCalendar = false;
-                                });
-                              },
-                            ),
-                            const SizedBox(height: 14),
-                            HomeWorkingCard(
-                              attendanceController: attendanceController,
-                            ),
-                            const SizedBox(height: 17),
-                            const _ActivityTitle(),
-                            const SizedBox(height: 10),
-                            HomeActivityCard(
-                              attendanceController: attendanceController,
-                              now: _now,
-                            ),
-                            const SizedBox(height: 8),
-                          ]),
-                        ),
-                      ),
-                    ],
                   ),
-                ),
-              ],
+
+                  RefreshIndicator(
+                    color: AppColors.primary,
+                    backgroundColor: AppColors.surface,
+                    strokeWidth: 3,
+                    displacement: 45,
+                    onRefresh: () async {
+                      await Future.delayed(
+                        const Duration(milliseconds: 800),
+                      );
+
+                      if (mounted) {
+                        setState(() {});
+                      }
+                    },
+
+                    child: CustomScrollView(
+                      physics: const ClampingScrollPhysics(
+                        parent: AlwaysScrollableScrollPhysics(),
+                      ),
+
+                      slivers: [
+                        SliverToBoxAdapter(
+                          child: HomeHeader(
+                            onNotificationTap: () => _openPage(5),
+                          ),
+                        ),
+
+                        SliverPadding(
+                          padding: const EdgeInsets.fromLTRB(
+                            16,
+                            12,
+                            16,
+                            12,
+                          ),
+
+                          sliver: SliverList(
+                            delegate: SliverChildListDelegate([
+                              HomeDateCalendar(
+                                dateLabel: _dateLabel,
+                                selectedDate: _selectedDate,
+                                displayedMonth: _displayedMonth,
+                                showCalendar: _showMonthlyCalendar,
+
+                                onToggle: () {
+                                  setState(() {
+                                    _showMonthlyCalendar =
+                                        !_showMonthlyCalendar;
+
+                                    _displayedMonth = DateTime(
+                                      _selectedDate.year,
+                                      _selectedDate.month,
+                                    );
+                                  });
+                                },
+
+                                onMonthChanged: (date) {
+                                  setState(() {
+                                    _displayedMonth = date;
+                                  });
+                                },
+
+                                onDateSelected: (date) {
+                                  setState(() {
+                                    _selectedDate = date;
+                                    _showMonthlyCalendar = false;
+                                  });
+                                },
+                              ),
+
+                              const SizedBox(height: 14),
+
+                              HomeWorkingCard(
+                                attendanceController:
+                                    attendanceController,
+                              ),
+
+                              const SizedBox(height: 17),
+
+                              const _ActivityTitle(),
+
+                              const SizedBox(height: 10),
+
+                              HomeActivityCard(
+                                attendanceController:
+                                    attendanceController,
+                                now: _now,
+                              ),
+
+                              const SizedBox(height: 8),
+                            ]),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          CalendarScreen(),
-          LeaveScreen(),
-        ],
-      ),
-      bottomNavigationBar: HomeBottomNavigation(
-        selectedIndex: _selectedIndex,
-        onTabSelected: _selectTab,
-        onMenuTap: () => Get.to(() => const MenuScreen()),
-      ),
-      floatingActionButtonLocation:
-          FloatingActionButtonLocation.centerDocked,
-      floatingActionButton: HoldToConfirmButton(
-        isCheckOut: _isCheckedIn,
-        onConfirm: _attendanceAction,
+
+            CalendarScreen(),
+
+            LeaveScreen(),
+          ],
+        ),
+
+        bottomNavigationBar: HomeBottomNavigation(
+          selectedIndex: _selectedIndex,
+          onTabSelected: _selectTab,
+          onMenuTap: () => Get.to(() => const MenuScreen()),
+        ),
+
+        floatingActionButtonLocation:
+            FloatingActionButtonLocation.centerDocked,
+
+        floatingActionButton: HoldToConfirmButton(
+          isCheckOut: _isCheckedIn,
+          onConfirm: _attendanceAction,
+        ),
       ),
     );
   }
 }
+
+// ACTIVITY TITLE
 
 class _ActivityTitle extends StatelessWidget {
   const _ActivityTitle();
@@ -417,7 +567,9 @@ class _ActivityTitle extends StatelessWidget {
             ),
           ),
         ),
+
         const SizedBox(width: 14),
+
         Text(
           "Today's activity",
           style: GoogleFonts.inter(

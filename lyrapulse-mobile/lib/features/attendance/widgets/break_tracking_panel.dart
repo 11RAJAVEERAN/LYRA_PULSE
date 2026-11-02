@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../app/theme/app_colors.dart';
 import 'package:get/get.dart';
 
@@ -137,13 +138,13 @@ class _BreakTrackingPanelState extends State<BreakTrackingPanel> {
                       ),
                     ),
                     const SizedBox(width: 12),
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             'Break Tracking',
-                            style: TextStyle(
+                            style: GoogleFonts.inter(
                               fontSize: 17,
                               fontWeight: FontWeight.bold,
                             ),
@@ -151,7 +152,7 @@ class _BreakTrackingPanelState extends State<BreakTrackingPanel> {
                           SizedBox(height: 4),
                           Text(
                             'Manage your break check-in and check-out',
-                            style: TextStyle(
+                            style: GoogleFonts.inter(
                               fontSize: 12,
                               color: AppColors.textSecondary,
                             ),
@@ -190,7 +191,7 @@ class _BreakTrackingPanelState extends State<BreakTrackingPanel> {
                       if (activeBreak != null) ...[
                         Text(
                           '${activeBreak.type} Break in Progress',
-                          style: const TextStyle(
+                          style:  GoogleFonts.inter(
                             color: AppColors.warning,
                             fontWeight: FontWeight.bold,
                             fontSize: 15,
@@ -212,9 +213,9 @@ class _BreakTrackingPanelState extends State<BreakTrackingPanel> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
+                              Text(
                                 'Break Duration',
-                                style: TextStyle(
+                                style: GoogleFonts.inter(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -224,7 +225,7 @@ class _BreakTrackingPanelState extends State<BreakTrackingPanel> {
                                 controller.formatElapsedDuration(
                                   activeDuration,
                                 ),
-                                style: const TextStyle(
+                                style:  GoogleFonts.inter(
                                   fontSize: 28,
                                   fontWeight: FontWeight.bold,
                                   fontFeatures: [
@@ -295,20 +296,20 @@ class _BreakTrackingPanelState extends State<BreakTrackingPanel> {
                       const SizedBox(height: 16),
                       const Divider(),
                       const SizedBox(height: 8),
-                      const Text(
+                      Text(
                         'Break History',
-                        style: TextStyle(
+                        style: GoogleFonts.inter(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       const SizedBox(height: 8),
                       if (sessions.isEmpty)
-                        const Padding(
+                        Padding(
                           padding: EdgeInsets.symmetric(vertical: 8),
                           child: Text(
                             'No breaks recorded today.',
-                            style: TextStyle(color: AppColors.textSecondary),
+                            style: GoogleFonts.inter(color: AppColors.textSecondary),
                           ),
                         )
                       else
@@ -334,14 +335,14 @@ class _BreakTrackingPanelState extends State<BreakTrackingPanel> {
                                     Expanded(
                                       child: Text(
                                         session.type,
-                                        style: const TextStyle(
+                                        style:  GoogleFonts.inter(
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
                                     ),
                                     Text(
                                       isActive ? 'In Progress' : 'Completed',
-                                      style: TextStyle(
+                                      style: GoogleFonts.inter(
                                         fontSize: 12,
                                         color: isActive
                                             ? AppColors.warningDark
@@ -366,9 +367,9 @@ class _BreakTrackingPanelState extends State<BreakTrackingPanel> {
                                 ),
                                 if (!isActive) ...[
                                   const SizedBox(height: 8),
-                                  const Text(
+                                  Text(
                                     'Return Location',
-                                    style: TextStyle(
+                                    style: GoogleFonts.inter(
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
@@ -383,9 +384,9 @@ class _BreakTrackingPanelState extends State<BreakTrackingPanel> {
                                       'Lng: ${session.endLongitude!.toStringAsFixed(6)}',
                                     )
                                   else
-                                    const Text(
+                                    Text(
                                       'Location not available',
-                                      style: TextStyle(
+                                      style: GoogleFonts.inter(
                                         color: AppColors.textSecondary,
                                       ),
                                     ),
@@ -401,7 +402,7 @@ class _BreakTrackingPanelState extends State<BreakTrackingPanel> {
                     Text(
                       'Total break time: '
                       '${controller.formattedBreakDuration}',
-                      style: const TextStyle(
+                      style:  GoogleFonts.inter(
                         fontWeight: FontWeight.w600,
                       ),
                     ),

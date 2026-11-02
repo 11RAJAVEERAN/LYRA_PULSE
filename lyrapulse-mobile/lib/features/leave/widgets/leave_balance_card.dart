@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../app/theme/app_colors.dart';
 import 'package:get/get.dart';
 
@@ -33,9 +34,9 @@ color: AppColors.primaryBlue.withValues(alpha: 0.18),              blurRadius: 1
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Available Leave Balance',
-              style: TextStyle(
+              style: GoogleFonts.inter(
                 color: AppColors.surface,
                 fontSize: 13,
               ),
@@ -51,7 +52,7 @@ color: AppColors.primaryBlue.withValues(alpha: 0.18),              blurRadius: 1
                 const SizedBox(width: 12),
                 Text(
                   '${balance.toStringAsFixed(1)} Days',
-                  style: const TextStyle(
+                  style:  GoogleFonts.inter(
                     color: AppColors.surface,
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -64,13 +65,13 @@ color: AppColors.primaryBlue.withValues(alpha: 0.18),              blurRadius: 1
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   'Remaining Balance',
-                  style: TextStyle(color: AppColors.surface),
+                  style: GoogleFonts.inter(color: AppColors.surface),
                 ),
                 Text(
                   '${balance.toStringAsFixed(1)} Days',
-                  style: const TextStyle(
+                  style:  GoogleFonts.inter(
                     color: AppColors.surface,
                     fontWeight: FontWeight.bold,
                   ),

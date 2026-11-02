@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 
 import '../../../app/theme/app_colors.dart';
@@ -20,9 +21,9 @@ class MenuScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Menu',
-          style: TextStyle(
+          style: GoogleFonts.inter(
             fontWeight: FontWeight.w700,
             color: AppColors.textPrimary,
           ),
@@ -221,7 +222,7 @@ Widget _buildLogoutButton(LyraMenuController controller) {
           color: AppColors.error.withValues(alpha: 0.25),
         ),
       ),
-      child: const Row(
+      child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
@@ -232,7 +233,7 @@ Widget _buildLogoutButton(LyraMenuController controller) {
           SizedBox(width: 10),
           Text(
             'Logout',
-            style: TextStyle(
+            style: GoogleFonts.inter(
               color: AppColors.error,
               fontSize: 15,
               fontWeight: FontWeight.w700,

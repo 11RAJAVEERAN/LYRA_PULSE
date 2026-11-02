@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../app/theme/app_colors.dart';
 
 class LeaveEmptyState extends StatelessWidget {
@@ -35,7 +36,7 @@ class LeaveEmptyState extends StatelessWidget {
             const SizedBox(height: 22),
             Text(
               title,
-              style: const TextStyle(
+              style:  GoogleFonts.inter(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
@@ -44,7 +45,7 @@ class LeaveEmptyState extends StatelessWidget {
             Text(
               subtitle,
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style:  GoogleFonts.inter(
                 color: AppColors.textSecondary,
                 fontSize: 13,
               ),

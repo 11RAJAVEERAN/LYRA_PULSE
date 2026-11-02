@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../app/theme/app_colors.dart';
 import 'package:get/get.dart';
 
@@ -19,9 +20,9 @@ class LeaveScreen extends GetView<LeaveController> {
         backgroundColor: AppColors.surface,
         elevation: 0,
         foregroundColor: AppColors.textPrimary,
-        title: const Text(
+        title: Text(
           'Leave Management',
-          style: TextStyle(
+          style: GoogleFonts.inter(
             fontSize: 19,
             fontWeight: FontWeight.bold,
           ),
@@ -152,7 +153,7 @@ class LeaveScreen extends GetView<LeaveController> {
             children: [
               Text(
                 count,
-                style: TextStyle(
+                style: GoogleFonts.inter(
                   fontSize: 21,
                   fontWeight: FontWeight.bold,
                   color: foreground,
@@ -160,7 +161,7 @@ class LeaveScreen extends GetView<LeaveController> {
               ),
               Text(
                 title,
-                style: TextStyle(
+                style: GoogleFonts.inter(
                   fontSize: 11,
                   color: foreground,
                 ),
@@ -208,7 +209,7 @@ class LeaveScreen extends GetView<LeaveController> {
           child: Center(
             child: Text(
               title,
-              style: TextStyle(
+              style: GoogleFonts.inter(
                 fontSize: 14,
                 fontWeight:
                     selected ? FontWeight.bold : FontWeight.w500,

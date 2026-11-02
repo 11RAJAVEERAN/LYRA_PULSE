@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../app/theme/app_colors.dart';
 
 class AttendanceLegend extends StatelessWidget {
@@ -48,7 +49,7 @@ class AttendanceLegend extends StatelessWidget {
               const SizedBox(width: 7),
               Text(
                 item.label,
-                style: const TextStyle(
+                style:  GoogleFonts.inter(
                   fontSize: 12,
                   color: AppColors.textSecondary,
                   fontWeight: FontWeight.w500,

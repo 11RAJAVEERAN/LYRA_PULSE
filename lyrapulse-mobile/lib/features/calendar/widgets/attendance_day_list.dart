@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../app/theme/app_colors.dart';
 import '../controllers/calendar_controller.dart';
 
@@ -43,7 +44,7 @@ class AttendanceDayList extends StatelessWidget {
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(18),
         ),
-        child: const Column(
+        child: Column(
           children: [
             Icon(
               Icons.event_available_rounded,
@@ -53,7 +54,7 @@ class AttendanceDayList extends StatelessWidget {
             SizedBox(height: 10),
             Text(
               'No attendance records found',
-              style: TextStyle(
+              style: GoogleFonts.inter(
                 color: AppColors.textSecondary,
                 fontWeight: FontWeight.w500,
               ),
@@ -105,7 +106,7 @@ class AttendanceDayList extends StatelessWidget {
                         children: [
                           Text(
                             '$day',
-                            style: TextStyle(
+                            style: GoogleFonts.inter(
                               fontSize: 20,
                               fontWeight: FontWeight.w700,
                               color: color,
@@ -114,7 +115,7 @@ class AttendanceDayList extends StatelessWidget {
                           const SizedBox(height: 2),
                           Text(
                             controller.weekdayShort(date),
-                            style: const TextStyle(
+                            style:  GoogleFonts.inter(
                               fontSize: 11,
                               color: AppColors.textSecondary,
                             ),
@@ -129,7 +130,7 @@ class AttendanceDayList extends StatelessWidget {
                         children: [
                           Text(
                             controller.statusLabel(status),
-                            style: const TextStyle(
+                            style:  GoogleFonts.inter(
                               fontSize: 15,
                               fontWeight: FontWeight.w700,
                               color: AppColors.textPrimary,
@@ -138,7 +139,7 @@ class AttendanceDayList extends StatelessWidget {
                           const SizedBox(height: 5),
                           Text(
                             '${controller.monthTitle} • ${controller.weekdayShort(date)}',
-                            style: const TextStyle(
+                            style:  GoogleFonts.inter(
                               fontSize: 11,
                               color: AppColors.textSecondary,
                             ),

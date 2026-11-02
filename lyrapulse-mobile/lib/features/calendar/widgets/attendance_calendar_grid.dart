@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../app/theme/app_colors.dart';
 import '../controllers/calendar_controller.dart';
 
@@ -71,7 +72,7 @@ class AttendanceCalendarGrid extends StatelessWidget {
                   padding: EdgeInsets.symmetric(vertical: 12),
                   child: Text(
                     day,
-                    style: TextStyle(
+                    style: GoogleFonts.inter(
                       color: AppColors.textSecondary,
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -134,7 +135,7 @@ class AttendanceCalendarGrid extends StatelessWidget {
                     Center(
                       child: Text(
                         '$day',
-                        style: TextStyle(
+                        style: GoogleFonts.inter(
                           fontSize: 14,
                           fontWeight: selected || isToday
                               ? FontWeight.w700

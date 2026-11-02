@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../app/theme/app_colors.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
@@ -212,20 +213,20 @@ class _AttendanceConfirmationScreenState
           child: Column(
             children: [
               const SizedBox(height: 12),
-              const Text(
+              Text(
                 'Verify Your Photo',
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: GoogleFonts.inter(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                   color: AppColors.textPrimary,
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 'Make sure your face is clearly visible before continuing.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: AppColors.primaryDark),
+                style: GoogleFonts.inter(color: AppColors.primaryDark),
               ),
               const SizedBox(height: 24),
               Expanded(
@@ -251,7 +252,7 @@ class _AttendanceConfirmationScreenState
                 Text(
                   _errorMessage!,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
+                  style:  GoogleFonts.inter(
                     color: AppColors.error,
                     fontSize: 13,
                   ),

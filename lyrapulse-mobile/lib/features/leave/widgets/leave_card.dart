@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../../app/theme/app_colors.dart';
 import '../models/leave_model.dart';
@@ -74,7 +75,7 @@ class LeaveCard extends StatelessWidget {
                   children: [
                     Text(
                       '${leave.leaveType} Leave',
-                      style: const TextStyle(
+                      style:  GoogleFonts.inter(
                         fontWeight: FontWeight.bold,
                         fontSize: 15,
                       ),
@@ -82,7 +83,7 @@ class LeaveCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       '${leave.totalDays} Day(s) • ${leave.duration}',
-                      style: const TextStyle(
+                      style:  GoogleFonts.inter(
                         color: AppColors.textSecondary,
                         fontSize: 12,
                       ),
@@ -132,7 +133,7 @@ class LeaveCard extends StatelessWidget {
         Expanded(
           child: Text(
             value,
-            style: const TextStyle(
+            style:  GoogleFonts.inter(
               fontSize: 12,
               color: AppColors.textSecondary,
             ),

@@ -1,7 +1,7 @@
 
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
-
 
 import '../../features/home/bindings/home_binding.dart';
 import '../../features/auth/controllers/auth_controller.dart';
@@ -23,12 +23,13 @@ import '../../features/permission/views/permission_return_screen.dart';
 import 'package:lyrapulse_mobile/features/leave/bindings/leave_binding.dart';
 import 'package:lyrapulse_mobile/features/leave/views/leave_screen.dart';
 import 'package:lyrapulse_mobile/features/leave/views/apply_leave_screen.dart';
+
 import 'app_routes.dart';
+import 'app_back_handler.dart';
 import '../theme/app_colors.dart';
 
 abstract final class AppPages {
   static final List<GetPage<dynamic>> pages = [
-
     // SPLASH
     GetPage(
       name: AppRoutes.initial,
@@ -63,62 +64,79 @@ abstract final class AppPages {
     ),
 
     // HOME
-   GetPage(
-  name: AppRoutes.home,
-  page: () => const HomeScreen(),
-  binding: HomeBinding(),
-),
+    // HomeScreen has its own back and exit confirmation handling.
+    GetPage(
+      name: AppRoutes.home,
+      page: () => const HomeScreen(),
+      binding: HomeBinding(),
+    ),
 
     // LOCATION VERIFICATION
     GetPage(
       name: AppRoutes.locationVerification,
-      page: () => const LocationVerificationScreen(
-        isCheckOut: false,
+      page: () => const AppBackHandler(
+        child: LocationVerificationScreen(
+          isCheckOut: false,
+        ),
       ),
     ),
 
     // PERMISSION
     GetPage(
       name: AppRoutes.permissionStart,
-      page: () => const PermissionScreen(),
+      page: () => const AppBackHandler(
+        child: PermissionScreen(),
+      ),
     ),
 
     GetPage(
       name: AppRoutes.permissionSubmitted,
-      page: () => const PermissionSubmittedScreen(),
+      page: () => const AppBackHandler(
+        child: PermissionSubmittedScreen(),
+      ),
     ),
 
     GetPage(
       name: AppRoutes.permissionReturn,
-      page: () => const PermissionReturnScreen(),
+      page: () => const AppBackHandler(
+        child: PermissionReturnScreen(),
+      ),
     ),
 
     // ATTENDANCE
     GetPage(
       name: AppRoutes.attendance,
-      page: () => const _PlaceholderPage(
-        title: 'Attendance',
-        icon: Icons.access_time_rounded,
+      page: () => const AppBackHandler(
+        child: _PlaceholderPage(
+          title: 'Attendance',
+          icon: Icons.access_time_rounded,
+        ),
       ),
     ),
 
     // LEAVE
-   GetPage(
-  name: AppRoutes.leave,
-  page: () => const LeaveScreen(),
-  binding: LeaveBinding(),
-),
+    GetPage(
+      name: AppRoutes.leave,
+      page: () => AppBackHandler(
+        child: const LeaveScreen(),
+      ),
+      binding: LeaveBinding(),
+    ),
 
-GetPage(
-  name: AppRoutes.applyLeave,
-  page: () => const ApplyLeaveScreen(),
-  binding: LeaveBinding(),
-),
+    GetPage(
+      name: AppRoutes.applyLeave,
+      page: () => AppBackHandler(
+        child: const ApplyLeaveScreen(),
+      ),
+      binding: LeaveBinding(),
+    ),
 
     // PROFILE
     GetPage(
       name: AppRoutes.profile,
-      page: () => const ProfileScreen(),
+      page: () => AppBackHandler(
+        child: const ProfileScreen(),
+      ),
       binding: ProfileBinding(),
     ),
   ];
@@ -151,7 +169,7 @@ class _PlaceholderPage extends StatelessWidget {
         ),
         title: Text(
           title,
-          style: const TextStyle(
+          style: GoogleFonts.inter(
             color: AppColors.surface,
             fontSize: 18,
             fontWeight: FontWeight.w700,

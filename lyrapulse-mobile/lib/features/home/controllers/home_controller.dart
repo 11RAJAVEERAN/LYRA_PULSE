@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 import 'package:geolocator/geolocator.dart';
 
@@ -207,20 +208,20 @@ class HomeController extends GetxController {
                 ),
               ),
               const SizedBox(height: 18),
-              const Text(
+              Text(
                 'Location is turned off',
-                style: TextStyle(
+                style: GoogleFonts.inter(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: AppColors.textPrimary,
                 ),
               ),
               const SizedBox(height: 10),
-              const Text(
+              Text(
                 'Please turn on your location to use '
                 'Lyra Pulse attendance features.',
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: GoogleFonts.inter(
                   fontSize: 12,
                   height: 1.5,
                   color: AppColors.textSecondary,
@@ -243,9 +244,9 @@ class HomeController extends GetxController {
                     await Geolocator.openLocationSettings();
                   },
                   icon: const Icon(Icons.location_on_rounded),
-                  label: const Text(
+                  label: Text(
                     'Turn On Location',
-                    style: TextStyle(
+                    style: GoogleFonts.inter(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
                     ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../app/theme/app_colors.dart';
 import '../controllers/calendar_controller.dart';
 
@@ -22,7 +23,7 @@ class CalendarMonthHeader extends StatelessWidget {
           child: Center(
             child: Text(
               controller.monthTitle,
-              style: const TextStyle(
+              style:  GoogleFonts.inter(
                 fontSize: 21,
                 fontWeight: FontWeight.w700,
                 color: AppColors.textPrimary,

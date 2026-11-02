@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 
 import 'package:lyrapulse_mobile/features/attendance/controllers/attendance_controller.dart';
@@ -171,9 +172,9 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
             size: 20,
           ),
         ),
-        title: const Text(
+        title: Text(
           'Attendance History',
-          style: TextStyle(
+          style: GoogleFonts.inter(
             color: AppColors.primary,
             fontSize: 19,
             fontWeight: FontWeight.w700,
@@ -210,7 +211,7 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
                           Expanded(
                             child: Text(
                               month,
-                              style: TextStyle(
+                              style: GoogleFonts.inter(
                                 color: AppColors.primary,
                                 fontSize: 14,
                                 fontWeight: isSelected
@@ -271,18 +272,18 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
                               selectedMonth,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
+                              style:  GoogleFonts.inter(
                                 color: AppColors.primary,
                                 fontSize: 16,
                                 fontWeight: FontWeight.w800,
                               ),
                             ),
                             const SizedBox(height: 5),
-                            const Text(
+                            Text(
                               'Your attendance summary',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
+                              style: GoogleFonts.inter(
                                 color: AppColors.textSecondary,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500,
@@ -302,9 +303,9 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
                 ),
               ),
               const SizedBox(height: 22),
-              const Text(
+              Text(
                 'This Month',
-                style: TextStyle(
+                style: GoogleFonts.inter(
                   color: AppColors.primary,
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
@@ -350,9 +351,9 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
                 );
               }),
               const SizedBox(height: 25),
-              const Text(
+              Text(
                 'Attendance Records',
-                style: TextStyle(
+                style: GoogleFonts.inter(
                   color: AppColors.primary,
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
@@ -459,7 +460,7 @@ class _SummaryCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             value,
-            style: const TextStyle(
+            style:  GoogleFonts.inter(
               color: AppColors.primary,
               fontSize: 19,
               fontWeight: FontWeight.w800,
@@ -468,7 +469,7 @@ class _SummaryCard extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             title,
-            style: const TextStyle(
+            style:  GoogleFonts.inter(
               color: AppColors.textSecondary,
               fontSize: 11,
               fontWeight: FontWeight.w600,
@@ -527,7 +528,7 @@ class _AttendanceCard extends StatelessWidget {
               children: [
                 Text(
                   date,
-                  style: const TextStyle(
+                  style:  GoogleFonts.inter(
                     color: AppColors.primary,
                     fontSize: 19,
                     fontWeight: FontWeight.w800,
@@ -535,7 +536,7 @@ class _AttendanceCard extends StatelessWidget {
                 ),
                 Text(
                   month,
-                  style: const TextStyle(
+                  style:  GoogleFonts.inter(
                     color: AppColors.textSecondary,
                     fontSize: 10,
                     fontWeight: FontWeight.w600,
@@ -551,7 +552,7 @@ class _AttendanceCard extends StatelessWidget {
               children: [
                 Text(
                   day,
-                  style: const TextStyle(
+                  style:  GoogleFonts.inter(
                     color: AppColors.primary,
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
@@ -573,7 +574,7 @@ class _AttendanceCard extends StatelessWidget {
                         const SizedBox(width: 5),
                         Text(
                           checkIn,
-                          style: const TextStyle(
+                          style:  GoogleFonts.inter(
                             color: AppColors.textSecondary,
                             fontSize: 11,
                           ),
@@ -591,7 +592,7 @@ class _AttendanceCard extends StatelessWidget {
                         const SizedBox(width: 5),
                         Text(
                           checkOut,
-                          style: const TextStyle(
+                          style:  GoogleFonts.inter(
                             color: AppColors.textSecondary,
                             fontSize: 11,
                           ),
@@ -615,7 +616,7 @@ class _AttendanceCard extends StatelessWidget {
             ),
             child: Text(
               status,
-              style: TextStyle(
+              style: GoogleFonts.inter(
                 color: statusColor,
                 fontSize: 10,
                 fontWeight: FontWeight.w800,
@@ -666,9 +667,9 @@ class _EmptyAttendanceState extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 14),
-          const Text(
+          Text(
             'No attendance records',
-            style: TextStyle(
+            style: GoogleFonts.inter(
               color: AppColors.primary,
               fontSize: 15,
               fontWeight: FontWeight.w800,
@@ -678,7 +679,7 @@ class _EmptyAttendanceState extends StatelessWidget {
           Text(
             'No attendance data available for $month.',
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style:  GoogleFonts.inter(
               color: AppColors.textSecondary,
               fontSize: 12,
               fontWeight: FontWeight.w500,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../app/theme/app_colors.dart';
 import 'package:get/get.dart';
 
@@ -33,17 +34,17 @@ class WithdrawBottomSheet extends GetView<LeaveController> {
               ),
             ),
             const SizedBox(height: 24),
-            const Text(
+            Text(
               'Withdraw Leave?',
-              style: TextStyle(
+              style: GoogleFonts.inter(
                 fontSize: 21,
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 10),
-            const Text(
+            Text(
               'Are you sure you want to withdraw this leave application?',
-              style: TextStyle(
+              style: GoogleFonts.inter(
                 color: AppColors.textSecondary,
                 height: 1.5,
               ),
@@ -58,7 +59,7 @@ class WithdrawBottomSheet extends GetView<LeaveController> {
               ),
               child: Text(
                 '${leave.leaveType} • ${leave.startDate.day}/${leave.startDate.month}/${leave.startDate.year}',
-                style: const TextStyle(
+                style:  GoogleFonts.inter(
                   fontWeight: FontWeight.w600,
                 ),
               ),
