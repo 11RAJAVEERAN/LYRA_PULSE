@@ -97,6 +97,28 @@ class DeviceHardwareStatusTests(unittest.TestCase):
         leds.api_error()
         self.assertEqual((blue.state, green.state, red.state), (0, 0, 0))
 
+    def test_enrollment_led_states_blink_and_indicate_each_result(self):
+        leds = StatusLed()
+        blue = fakes.FakePin.instances[BLUE_LED_PIN]
+        green = fakes.FakePin.instances[GREEN_LED_PIN]
+        red = fakes.FakePin.instances[RED_LED_PIN]
+
+        leds.enrollment_blink_start()
+        self.assertEqual((blue.state, green.state, red.state), (1, 0, 0))
+
+        leds._enrollment_next_toggle_ms = leds._ticks_ms() - 1
+        leds.enrollment_blink_tick()
+        self.assertEqual((blue.state, green.state, red.state), (0, 0, 0))
+
+        leds.enrollment_success()
+        self.assertEqual((blue.state, green.state, red.state), (0, 1, 0))
+
+        leds.enrollment_failure()
+        self.assertEqual((blue.state, green.state, red.state), (0, 0, 1))
+
+        leds.ready_status()
+        self.assertEqual((blue.state, green.state, red.state), (1, 0, 0))
+
     def test_beep_once_and_twice_have_exact_pulse_counts_and_finish_off(self):
         buzzer = Buzzer()
         pin = fakes.FakePin.instances[BUZZER_PIN]
@@ -287,7 +309,7 @@ class DeviceHardwareStatusTests(unittest.TestCase):
         display.show_ready()
         self.assertEqual(
             display.oled.lines,
-            ["LYRA TECH", "READY", "Touch sensor", "Place finger"],
+            ["LYRA TECH", "READY - PLACE FINGER"],
         )
 
         display.oled.lines = []
@@ -300,6 +322,32 @@ class DeviceHardwareStatusTests(unittest.TestCase):
         display.oled.lines = []
         display._show_lines(["WELCOME", "CHECKED IN"])
         self.assertEqual(display.oled.lines, ["WELCOME", "CHECKED IN"])
+
+    def test_enrollment_progress_screen_includes_capture_and_current_status(self):
+        display = OledDisplay.__new__(OledDisplay)
+        display.width = 128
+        display.height = 64
+        display.oled = FakeDisplay()
+
+        display.show_enrollment_progress(
+            employee_id=17,
+            finger_index=2,
+            total_fingers=2,
+            capture_index=4,
+            status="REMOVE FINGER",
+            finger="left_thumb",
+        )
+
+        self.assertEqual(
+            display.oled.lines,
+            [
+                "ENROLLMENT",
+                "Employee 17",
+                "F2/2 left thumb",
+                "Capture 4/4",
+                "REMOVE FINGER",
+            ],
+        )
 
     def test_centered_text_uses_font_metrics_and_clips_long_text(self):
         display = OledDisplay.__new__(OledDisplay)

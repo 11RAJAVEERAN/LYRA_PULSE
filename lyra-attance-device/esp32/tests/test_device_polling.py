@@ -126,7 +126,7 @@ class DevicePollingTests(unittest.TestCase):
         api = FakeEnrollmentAPI()
 
         class DuplicateFingerprintService:
-            def enroll_from_command(self, *_args):
+            def enroll_from_command(self, *_args, **_kwargs):
                 raise EnrollmentError(
                     "DUPLICATE_FINGERPRINT",
                     "Finger already exists in sensor slot 1",
@@ -156,7 +156,10 @@ class DevicePollingTests(unittest.TestCase):
                 {"error_code": "DUPLICATE_FINGERPRINT"},
             )],
         )
-        self.assertIn(("show_enrollment_failed",), events)
+        self.assertIn(
+            ("show_enrollment_failed", "Finger already exists in sensor slot 1"),
+            events,
+        )
         self.assertIn(("buzzer", "error_beep"), events)
 
     def test_empty_poll_returns_without_starting_enrollment(self):
@@ -413,7 +416,7 @@ class DevicePollingTests(unittest.TestCase):
         api = FakeEnrollmentAPI()
 
         class FailedEnrollmentService:
-            def enroll_from_command(self, *_args):
+            def enroll_from_command(self, *_args, **_kwargs):
                 raise EnrollmentError("SENSOR_TIMEOUT", "No UART response")
 
         import main
@@ -443,7 +446,7 @@ class DevicePollingTests(unittest.TestCase):
         api = FakeEnrollmentAPI()
 
         class CancelledEnrollmentService:
-            def enroll_from_command(self, *_args):
+            def enroll_from_command(self, *_args, **_kwargs):
                 raise EnrollmentError("SCAN_CANCELLED", "Finger removed before capture")
 
         sensor_faulted = run_enrollment(
@@ -463,8 +466,7 @@ class DevicePollingTests(unittest.TestCase):
         self.assertNotIn(("show_sensor_error",), events)
         self.assertNotIn(("buzzer", "error_beep"), events)
         self.assertNotIn(("led", "red_on"), events)
-        self.assertEqual(api.reports[0][2], "FAILED")
-        self.assertEqual(api.reports[0][3]["error_code"], "SCAN_CANCELLED")
+        self.assertFalse(api.reports)
 
 
     def test_attendance_scan_marks_r307_communication_error_for_backoff_recovery(self):

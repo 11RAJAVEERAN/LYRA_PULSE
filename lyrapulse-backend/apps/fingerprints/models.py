@@ -12,6 +12,7 @@ ACTIVE_ENROLLMENT_STATUSES = (
     "WAITING_FOR_FINGER",
     "WAITING_FOR_SECOND_SCAN",
     "PROCESSING",
+    "STORING",
 )
 
 
@@ -32,9 +33,11 @@ class FingerprintEnrollment(models.Model):
 
     class Status(models.TextChoices):
         PENDING = "PENDING", "Pending"
+        QUEUED = "QUEUED", "Queued"
         WAITING_FOR_FINGER = "WAITING_FOR_FINGER", "Waiting for finger"
         WAITING_FOR_SECOND_SCAN = "WAITING_FOR_SECOND_SCAN", "Waiting for second scan"
         PROCESSING = "PROCESSING", "Processing"
+        STORING = "STORING", "Storing"
         SUCCESS = "SUCCESS", "Success"
         FAILED = "FAILED", "Failed"
         EXPIRED = "EXPIRED", "Expired"
@@ -44,6 +47,9 @@ class FingerprintEnrollment(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.PROTECT, related_name="fingerprint_enrollments")
     device = models.ForeignKey(Device, on_delete=models.PROTECT, related_name="fingerprint_enrollments")
     finger = models.CharField(max_length=20, choices=Finger.choices)
+    pair_id = models.UUIDField(null=True, blank=True, db_index=True)
+    finger_index = models.PositiveSmallIntegerField(default=1)
+    total_fingers = models.PositiveSmallIntegerField(default=1)
     status = models.CharField(max_length=30, choices=Status.choices, default=Status.PENDING)
     actual_slot = models.PositiveIntegerField(null=True, blank=True)
     created_by = models.ForeignKey(

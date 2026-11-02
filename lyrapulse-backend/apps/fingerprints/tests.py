@@ -59,6 +59,8 @@ class FingerprintEnrollmentAPITests(TestCase):
 
     def enroll(self, **payload):
         data = {"device_id": self.device.device_id, "finger": "right_index"}
+        if "fingers" in payload and "finger" not in payload:
+            data.pop("finger")
         data.update(payload)
         self.client.force_authenticate(self.admin)
         return self.client.post(
@@ -111,6 +113,197 @@ class FingerprintEnrollmentAPITests(TestCase):
         enrollment = FingerprintEnrollment.objects.get(pk=response.data["data"]["enrollment_id"])
         self.assertGreater(enrollment.expires_at, timezone.now())
         self.assertEqual(enrollment.created_by, self.admin)
+
+    def test_two_finger_request_creates_sequential_commands_for_one_employee(self):
+        response = self.enroll(
+            fingers=["right_thumb", "left_thumb"],
+        )
+
+        self.assertEqual(response.status_code, 201)
+        data = response.data["data"]
+        self.assertEqual(data["total_fingers"], 2)
+        self.assertEqual(len(data["enrollments"]), 2)
+        self.assertEqual(
+            [item["finger_index"] for item in data["enrollments"]],
+            [1, 2],
+        )
+        self.assertEqual(
+            [item["status"] for item in data["enrollments"]],
+            [
+                FingerprintEnrollment.Status.PENDING,
+                FingerprintEnrollment.Status.QUEUED,
+            ],
+        )
+        enrollments = list(
+            FingerprintEnrollment.objects.filter(pair_id=data["pair_id"]).order_by("finger_index")
+        )
+        self.assertEqual(len(enrollments), 2)
+        self.assertEqual(enrollments[0].employee, self.employee)
+        self.assertEqual(enrollments[1].employee, self.employee)
+        self.assertEqual([item.finger for item in enrollments], ["right_thumb", "left_thumb"])
+        self.assertEqual(
+            [item.finger_index for item in enrollments],
+            [1, 2],
+        )
+        self.assertEqual(
+            FingerprintEnrollment.objects.filter(
+                device=self.device,
+                status__in=FingerprintEnrollment.ACTIVE_STATUSES,
+            ).count(),
+            1,
+        )
+
+    def test_two_finger_request_rejects_duplicate_or_existing_mappings(self):
+        duplicate = self.enroll(
+            fingers=["right_thumb", "right_thumb"],
+        )
+        self.assertEqual(duplicate.status_code, 400)
+
+        EmployeeFingerprint.objects.create(
+            employee=self.employee,
+            device=self.device,
+            fingerprint_slot=19,
+            finger="right_thumb",
+        )
+        existing = self.enroll(
+            fingers=["right_thumb", "left_thumb"],
+        )
+        self.assertEqual(existing.status_code, 400)
+        self.assertEqual(
+            FingerprintEnrollment.objects.filter(employee=self.employee).count(),
+            0,
+        )
+
+    def test_two_finger_pair_activates_second_only_after_first_slot_is_stored(self):
+        started = self.enroll(
+            fingers=["right_thumb", "left_thumb"],
+        )
+        pair = FingerprintEnrollment.objects.filter(
+            pair_id=started.data["data"]["pair_id"]
+        ).order_by("finger_index")
+        first, second = list(pair)
+        self.advance_to_processing(first)
+
+        reserve = self.device_client().post(
+            self.result_url(first),
+            {"status": "STORING", "fingerprint_slot": 17},
+            format="json",
+        )
+        self.assertEqual(reserve.status_code, 200)
+        first.refresh_from_db()
+        self.assertEqual(first.status, FingerprintEnrollment.Status.STORING)
+        self.assertEqual(first.actual_slot, 17)
+        self.assertEqual(
+            self.device_client().get(self.poll_url()).data["data"]["fingerprint_slot"],
+            17,
+        )
+
+        result = self.device_client().post(
+            self.result_url(first),
+            {"status": "SUCCESS", "fingerprint_slot": 17},
+            format="json",
+        )
+        self.assertEqual(result.status_code, 200)
+        first.refresh_from_db()
+        second.refresh_from_db()
+        self.assertEqual(first.status, FingerprintEnrollment.Status.SUCCESS)
+        self.assertEqual(second.status, FingerprintEnrollment.Status.PENDING)
+
+        command = self.device_client().get(self.poll_url()).data["data"]
+        self.assertEqual(command["enrollment_id"], str(second.id))
+        self.assertEqual(command["employee_id"], self.employee.id)
+        self.assertEqual(command["pair_id"], str(first.pair_id))
+        self.assertEqual(command["finger_index"], 2)
+        self.assertEqual(command["total_fingers"], 2)
+        self.assertEqual(command["finger"], "left_thumb")
+
+        self.advance_to_processing(second)
+        reserve_second = self.device_client().post(
+            self.result_url(second),
+            {"status": "STORING", "fingerprint_slot": 23},
+            format="json",
+        )
+        self.assertEqual(reserve_second.status_code, 200)
+        result_second = self.device_client().post(
+            self.result_url(second),
+            {"status": "SUCCESS", "fingerprint_slot": 23},
+            format="json",
+        )
+        self.assertEqual(result_second.status_code, 200)
+
+        mappings = list(
+            EmployeeFingerprint.objects.filter(employee=self.employee, device=self.device)
+            .order_by("fingerprint_slot")
+        )
+        self.assertEqual([mapping.fingerprint_slot for mapping in mappings], [17, 23])
+        self.assertEqual([mapping.finger for mapping in mappings], ["right_thumb", "left_thumb"])
+        self.assertTrue(all(mapping.employee_id == self.employee.id for mapping in mappings))
+        self.assertEqual(self.device_client().get(self.poll_url()).data["data"], {})
+
+    def test_reserved_slot_cannot_change_or_overwrite_a_mapping(self):
+        other_user = User.objects.create_user("9100000004")
+        other_employee = Employee.objects.create(
+            employee_code="FP-EMP003",
+            user=other_user,
+            branch=self.branch,
+        )
+        EmployeeFingerprint.objects.create(
+            employee=other_employee,
+            device=self.device,
+            fingerprint_slot=22,
+            finger="left_index",
+        )
+        started = self.enroll()
+        enrollment = FingerprintEnrollment.objects.get(
+            pk=started.data["data"]["enrollment_id"]
+        )
+        self.advance_to_processing(enrollment)
+
+        reserved = self.device_client().post(
+            self.result_url(enrollment),
+            {"status": "STORING", "fingerprint_slot": 24},
+            format="json",
+        )
+        self.assertEqual(reserved.status_code, 200)
+        changed_slot = self.device_client().post(
+            self.result_url(enrollment),
+            {"status": "STORING", "fingerprint_slot": 25},
+            format="json",
+        )
+        self.assertEqual(changed_slot.status_code, 409)
+        occupied_slot = self.device_client().post(
+            self.result_url(enrollment),
+            {"status": "SUCCESS", "fingerprint_slot": 22},
+            format="json",
+        )
+        self.assertEqual(occupied_slot.status_code, 409)
+        self.assertEqual(
+            EmployeeFingerprint.objects.get(
+                device=self.device,
+                fingerprint_slot=22,
+            ).employee_id,
+            other_employee.id,
+        )
+
+    def test_failure_of_first_pair_member_cancels_queued_second(self):
+        started = self.enroll(
+            fingers=["right_thumb", "left_thumb"],
+        )
+        pair = list(
+            FingerprintEnrollment.objects.filter(
+                pair_id=started.data["data"]["pair_id"]
+            ).order_by("finger_index")
+        )
+
+        result = self.device_client().post(
+            self.result_url(pair[0]),
+            {"status": "FAILED", "error_code": "POOR_IMAGE"},
+            format="json",
+        )
+
+        self.assertEqual(result.status_code, 200)
+        pair[1].refresh_from_db()
+        self.assertEqual(pair[1].status, FingerprintEnrollment.Status.CANCELLED)
 
     def test_employee_must_exist(self):
         self.client.force_authenticate(self.admin)
@@ -242,7 +435,17 @@ class FingerprintEnrollmentAPITests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
             set(response.data["data"]),
-            {"enrollment_id", "employee_id", "action", "finger"},
+            {
+                "enrollment_id",
+                "employee_id",
+                "action",
+                "finger",
+                "pair_id",
+                "finger_index",
+                "total_fingers",
+                "status",
+                "fingerprint_slot",
+            },
         )
         self.assertEqual(response.data["data"]["enrollment_id"], enrollment_id)
         self.assertEqual(response.data["data"]["employee_id"], self.employee.id)

@@ -34,42 +34,67 @@ def poll_enrollment_command(api_client, device_id):
 
 def run_enrollment(command, device_id, api_client, fingerprint_service, oled, buzzer, led):
     oled.show_enrollment()
-    led.green_off()
+    led.enrollment_blink_start()
     sensor_faulted = False
     try:
-        fingerprint_service.enroll_from_command(command, oled, api_client, device_id)
+        fingerprint_service.enroll_from_command(
+            command,
+            oled,
+            api_client,
+            device_id,
+            on_wait=led.enrollment_blink_tick,
+        )
         buzzer.success_beep()
-        led.green_on()
+        led.enrollment_success()
     except EnrollmentError as exc:
         cancelled = exc.error_code == "SCAN_CANCELLED"
+        state_pending = exc.error_code in (
+            "DEVICE_API_ERROR",
+            "SLOT_VERIFICATION_FAILED",
+            "STORAGE_PENDING",
+        )
         sensor_faulted = exc.error_code in (
             "SENSOR_TIMEOUT",
             "SENSOR_COMMUNICATION_ERROR",
+            "SENSOR_TEMPLATE_READ_ERROR",
         )
         log("ENROLL", "Enrollment failed (%s): %s" % (exc.error_code, exc))
-        response = api_client.report_enrollment_status(
-            device_id,
-            command.get("enrollment_id"),
-            "FAILED",
-            error_code=exc.error_code,
-        )
-        if not response.get("success"):
-            log("ENROLL", "Could not record enrollment failure with the server")
+        if not state_pending and not cancelled:
+            response = api_client.report_enrollment_status(
+                device_id,
+                command.get("enrollment_id"),
+                "FAILED",
+                error_code=exc.error_code,
+            )
+            if not response.get("success"):
+                log("ENROLL", "Could not record enrollment failure with the server")
+        elif state_pending:
+            log(
+                "ENROLL",
+                "Enrollment state preserved; the device will resume from server polling",
+            )
         if cancelled:
-            buzzer.off()
-            led.ready_status()
             oled.show_ready()
+            led.ready_status()
+            buzzer.off()
+        elif state_pending and exc.error_code == "DEVICE_API_ERROR":
+            oled.show_api_error()
+            led.api_error()
+            buzzer.off()
         elif sensor_faulted:
             oled.show_sensor_error()
             led.sensor_error()
             buzzer.off()
+        elif state_pending:
+            oled.show_enrollment_failed(str(exc))
+            led.sensor_error()
+            buzzer.off()
         else:
-            oled.show_enrollment_failed()
+            oled.show_enrollment_failed(str(exc))
             buzzer.error_beep()
-            led.red_on()
+            led.enrollment_failure()
             time.sleep(1.5)
-            led.red_off()
-            led.green_on()
+            led.ready_status()
     return sensor_faulted
 
 
@@ -317,8 +342,6 @@ def main():
                     buzzer,
                     led,
                 )
-                if not sensor_faulted:
-                    fingerprint_service.wait_for_finger_removed()
                 if sensor_faulted:
                     sensor_ready = False
                 time.sleep(FINGERPRINT_COOLDOWN)
@@ -338,7 +361,7 @@ def main():
                         buzzer,
                         led,
                     )
-                    fingerprint_service.wait_for_finger_removed()
+                    return False
                 return None
 
             sensor_faulted = run_attendance_scan(

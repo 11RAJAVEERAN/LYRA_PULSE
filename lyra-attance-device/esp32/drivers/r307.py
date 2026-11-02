@@ -111,6 +111,7 @@ class R307:
     CMD_VERIFY_PASSWORD = 0x13
     CMD_GET_IMAGE = 0x0001
     CMD_IMG2TZ = 0x0002
+    CMD_MATCH = 0x0003
     CMD_SEARCH = 0x0004
     CMD_REG_MODEL = 0x0005
     CMD_STORE_MODEL = 0x0006
@@ -572,6 +573,26 @@ class R307:
         if status != self.STATUS_IMAGE_CONVERT_OK:
             raise R307TemplateError("Fingerprint image conversion failed")
         return True
+
+    def match_templates(self, first_buffer=1, second_buffer=2):
+        if first_buffer not in (1, 2) or second_buffer not in (1, 2):
+            raise ValueError("Character buffer must be 1 or 2")
+        if first_buffer == second_buffer:
+            raise ValueError("Template matching requires two different buffers")
+        response = self._execute_command(
+            self.CMD_MATCH,
+            bytes([first_buffer, second_buffer]),
+        )
+        if not response["payload"]:
+            raise R307InvalidPacketError("Match response did not include a status code")
+        status = response["payload"][0]
+        if status != self.STATUS_OK:
+            raise R307TemplateError(
+                "Fingerprint samples did not match: confirmation=0x%02X" % status
+            )
+        if len(response["payload"]) < 3:
+            raise R307InvalidPacketError("Match response did not include a score")
+        return {"score": int.from_bytes(response["payload"][1:3], "big")}
 
     def search(self, buffer_id=1, start_page=0, page_num=100):
         payload = bytearray()
