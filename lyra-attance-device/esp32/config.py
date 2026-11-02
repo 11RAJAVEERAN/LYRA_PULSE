@@ -10,6 +10,12 @@
 # WIFI_TIMEOUT_SECONDS = 20
 # WIFI_RETRY_COUNT = 3
 
+# WIFI_SSID = "TP-Link_9BAF"
+# WIFI_PASSWORD = "44639518"
+# WIFI_TIMEOUT_SECONDS = 20
+# WIFI_RETRY_COUNT = 3
+
+
 WIFI_SSID = "YOUR_WIFI_SSID"
 WIFI_PASSWORD = "YOUR_WIFI_PASSWORD"
 WIFI_TIMEOUT_SECONDS = 20
@@ -26,7 +32,7 @@ TEST_MODE = True
 # API
 # ------------------------------------------------------------
 # Update to the actual Django backend URL before deployment.
-API_BASE_URL = "http://192.168.1.11:8000"
+API_BASE_URL = "http://192.168.226.139:8000"
 API_FINGERPRINT_ENDPOINT = "/api/v1/attendance/fingerprint/"
 API_DEVICE_ENROLLMENT_PENDING = "/api/v1/devices/{device_id}/enrollment/pending/"
 API_DEVICE_ENROLLMENT_RESULT = "/api/v1/devices/{device_id}/enrollment/{enrollment_id}/result/"

@@ -111,14 +111,19 @@ class TouchSensor:
         )
         return True
 
-    def wait_for_release(self, timeout_seconds=None):
+    def wait_for_release(self, timeout_seconds=None, on_wait=None):
         inactive_samples = 0
         started = time.time()
+        samples_since_callback = 0
         while inactive_samples < R307_TOUCH_DEBOUNCE_SAMPLES:
             if self.is_active():
                 inactive_samples = 0
             else:
                 inactive_samples += 1
+            samples_since_callback += 1
+            if on_wait is not None and samples_since_callback >= 10:
+                on_wait()
+                samples_since_callback = 0
             if (
                 timeout_seconds is not None
                 and time.time() - started >= timeout_seconds

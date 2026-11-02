@@ -83,7 +83,7 @@ class OledDisplay:
         self._show_lines(["WiFi", "Connected"])
 
     def show_ready(self):
-        self._show_lines(["LYRA TECH", "READY", "Touch sensor", "Place finger"])
+        self._show_lines(["LYRA TECH", "READY - PLACE FINGER"])
 
     def show_welcome(self):
         self._show_lines(["WELCOME"])
@@ -135,11 +135,38 @@ class OledDisplay:
     def show_enrollment(self):
         self._show_lines(["Enrollment", "Mode"])
 
-    def show_enrollment_failed(self):
-        self._show_lines(["Enrollment", "Failed"])
+    def show_enrollment_failed(self, reason=None):
+        lines = ["Enrollment", "Failed"]
+        if reason:
+            lines.append(str(reason)[:21])
+        self._show_lines(lines)
 
     def show_enrollment_prompt(self, prompt):
         self._show_lines([prompt], title="ENROLLMENT")
+
+    def show_enrollment_progress(
+        self,
+        employee_id,
+        finger_index,
+        total_fingers,
+        capture_index,
+        status,
+        finger,
+    ):
+        self._show_lines(
+            [
+                "Employee %s" % employee_id,
+                "F%s/%s %s"
+                % (
+                    finger_index,
+                    total_fingers,
+                    str(finger).replace("_", " "),
+                ),
+                "Capture %s/4" % capture_index,
+                str(status)[:21],
+            ],
+            title="ENROLLMENT",
+        )
 
     def show_enrollment_remove_finger(self):
         self._show_lines(["Remove finger"], title="ENROLLMENT")

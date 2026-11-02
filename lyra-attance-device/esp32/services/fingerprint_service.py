@@ -58,6 +58,7 @@ class EnrollmentError(Exception):
 
 class FingerprintService:
     FINGER_REMOVAL_CONFIRMATIONS = 3
+    ENROLLMENT_CAPTURE_ATTEMPTS = 3
 
     def __init__(self, sensor, touch_sensor=None):
         self.sensor = sensor
@@ -148,6 +149,7 @@ class FingerprintService:
         detection_mode=R307_DETECTION_MODE,
         uart_fallback_enabled=R307_UART_FALLBACK_ENABLED,
         timeout_seconds=None,
+        capture_on_wait=None,
     ):
         if self.touch_sensor is None and detection_mode != "uart_fallback":
             raise RuntimeError("A touch sensor is required to wait for a finger")
@@ -238,6 +240,7 @@ class FingerprintService:
                     try:
                         captured = self._capture_after_touch(
                             timeout_seconds=capture_timeout_seconds,
+                            on_wait=capture_on_wait,
                         )
                     except R307TimeoutError as exc:
                         log("TOUCH", "Capture failed: %s" % exc)
@@ -305,7 +308,7 @@ class FingerprintService:
             )
             return False
 
-    def _capture_after_touch(self, timeout_seconds=None):
+    def _capture_after_touch(self, timeout_seconds=None, on_wait=None):
         consecutive_errors = 0
         capture_started = _ticks_ms()
         attempt = 0
@@ -314,6 +317,8 @@ class FingerprintService:
             or self.touch_sensor.is_active()
             or not self.touch_sensor.is_released_debounced()
         ):
+            if on_wait is not None:
+                on_wait()
             attempt += 1
             if (
                 timeout_seconds is not None
@@ -359,15 +364,22 @@ class FingerprintService:
 
         return False
 
-    def wait_for_finger_removed(self):
+    def wait_for_finger_removed(self, on_wait=None):
         if (
             self.touch_sensor is not None
             and self.touch_sensor.active_level is not None
         ):
             log("SCAN", "state=WAITING_FOR_REMOVAL")
-            if self.touch_sensor.wait_for_release(
-                timeout_seconds=R307_FINGER_REMOVAL_TIMEOUT_SECONDS,
-            ):
+            if on_wait is None:
+                released = self.touch_sensor.wait_for_release(
+                    timeout_seconds=R307_FINGER_REMOVAL_TIMEOUT_SECONDS,
+                )
+            else:
+                released = self.touch_sensor.wait_for_release(
+                    timeout_seconds=R307_FINGER_REMOVAL_TIMEOUT_SECONDS,
+                    on_wait=on_wait,
+                )
+            if released:
                 log("READY", "Touch release confirmed")
                 self._awaiting_removal = False
                 return True
@@ -470,15 +482,61 @@ class FingerprintService:
         log("FINGER", "Enrollment stored at template ID %s" % template_id)
         return True
 
-    def _wait_for_finger(self, display, prompt, timeout_seconds):
-        step = prompt.replace("Place finger ", "").replace("Same finger ", "")
-        log("ENROLL", "Waiting for finger %s" % step)
-        display.show_enrollment_prompt(prompt)
+    @staticmethod
+    def _show_enrollment_progress(
+        display,
+        command,
+        capture_index,
+        status,
+    ):
+        show_progress = getattr(display, "show_enrollment_progress", None)
+        if show_progress is not None:
+            show_progress(
+                command.get("employee_id", ""),
+                command.get("finger_index", 1),
+                command.get("total_fingers", 1),
+                capture_index,
+                status,
+                command.get("finger", ""),
+            )
+        elif status == "REMOVE FINGER":
+            display.show_enrollment_remove_finger()
+        else:
+            display.show_enrollment_prompt(
+                "%s %s/4" % (status, capture_index)
+            )
+
+    def _wait_for_finger(
+        self,
+        display,
+        command,
+        capture_index,
+        timeout_seconds,
+        on_wait=None,
+    ):
+        self._show_enrollment_progress(
+            display,
+            command,
+            capture_index,
+            "PLACE FINGER",
+        )
+        log(
+            "ENROLL",
+            "Waiting for employee=%s finger=%s/%s capture=%s/4"
+            % (
+                command.get("employee_id", ""),
+                command.get("finger_index", 1),
+                command.get("total_fingers", 1),
+                capture_index,
+            ),
+        )
         try:
             captured = self.wait_for_finger(
                 detection_mode="gpio_only",
                 uart_fallback_enabled=False,
                 timeout_seconds=timeout_seconds,
+                on_wait=on_wait,
+                capture_on_wait=on_wait,
             )
         except R307TimeoutError as exc:
             log("TOUCH", "Enrollment touch/capture timeout: %s" % exc)
@@ -490,14 +548,35 @@ class FingerprintService:
             )
         log("ENROLL", "Touch-confirmed GetImage succeeded")
 
-    def _wait_for_finger_removed(self, display, timeout_seconds):
+    def _wait_for_finger_removed(
+        self,
+        display,
+        command,
+        capture_index,
+        timeout_seconds,
+        on_wait=None,
+    ):
         log("ENROLL", "Waiting for finger removal")
-        display.show_enrollment_remove_finger()
+        self._show_enrollment_progress(
+            display,
+            command,
+            capture_index,
+            "REMOVE FINGER",
+        )
         if (
             self.touch_sensor is not None
             and self.touch_sensor.active_level is not None
         ):
-            if not self.touch_sensor.wait_for_release(timeout_seconds=timeout_seconds):
+            if on_wait is None:
+                released = self.touch_sensor.wait_for_release(
+                    timeout_seconds=timeout_seconds,
+                )
+            else:
+                released = self.touch_sensor.wait_for_release(
+                    timeout_seconds=timeout_seconds,
+                    on_wait=on_wait,
+                )
+            if not released:
                 raise EnrollmentError(
                     "SENSOR_TIMEOUT",
                     "Timed out waiting for the finger to be removed",
@@ -508,6 +587,8 @@ class FingerprintService:
 
         remaining_tenths = timeout_seconds * 10
         while remaining_tenths > 0:
+            if on_wait is not None:
+                on_wait()
             try:
                 self.sensor.get_image()
                 time.sleep(0.1)
@@ -517,6 +598,110 @@ class FingerprintService:
                 self._awaiting_removal = False
                 return
         raise EnrollmentError("SENSOR_TIMEOUT", "Timed out waiting for the finger to be removed")
+
+    def _capture_enrollment_sample(
+        self,
+        display,
+        command,
+        capture_index,
+        buffer_id,
+        timeout_seconds,
+        on_wait=None,
+        verify_match=False,
+    ):
+        last_error = None
+        for attempt in range(1, self.ENROLLMENT_CAPTURE_ATTEMPTS + 1):
+            captured = False
+            try:
+                self._wait_for_finger(
+                    display,
+                    command,
+                    capture_index,
+                    timeout_seconds,
+                    on_wait=on_wait,
+                )
+                captured = True
+                self.sensor.image_to_template(buffer_id=buffer_id)
+                if verify_match:
+                    self.sensor.match_templates(first_buffer=1, second_buffer=2)
+                self._wait_for_finger_removed(
+                    display,
+                    command,
+                    capture_index,
+                    timeout_seconds,
+                    on_wait=on_wait,
+                )
+                return
+            except EnrollmentError as exc:
+                if exc.error_code in (
+                    "DEVICE_API_ERROR",
+                    "SLOT_VERIFICATION_FAILED",
+                ):
+                    raise
+                if captured and exc.error_code == "SENSOR_TIMEOUT":
+                    raise
+                last_error = exc
+            except (R307ImageError, R307TemplateError) as exc:
+                last_error = exc
+                if captured:
+                    try:
+                        self._wait_for_finger_removed(
+                            display,
+                            command,
+                            capture_index,
+                            timeout_seconds,
+                            on_wait=on_wait,
+                        )
+                    except EnrollmentError as removal_error:
+                        last_error = removal_error
+
+            if attempt < self.ENROLLMENT_CAPTURE_ATTEMPTS:
+                self._show_enrollment_progress(
+                    display,
+                    command,
+                    capture_index,
+                    "RETRY",
+                )
+                log(
+                    "ENROLL",
+                    "Retrying capture %s/4 attempt %s/%s: %s"
+                    % (
+                        capture_index,
+                        attempt + 1,
+                        self.ENROLLMENT_CAPTURE_ATTEMPTS,
+                        last_error,
+                    ),
+                )
+
+        if isinstance(last_error, EnrollmentError):
+            raise EnrollmentError(
+                last_error.error_code,
+                "Capture %s/4 failed after %s attempts: %s"
+                % (
+                    capture_index,
+                    self.ENROLLMENT_CAPTURE_ATTEMPTS,
+                    last_error,
+                ),
+            )
+        if isinstance(last_error, R307TemplateError):
+            raise EnrollmentError(
+                "POOR_IMAGE",
+                "Capture %s/4 failed after %s attempts: %s"
+                % (
+                    capture_index,
+                    self.ENROLLMENT_CAPTURE_ATTEMPTS,
+                    last_error,
+                ),
+            )
+        raise EnrollmentError(
+            "IMAGE_CAPTURE_FAILED",
+            "Capture %s/4 failed after %s attempts: %s"
+            % (
+                capture_index,
+                self.ENROLLMENT_CAPTURE_ATTEMPTS,
+                last_error,
+            ),
+        )
 
     @staticmethod
     def _report(api_client, device_id, enrollment_id, status, fingerprint_slot=None):
@@ -535,35 +720,140 @@ class FingerprintService:
             raise EnrollmentError("SLOT_VERIFICATION_FAILED", "Server confirmed a different fingerprint slot")
         return data
 
-    def enroll_from_command(self, command, display, api_client, device_id):
+    def _confirm_reserved_template(
+        self,
+        command,
+        display,
+        api_client,
+        device_id,
+        slot,
+    ):
+        try:
+            if not self.sensor.is_template_slot_occupied(slot):
+                return False
+            self.sensor.load_template(slot, buffer_id=1)
+            result = self.sensor.search(
+                buffer_id=1,
+                start_page=slot,
+                page_num=1,
+            )
+        except R307TemplateError as exc:
+            raise EnrollmentError("STORAGE_PENDING", str(exc))
+
+        if result is None or result.get("fingerprint_id") != slot:
+            raise EnrollmentError(
+                "SLOT_VERIFICATION_FAILED",
+                "Reserved slot %s is occupied but could not be verified" % slot,
+            )
+        self._report(
+            api_client,
+            device_id,
+            command["enrollment_id"],
+            "SUCCESS",
+            fingerprint_slot=slot,
+        )
+        self._show_enrollment_progress(
+            display,
+            command,
+            4,
+            "ENROLLMENT SUCCESS",
+        )
+        display.show_enrollment_success(slot)
+        log("ENROLL", "Recovered stored template at reserved slot %s" % slot)
+        return True
+
+    def enroll_from_command(
+        self,
+        command,
+        display,
+        api_client,
+        device_id,
+        on_wait=None,
+    ):
         enrollment_id = command.get("enrollment_id")
         if not enrollment_id or command.get("action") != "ENROLL_FINGERPRINT":
             raise EnrollmentError("UNKNOWN", "Invalid enrollment command")
 
-        timeout_seconds = ENROLLMENT_STEP_TIMEOUT_SECONDS
-        try:
-            self._wait_for_finger(display, "Place finger 1/2", timeout_seconds)
-            log("R307", "Image2Tz buffer 1")
-            self.sensor.image_to_template(buffer_id=1)
-            log("ENROLL", "Image2Tz succeeded: buffer 1")
+        finger_index = command.get("finger_index", 1)
+        total_fingers = command.get("total_fingers", 1)
+        if (
+            not isinstance(finger_index, int)
+            or not isinstance(total_fingers, int)
+            or finger_index < 1
+            or total_fingers < finger_index
+        ):
+            raise EnrollmentError("UNKNOWN", "Invalid enrollment pair metadata")
 
-            self._wait_for_finger_removed(display, timeout_seconds)
+        timeout_seconds = ENROLLMENT_STEP_TIMEOUT_SECONDS
+        reserved_slot = command.get("fingerprint_slot")
+        try:
+            if command.get("status") == "STORING":
+                if not isinstance(reserved_slot, int) or reserved_slot < 0:
+                    raise EnrollmentError(
+                        "SLOT_VERIFICATION_FAILED",
+                        "The server did not provide the reserved sensor slot",
+                    )
+                if self._confirm_reserved_template(
+                    command,
+                    display,
+                    api_client,
+                    device_id,
+                    reserved_slot,
+                ):
+                    return reserved_slot
+
+            self._capture_enrollment_sample(
+                display,
+                command,
+                1,
+                1,
+                timeout_seconds,
+                on_wait=on_wait,
+            )
             self._report(
                 api_client,
                 device_id,
                 enrollment_id,
                 "WAITING_FOR_SECOND_SCAN",
             )
+            self._capture_enrollment_sample(
+                display,
+                command,
+                2,
+                2,
+                timeout_seconds,
+                on_wait=on_wait,
+            )
 
-            self._wait_for_finger(display, "Same finger 2/2", timeout_seconds)
-            log("R307", "Image2Tz buffer 2")
-            self.sensor.image_to_template(buffer_id=2)
-            log("ENROLL", "Image2Tz succeeded: buffer 2")
-            self._report(api_client, device_id, enrollment_id, "PROCESSING")
-
-            log("R307", "CreateTemplate")
+            log("R307", "CreateTemplate from captures 1/4 and 2/4")
             self.sensor.create_model()
             log("ENROLL", "CreateTemplate succeeded")
+            self._report(
+                api_client,
+                device_id,
+                enrollment_id,
+                "PROCESSING",
+            )
+
+            self._capture_enrollment_sample(
+                display,
+                command,
+                3,
+                2,
+                timeout_seconds,
+                on_wait=on_wait,
+                verify_match=True,
+            )
+            self._capture_enrollment_sample(
+                display,
+                command,
+                4,
+                2,
+                timeout_seconds,
+                on_wait=on_wait,
+                verify_match=True,
+            )
+
             duplicate = self.sensor.search(
                 buffer_id=1,
                 start_page=0,
@@ -572,17 +862,50 @@ class FingerprintService:
             if duplicate is not None:
                 raise EnrollmentError(
                     "DUPLICATE_FINGERPRINT",
-                    "Finger already exists in sensor slot %s" % duplicate["fingerprint_id"],
+                    "Finger already exists in sensor slot %s"
+                    % duplicate["fingerprint_id"],
                 )
             log("ENROLL", "Duplicate search found no existing match")
-            slot = self.sensor.find_free_template_slot(
-                MAX_TEMPLATE_COUNT,
-                start_page=ENROLLMENT_TEMPLATE_ID,
-                buffer_id=2,
-            )
+
+            slot = reserved_slot
+            if slot is None:
+                slot = self.sensor.find_free_template_slot(
+                    MAX_TEMPLATE_COUNT,
+                    start_page=ENROLLMENT_TEMPLATE_ID,
+                    buffer_id=2,
+                )
+                self._report(
+                    api_client,
+                    device_id,
+                    enrollment_id,
+                    "STORING",
+                    fingerprint_slot=slot,
+                )
+            elif self.sensor.is_template_slot_occupied(slot):
+                raise EnrollmentError(
+                    "SLOT_VERIFICATION_FAILED",
+                    "Reserved sensor slot %s became occupied before storage" % slot,
+                )
+
             log("R307", "StoreTemplate slot %s" % slot)
-            self.sensor.store_model(slot, buffer_id=1)
-            log("ENROLL", "StoreTemplate acknowledged for actual slot %s" % slot)
+            try:
+                self.sensor.store_model(slot, buffer_id=1)
+                if not self.sensor.is_template_slot_occupied(slot):
+                    raise R307TemplateError(
+                        "Stored template was not present at slot %s" % slot
+                    )
+                self.sensor.load_template(slot, buffer_id=2)
+                stored_match = self.sensor.match_templates(
+                    first_buffer=1,
+                    second_buffer=2,
+                )
+                log(
+                    "ENROLL",
+                    "Stored template verified at slot %s score=%s"
+                    % (slot, stored_match.get("score")),
+                )
+            except R307PacketError as exc:
+                raise EnrollmentError("STORAGE_PENDING", str(exc))
 
             self._report(
                 api_client,
@@ -591,8 +914,18 @@ class FingerprintService:
                 "SUCCESS",
                 fingerprint_slot=slot,
             )
+            self._show_enrollment_progress(
+                display,
+                command,
+                4,
+                "ENROLLMENT SUCCESS",
+            )
             display.show_enrollment_success(slot)
-            log("ENROLL", "Two-scan enrollment completed at slot %s" % slot)
+            log(
+                "ENROLL",
+                "Four-capture enrollment completed at slot %s"
+                % slot,
+            )
             return slot
         except EnrollmentError:
             raise
@@ -614,7 +947,7 @@ class FingerprintService:
             elif "model generation failed" in normalized_message:
                 code = "TEMPLATE_CREATE_FAILED"
             elif "storage failed" in normalized_message:
-                code = "STORAGE_FAILED"
+                code = "STORAGE_PENDING" if reserved_slot is not None else "STORAGE_FAILED"
             elif "template load failed" in normalized_message:
                 code = "SENSOR_TEMPLATE_READ_ERROR"
             else:

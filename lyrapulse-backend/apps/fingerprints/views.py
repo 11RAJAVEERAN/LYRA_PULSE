@@ -22,6 +22,7 @@ from .serializers import (
     FingerprintEnrollmentStartSerializer,
     FingerprintEnrollmentStatusSerializer,
 )
+from .services import activate_next_finger, cancel_queued_finger
 
 
 class EnrollmentConflict(APIException):
@@ -51,10 +52,11 @@ class EmployeeFingerprintEnrollmentStartView(GenericAPIView):
         serializer.is_valid(raise_exception=True)
         try:
             with transaction.atomic():
-                enrollment = serializer.save()
+                enrollments = serializer.save()
         except IntegrityError as exc:
             raise EnrollmentConflict("This device already has an active enrollment.") from exc
 
+        enrollment = enrollments[0]
         data = {
             "enrollment_id": str(enrollment.id),
             "employee_id": employee.id,
@@ -62,7 +64,22 @@ class EmployeeFingerprintEnrollmentStartView(GenericAPIView):
             "finger": enrollment.finger,
             "status": enrollment.status,
             "expires_at": enrollment.expires_at,
+            "pair_id": str(enrollment.pair_id),
+            "finger_index": enrollment.finger_index,
+            "total_fingers": enrollment.total_fingers,
         }
+        if enrollment.total_fingers > 1:
+            data["enrollments"] = [
+                {
+                    "enrollment_id": str(item.id),
+                    "finger": item.finger,
+                    "finger_index": item.finger_index,
+                    "total_fingers": item.total_fingers,
+                    "status": item.status,
+                    "expires_at": item.expires_at,
+                }
+                for item in enrollments
+            ]
         return success_response(data, "Fingerprint enrollment started", status.HTTP_201_CREATED)
 
 
@@ -85,6 +102,7 @@ class EmployeeFingerprintEnrollmentStatusView(GenericAPIView):
                 completed_at=timezone.now(),
                 failure_reason="EXPIRED",
             )
+            cancel_queued_finger(enrollment, timezone.now(), "PAIR_PREVIOUS_FINGER_EXPIRED")
             enrollment.refresh_from_db()
         return success_response(self.get_serializer(enrollment).data, "Fingerprint enrollment status retrieved")
 
@@ -114,18 +132,21 @@ class DeviceEnrollmentPendingView(GenericAPIView):
                 enrollment.completed_at = now
                 enrollment.failure_reason = "EXPIRED"
                 enrollment.save(update_fields=("status", "completed_at", "failure_reason", "updated_at"))
+                cancel_queued_finger(enrollment, now, "PAIR_PREVIOUS_FINGER_EXPIRED")
                 return success_response(None, "No pending enrollment")
             if not enrollment.employee.is_active or not enrollment.employee.user.is_active:
                 enrollment.status = FingerprintEnrollment.Status.FAILED
                 enrollment.completed_at = now
                 enrollment.failure_reason = "EMPLOYEE_INACTIVE"
                 enrollment.save(update_fields=("status", "completed_at", "failure_reason", "updated_at"))
+                cancel_queued_finger(enrollment, now, "PAIR_EMPLOYEE_INACTIVE")
                 return success_response(None, "No pending enrollment")
             if enrollment.employee.branch_id != device.branch_id or not device.branch.is_active:
                 enrollment.status = FingerprintEnrollment.Status.FAILED
                 enrollment.completed_at = now
                 enrollment.failure_reason = "BRANCH_MISMATCH"
                 enrollment.save(update_fields=("status", "completed_at", "failure_reason", "updated_at"))
+                cancel_queued_finger(enrollment, now, "PAIR_BRANCH_MISMATCH")
                 return success_response(None, "No pending enrollment")
 
             if enrollment.status == FingerprintEnrollment.Status.PENDING:
@@ -138,6 +159,11 @@ class DeviceEnrollmentPendingView(GenericAPIView):
             "employee_id": enrollment.employee_id,
             "action": "ENROLL_FINGERPRINT",
             "finger": enrollment.finger,
+            "pair_id": str(enrollment.pair_id) if enrollment.pair_id else None,
+            "finger_index": enrollment.finger_index,
+            "total_fingers": enrollment.total_fingers,
+            "status": enrollment.status,
+            "fingerprint_slot": enrollment.actual_slot,
         }
         return success_response(command, "Enrollment command retrieved")
 
@@ -190,42 +216,85 @@ class DeviceEnrollmentResultView(GenericAPIView):
                     enrollment.completed_at = now
                     enrollment.failure_reason = "EXPIRED"
                     enrollment.save(update_fields=("status", "completed_at", "failure_reason", "updated_at"))
+                    cancel_queued_finger(enrollment, now, "PAIR_PREVIOUS_FINGER_EXPIRED")
                     conflict_message = "Enrollment has expired."
                 elif not device.is_active or not enrollment.employee.is_active or not enrollment.employee.user.is_active:
                     enrollment.status = FingerprintEnrollment.Status.FAILED
                     enrollment.completed_at = now
                     enrollment.failure_reason = "DEVICE_OR_EMPLOYEE_INACTIVE"
                     enrollment.save(update_fields=("status", "completed_at", "failure_reason", "updated_at"))
+                    cancel_queued_finger(enrollment, now, "PAIR_DEVICE_OR_EMPLOYEE_INACTIVE")
                     conflict_message = "The device or employee is inactive."
                 elif enrollment.employee.branch_id != device.branch_id or not device.branch.is_active:
                     enrollment.status = FingerprintEnrollment.Status.FAILED
                     enrollment.completed_at = now
                     enrollment.failure_reason = "BRANCH_MISMATCH"
                     enrollment.save(update_fields=("status", "completed_at", "failure_reason", "updated_at"))
+                    cancel_queued_finger(enrollment, now, "PAIR_BRANCH_MISMATCH")
                     conflict_message = "The device and employee are no longer in the same active branch."
                 else:
                     new_status = data["status"]
                     if new_status == FingerprintEnrollment.Status.WAITING_FOR_SECOND_SCAN:
-                        if enrollment.status != FingerprintEnrollment.Status.WAITING_FOR_FINGER:
+                        if enrollment.status not in (
+                            FingerprintEnrollment.Status.WAITING_FOR_FINGER,
+                            FingerprintEnrollment.Status.WAITING_FOR_SECOND_SCAN,
+                            FingerprintEnrollment.Status.PROCESSING,
+                            FingerprintEnrollment.Status.STORING,
+                        ):
                             raise EnrollmentConflict("Invalid enrollment state transition.")
-                        enrollment.status = new_status
-                        enrollment.save(update_fields=("status", "updated_at"))
+                        if enrollment.status == FingerprintEnrollment.Status.WAITING_FOR_FINGER:
+                            enrollment.status = new_status
+                            enrollment.save(update_fields=("status", "updated_at"))
                     elif new_status == FingerprintEnrollment.Status.PROCESSING:
-                        if enrollment.status != FingerprintEnrollment.Status.WAITING_FOR_SECOND_SCAN:
+                        if enrollment.status not in (
+                            FingerprintEnrollment.Status.WAITING_FOR_SECOND_SCAN,
+                            FingerprintEnrollment.Status.PROCESSING,
+                            FingerprintEnrollment.Status.STORING,
+                        ):
                             raise EnrollmentConflict("Invalid enrollment state transition.")
-                        enrollment.status = new_status
-                        enrollment.save(update_fields=("status", "updated_at"))
+                        if enrollment.status == FingerprintEnrollment.Status.WAITING_FOR_SECOND_SCAN:
+                            enrollment.status = new_status
+                            enrollment.save(update_fields=("status", "updated_at"))
+                    elif new_status == FingerprintEnrollment.Status.STORING:
+                        slot = data["fingerprint_slot"]
+                        if slot >= getattr(settings, "R307_MAX_TEMPLATE_COUNT", 1000):
+                            raise ValidationError({"fingerprint_slot": "The reported slot exceeds sensor capacity."})
+                        if enrollment.status not in (
+                            FingerprintEnrollment.Status.PROCESSING,
+                            FingerprintEnrollment.Status.STORING,
+                        ):
+                            raise EnrollmentConflict("Enrollment must be processing before storage is reserved.")
+                        if enrollment.actual_slot not in (None, slot):
+                            raise EnrollmentConflict("A different sensor slot is already reserved.")
+                        if EmployeeFingerprint.objects.filter(
+                            device=device,
+                            fingerprint_slot=slot,
+                            is_active=True,
+                        ).exists():
+                            raise EnrollmentConflict("The reported sensor slot is already mapped.")
+                        enrollment.status = FingerprintEnrollment.Status.STORING
+                        enrollment.actual_slot = slot
+                        enrollment.save(update_fields=("status", "actual_slot", "updated_at"))
                     elif new_status == FingerprintEnrollment.Status.FAILED:
                         enrollment.status = new_status
                         enrollment.failure_reason = data["error_code"]
                         enrollment.completed_at = now
                         enrollment.save(update_fields=("status", "failure_reason", "completed_at", "updated_at"))
+                        cancel_queued_finger(enrollment, now, "PAIR_PREVIOUS_FINGER_FAILED")
                     else:
-                        if enrollment.status != FingerprintEnrollment.Status.PROCESSING:
+                        if enrollment.status not in (
+                            FingerprintEnrollment.Status.PROCESSING,
+                            FingerprintEnrollment.Status.STORING,
+                        ):
                             raise EnrollmentConflict("Enrollment must be processing before success is reported.")
                         slot = data["fingerprint_slot"]
                         if slot >= getattr(settings, "R307_MAX_TEMPLATE_COUNT", 1000):
                             raise ValidationError({"fingerprint_slot": "The reported slot exceeds sensor capacity."})
+                        if (
+                            enrollment.status == FingerprintEnrollment.Status.STORING
+                            and enrollment.actual_slot != slot
+                        ):
+                            raise EnrollmentConflict("The reported slot does not match the reserved sensor slot.")
                         if EmployeeFingerprint.objects.filter(
                             device=device,
                             fingerprint_slot=slot,
@@ -259,6 +328,7 @@ class DeviceEnrollmentResultView(GenericAPIView):
                                 "updated_at",
                             )
                         )
+                        activate_next_finger(enrollment, now)
         except IntegrityError as exc:
             raise EnrollmentConflict("The fingerprint slot or employee finger is already mapped.") from exc
 
