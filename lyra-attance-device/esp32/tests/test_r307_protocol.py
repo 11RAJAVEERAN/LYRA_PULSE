@@ -88,6 +88,24 @@ class R307EnrollmentProtocolTests(unittest.TestCase):
             bytes.fromhex("EF01FFFFFFFF0100071300000000001B"),
         )
 
+    def test_short_uart_write_fails_before_waiting_for_sensor_response(self):
+        self.uart.write = lambda frame: len(frame) - 1
+
+        with self.assertRaisesRegex(
+            R307CommunicationError,
+            "UART write incomplete: wrote 15 of 16 bytes",
+        ):
+            self.sensor.verify_password(0)
+
+    def test_uart_write_timeout_is_reported_when_write_returns_none(self):
+        self.uart.write = lambda _frame: None
+
+        with self.assertRaisesRegex(
+            R307CommunicationError,
+            "UART write incomplete: wrote None of 16 bytes",
+        ):
+            self.sensor.verify_password(0)
+
     def test_search_status_nine_is_not_found_even_in_status_only_ack(self):
         self.queue_ack(b"\x09")
 

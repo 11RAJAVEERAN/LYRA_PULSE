@@ -11,10 +11,10 @@ from config import (
     R307_DETECTION_MODE,
     R307_UART_FALLBACK_ENABLED,
     R307_UART_FALLBACK_INTERVAL_SECONDS,
-    R307_TOUCH_CAPTURE_MAX_ATTEMPTS,
-    R307_TOUCH_CAPTURE_RETRY_INTERVAL_SECONDS,
     R307_TOUCH_CAPTURE_TIMEOUT_SECONDS,
+    R307_TOUCH_CAPTURE_RETRY_INTERVAL_SECONDS,
     R307_TOUCH_SAMPLE_INTERVAL_SECONDS,
+    R307_TOUCH_PIN,
 )
 from drivers.r307 import (
     R307,
@@ -67,6 +67,25 @@ class FingerprintService:
         self._fallback_errors = 0
         self._awaiting_removal = False
         self._removal_rearm_deadline = None
+        self.last_match_score = None
+
+    def _log_touch_state(self, context):
+        if self.touch_sensor is None:
+            return
+        level = self.touch_sensor.current_level()
+        active_level = self.touch_sensor.active_level
+        active = active_level is not None and level == active_level
+        log(
+            "TOUCH",
+            "GPIO%d raw=%d active_level=%s active=%s %s"
+            % (
+                R307_TOUCH_PIN,
+                level,
+                active_level if active_level is not None else "unknown",
+                "yes" if active else "no",
+                context,
+            ),
+        )
 
     def _retry_sensor_initialization(self, phase):
         log(
@@ -128,6 +147,7 @@ class FingerprintService:
         poll_interval_seconds=3,
         detection_mode=R307_DETECTION_MODE,
         uart_fallback_enabled=R307_UART_FALLBACK_ENABLED,
+        timeout_seconds=None,
     ):
         if self.touch_sensor is None and detection_mode != "uart_fallback":
             raise RuntimeError("A touch sensor is required to wait for a finger")
@@ -157,6 +177,8 @@ class FingerprintService:
             ),
         )
         fallback_polls_remaining = polls_per_fallback
+        started = _ticks_ms()
+        self._log_touch_state("state=WAITING_FOR_TOUCH")
         log(
             "SCAN",
             "Detection mode=%s UART fallback=%s interval=%.1fs"
@@ -168,6 +190,13 @@ class FingerprintService:
         )
         log("SCAN", "state=READY_WAITING_FOR_TOUCH")
         while True:
+            if (
+                timeout_seconds is not None
+                and _ticks_diff(_ticks_ms(), started) >= timeout_seconds * 1000
+            ):
+                raise R307TimeoutError(
+                    "Timed out waiting for a touch-confirmed fingerprint image"
+                )
             if self._awaiting_removal:
                 if not self.wait_for_finger_removed():
                     return False
@@ -197,17 +226,38 @@ class FingerprintService:
             if touch_edge or fallback_due:
                 if touch_edge:
                     self._awaiting_removal = True
-                    log("SCAN", "GPIO18 touch edge; confirming image with GetImage")
+                    self._log_touch_state("touch detected")
+                    log("SCAN", "Image capture started (GenImg)")
                     log("SCAN", "state=CAPTURING_IMAGE")
-                    if self._capture_after_touch():
-                        log("FINGER", "GetImage confirmed a captured image")
+                    capture_timeout_seconds = R307_TOUCH_CAPTURE_TIMEOUT_SECONDS
+                    if timeout_seconds is not None:
+                        capture_timeout_seconds = min(
+                            capture_timeout_seconds,
+                            timeout_seconds,
+                        )
+                    try:
+                        captured = self._capture_after_touch(
+                            timeout_seconds=capture_timeout_seconds,
+                        )
+                    except R307TimeoutError as exc:
+                        log("TOUCH", "Capture failed: %s" % exc)
+                        self.wait_for_finger_removed()
+                        return False
+                    if captured:
+                        log("FINGER", "Image capture successful (GenImg ACK=0x00)")
                         return True
 
-                    log("SCAN", "Capture window expired; waiting for removal before rearming")
-                    if not self.wait_for_finger_removed():
-                        return False
-                    polls_remaining = polls_per_callback
-                    fallback_polls_remaining = polls_per_fallback
+                    log(
+                        "TOUCH",
+                        "GPIO%d raw=%d active=%s released before capture; scan cancelled"
+                        % (
+                            R307_TOUCH_PIN,
+                            self.touch_sensor.current_level(),
+                            "yes" if self.touch_sensor.is_active() else "no",
+                        ),
+                    )
+                    self.wait_for_finger_removed()
+                    return False
                 else:
                     if self._poll_uart_fallback():
                         log("FINGER", "UART fallback confirmed a captured image")
@@ -215,6 +265,8 @@ class FingerprintService:
                     fallback_polls_remaining = polls_per_fallback
 
             if on_wait is not None and polls_remaining <= 0:
+                if self.touch_sensor is not None:
+                    self._log_touch_state("state=WAITING_FOR_TOUCH")
                 command = on_wait()
                 polls_remaining = polls_per_callback
                 if command is not None:
@@ -253,15 +305,24 @@ class FingerprintService:
             )
             return False
 
-    def _capture_after_touch(self):
+    def _capture_after_touch(self, timeout_seconds=None):
         consecutive_errors = 0
         capture_started = _ticks_ms()
-        for attempt in range(1, R307_TOUCH_CAPTURE_MAX_ATTEMPTS + 1):
+        attempt = 0
+        while (
+            self.touch_sensor is None
+            or self.touch_sensor.is_active()
+            or not self.touch_sensor.is_released_debounced()
+        ):
+            attempt += 1
             if (
-                _ticks_diff(_ticks_ms(), capture_started)
-                >= R307_TOUCH_CAPTURE_TIMEOUT_SECONDS * 1000
+                timeout_seconds is not None
+                and _ticks_diff(_ticks_ms(), capture_started)
+                >= timeout_seconds * 1000
             ):
-                break
+                raise R307TimeoutError(
+                    "Timed out waiting for an image while touch remained active"
+                )
             if not self._sensor_available:
                 self._retry_sensor_initialization("CAPTURING_IMAGE")
                 time.sleep(R307_TOUCH_CAPTURE_RETRY_INTERVAL_SECONDS)
@@ -280,8 +341,8 @@ class FingerprintService:
                 if attempt == 1 or attempt % 10 == 0:
                     log(
                         "SCAN",
-                        "GetImage reports no usable image (0x02); attempt %d/%d"
-                        % (attempt, R307_TOUCH_CAPTURE_MAX_ATTEMPTS),
+                        "GetImage reports no usable image (0x02); attempt %d"
+                        % attempt,
                     )
             except R307ImageError as exc:
                 consecutive_errors = 0
@@ -296,17 +357,32 @@ class FingerprintService:
 
             time.sleep(R307_TOUCH_CAPTURE_RETRY_INTERVAL_SECONDS)
 
-        log(
-            "SENSOR",
-            "No confirmed image within %ds or %d GetImage attempts"
-            % (
-                R307_TOUCH_CAPTURE_TIMEOUT_SECONDS,
-                R307_TOUCH_CAPTURE_MAX_ATTEMPTS,
-            ),
-        )
         return False
 
     def wait_for_finger_removed(self):
+        if (
+            self.touch_sensor is not None
+            and self.touch_sensor.active_level is not None
+        ):
+            log("SCAN", "state=WAITING_FOR_REMOVAL")
+            if self.touch_sensor.wait_for_release(
+                timeout_seconds=R307_FINGER_REMOVAL_TIMEOUT_SECONDS,
+            ):
+                log("READY", "Touch release confirmed")
+                self._awaiting_removal = False
+                return True
+            log(
+                "SENSOR",
+                "Touch release was not confirmed within %ds; applying bounded cooldown"
+                % R307_FINGER_REMOVAL_TIMEOUT_SECONDS,
+            )
+            self._awaiting_removal = False
+            self._removal_rearm_deadline = _ticks_add(
+                _ticks_ms(),
+                R307_FINGER_REMOVAL_COOLDOWN_SECONDS * 1000,
+            )
+            return False
+
         consecutive_errors = 0
         consecutive_no_finger = 0
         started = _ticks_ms()
@@ -384,6 +460,7 @@ class FingerprintService:
             return None
         fingerprint_id = result.get("fingerprint_id")
         score = result.get("score")
+        self.last_match_score = score
         log("FINGER", "Match found: id=%s score=%s" % (fingerprint_id, score))
         return fingerprint_id
 
@@ -397,22 +474,38 @@ class FingerprintService:
         step = prompt.replace("Place finger ", "").replace("Same finger ", "")
         log("ENROLL", "Waiting for finger %s" % step)
         display.show_enrollment_prompt(prompt)
-        log("R307", "GetImage")
-        remaining_tenths = timeout_seconds * 10
-        while remaining_tenths > 0:
-            try:
-                self.sensor.get_image()
-                self._awaiting_removal = True
-                log("ENROLL", "GetImage succeeded")
-                return
-            except R307FingerError:
-                time.sleep(0.1)
-                remaining_tenths -= 1
-        raise EnrollmentError("SENSOR_TIMEOUT", "Timed out waiting for a finger")
+        try:
+            captured = self.wait_for_finger(
+                detection_mode="gpio_only",
+                uart_fallback_enabled=False,
+                timeout_seconds=timeout_seconds,
+            )
+        except R307TimeoutError as exc:
+            log("TOUCH", "Enrollment touch/capture timeout: %s" % exc)
+            raise EnrollmentError("SENSOR_TIMEOUT", str(exc))
+        if not captured:
+            raise EnrollmentError(
+                "SCAN_CANCELLED",
+                "Touch was released before the fingerprint image was captured",
+            )
+        log("ENROLL", "Touch-confirmed GetImage succeeded")
 
     def _wait_for_finger_removed(self, display, timeout_seconds):
         log("ENROLL", "Waiting for finger removal")
         display.show_enrollment_remove_finger()
+        if (
+            self.touch_sensor is not None
+            and self.touch_sensor.active_level is not None
+        ):
+            if not self.touch_sensor.wait_for_release(timeout_seconds=timeout_seconds):
+                raise EnrollmentError(
+                    "SENSOR_TIMEOUT",
+                    "Timed out waiting for the finger to be removed",
+                )
+            self._awaiting_removal = False
+            log("ENROLL", "Touch release confirmed")
+            return
+
         remaining_tenths = timeout_seconds * 10
         while remaining_tenths > 0:
             try:
@@ -449,7 +542,7 @@ class FingerprintService:
 
         timeout_seconds = ENROLLMENT_STEP_TIMEOUT_SECONDS
         try:
-            self._wait_for_finger(display, "Place finger 1/3", timeout_seconds)
+            self._wait_for_finger(display, "Place finger 1/2", timeout_seconds)
             log("R307", "Image2Tz buffer 1")
             self.sensor.image_to_template(buffer_id=1)
             log("ENROLL", "Image2Tz succeeded: buffer 1")
@@ -462,7 +555,7 @@ class FingerprintService:
                 "WAITING_FOR_SECOND_SCAN",
             )
 
-            self._wait_for_finger(display, "Same finger 2/3", timeout_seconds)
+            self._wait_for_finger(display, "Same finger 2/2", timeout_seconds)
             log("R307", "Image2Tz buffer 2")
             self.sensor.image_to_template(buffer_id=2)
             log("ENROLL", "Image2Tz succeeded: buffer 2")
@@ -491,23 +584,6 @@ class FingerprintService:
             self.sensor.store_model(slot, buffer_id=1)
             log("ENROLL", "StoreTemplate acknowledged for actual slot %s" % slot)
 
-            self._wait_for_finger_removed(display, timeout_seconds)
-            self._wait_for_finger(display, "Place finger 3/3", timeout_seconds)
-            log("R307", "Image2Tz verification buffer 1")
-            self.sensor.image_to_template(buffer_id=1)
-            log("ENROLL", "Image2Tz succeeded: verification buffer 1")
-            log("R307", "Verification search")
-            verification = self.sensor.search(
-                buffer_id=1,
-                start_page=0,
-                page_num=MAX_TEMPLATE_COUNT,
-            )
-            if verification is None or verification["fingerprint_id"] != slot:
-                raise EnrollmentError(
-                    "SLOT_VERIFICATION_FAILED",
-                    "Sensor search did not confirm the newly stored slot",
-                )
-
             self._report(
                 api_client,
                 device_id,
@@ -516,7 +592,7 @@ class FingerprintService:
                 fingerprint_slot=slot,
             )
             display.show_enrollment_success(slot)
-            log("ENROLL", "Third scan verified actual slot %s" % slot)
+            log("ENROLL", "Two-scan enrollment completed at slot %s" % slot)
             return slot
         except EnrollmentError:
             raise

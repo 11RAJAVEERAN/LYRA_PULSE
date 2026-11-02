@@ -1,47 +1,59 @@
 # API integration
 
-## Existing backend state
+The firmware uses the existing Django device APIs. The backend source is in
+`lyrapulse-backend`; these routes are implemented and are not placeholders.
 
-The checked-in Django backend exposes authentication and employee endpoints but no device attendance/fingerprint route was found during inspection.
+## Device authentication
 
-Relevant files inspected:
+Device requests use the configured device token in the `Authorization` header
+as `Device <token>`. Requests use JSON and the common success envelope:
 
-- lyrapulse-backend/config/urls.py
-- lyrapulse-backend/apps/accounts/urls.py
-- lyrapulse-backend/apps/employees/urls.py
+```json
+{
+  "success": true,
+  "message": "Operation successful",
+  "data": {}
+}
+```
 
-The current project includes these routes:
+## Enrollment polling
 
-- /api/v1/auth/send-otp/
-- /api/v1/auth/verify-otp/
-- /api/v1/auth/me/
-- /api/v1/mobile/me/
+`GET /api/v1/devices/{device_id}/enrollment/pending/` returns an empty `data`
+object when there is no pending enrollment, or a command containing
+`enrollment_id`, `employee_id`, `action`, and `finger`. The device captures and
+verifies the fingerprint locally; the employee-to-device mapping is completed
+only after the backend accepts the reported successful enrollment.
 
-No `/api/v1/attendance/` or fingerprint-specific endpoint is currently implemented.
+The device reports enrollment progress to
+`POST /api/v1/devices/{device_id}/enrollment/{enrollment_id}/result/`:
 
-## Device payload
+- `WAITING_FOR_SECOND_SCAN`
+- `PROCESSING`
+- `SUCCESS` with `fingerprint_slot`
+- `FAILED` with `error_code`
 
-The firmware is written to send this structure:
+## Attendance
+
+`POST /api/v1/attendance/fingerprint/` accepts the existing device payload:
 
 ```json
 {
   "device_id": "LYRA-DEVICE-001",
-  "fingerprint_id": 23,
-  "event_type": "fingerprint"
+  "fingerprint_slot": 23
 }
 ```
 
-## Placeholder endpoint
+The backend authenticates the device, resolves the active employee mapping for
+that slot, and applies its existing check-in/check-out rules. The device must
+not infer the attendance action locally. A successful response includes the
+employee name and a `status` of `CHECKED_IN` or `CHECKED_OUT`; duplicate scans
+may include `duplicate: true`. Firmware success feedback is shown only when
+the response contains a valid status and employee name.
 
-The configuration currently targets:
+## Integration constraints
 
-- /api/v1/attendance/fingerprint/
-
-This is a placeholder and should be replaced by the backend team when the actual device attendance endpoint is created.
-
-## Security recommendations
-
-- Use HTTPS in production.
-- Store `DEVICE_TOKEN` in secure storage.
-- Never send raw fingerprint images.
-- Only send the matched template ID.
+- Preserve the endpoint paths, methods, authentication, and payload fields.
+- Never send raw fingerprint images; only the matched slot is sent.
+- Attendance requests are not retried automatically after a timeout because a
+  retry could change the attendance state.
+- Use HTTPS in production and protect `DEVICE_TOKEN` in device configuration.

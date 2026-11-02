@@ -30,6 +30,9 @@ Each UART packet is parsed as follows:
 
 - Validate packet header before reading payload.
 - Validate checksum before trusting the response.
+- Verify that `UART.write()` accepts the entire command frame before waiting
+  for an ACK. A short write or `None` return is a UART communication error,
+  not a sensor response timeout.
 - The startup command is VerifyPassword (`0x13`) with the configured 32-bit
   password. With the default password zero, the request is
   `EF01FFFFFFFF0100071300000000001B`; its successful ACK is

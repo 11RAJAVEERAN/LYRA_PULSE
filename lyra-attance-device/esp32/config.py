@@ -5,8 +5,13 @@
 # ------------------------------------------------------------
 # Use a 2.4 GHz Wi-Fi network; ESP32 does not support 5 GHz.
 # Replace these with your real values before flashing to a device.
-WIFI_SSID = "Airtel_vasa_3220"
-WIFI_PASSWORD = "Air@69764"
+# WIFI_SSID = "Airtel_vasa_3220"
+# WIFI_PASSWORD = "Air@69764"
+# WIFI_TIMEOUT_SECONDS = 20
+# WIFI_RETRY_COUNT = 3
+
+WIFI_SSID = "TP-Link_9BAF"
+WIFI_PASSWORD = "44639518"
 WIFI_TIMEOUT_SECONDS = 20
 WIFI_RETRY_COUNT = 3
     
@@ -21,7 +26,7 @@ TEST_MODE = True
 # API
 # ------------------------------------------------------------
 # Update to the actual Django backend URL before deployment.
-API_BASE_URL = "http://192.168.1.4:8000"
+API_BASE_URL = "http://192.168.1.11:8000"
 API_FINGERPRINT_ENDPOINT = "/api/v1/attendance/fingerprint/"
 API_DEVICE_ENROLLMENT_PENDING = "/api/v1/devices/{device_id}/enrollment/pending/"
 API_DEVICE_ENROLLMENT_RESULT = "/api/v1/devices/{device_id}/enrollment/{enrollment_id}/result/"
@@ -39,13 +44,13 @@ R307_ADDRESS = 0xFFFFFFFF
 R307_UART_READ_TIMEOUT_MS = 10
 R307_DEBUG = True
 R307_TOUCH_PIN = 18
-R307_TOUCH_ACTIVE_LEVEL = None
-R307_TOUCH_DEBOUNCE_SAMPLES = 5
+R307_TOUCH_ACTIVE_LEVEL = 0
+R307_TOUCH_DEBOUNCE_SAMPLES = 11
 R307_TOUCH_SAMPLE_INTERVAL_SECONDS = 0.01
-R307_DETECTION_MODE = "hybrid"
-R307_UART_FALLBACK_ENABLED = True
+R307_DETECTION_MODE = "gpio_only"
+R307_UART_FALLBACK_ENABLED = False
 R307_UART_FALLBACK_INTERVAL_SECONDS = 2.0
-R307_TOUCH_CAPTURE_RETRY_INTERVAL_SECONDS = 0.25
+R307_TOUCH_CAPTURE_RETRY_INTERVAL_SECONDS = 0.08
 R307_TOUCH_CAPTURE_TIMEOUT_SECONDS = 10
 R307_TOUCH_CAPTURE_MAX_ATTEMPTS = 40
 R307_FINGER_REMOVAL_TIMEOUT_SECONDS = 30
@@ -66,9 +71,9 @@ OLED_I2C_ADDRESS = 0x3C
 # GPIO outputs
 # ------------------------------------------------------------
 BUZZER_PIN = 4
-GREEN_LED_PIN = 25
-BLUE_LED_PIN = 26
-RED_LED_PIN = 27
+GREEN_LED_PIN = 32
+BLUE_LED_PIN = 33
+RED_LED_PIN = 25
 
 # ------------------------------------------------------------
 # Behavior and safety

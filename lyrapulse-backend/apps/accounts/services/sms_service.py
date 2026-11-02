@@ -13,7 +13,7 @@ class SMSService:
 class MockSMSService(SMSService):
     def send_otp(self, phone_number, otp):
         if settings.DEBUG:
-            logger.info("Development OTP generated for %s: %s", phone_number, otp)
+            logger.info("Development OTP generated for %s", phone_number)
 
 
 def get_sms_service():

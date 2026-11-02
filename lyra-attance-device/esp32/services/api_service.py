@@ -57,6 +57,8 @@ from config import (
 )
 from utils.logger import log
 
+ENROLLMENT_POLL_TIMEOUT_SECONDS = 0.5
+
 
 class AttendanceAPIClient:
     def __init__(self, base_url=API_BASE_URL, timeout=API_TIMEOUT, retry_count=API_RETRY_COUNT):
@@ -94,10 +96,19 @@ class AttendanceAPIClient:
             return {"success": False, "message": "Invalid JSON response: %s" % exc}
         return body if isinstance(body, dict) else {"success": False, "data": body}
 
-    def _device_request(self, method, endpoint, payload=None, retry_count=None, headers=None):
+    def _device_request(
+        self,
+        method,
+        endpoint,
+        payload=None,
+        retry_count=None,
+        headers=None,
+        timeout=None,
+    ):
         url = self.base_url + endpoint
         last_error = None
         attempts = self.retry_count if retry_count is None else retry_count
+        request_timeout = self.timeout if timeout is None else timeout
         for attempt in range(attempts + 1):
             response = None
             try:
@@ -105,14 +116,14 @@ class AttendanceAPIClient:
                     response = requests.get(
                         url,
                         headers=headers or self._device_headers(),
-                        timeout=self.timeout,
+                        timeout=request_timeout,
                     )
                 else:
                     response = requests.post(
                         url,
                         data=json.dumps(payload).encode("utf-8"),
                         headers=headers or self._device_headers(),
-                        timeout=self.timeout,
+                        timeout=request_timeout,
                     )
                 status_code = getattr(response, "status_code", getattr(response, "status", 500))
                 body = self._response_body(response)
@@ -139,7 +150,12 @@ class AttendanceAPIClient:
 
     def poll_enrollment(self, device_id):
         endpoint = API_DEVICE_ENROLLMENT_PENDING.format(device_id=device_id)
-        return self._device_request("GET", endpoint)
+        return self._device_request(
+            "GET",
+            endpoint,
+            retry_count=0,
+            timeout=ENROLLMENT_POLL_TIMEOUT_SECONDS,
+        )
 
     def report_enrollment_status(
         self,
@@ -158,4 +174,4 @@ class AttendanceAPIClient:
             payload["fingerprint_slot"] = fingerprint_slot
         if error_code is not None:
             payload["error_code"] = error_code
-        return self._device_request("POST", endpoint, payload)
+        return self._device_request("POST", endpoint, payload        )
