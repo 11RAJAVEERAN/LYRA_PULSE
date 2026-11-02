@@ -9,9 +9,9 @@ import { EmptyState } from '../../../components/common/EmptyState'
 import { ErrorState } from '../../../components/common/ErrorState'
 import { PageHeader } from '../../../components/common/PageHeader'
 import { SearchInput } from '../../../components/common/SearchInput'
-import { StatusChip } from '../../../components/common/StatusChip'
 import { authService } from '../../../services/authService'
 import { ShiftFormDialog } from '../components/ShiftFormDialog'
+import { formatScheduleSummary, formatTimeAmPm } from '../components/ShiftScheduleEditor'
 import { useCreateShift, useShift, useShiftOptions, useShifts, useUpdateShift } from '../hooks/useShiftQueries'
 
 function messageFrom(error) {
@@ -30,6 +30,55 @@ function dateText(value) {
   if (!value) return '—'
   return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(new Date(value))
 }
+
+const weekdayLabels = [
+  ['SUNDAY', 'Sunday', 'S'], ['MONDAY', 'Monday', 'M'], ['TUESDAY', 'Tuesday', 'T'],
+  ['WEDNESDAY', 'Wednesday', 'W'], ['THURSDAY', 'Thursday', 'T'], ['FRIDAY', 'Friday', 'F'],
+  ['SATURDAY', 'Saturday', 'S'],
+]
+const weekdayNames = Object.fromEntries(weekdayLabels.map(([weekday, name]) => [weekday, name.slice(0, 3)]))
+
+function workingDaysText(row) {
+  const days = new Map((row.current_schedule?.days ?? []).map((day) => [day.weekday, day.is_working]))
+  return (
+    <Stack direction="row" spacing={0.25} flexWrap="nowrap" aria-label="Working days" sx={{ whiteSpace: 'nowrap' }}>
+      {weekdayLabels.map(([weekday, name, initial]) => {
+        const isWorking = Boolean(days.get(weekday))
+        return (
+          <Tooltip key={weekday} title={name}>
+            <Box component="span" aria-label={`${name}: ${isWorking ? 'working' : 'off'}`} sx={{
+              width: 22, height: 22, flex: '0 0 22px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              borderRadius: 0.75, bgcolor: isWorking ? 'info.light' : 'action.hover',
+            }}>
+              <Typography component="span" sx={{ color: isWorking ? 'text.primary' : 'text.secondary', fontSize: '0.75rem', lineHeight: 1, fontWeight: 700 }}>
+                {initial}
+              </Typography>
+            </Box>
+          </Tooltip>
+        )
+      })}
+    </Stack>
+  )
+}
+
+function timeRangesText(row) {
+  const days = row.current_schedule?.days?.filter((day) => day.is_working && day.start_time && day.end_time) ?? []
+  if (!days.length) return formatScheduleSummary(row.schedule_summary ?? '—')
+  const ranges = new Map()
+  days.forEach((day) => {
+    const key = `${day.start_time}|${day.end_time}`
+    ranges.set(key, [...(ranges.get(key) ?? []), weekdayNames[day.weekday]])
+  })
+  return [...ranges.entries()].map(([range, names]) => {
+    const [start, end] = range.split('|')
+    const label = names.length === 7 ? 'Sun–Sat'
+      : names.join(',') === 'Mon,Tue,Wed,Thu,Fri' ? 'Mon–Fri'
+        : names.join(' · ')
+    return `${ranges.size > 1 ? `${label} ` : ''}${formatTimeAmPm(start)} – ${formatTimeAmPm(end)}`
+  }).join('  ·  ')
+}
+
+const shiftColumnWidths = [165, 120, 210, 250, 150, 100, 140, 100]
 
 export function ShiftsPage() {
   const user = authService.getCurrentUser()
@@ -103,25 +152,25 @@ export function ShiftsPage() {
           <EmptyState compact title={search || status !== 'active' ? 'No shifts match these filters' : 'No shifts yet'} description={search || status !== 'active' ? 'Try changing or clearing the filters.' : 'Create a shift to start assigning work schedules.'} />
         ) : (
           <TableContainer sx={{ overflowX: 'auto' }}>
-            <Table size="small" sx={{ minWidth: 870 }} aria-label="Shifts">
+            <Table size="small" sx={{ minWidth: 1180, tableLayout: 'fixed', '& .MuiTableCell-root': { px: 1, py: 1 } }} aria-label="Shifts">
               <TableHead><TableRow sx={{ bgcolor: 'info.light' }}>
-                {['Shift Name', 'Branch', 'Schedule Summary', 'Scheduled Hours / Week', 'Assigned Employees', 'Status', 'Last Modified', 'Actions'].map((label) => <TableCell key={label} sx={{ fontWeight: 700, color: 'primary.main', whiteSpace: 'nowrap' }}>{label}</TableCell>)}
+                {['Shift Name', 'Branch', 'Working Days', 'Shift Timing', 'Assigned Employees', 'Status', 'Last Modified', 'Actions'].map((label, index) => <TableCell key={label} align={label === 'Assigned Employees' || label === 'Status' ? 'center' : undefined} sx={{ width: shiftColumnWidths[index], fontWeight: 700, color: 'primary.main', whiteSpace: 'nowrap' }}>{label}</TableCell>)}
               </TableRow></TableHead>
               <TableBody>
                 {results.map((row) => (
                   <TableRow key={row.id} hover>
-                    <TableCell><Typography variant="body2" fontWeight={700}>{row.name}</Typography></TableCell>
-                    <TableCell>{row.branch_detail?.name ?? '—'}</TableCell>
-                    <TableCell sx={{ minWidth: 180 }}>{row.schedule_summary ?? '—'}</TableCell>
-                    <TableCell>{row.scheduled_working_seconds_per_week == null ? '—' : `${Math.floor(row.scheduled_working_seconds_per_week / 3600)}h ${Math.floor((row.scheduled_working_seconds_per_week % 3600) / 60) ? `${Math.floor((row.scheduled_working_seconds_per_week % 3600) / 60)}m` : ''}`}</TableCell>
-                    <TableCell>{row.assigned_employee_count ?? 0}</TableCell>
-                    <TableCell><StatusChip label={row.is_active ? 'Active' : 'Inactive'} /></TableCell>
-                    <TableCell sx={{ whiteSpace: 'nowrap' }}>{dateText(row.updated_at)}</TableCell>
-                    <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>
+                    <TableCell sx={{ width: 165 }}><Tooltip title={row.name}><Typography variant="body2" fontWeight={700} noWrap>{row.name}</Typography></Tooltip></TableCell>
+                    <TableCell sx={{ width: 120 }}><Tooltip title={row.branch_detail?.name ?? ''}><Typography variant="body2" noWrap>{row.branch_detail?.name ?? '—'}</Typography></Tooltip></TableCell>
+                    <TableCell sx={{ width: 210, whiteSpace: 'nowrap' }}>{workingDaysText(row)}</TableCell>
+                    <TableCell sx={{ width: 250, whiteSpace: 'nowrap' }}><Tooltip title={timeRangesText(row)}><Typography variant="body2" noWrap>{timeRangesText(row)}</Typography></Tooltip></TableCell>
+                    <TableCell align="center" sx={{ width: 150, fontWeight: 600 }}>{row.assigned_employee_count ?? 0}</TableCell>
+                    <TableCell align="center" sx={{ width: 100 }}><Chip size="small" variant="outlined" color={row.is_active ? 'success' : 'default'} label={row.is_active ? 'Active' : 'Inactive'} sx={{ height: 24, fontWeight: 600, bgcolor: 'background.paper' }} /></TableCell>
+                    <TableCell sx={{ width: 140, whiteSpace: 'nowrap' }}>{dateText(row.updated_at)}</TableCell>
+                    <TableCell align="right" sx={{ width: 100, whiteSpace: 'nowrap' }}>
                       {canManage ? <>
-                        <Tooltip title="Edit shift"><IconButton size="small" aria-label={`Edit ${row.name}`} onClick={() => openEdit(row)}><Edit2 size={17} /></IconButton></Tooltip>
+                        <Tooltip title="Edit Shift"><IconButton size="small" aria-label={`Edit ${row.name}`} onClick={() => openEdit(row)}><Edit2 size={17} /></IconButton></Tooltip>
                         <Tooltip title={row.is_active ? 'Deactivate shift' : 'Reactivate shift'}>
-                          <IconButton size="small" aria-label={`${row.is_active ? 'Deactivate' : 'Reactivate'} ${row.name}`} onClick={() => setDeactivating(row)}>
+                          <IconButton size="small" sx={{ ml: 0.5 }} aria-label={`${row.is_active ? 'Deactivate' : 'Reactivate'} ${row.name}`} onClick={() => setDeactivating(row)}>
                             {row.is_active ? <ToggleLeft size={18} /> : <ToggleRight size={18} />}
                           </IconButton>
                         </Tooltip>

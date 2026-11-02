@@ -294,7 +294,7 @@ class AssignmentWriteSerializer(serializers.Serializer):
     shift_id = serializers.IntegerField(min_value=1)
     effective_from = serializers.DateField()
     effective_to = serializers.DateField(required=False, allow_null=True)
-    week_off_days = ShiftWeekOffField()
+    week_off_days = ShiftWeekOffField(required=False, allow_empty=True, default=list)
 
     def validate(self, attrs):
         if attrs.get("effective_to") and attrs["effective_to"] < attrs["effective_from"]:
@@ -324,7 +324,7 @@ class BulkAssignmentWriteSerializer(serializers.Serializer):
     shift_id = serializers.IntegerField(min_value=1)
     effective_from = serializers.DateField()
     effective_to = serializers.DateField(required=False, allow_null=True)
-    week_off_days = ShiftWeekOffField()
+    week_off_days = ShiftWeekOffField(required=False, allow_empty=True, default=list)
 
     def validate(self, attrs):
         if len(attrs["employee_ids"]) != len(set(attrs["employee_ids"])):

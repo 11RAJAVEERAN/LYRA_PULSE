@@ -107,19 +107,19 @@ export function ShiftFormDialog({ open, onClose, shift, branches, onSave, saving
   }
 
   return (
-    <Dialog open={open} onClose={saving ? undefined : onClose} fullWidth maxWidth="xl" scroll="paper">
-      <Box component="form" onSubmit={submit}>
-        <DialogTitle sx={{ pb: 1 }}>
+    <Dialog open={open} onClose={saving ? undefined : onClose} fullWidth maxWidth="xl" scroll="paper"
+      PaperProps={{ sx: { display: 'flex', flexDirection: 'column', maxHeight: 'calc(100dvh - 48px)' } }}>
+      <Box component="form" onSubmit={submit} sx={{ display: 'flex', flexDirection: 'column', minHeight: 0, maxHeight: 'calc(100dvh - 48px)' }}>
+        <DialogTitle sx={{ pb: 1, position: 'sticky', top: 0, zIndex: 2, bgcolor: 'background.paper', borderBottom: 1, borderColor: 'divider' }}>
           <Typography variant="h5" component="div" fontWeight={700}>{shift ? 'Edit Shift' : 'Create Shift'}</Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>Configure the weekly schedule employees will be assigned to.</Typography>
         </DialogTitle>
-        <DialogContent dividers>
+        <DialogContent dividers sx={{ flex: '1 1 auto', minHeight: 0, overflowY: 'auto', px: { xs: 2, sm: 3 }, py: 2 }}>
           <Stack spacing={2.5}>
             {serverError ? <Alert severity="error">{serverError}</Alert> : null}
             {errors.length ? <Alert severity="info">{errors[0]}</Alert> : null}
             <Box>
               <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 1.25 }}>Basic information</Typography>
-              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'minmax(220px, 0.8fr) minmax(260px, 1.5fr) auto' }, gap: 1.5, alignItems: 'center' }}>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'minmax(220px, 1fr) minmax(260px, 1.5fr) auto' }, gap: 1.5, alignItems: 'center' }}>
                 <FormControl size="small" fullWidth disabled={Boolean(shift)}>
                   <InputLabel id="shift-branch-label">Branch</InputLabel>
                   <Select labelId="shift-branch-label" label="Branch" value={form.branch} onChange={(e) => setForm((v) => ({ ...v, branch: e.target.value }))}>
@@ -129,7 +129,6 @@ export function ShiftFormDialog({ open, onClose, shift, branches, onSave, saving
                 <TextField label="Shift name" required fullWidth size="small" value={form.name} onChange={(e) => setForm((v) => ({ ...v, name: e.target.value }))} inputProps={{ maxLength: 120 }} />
                 {shift ? <FormControlLabel sx={{ m: 0 }} control={<Switch checked={form.is_active} onChange={(e) => setForm((v) => ({ ...v, is_active: e.target.checked }))} />} label={form.is_active ? 'Active' : 'Inactive'} /> : null}
               </Box>
-              {shift ? <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.75 }}>Branch cannot be changed after a shift is created.</Typography> : null}
             </Box>
 
             {shift ? (
@@ -139,7 +138,6 @@ export function ShiftFormDialog({ open, onClose, shift, branches, onSave, saving
                   type="date" size="small" label="Effective from" value={form.schedule_effective_from}
                   onChange={(e) => setForm((v) => ({ ...v, schedule_effective_from: e.target.value }))}
                   slotProps={{ inputLabel: { shrink: true }, htmlInput: { min: tomorrow() } }}
-                  helperText="Schedule changes take effect prospectively. Existing schedule history is preserved."
                   sx={{ width: { xs: '100%', sm: 280 } }}
                 />
               </Box>
@@ -151,7 +149,7 @@ export function ShiftFormDialog({ open, onClose, shift, branches, onSave, saving
             </Box>
           </Stack>
         </DialogContent>
-        <DialogActions sx={{ px: 3, py: 2 }}>
+        <DialogActions sx={{ px: 3, py: 2, position: 'sticky', bottom: 0, zIndex: 2, bgcolor: 'background.paper', borderTop: 1, borderColor: 'divider' }}>
           <Button onClick={onClose} disabled={saving}>Cancel</Button>
           <Button type="submit" variant="contained" disabled={saving || errors.length > 0}>
             {saving ? 'Saving…' : 'Save Shift'}
