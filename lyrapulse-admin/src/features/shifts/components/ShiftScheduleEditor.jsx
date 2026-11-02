@@ -1,9 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import {
-  Alert, Box, Button, FormControlLabel, Paper, Stack, Switch, Table, TableBody, TableCell, TableContainer,
-  TableHead, TableRow, TextField, Typography,
+  Alert, Button, FormControl, FormControlLabel, MenuItem, Paper, Select, Stack,
+  Switch, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography,
 } from '@mui/material'
-import { Clipboard, ClipboardPaste, Coffee, WandSparkles } from 'lucide-react'
 
 export const WEEKDAYS = [
   ['SUNDAY', 'Sunday'], ['MONDAY', 'Monday'], ['TUESDAY', 'Tuesday'], ['WEDNESDAY', 'Wednesday'],
@@ -45,14 +44,92 @@ function updateDay(days, weekday, patch) {
   return days.map((day) => day.weekday === weekday ? { ...day, ...patch } : day)
 }
 
+function timeParts(value) {
+  if (!value) return { hour: '', minute: '', period: '' }
+  const [hour24, minute] = value.slice(0, 5).split(':').map(Number)
+  return {
+    hour: String((hour24 % 12) || 12).padStart(2, '0'),
+    minute: String(minute).padStart(2, '0'),
+    period: hour24 >= 12 ? 'PM' : 'AM',
+  }
+}
+
+function timeValue(parts) {
+  if (!parts.hour || !parts.minute || !parts.period) return null
+  const hour = Number(parts.hour) % 12 + (parts.period === 'PM' ? 12 : 0)
+  return `${String(hour).padStart(2, '0')}:${parts.minute}`
+}
+
+export function formatTimeAmPm(value) {
+  if (!value) return ''
+  const parts = timeParts(value)
+  return `${parts.hour}:${parts.minute} ${parts.period}`
+}
+
+export function formatScheduleSummary(value) {
+  return value?.replace(/\b([01]\d|2[0-3]):([0-5]\d)\b/g, (_match, hour, minute) =>
+    formatTimeAmPm(`${hour}:${minute}`)) ?? value
+}
+
+function isValidCommonTiming(common) {
+  if (!common.start_time || !common.end_time || common.end_time <= common.start_time) return false
+  if (!common.has_break) return true
+  return Boolean(common.break_start_time && common.break_end_time
+    && common.start_time < common.break_start_time
+    && common.break_start_time < common.break_end_time
+    && common.break_end_time < common.end_time)
+}
+
+function TimePicker({ value, onChange, label, disabled = false }) {
+  const parts = timeParts(value)
+  const changePart = (key, nextValue) => {
+    const changed = { ...parts, [key]: nextValue }
+    const complete = {
+      hour: changed.hour || '12',
+      minute: changed.minute || '00',
+      period: changed.period || 'AM',
+    }
+    onChange(timeValue(complete))
+  }
+  const selectSx = {
+    height: 36, fontSize: '0.8125rem',
+    '& .MuiSelect-select': { px: 0.75, py: 0.75, minHeight: 'unset', display: 'flex', alignItems: 'center' },
+    '& .MuiOutlinedInput-notchedOutline': { border: 0 },
+  }
+  return (
+    <Stack direction="row" spacing={0} alignItems="center" role="group" aria-label={label}
+      sx={{ width: 'fit-content', height: 40, border: 1, borderColor: 'divider', borderRadius: 1, overflow: 'hidden', bgcolor: disabled ? 'action.disabledBackground' : 'background.paper', '&:focus-within': { borderColor: 'primary.main', boxShadow: (theme) => `0 0 0 1px ${theme.palette.primary.main}` } }}>
+      <FormControl size="small" sx={{ width: 58, flexShrink: 0 }}>
+        <Select value={parts.hour} displayEmpty disabled={disabled} onChange={(event) => changePart('hour', event.target.value)} inputProps={{ 'aria-label': `${label} hour` }} sx={selectSx}>
+          <MenuItem value="" disabled>HH</MenuItem>
+          {Array.from({ length: 12 }, (_, index) => String(index + 1).padStart(2, '0')).map((hour) => <MenuItem key={hour} value={hour}>{hour}</MenuItem>)}
+        </Select>
+      </FormControl>
+      <Typography color="text.secondary" sx={{ px: 0.25 }}>:</Typography>
+      <FormControl size="small" sx={{ width: 58, flexShrink: 0 }}>
+        <Select value={parts.minute} displayEmpty disabled={disabled} onChange={(event) => changePart('minute', event.target.value)} inputProps={{ 'aria-label': `${label} minute` }} sx={selectSx}>
+          <MenuItem value="" disabled>MM</MenuItem>
+          {Array.from({ length: 60 }, (_, index) => String(index).padStart(2, '0')).map((minute) => <MenuItem key={minute} value={minute}>{minute}</MenuItem>)}
+        </Select>
+      </FormControl>
+      <FormControl size="small" sx={{ width: 84, flexShrink: 0, borderLeft: 1, borderColor: 'divider' }}>
+        <Select value={parts.period} displayEmpty disabled={disabled} onChange={(event) => changePart('period', event.target.value)} inputProps={{ 'aria-label': `${label} AM or PM` }} sx={selectSx}>
+          <MenuItem value="" disabled>AM/PM</MenuItem>
+          <MenuItem value="AM">AM</MenuItem>
+          <MenuItem value="PM">PM</MenuItem>
+        </Select>
+      </FormControl>
+    </Stack>
+  )
+}
+
 export function ShiftScheduleEditor({ days, onChange, errors = {} }) {
   const [common, setCommon] = useState({ start_time: '', end_time: '', has_break: false, break_start_time: '', break_end_time: '' })
-  const [copied, setCopied] = useState(null)
   const workingCount = days.filter((day) => day.is_working).length
-  const weeklySeconds = useMemo(() => days.reduce((sum, day) => sum + (scheduledSeconds(day) ?? 0), 0), [days])
+  const commonTimingValid = isValidCommonTiming(common)
 
   const applyCommon = () => {
-    if (!common.start_time || !common.end_time || !workingCount) return
+    if (!commonTimingValid || !workingCount) return
     onChange(days.map((day) => day.is_working ? {
       ...day,
       start_time: common.start_time,
@@ -63,60 +140,67 @@ export function ShiftScheduleEditor({ days, onChange, errors = {} }) {
     } : day))
   }
 
-  const toggleWorking = (day, enabled) => onChange(updateDay(days, day.weekday, enabled
-    ? { is_working: true }
-    : { is_working: false, start_time: null, end_time: null, break_start_time: null, break_end_time: null, break_enabled: false }))
+  const toggleWorking = (day, enabled) => onChange(updateDay(days, day.weekday, { is_working: enabled }))
 
   const toggleBreak = (day, enabled) => onChange(updateDay(days, day.weekday, enabled
     ? { break_enabled: true }
     : { break_enabled: false, break_start_time: null, break_end_time: null }))
 
   const timeField = (day, key, label, disabled = false) => (
-    <TextField
-      type="time" size="small" value={day[key] ?? ''} disabled={disabled}
-      onChange={(event) => onChange(updateDay(days, day.weekday, { [key]: event.target.value || null }))}
-      label={label} slotProps={{ inputLabel: { shrink: true }, htmlInput: { step: 300, 'aria-label': `${label} ${day.weekday.toLowerCase()}` } }}
-      sx={{ width: { xs: 142, sm: 150 }, '& .MuiInputBase-input': { fontVariantNumeric: 'tabular-nums' } }}
-    />
+    <Stack spacing={0.25}>
+      <Typography variant="caption" color="text.secondary">{label}</Typography>
+      <TimePicker value={day[key]} disabled={disabled} label={`${label} ${day.weekday.toLowerCase()}`} onChange={(value) => onChange(updateDay(days, day.weekday, { [key]: value }))} />
+    </Stack>
   )
 
   return (
     <Stack spacing={2}>
-      <Paper variant="outlined" sx={{ p: { xs: 1.5, sm: 2 }, bgcolor: 'info.light' }}>
-        <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} alignItems={{ md: 'center' }} justifyContent="space-between">
-          <Box>
-            <Typography variant="subtitle1" fontWeight={700}>Common shift timing</Typography>
-            <Typography variant="body2" color="text.secondary">Set one schedule and apply it to the working days below.</Typography>
-          </Box>
-          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-            <TextField type="time" size="small" label="Start time" value={common.start_time} onChange={(e) => setCommon((v) => ({ ...v, start_time: e.target.value }))} slotProps={{ inputLabel: { shrink: true }, htmlInput: { step: 300 } }} sx={{ width: 150, bgcolor: 'background.paper' }} />
-            <TextField type="time" size="small" label="End time" value={common.end_time} onChange={(e) => setCommon((v) => ({ ...v, end_time: e.target.value }))} slotProps={{ inputLabel: { shrink: true }, htmlInput: { step: 300 } }} sx={{ width: 150, bgcolor: 'background.paper' }} />
+      <Paper variant="outlined" sx={{ p: { xs: 1.5, sm: 2 } }}>
+        <Stack spacing={1.5}>
+          <Typography variant="subtitle1" fontWeight={700}>Common shift timing</Typography>
+          <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} alignItems={{ md: 'flex-end' }}>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
+              <Stack spacing={0.5}>
+                <Typography variant="body2" fontWeight={600}>Start Time</Typography>
+                <TimePicker label="Common start time" value={common.start_time} onChange={(value) => setCommon((v) => ({ ...v, start_time: value ?? '' }))} />
+              </Stack>
+              <Stack spacing={0.5}>
+                <Typography variant="body2" fontWeight={600}>End Time</Typography>
+                <TimePicker label="Common end time" value={common.end_time} onChange={(value) => setCommon((v) => ({ ...v, end_time: value ?? '' }))} />
+              </Stack>
+            </Stack>
             <FormControlLabel
-              sx={{ mx: 0, px: 1, borderRadius: 1, bgcolor: 'background.paper' }}
+              sx={{ m: 0, minHeight: 40, px: 1, border: 1, borderColor: 'divider', borderRadius: 1, alignSelf: { xs: 'flex-start', md: 'flex-end' } }}
               control={<Switch size="small" checked={common.has_break} onChange={(e) => setCommon((v) => ({ ...v, has_break: e.target.checked }))} />}
-              label={<Typography variant="body2"><Coffee size={14} style={{ verticalAlign: 'middle', marginRight: 5 }} />Add break</Typography>}
+              label={<Typography variant="body2">Add break</Typography>}
             />
           </Stack>
-        </Stack>
-        {common.has_break ? (
-          <Stack direction="row" spacing={1} sx={{ mt: 1.5 }}>
-            <TextField type="time" size="small" label="Break start" value={common.break_start_time} onChange={(e) => setCommon((v) => ({ ...v, break_start_time: e.target.value }))} slotProps={{ inputLabel: { shrink: true }, htmlInput: { step: 300 } }} sx={{ width: 150, bgcolor: 'background.paper' }} />
-            <TextField type="time" size="small" label="Break end" value={common.break_end_time} onChange={(e) => setCommon((v) => ({ ...v, break_end_time: e.target.value }))} slotProps={{ inputLabel: { shrink: true }, htmlInput: { step: 300 } }} sx={{ width: 150, bgcolor: 'background.paper' }} />
+
+          {common.has_break ? (
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ pt: 1.5, borderTop: 1, borderColor: 'divider' }}>
+              <Stack spacing={0.4}>
+                <Typography variant="caption" color="text.secondary">Break start</Typography>
+                <TimePicker label="Common break start" value={common.break_start_time} onChange={(value) => setCommon((v) => ({ ...v, break_start_time: value ?? '' }))} />
+              </Stack>
+              <Stack spacing={0.4}>
+                <Typography variant="caption" color="text.secondary">Break end</Typography>
+                <TimePicker label="Common break end" value={common.break_end_time} onChange={(value) => setCommon((v) => ({ ...v, break_end_time: value ?? '' }))} />
+              </Stack>
+            </Stack>
+          ) : null}
+
+          <Stack direction="row">
+            <Button size="small" variant="outlined"
+              disabled={!commonTimingValid || workingCount === 0} onClick={applyCommon}>
+              Apply to {workingCount} working {workingCount === 1 ? 'day' : 'days'}
+            </Button>
           </Stack>
-        ) : null}
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ sm: 'center' }} sx={{ mt: 1.5 }}>
-          <Button size="small" variant="contained" startIcon={<WandSparkles size={16} />} disabled={!common.start_time || !common.end_time || workingCount === 0} onClick={applyCommon}>
-            Apply to working days
-          </Button>
-          <Typography variant="caption" color="text.secondary">
-            {workingCount ? `Updates ${workingCount} enabled ${workingCount === 1 ? 'day' : 'days'}.` : 'Enable working days below first.'}
-          </Typography>
         </Stack>
       </Paper>
 
       {errors.days ? <Alert severity="error">{errors.days}</Alert> : null}
       <TableContainer component={Paper} variant="outlined" sx={{ maxWidth: '100%', overflowX: 'auto' }}>
-        <Table size="small" sx={{ minWidth: 910 }} aria-label="Weekly shift schedule">
+        <Table size="small" sx={{ minWidth: 1040 }} aria-label="Weekly shift schedule">
           <TableHead>
             <TableRow sx={{ bgcolor: 'info.light' }}>
               <TableCell sx={{ fontWeight: 700 }}>Day</TableCell>
@@ -124,14 +208,13 @@ export function ShiftScheduleEditor({ days, onChange, errors = {} }) {
               <TableCell sx={{ fontWeight: 700 }}>Shift timing</TableCell>
               <TableCell sx={{ fontWeight: 700 }}>Break</TableCell>
               <TableCell sx={{ fontWeight: 700 }}>Scheduled hours</TableCell>
-              <TableCell align="right" sx={{ fontWeight: 700 }}>Action</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {days.map((day) => (
-              <TableRow key={day.weekday} sx={{ '&:last-child td': { borderBottom: 0 } }}>
-                <TableCell sx={{ minWidth: 108, fontWeight: 600 }}>{WEEKDAYS.find(([key]) => key === day.weekday)?.[1]}</TableCell>
-                <TableCell sx={{ minWidth: 115 }}>
+              <TableRow key={day.weekday} sx={{ height: 58, opacity: day.is_working ? 1 : 0.72, '&:last-child td': { borderBottom: 0 } }}>
+                <TableCell sx={{ minWidth: 96, fontWeight: 600 }}>{WEEKDAYS.find(([key]) => key === day.weekday)?.[1]}</TableCell>
+                <TableCell sx={{ minWidth: 88 }}>
                   <FormControlLabel
                     sx={{ m: 0 }}
                     control={<Switch size="small" checked={day.is_working} onChange={(e) => toggleWorking(day, e.target.checked)} inputProps={{ 'aria-label': `${day.weekday} is a working day` }} />}
@@ -147,7 +230,7 @@ export function ShiftScheduleEditor({ days, onChange, errors = {} }) {
                     </Stack>
                   ) : <Typography variant="body2" color="text.secondary">Not scheduled</Typography>}
                 </TableCell>
-                <TableCell sx={{ minWidth: 210 }}>
+                <TableCell sx={{ minWidth: 350 }}>
                   {day.is_working ? (
                     <Stack spacing={0.5}>
                       <FormControlLabel
@@ -160,31 +243,14 @@ export function ShiftScheduleEditor({ days, onChange, errors = {} }) {
                         {timeField(day, 'break_end_time', 'Break end')}
                       </Stack> : null}
                     </Stack>
-                  ) : <Typography variant="body2" color="text.secondary">—</Typography>}
+                  ) : <Typography variant="body2" color="text.secondary">No break</Typography>}
                 </TableCell>
                 <TableCell sx={{ whiteSpace: 'nowrap', fontWeight: 600 }}>{formatDuration(scheduledSeconds(day))}</TableCell>
-                <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>
-                  {copied?.weekday === day.weekday ? (
-                    <Button size="small" disabled>Copied</Button>
-                  ) : copied ? (
-                    <Button size="small" startIcon={<ClipboardPaste size={15} />} onClick={() => { onChange(updateDay(days, day.weekday, { ...copied, weekday: day.weekday })); setCopied(null) }}>Paste</Button>
-                  ) : (
-                    <Button size="small" startIcon={<Clipboard size={15} />} disabled={!day.is_working} onClick={() => setCopied({
-                      weekday: day.weekday, is_working: day.is_working, start_time: day.start_time, end_time: day.end_time,
-                      break_start_time: day.break_start_time, break_end_time: day.break_end_time,
-                      break_enabled: day.break_enabled ?? Boolean(day.break_start_time && day.break_end_time),
-                    })}>Copy</Button>
-                  )}
-                </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </TableContainer>
-      <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" spacing={0.5}>
-        <Typography variant="body2" color="text.secondary">Scheduled hours are planned shift time minus the planned break. Attendance hours remain separate.</Typography>
-        <Typography variant="body2" fontWeight={700}>Weekly total: {formatDuration(weeklySeconds)}</Typography>
-      </Stack>
     </Stack>
   )
 }

@@ -93,6 +93,24 @@ class ShiftManagementTests(TestCase):
         self.assertEqual(response.status_code, 201, response.data)
         self.assertTrue(ShiftAssignment.objects.filter(employee=self.employee, shift_id=shift["id"]).exists())
 
+    def test_week_off_days_are_optional_for_single_and_bulk_assignment(self):
+        shift = self.create_shift()
+        single = self.client.post("/api/v1/shift-assignments/", {
+            "employee_id": self.employee.pk, "shift_id": shift["id"],
+            "effective_from": timezone.localdate().isoformat(),
+        }, format="json")
+        self.assertEqual(single.status_code, 201, single.data)
+        self.assertEqual(single.data["data"]["week_off_days"], [])
+
+        another_user = User.objects.create_user("9000000005")
+        another_employee = Employee.objects.create(employee_code="EMP-4", user=another_user, branch=self.branch)
+        bulk = self.client.post("/api/v1/shift-assignments/bulk/", {
+            "employee_ids": [another_employee.pk], "shift_id": shift["id"],
+            "effective_from": timezone.localdate().isoformat(),
+        }, format="json")
+        self.assertEqual(bulk.status_code, 201, bulk.data)
+        self.assertEqual(bulk.data["data"]["results"][0]["week_off_days"], [])
+
     def test_bulk_assignment_is_atomic_when_any_employee_invalid(self):
         second_user = User.objects.create_user("9000000003")
         second_employee = Employee.objects.create(employee_code="EMP-2", user=second_user, branch=self.branch, is_active=False)

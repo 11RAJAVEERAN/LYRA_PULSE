@@ -6,6 +6,7 @@ export const shiftKeys = {
   list: (params) => ['shifts', 'list', params],
   detail: (id) => ['shifts', 'detail', id],
   assignments: (params) => ['shift-assignments', 'list', params],
+  allAssignments: (params) => ['shift-assignments', 'all', params],
   history: (employeeId, params) => ['shift-assignments', 'history', employeeId, params],
   branches: ['shift-options', 'branches'],
   departments: ['shift-options', 'departments'],
@@ -37,6 +38,20 @@ export function useShiftAssignments(params) {
   })
 }
 
+export function useAllShiftAssignments(params) {
+  return useQuery({
+    queryKey: shiftKeys.allAssignments(params),
+    queryFn: ({ signal }) => shiftsApi.listAllAssignments(params, signal),
+  })
+}
+
+export function useAllShifts(params) {
+  return useQuery({
+    queryKey: ['shifts', 'all', params],
+    queryFn: ({ signal }) => shiftsApi.listAll(params, signal),
+  })
+}
+
 export function useAssignmentHistory(employeeId, params, enabled = true) {
   return useQuery({
     queryKey: shiftKeys.history(employeeId, params),
@@ -52,11 +67,12 @@ export function useShiftOptions() {
   return { branches, departments, designations }
 }
 
-export function useEmployeesForBranch(branch) {
+export function useEmployeesForBranch(filters, enabled = true) {
+  const params = typeof filters === 'object' && filters !== null ? filters : filters ? { branch: filters } : {}
   return useQuery({
-    queryKey: shiftKeys.employees(branch),
-    queryFn: ({ signal }) => shiftsApi.employees(branch, signal),
-    enabled: Boolean(branch),
+    queryKey: shiftKeys.employees(params),
+    queryFn: ({ signal }) => shiftsApi.employees(params, signal),
+    enabled,
   })
 }
 
