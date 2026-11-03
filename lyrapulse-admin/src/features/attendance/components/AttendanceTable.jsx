@@ -41,7 +41,7 @@ export function AttendanceTable({ rows, loading, showDate, onOpen }) {
 
   return (
     <TableContainer sx={{ border: 0, borderRadius: 0 }}>
-      <Table size="small" sx={{ minWidth: 900 }} aria-label="Attendance records">
+      <Table size="small" sx={{ minWidth: 900, '& .MuiTableBody-root .MuiTableRow-root': { height: 64, '& > .MuiTableCell-root': { py: 1.25, px: 1.5, fontSize: '0.875rem', verticalAlign: 'middle', whiteSpace: 'nowrap' } } }} aria-label="Attendance records">
         <TableHead>
           <TableRow>
             <TableCell>Employee</TableCell>

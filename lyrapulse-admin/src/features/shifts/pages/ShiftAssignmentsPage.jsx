@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import {
-  Alert, Box, Button, Checkbox, Chip, LinearProgress, MenuItem, Paper, Snackbar, Stack, Table,
-  TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow, TextField, Typography,
+  Alert, Box, Button, Checkbox, LinearProgress, MenuItem, Paper, Snackbar, Stack, Table,
+  TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow, TextField, Tooltip, Typography,
 } from '@mui/material'
 import { History, Plus } from 'lucide-react'
 import { authService } from '../../../services/authService'
@@ -27,26 +27,50 @@ const errorText = (error) => {
   return error?.message ?? 'Unable to complete this request.'
 }
 
-const weekdayNames = {
-  SUNDAY: 'Sun', MONDAY: 'Mon', TUESDAY: 'Tue', WEDNESDAY: 'Wed',
-  THURSDAY: 'Thu', FRIDAY: 'Fri', SATURDAY: 'Sat',
+const weekdayLabels = [
+  ['SUNDAY', 'Sunday', 'S'], ['MONDAY', 'Monday', 'M'], ['TUESDAY', 'Tuesday', 'T'],
+  ['WEDNESDAY', 'Wednesday', 'W'], ['THURSDAY', 'Thursday', 'T'], ['FRIDAY', 'Friday', 'F'],
+  ['SATURDAY', 'Saturday', 'S'],
+]
+
+function scheduleTimeText(shift) {
+  const days = shift?.current_schedule?.days?.filter((day) => day.is_working) ?? []
+  if (!days.length) return 'Schedule unavailable'
+  const ranges = [...new Set(days.filter((day) => day.start_time && day.end_time).map((day) => `${day.start_time}|${day.end_time}`))]
+  return ranges.length ? ranges.map((range) => {
+    const [start, end] = range.split('|')
+    return `${formatTimeAmPm(start)} – ${formatTimeAmPm(end)}`
+  }).join(' · ') : 'Schedule unavailable'
 }
 
-function scheduleText(shift) {
-  const days = shift?.current_schedule?.days?.filter((day) => day.is_working) ?? []
-  if (!days.length) return shift?.schedule_summary === 'Varies by day' ? 'Varies by day' : 'Schedule unavailable'
-  const ranges = new Map()
-  days.forEach((day) => {
-    const key = `${day.start_time}|${day.end_time}`
-    ranges.set(key, [...(ranges.get(key) ?? []), day.weekday])
-  })
-  return [...ranges.entries()].map(([range, weekdays]) => {
-    const [start, end] = range.split('|')
-    const dayLabel = weekdays.length === 5 && weekdays[0] === 'MONDAY' && weekdays[4] === 'FRIDAY'
-      ? 'Mon–Fri'
-      : weekdays.map((weekday) => weekdayNames[weekday]).join(', ')
-    return `${dayLabel} · ${formatTimeAmPm(start)}–${formatTimeAmPm(end)}`
-  }).join('  |  ')
+function scheduleDaysText(shift) {
+  const schedule = shift?.current_schedule?.days
+  if (!schedule?.length) return '—'
+  const workdays = new Set(schedule.filter((day) => day.is_working).map((day) => day.weekday))
+  return (
+    <Stack direction="row" spacing={0.25} flexWrap="nowrap" sx={{ whiteSpace: 'nowrap' }} aria-label="Shift working days">
+      {weekdayLabels.map(([weekday, name, letter]) => {
+        const active = workdays.has(weekday)
+        return <Tooltip key={weekday} title={name}>
+          <Box component="span" aria-label={`${name}: ${active ? 'working' : 'off'}`} sx={{
+            width: 20, height: 22, flex: '0 0 20px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+            borderRadius: 0.75, bgcolor: active ? 'info.light' : 'action.hover', color: active ? 'text.primary' : 'text.secondary',
+            fontSize: '0.75rem', lineHeight: 1, fontWeight: 700,
+          }}>{letter}</Box>
+        </Tooltip>
+      })}
+    </Stack>
+  )
+}
+
+function dateText(value) {
+  if (!value) return '—'
+  const date = new Date(`${value.slice(0, 10)}T00:00:00`)
+  return new Intl.DateTimeFormat(undefined, { day: '2-digit', month: 'short', year: 'numeric' }).format(date)
+}
+
+function employeeName(employee) {
+  return employee.display_name?.trim() || employee.name || `${employee.first_name ?? ''} ${employee.last_name ?? ''}`.trim()
 }
 
 function assignmentIndex(assignments) {
@@ -62,10 +86,6 @@ function assignmentIndex(assignments) {
     const previous = rows.filter((row) => row.assignment_state === 'EXPIRED').sort((a, b) => b.effective_from.localeCompare(a.effective_from))[0] ?? null
     return [employeeId, { current, future, previous }]
   }))
-}
-
-function employeeName(employee) {
-  return employee.display_name?.trim() || employee.name || `${employee.first_name ?? ''} ${employee.last_name ?? ''}`.trim()
 }
 
 export function ShiftAssignmentsPage() {
@@ -179,38 +199,40 @@ export function ShiftAssignmentsPage() {
   return <Box>
     <PageHeader
       title="Shift Assignments"
-      subtitle="Assign shifts to employees and review their assignment history."
+      subtitle="Assign shifts to employees and manage their work schedules."
       action={canAssign ? (
         <Button variant="contained" startIcon={<Plus size={17} />} disabled={mixedBranchSelection}
           onClick={() => setDialogOpen(true)}>
-          {selected.length ? `Assign to selected (${selected.length})` : 'Assign Shift'}
+          Assign Shift
         </Button>
       ) : null}
     />
     <Paper variant="outlined" sx={{ overflow: 'hidden' }}>
-      <Stack direction={{ xs: 'column', lg: 'row' }} spacing={1.25} sx={{ p: 2 }}>
-        <Box sx={{ flex: '1 1 260px', maxWidth: { lg: 360 } }}>
-          <SearchInput value={search} onChange={(value) => { setSearch(value); setPage(0) }} placeholder="Search employees…" label="Search employees" />
+      <Stack direction="row" flexWrap="wrap" spacing={1.25} useFlexGap sx={{ p: 2, alignItems: 'center' }}>
+        <Box sx={{ flex: '2 1 300px', minWidth: 260 }}>
+          <SearchInput value={search} onChange={(value) => { setSearch(value); setPage(0) }} placeholder="Search employee name or ID..." label="Search employee name or ID" />
         </Box>
-        <TextField select size="small" label="Branch" value={branch} onChange={changeFilter(setBranch)} sx={{ minWidth: 170 }}>
+        <TextField select size="small" label="Branch" value={branch} onChange={changeFilter(setBranch)} sx={{ flex: '1 1 150px', minWidth: 145 }}>
           <MenuItem value="">All branches</MenuItem>{(options.branches.data ?? []).map((item) => <MenuItem key={item.id} value={String(item.id)}>{item.name}</MenuItem>)}
         </TextField>
-        <TextField select size="small" label="Department" value={department} onChange={changeFilter(setDepartment)} sx={{ minWidth: 170 }}>
+        <TextField select size="small" label="Department" value={department} onChange={changeFilter(setDepartment)} sx={{ flex: '1 1 150px', minWidth: 145 }}>
           <MenuItem value="">All departments</MenuItem>{(options.departments.data ?? []).map((item) => <MenuItem key={item.id} value={String(item.id)}>{item.name}</MenuItem>)}
         </TextField>
-        <TextField select size="small" label="Designation" value={designation} onChange={changeFilter(setDesignation)} sx={{ minWidth: 170 }}>
+        <TextField select size="small" label="Designation" value={designation} onChange={changeFilter(setDesignation)} sx={{ flex: '1 1 150px', minWidth: 145 }}>
           <MenuItem value="">All designations</MenuItem>{(options.designations.data ?? []).map((item) => <MenuItem key={item.id} value={String(item.id)}>{item.name}</MenuItem>)}
         </TextField>
-        <TextField select size="small" label="Status" value={status} onChange={changeFilter(setStatus)} sx={{ minWidth: 150 }}>
-          <MenuItem value="all">All employees</MenuItem><MenuItem value="current">Assigned</MenuItem><MenuItem value="unassigned">Unassigned</MenuItem><MenuItem value="future">Future assignment</MenuItem><MenuItem value="expired">Previous assignment</MenuItem>
+        <TextField select size="small" label="Employee Status" value={status} onChange={changeFilter(setStatus)} sx={{ flex: '1 1 150px', minWidth: 145 }}>
+          <MenuItem value="all">All Employees</MenuItem><MenuItem value="current">Assigned</MenuItem><MenuItem value="unassigned">Unassigned</MenuItem><MenuItem value="future">Future assignment</MenuItem><MenuItem value="expired">Previous assignment</MenuItem>
         </TextField>
       </Stack>
       {canAssign && selected.length ? (
-        <Stack direction="row" alignItems="center" spacing={1} sx={{ px: 2, pb: 1.5 }}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} alignItems={{ sm: 'center' }} justifyContent="space-between" spacing={1.5} sx={{ mx: 2, mb: 1.5, px: 1.5, py: 1, border: 1, borderColor: 'divider', borderRadius: 1 }}>
           <Typography variant="body2" fontWeight={600}>{selected.length} employee{selected.length === 1 ? '' : 's'} selected</Typography>
-          {mixedBranchSelection ? <Alert severity="warning" sx={{ py: 0 }}>Choose employees from one branch.</Alert> : null}
-          <Button size="small" disabled={mixedBranchSelection} onClick={() => setDialogOpen(true)}>Assign Shift</Button>
-          <Button size="small" onClick={resetSelection}>Clear selection</Button>
+          <Stack direction={{ xs: 'column', sm: 'row' }} flexWrap="wrap" alignItems={{ sm: 'center' }} spacing={1}>
+            {mixedBranchSelection ? <Alert severity="warning" sx={{ py: 0 }}>Choose employees from one branch.</Alert> : null}
+            <Button size="small" variant="contained" disabled={mixedBranchSelection} onClick={() => setDialogOpen(true)}>Assign Shift</Button>
+            <Button size="small" onClick={resetSelection}>Clear Selection</Button>
+          </Stack>
         </Stack>
       ) : null}
       {isLoading ? <LinearProgress aria-label="Loading employees and shift assignments" /> : null}
@@ -220,19 +242,20 @@ export function ShiftAssignmentsPage() {
         <EmptyState compact title={normalizedSearch || status !== 'all' ? 'No employees match these filters' : 'No employees found'} description="Try changing the filters or clearing the search." />
       ) : (
         <TableContainer sx={{ overflowX: 'auto' }}>
-          <Table size="small" sx={{ minWidth: 1000 }} aria-label="Employee shift assignments">
-            <TableHead><TableRow sx={{ bgcolor: 'info.light' }}>
+          <Table size="small" sx={{ minWidth: canAssign ? 1600 : 1550, tableLayout: 'fixed', '& .MuiTableBody-root .MuiTableRow-root': { height: 64, '& > .MuiTableCell-root': { py: 1.25, px: 1.5, fontSize: '0.875rem', verticalAlign: 'middle', whiteSpace: 'nowrap' } } }} aria-label="Employee shift assignments">
+            <TableHead><TableRow sx={{ bgcolor: 'info.light', height: 48 }}>
               {canAssign ? <TableCell padding="checkbox" sx={{ width: 48 }}>
                 <Checkbox size="small" checked={allVisibleSelected} indeterminate={!allVisibleSelected && someVisibleSelected}
                   disabled={pageSelectable.length === 0} onChange={togglePageSelection} inputProps={{ 'aria-label': 'Select all employees on this page' }} />
               </TableCell> : null}
-              {['Employee', 'Role / Designation', 'Branch', 'Current Shift', 'Effective Period', 'Week Off', 'Status', 'History'].map((label) => <TableCell key={label} sx={{ fontWeight: 700, whiteSpace: 'nowrap', color: 'primary.main' }}>{label}</TableCell>)}
+              {['Employee', 'Designation', 'Branch', 'Assigned Shift', 'Working Days', 'Effective From', 'Week Off', 'Status', 'Actions'].map((label, index) => <TableCell key={label} align={label === 'Status' ? 'center' : undefined} sx={{ width: [210, 180, 155, 245, 180, 185, 115, 110, 110][index], fontWeight: 700, whiteSpace: 'nowrap', color: 'primary.main' }}>{label}</TableCell>)}
             </TableRow></TableHead>
             <TableBody>
               {pageRows.map((employee) => {
                 const assignment = assignmentByEmployee.get(employee.id) ?? {}
                 const displayedAssignment = assignment.current ?? assignment.future ?? assignment.previous
-                const currentShift = assignment.current ? shiftsById.get(assignment.current.shift.id) : null
+                const scheduledAssignment = assignment.current ?? assignment.future
+                const displayedShift = scheduledAssignment ? shiftsById.get(scheduledAssignment.shift.id) : null
                 const selectedEmployee = selectedIds.has(employee.id)
                 return (
                   <TableRow key={employee.id} hover selected={selectedEmployee}>
@@ -240,20 +263,26 @@ export function ShiftAssignmentsPage() {
                       <Checkbox size="small" checked={selectedEmployee} disabled={!employee.is_active || !employee.branch}
                         onChange={() => toggleEmployee(employee)} inputProps={{ 'aria-label': `Select ${employeeName(employee)}` }} />
                     </TableCell> : null}
-                    <TableCell sx={{ minWidth: 180 }}>
-                      <Typography variant="body2" fontWeight={700}>{employeeName(employee)}</Typography>
-                      <Typography variant="caption" color="text.secondary">{employee.employee_code}</Typography>
+                    <TableCell sx={{ width: 210 }}>
+                      <Tooltip title={employeeName(employee)}><Typography variant="body2" fontWeight={700} noWrap>{employeeName(employee)}</Typography></Tooltip>
+                      <Typography variant="caption" color="text.secondary" noWrap>{employee.employee_code || '—'}</Typography>
                     </TableCell>
-                    <TableCell sx={{ minWidth: 150 }}>{employee.designation ? designationsById.get(employee.designation) ?? '—' : '—'}</TableCell>
-                    <TableCell>{branchesById.get(employee.branch) ?? '—'}</TableCell>
-                    <TableCell sx={{ minWidth: 210 }}>
-                      {currentShift ? <Stack spacing={0.25}><Typography variant="body2" fontWeight={600}>{assignment.current.shift.name}</Typography><Typography variant="caption" color="text.secondary">{scheduleText(currentShift)}</Typography></Stack>
-                        : <Stack spacing={0.25}><Chip size="small" variant="outlined" label="Not Assigned" sx={{ width: 'fit-content' }} />{assignment.future ? <Typography variant="caption" color="text.secondary">Upcoming: {assignment.future.shift.name} · {assignment.future.effective_from}</Typography> : null}{assignment.previous && !assignment.future ? <Typography variant="caption" color="text.secondary">Previous: {assignment.previous.shift.name}</Typography> : null}</Stack>}
+                    <TableCell sx={{ width: 180 }}><Tooltip title={employee.designation ? designationsById.get(employee.designation) ?? '' : ''}><Typography variant="body2" noWrap>{employee.designation ? designationsById.get(employee.designation) ?? '—' : '—'}</Typography></Tooltip></TableCell>
+                    <TableCell sx={{ width: 155 }}><Tooltip title={branchesById.get(employee.branch) ?? ''}><Typography variant="body2" noWrap>{branchesById.get(employee.branch) ?? '—'}</Typography></Tooltip></TableCell>
+                    <TableCell sx={{ width: 245 }}>
+                      {displayedShift ? <Stack spacing={0.25} sx={{ minWidth: 0 }}>
+                        <Tooltip title={scheduledAssignment.shift.name}><Typography variant="body2" fontWeight={600} noWrap>{scheduledAssignment.shift.name}</Typography></Tooltip>
+                        <Tooltip title={scheduleTimeText(displayedShift)}><Typography variant="caption" color="text.secondary" noWrap>{assignment.future && !assignment.current ? 'Upcoming · ' : ''}{scheduleTimeText(displayedShift)}</Typography></Tooltip>
+                      </Stack> : <Stack spacing={0.25}>
+                        <Typography variant="body2" color="text.secondary">No shift assigned</Typography>
+                        {assignment.previous ? <Typography variant="caption" color="text.secondary" noWrap>Previous: {assignment.previous.shift.name}</Typography> : null}
+                      </Stack>}
                     </TableCell>
-                    <TableCell sx={{ whiteSpace: 'nowrap' }}>{displayedAssignment ? `${displayedAssignment.effective_from} — ${displayedAssignment.effective_to ?? 'No end date'}` : '—'}</TableCell>
-                    <TableCell>{displayedAssignment?.week_off_days?.join(', ') || '—'}</TableCell>
-                    <TableCell><StatusChip label={assignment.current ? 'Assigned' : 'Unassigned'} color={assignment.current ? 'success' : 'default'} /></TableCell>
-                    <TableCell><Button size="small" startIcon={<History size={15} />} onClick={() => setHistoryEmployee({ id: employee.id, name: employeeName(employee), employee_code: employee.employee_code })}>History</Button></TableCell>
+                    <TableCell sx={{ width: 180 }}>{displayedShift ? scheduleDaysText(displayedShift) : '—'}</TableCell>
+                    <TableCell sx={{ width: 185, whiteSpace: 'nowrap' }}>{displayedAssignment ? <Stack spacing={0.25}><Typography variant="body2">{dateText(displayedAssignment.effective_from)}</Typography>{displayedAssignment.effective_to ? <Typography variant="caption" color="text.secondary">to {dateText(displayedAssignment.effective_to)}</Typography> : null}</Stack> : '—'}</TableCell>
+                    <TableCell sx={{ width: 115, whiteSpace: 'nowrap' }}>{displayedAssignment?.week_off_days?.length ? displayedAssignment.week_off_days.join(', ') : 'Not set'}</TableCell>
+                    <TableCell align="center" sx={{ width: 110 }}><StatusChip label={assignment.current ? 'Assigned' : 'Unassigned'} color={assignment.current ? 'success' : 'default'} /></TableCell>
+                    <TableCell align="center" sx={{ width: 110 }}><Tooltip title="Assignment History"><Button size="small" aria-label={`Assignment history for ${employeeName(employee)}`} onClick={() => setHistoryEmployee({ id: employee.id, name: employeeName(employee), employee_code: employee.employee_code })}><History size={17} /></Button></Tooltip></TableCell>
                   </TableRow>
                 )
               })}
