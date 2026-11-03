@@ -15,7 +15,7 @@ class LyraMenuController extends GetxController {
 
   void openProfile() {
     selectedMenu.value = 'My Profile';
-    Get.to(() => ProfileScreen());
+   Get.toNamed('/profile');
   }
 
   void openNotifications() {

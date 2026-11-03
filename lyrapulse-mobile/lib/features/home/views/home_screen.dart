@@ -13,7 +13,6 @@ import '../../attendance/controllers/attendance_controller.dart';
 import '../../calendar/views/calendar_screen.dart';
 import '../../leave/views/leave_screen.dart';
 import '../../notification/views/notification_screen.dart';
-import '../../profile/views/profile_screen.dart';
 import '../widgets/hold_to_confirm_button.dart';
 import '../../menu/views/menu_screen.dart';
 
@@ -278,7 +277,7 @@ void _openPage(int index) {
       _selectTab(3);
       break;
     case 4:
-      Get.to(() => ProfileScreen());
+      Get.toNamed('/profile');
       break;
     case 5:
       Get.to(() => NotificationScreen());
@@ -1347,26 +1346,27 @@ Widget _navItem(
   //   );
   // }
 
-  Widget _drawerItem(
-    IconData icon,
-    String label,
-    VoidCallback onTap, {
-    Color color = AppColors.textPrimary,
-  }) {
-    return ListTile(
-      onTap: onTap,
-      leading: Icon(icon, color: color),
-      title: Text(
-        label,
-        style: GoogleFonts.inter(
-          color: color,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 22),
-      dense: true,
-    );
-  }
+//   Widget _drawerItem(
+//     IconData icon,
+//     String label,
+//     VoidCallback onTap, {
+//     Color color = AppColors.textPrimary,
+//   }) {
+//     return ListTile(
+//       onTap: onTap,
+//       leading: Icon(icon, color: color),
+//       title: Text(
+//         label,
+//         style: GoogleFonts.inter(
+//           color: color,
+//           fontWeight: FontWeight.w600,
+//         ),
+//       ),
+//       contentPadding: const EdgeInsets.symmetric(horizontal: 22),
+//       dense: true,
+//     );
+//   }
+// }
 }
 
 class _ActivityEntry {
