@@ -1,12 +1,12 @@
 import { Box, Typography, useTheme } from '@mui/material'
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 
-// Expects rows shaped { day, present, absent }. Colours come from the active theme.
+// Expects rows shaped { day, present, absent }. Every colour comes from the active theme.
 export function AttendanceChart({ data }) {
   const theme = useTheme()
   const presentColor = theme.palette.info.main
   const absentColor = theme.palette.error.main
-  const surface = theme.palette.background.paper
+  const axisTick = { fill: theme.palette.text.secondary, fontSize: 12 }
   const legend = [
     { label: 'Present', color: presentColor },
     { label: 'Absent', color: absentColor },
@@ -14,68 +14,37 @@ export function AttendanceChart({ data }) {
 
   return (
     <Box sx={{ width: '100%' }}>
-      <Box
-        sx={{
-          width: '100%',
-          height: 285,
-          borderRadius: 2,
-          backgroundColor: surface,
-          border: 1,
-          borderColor: 'divider',
-          overflow: 'hidden',
-        }}
-      >
+      <Box sx={{ width: '100%', height: 280 }}>
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} margin={{ top: 20, right: 18, left: -18, bottom: 12 }}>
+          <AreaChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
             <defs>
               <linearGradient id="presentGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={presentColor} stopOpacity={0.25} />
+                <stop offset="0%" stopColor={presentColor} stopOpacity={0.12} />
                 <stop offset="100%" stopColor={presentColor} stopOpacity={0} />
               </linearGradient>
               <linearGradient id="absentGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={absentColor} stopOpacity={0.16} />
+                <stop offset="0%" stopColor={absentColor} stopOpacity={0.06} />
                 <stop offset="100%" stopColor={absentColor} stopOpacity={0} />
               </linearGradient>
             </defs>
 
-            <CartesianGrid vertical={false} stroke={theme.palette.divider} strokeDasharray="3 6" />
-            <XAxis
-              dataKey="day"
-              axisLine={false}
-              tickLine={false}
-              tick={{ fill: theme.palette.text.secondary, fontSize: 11, fontWeight: 600 }}
-              dy={10}
-            />
-            <YAxis
-              axisLine={false}
-              tickLine={false}
-              tick={{ fill: theme.palette.text.secondary, fontSize: 10 }}
-              width={38}
-            />
+            <CartesianGrid vertical={false} stroke={theme.palette.divider} strokeDasharray="3 4" />
+            <XAxis dataKey="day" axisLine={false} tickLine={false} tick={axisTick} dy={8} />
+            <YAxis axisLine={false} tickLine={false} tick={axisTick} width={32} allowDecimals={false} />
             <Tooltip
-              cursor={{ stroke: presentColor, strokeWidth: 1, strokeDasharray: '5 5' }}
+              cursor={{ stroke: theme.palette.divider, strokeWidth: 1 }}
               contentStyle={{
-                backgroundColor: surface,
+                backgroundColor: theme.palette.background.paper,
                 border: `1px solid ${theme.palette.divider}`,
-                borderRadius: 12,
+                borderRadius: theme.shape.borderRadius,
                 boxShadow: theme.shadows[3],
-                padding: '10px 13px',
+                padding: '8px 12px',
               }}
-              labelStyle={{ color: theme.palette.primary.main, fontSize: 12, fontWeight: 700, marginBottom: 6 }}
-              itemStyle={{ fontSize: 12, fontWeight: 600 }}
+              labelStyle={{ color: theme.palette.text.primary, fontSize: 12, fontWeight: 600, marginBottom: 4 }}
+              itemStyle={{ fontSize: 12, fontWeight: 500, padding: 0 }}
               formatter={(value, name) => [value, name === 'present' ? 'Present' : 'Absent']}
             />
 
-            <Area
-              type="monotone"
-              dataKey="present"
-              name="present"
-              stroke={presentColor}
-              fill="url(#presentGradient)"
-              strokeWidth={3}
-              dot={{ r: 4, fill: presentColor, stroke: surface, strokeWidth: 2 }}
-              activeDot={{ r: 7, fill: presentColor, stroke: surface, strokeWidth: 3 }}
-            />
             <Area
               type="monotone"
               dataKey="absent"
@@ -83,19 +52,30 @@ export function AttendanceChart({ data }) {
               stroke={absentColor}
               fill="url(#absentGradient)"
               strokeWidth={2}
-              strokeDasharray="6 5"
-              dot={{ r: 3, fill: absentColor, stroke: surface, strokeWidth: 2 }}
-              activeDot={{ r: 5, fill: absentColor, stroke: surface, strokeWidth: 2 }}
+              dot={false}
+              activeDot={{ r: 4, fill: absentColor, stroke: theme.palette.background.paper, strokeWidth: 2 }}
+            />
+            <Area
+              type="monotone"
+              dataKey="present"
+              name="present"
+              stroke={presentColor}
+              fill="url(#presentGradient)"
+              strokeWidth={2}
+              dot={false}
+              activeDot={{ r: 4, fill: presentColor, stroke: theme.palette.background.paper, strokeWidth: 2 }}
             />
           </AreaChart>
         </ResponsiveContainer>
       </Box>
 
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 3, mt: 1.8 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1.5 }}>
         {legend.map((item) => (
-          <Box key={item.label} sx={{ display: 'flex', alignItems: 'center', gap: 0.8 }}>
+          <Box key={item.label} sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
             <Box aria-hidden="true" sx={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: item.color }} />
-            <Typography sx={{ fontSize: 11, color: 'text.secondary', fontWeight: 600 }}>{item.label}</Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
+              {item.label}
+            </Typography>
           </Box>
         ))}
       </Box>

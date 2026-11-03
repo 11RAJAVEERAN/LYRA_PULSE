@@ -86,7 +86,7 @@ export function AdminUsersPage() {
 
   return (
     <Box>
-      <PageHeader title="Admin users" subtitle="Manage administrator, HR, and manager access." />
+      <PageHeader title="Admin users"  />
 
       {error ? <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert> : null}
       {queryError ? <ErrorState message={getErrorMessage(queryError)} onRetry={() => refetch()} retrying={isFetching} /> : null}
@@ -157,7 +157,7 @@ export function AdminUsersPage() {
           <EmptyState title="No admin users yet" description="Create an administrator, HR, or manager account to get started." />
         ) : (
           <TableContainer sx={{ border: 0, borderRadius: 0 }}>
-            <Table aria-label="Admin users" sx={{ minWidth: 860 }}>
+            <Table aria-label="Admin users" sx={{ minWidth: 860, '& .MuiTableBody-root .MuiTableRow-root': { height: 64, '& > .MuiTableCell-root': { py: 1.25, px: 1.5, fontSize: '0.875rem', verticalAlign: 'middle', whiteSpace: 'nowrap' } } }}>
               <TableHead>
                 <TableRow>
                   <TableCell>Name</TableCell>
@@ -182,7 +182,7 @@ export function AdminUsersPage() {
                         <Switch checked={user.is_active} onChange={() => toggleActive(user)} inputProps={{ 'aria-label': `Set ${user.phone_number} ${user.is_active ? 'inactive' : 'active'}` }} />
                       </Stack>
                     </TableCell>
-                    <TableCell sx={{ maxWidth: 300, whiteSpace: 'normal', overflowWrap: 'anywhere' }}>
+                    <TableCell title={(user.permission_codenames || []).join(', ')} sx={{ maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {(user.permission_codenames || []).length ? user.permission_codenames.join(', ') : '—'}
                     </TableCell>
                     <TableCell align="right"><Button size="small" onClick={() => editUser(user)}>Edit</Button></TableCell>

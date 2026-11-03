@@ -4,6 +4,7 @@ import {
   ChevronDown,
   ChevronUp,
   ChevronsUpDown,
+  Filter,
 } from "lucide-react";
 import { colors, palette } from "../theme/colors";
 import { typography } from "../theme/typography";
@@ -207,15 +208,21 @@ export default function AttendanceMasterPage() {
     >
       <span>{children}</span>
 
-      {sort.key === column ? (
-        sort.direction === "asc" ? (
-          <ChevronUp size={17} />
+      <span className="am-sort-tools">
+        {sort.key === column ? (
+          sort.direction === "asc" ? (
+            <ChevronUp size={19} />
+          ) : (
+            <ChevronDown size={19} />
+          )
         ) : (
-          <ChevronDown size={17} />
-        )
-      ) : (
-        <ChevronsUpDown size={17} />
-      )}
+          <ChevronsUpDown size={19} />
+        )}
+
+        <span className="am-filter-icon">
+          <Filter size={19} />
+        </span>
+      </span>
     </button>
   );
 
@@ -421,43 +428,44 @@ export default function AttendanceMasterPage() {
 
         .am-table {
           width: 100%;
-          min-width: 1200px;
+          min-width: 1100px;
+          table-layout: fixed;
           border-collapse: separate;
           border-spacing: 0;
           font-family: inherit;
-          font-size: ${typography.body2.fontSize};
-          line-height: ${typography.body2.lineHeight};
+          font-size: 18px;
+          line-height: 1.35;
         }
 
         .am-table th {
           position: sticky;
           top: 0;
           z-index: 2;
-          height: 76px;
-          padding: 14px 18px;
-          background: ${colors.surfaceMuted};
-          color: ${colors.textSecondary};
+          height: 60px;
+          padding: 12px 18px;
+          background: #eff6ff;
+          color: ${colors.primary};
           text-align: left;
           font-family: inherit;
-          font-size: ${typography.caption.fontSize};
-          font-weight: ${typography.overline.fontWeight};
-          letter-spacing: 0.04em;
-          text-transform: uppercase;
+          font-size: 17px;
+          font-weight: 700;
+          letter-spacing: 0;
+          text-transform: none;
           white-space: nowrap;
-          line-height: ${typography.caption.lineHeight};
+          line-height: 1.3;
           border-bottom: 1px solid ${colors.border};
         }
 
         .am-table td {
-          height: 76px;
-          padding: 15px 18px;
+          height: 80px;
+          padding: 14px 18px;
           color: ${colors.textPrimary};
           white-space: nowrap;
           background: ${colors.surface};
           border-bottom: 1px solid ${colors.border};
           font-family: inherit;
-          font-size: ${typography.body2.fontSize};
-          line-height: ${typography.body2.lineHeight};
+          font-size: 18px;
+          line-height: 1.35;
         }
 
         .am-table tbody tr:hover td {
@@ -485,13 +493,32 @@ export default function AttendanceMasterPage() {
           background: transparent;
           color: inherit;
           font: inherit;
+          font-weight: 700;
           text-align: left;
           cursor: pointer;
         }
 
-        .am-sort svg {
+        .am-sort-tools {
+          display: inline-flex;
+          align-items: center;
+          gap: 12px;
           flex-shrink: 0;
-          color: ${colors.textSecondary};
+          color: #64748b;
+        }
+
+        .am-sort-tools svg {
+          flex-shrink: 0;
+          color: #64748b;
+        }
+
+        .am-filter-icon {
+          width: 1px;
+          height: 24px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding-left: 12px;
+          border-left: 1px solid ${colors.border};
         }
 
         .am-employee-name {
@@ -594,6 +621,7 @@ export default function AttendanceMasterPage() {
 
           .am-table {
             min-width: 1100px;
+            table-layout: auto;
           }
         }
 

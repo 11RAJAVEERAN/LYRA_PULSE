@@ -118,24 +118,37 @@ class EmployeeManagementSerializer(serializers.ModelSerializer):
         # resolve to a branch the admin is allowed to manage (SUPERADMIN is unrestricted).
         request = self.context.get("request")
         user = getattr(request, "user", None)
-        if user is None or user.has_global_scope:
+        if user is None:
             return attrs
-        allowed = set(user.scoped_branch_ids())
+        allowed = None if user.has_global_scope else set(user.scoped_branch_ids())
         errors = {}
-        if "branch" in attrs or not self.instance:
+        if allowed is not None and ("branch" in attrs or not self.instance):
             branch = attrs.get("branch")
             if branch is None or branch.pk not in allowed:
                 errors["branch"] = "Select a branch you are allowed to manage."
         department = attrs.get("department")
-        if department is not None and department.branch_id not in allowed:
+        if allowed is not None and department is not None and department.branch_id not in allowed:
             errors["department"] = "This department belongs to a branch outside your scope."
         designation = attrs.get("designation")
-        if designation is not None and designation.department.branch_id not in allowed:
+        if allowed is not None and designation is not None and designation.department.branch_id not in allowed:
             errors["designation"] = "This designation belongs to a branch outside your scope."
+
+        structure_fields = {"branch", "department", "designation"}
+        if not self.instance or structure_fields.intersection(attrs):
+            branch = attrs.get("branch", getattr(self.instance, "branch", None))
+            department = attrs.get("department", getattr(self.instance, "department", None))
+            designation = attrs.get("designation", getattr(self.instance, "designation", None))
+            if department is not None and (branch is None or department.branch_id != branch.pk):
+                errors["department"] = "The department must belong to the employee's branch."
+            if designation is not None and department is None:
+                errors["designation"] = "Select the department that owns this designation."
+            elif designation is not None and designation.department_id != department.pk:
+                errors["designation"] = "The designation must belong to the selected department."
+            if designation is not None and branch is not None and designation.department.branch_id != branch.pk:
+                errors["designation"] = "The designation must belong to the employee's branch."
         if errors:
             raise serializers.ValidationError(errors)
         return attrs
-
     def validate_date_of_birth(self, value):
         if value and value >= date.today():
             raise serializers.ValidationError("Date of birth must be in the past.")
@@ -256,3 +269,8 @@ class PayrollGroupOptionSerializer(serializers.ModelSerializer):
         model = PayrollGroup
         fields = ("id", "name", "is_active")
         read_only_fields = fields
+
+
+
+
+

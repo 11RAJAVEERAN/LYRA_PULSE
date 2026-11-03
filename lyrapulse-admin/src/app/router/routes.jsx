@@ -8,6 +8,10 @@ import { EmployeesPage } from '../../features/employees/pages/EmployeesPage'
 import { AdminUsersPage } from '../../features/adminUsers/pages/AdminUsersPage'
 import { DevicesPage } from '../../features/devices/pages/DevicesPage'
 import { AttendancePermissionsPage } from '../../features/attendancePermissions/pages/AttendancePermissionsPage'
+import { DepartmentsPage } from '../../features/departments/pages/DepartmentsPage'
+import { DesignationsPage } from '../../features/designations/pages/DesignationsPage'
+import { ShiftsPage } from '../../features/shifts/pages/ShiftsPage'
+import { ShiftAssignmentsPage } from '../../features/shifts/pages/ShiftAssignmentsPage'
 
 import { ROUTES } from '../../constants/routes'
 import { ProtectedRoute } from './ProtectedRoute'
@@ -18,6 +22,10 @@ import { AdminLayout } from '../../components/layout/AdminLayout'
 import AttendanceMasterPage from '../../reports/AttendanceMasterPage'
 import DailyPunchReportPage from '../../reports/DailyPunchReportPage'
 import ShiftWiseReportPage from '../../reports/ShiftWiseReportPage'
+import WorkingHoursReportPage from '../../reports/WorkingHoursReportPage'
+import MusterReportPage from '../../reports/MusterReportPage'
+import BranchWisePunchReportPage from '../../reports/BranchWisePunchReportPage'
+import LeaveTakenReportPage from '../../reports/LeaveTakenReportPage'
 
 export const routes = [
   {
@@ -48,12 +56,28 @@ export const routes = [
             element: <AttendancePage />,
           },
           {
+            path: ROUTES.shifts,
+            element: <ShiftsPage />,
+          },
+          {
+            path: ROUTES.shiftAssignments,
+            element: <ShiftAssignmentsPage />,
+          },
+          {
             path: ROUTES.devices,
             element: <DevicesPage />,
           },
           {
             path: ROUTES.permissions,
             element: <AttendancePermissionsPage />,
+          },
+          {
+            path: ROUTES.departments,
+            element: <DepartmentsPage />,
+          },
+          {
+            path: ROUTES.designations,
+            element: <DesignationsPage />,
           },
           {
             path: ROUTES.adminUsers,
@@ -77,13 +101,27 @@ export const routes = [
             path: 'reports/shift-wise-report',
             element: <ShiftWiseReportPage />,
           },
+          {
+            path: 'reports/working-hours',
+            element: <WorkingHoursReportPage />,
+          },
+          {
+            path: 'reports/muster-report',
+            element: <MusterReportPage />,
+          },
+          {
+            path: 'reports/branch-wise-punch',
+            element: <BranchWisePunchReportPage />,
+          },
+          {
+            path: 'reports/leave-taken',
+            element: <LeaveTakenReportPage />,
+          },
 
+          // Other routes
           ...[
             ROUTES.leaves,
             ROUTES.branches,
-            ROUTES.departments,
-            ROUTES.designations,
-            ROUTES.reports,
             ROUTES.settings,
           ].map((path) => ({
             path,
