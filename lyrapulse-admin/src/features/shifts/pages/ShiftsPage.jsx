@@ -152,7 +152,7 @@ export function ShiftsPage() {
           <EmptyState compact title={search || status !== 'active' ? 'No shifts match these filters' : 'No shifts yet'} description={search || status !== 'active' ? 'Try changing or clearing the filters.' : 'Create a shift to start assigning work schedules.'} />
         ) : (
           <TableContainer sx={{ overflowX: 'auto' }}>
-            <Table size="small" sx={{ minWidth: 1180, tableLayout: 'fixed', '& .MuiTableCell-root': { px: 1, py: 1 } }} aria-label="Shifts">
+            <Table size="small" sx={{ minWidth: 1180, tableLayout: 'fixed', '& .MuiTableCell-root': { px: 1, py: 1 }, '& .MuiTableBody-root .MuiTableRow-root': { height: 64, '& > .MuiTableCell-root': { py: 1.25, px: 1.5, fontSize: '0.875rem', verticalAlign: 'middle', whiteSpace: 'nowrap' } } }} aria-label="Shifts">
               <TableHead><TableRow sx={{ bgcolor: 'info.light' }}>
                 {['Shift Name', 'Branch', 'Working Days', 'Shift Timing', 'Assigned Employees', 'Status', 'Last Modified', 'Actions'].map((label, index) => <TableCell key={label} align={label === 'Assigned Employees' || label === 'Status' ? 'center' : undefined} sx={{ width: shiftColumnWidths[index], fontWeight: 700, color: 'primary.main', whiteSpace: 'nowrap' }}>{label}</TableCell>)}
               </TableRow></TableHead>

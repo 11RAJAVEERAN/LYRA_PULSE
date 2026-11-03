@@ -226,7 +226,7 @@ export function OrganizationStructureManager({ page, api }) {
                 <EmptyState title="No employees found" description={'There are no employees assigned to this ' + page.singular.toLowerCase() + '.'} />
               ) : (
                 <TableContainer sx={{ overflowX: 'auto' }}>
-                  <Table size="small" aria-label={'Employees in ' + employeeDetailsRow.name}>
+                  <Table size="small" aria-label={'Employees in ' + employeeDetailsRow.name} sx={{ '& .MuiTableBody-root .MuiTableRow-root': { height: 64, '& > .MuiTableCell-root': { py: 1.25, px: 1.5, fontSize: '0.875rem', verticalAlign: 'middle', whiteSpace: 'nowrap' } } }}>
                     <TableHead><TableRow>
                       <TableCell>Employee ID</TableCell>
                       <TableCell>Employee Name</TableCell>
@@ -253,7 +253,7 @@ export function OrganizationStructureManager({ page, api }) {
             ) : (
               <>
                 <TableContainer sx={{ overflowX: 'auto' }}>
-                  <Table size="small" aria-label={page.title} sx={{ minWidth: 650 }}>
+                  <Table size="small" aria-label={page.title} sx={{ minWidth: 650, '& .MuiTableBody-root .MuiTableRow-root': { height: 64, '& > .MuiTableCell-root': { py: 1.25, px: 1.5, fontSize: '0.875rem', verticalAlign: 'middle', whiteSpace: 'nowrap' } } }}>
                     <TableHead>
                       <TableRow>
                         <TableCell width="55">#</TableCell>

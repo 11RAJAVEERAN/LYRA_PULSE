@@ -91,7 +91,7 @@ export function AttendancePermissionsPage() {
         <EmptyState title="No employees found" description="Try another search or branch filter." />
       ) : <Paper variant="outlined" sx={{ overflow: 'hidden' }}>
         <TableContainer sx={{ maxHeight: 'calc(100vh - 330px)' }}>
-          <Table stickyHeader size="small" sx={{ minWidth: 1120 }}>
+          <Table stickyHeader size="small" sx={{ minWidth: 1120, '& .MuiTableBody-root .MuiTableRow-root': { height: 64, '& > .MuiTableCell-root': { py: 1.25, px: 1.5, fontSize: '0.875rem', verticalAlign: 'middle', whiteSpace: 'nowrap' } } }}>
             <TableHead><TableRow>
               <TableCell padding="checkbox"><Checkbox checked={allOnPage} indeterminate={!allOnPage && someOnPage} onChange={(event) => setSelected((current) => event.target.checked ? [...new Set([...current, ...rows.map((row) => row.id)])] : current.filter((id) => !rows.some((row) => row.id === id)))} inputProps={{ 'aria-label': 'Select all employees on this page' }} /></TableCell>
               <TableCell>Employee</TableCell><TableCell>Role / Designation</TableCell><TableCell>Attendance method</TableCell>

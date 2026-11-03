@@ -116,7 +116,7 @@ function QuickAction({ label, description, icon: Icon, to, disabledReason }) {
 function RecentAttendanceTable({ rows }) {
   return (
     <TableContainer sx={{ border: 0, borderRadius: 0 }}>
-      <Table size="small" sx={{ minWidth: 440 }} aria-label="Recent attendance">
+      <Table size="small" sx={{ minWidth: 440, '& .MuiTableBody-root .MuiTableRow-root': { height: 64, '& > .MuiTableCell-root': { py: 1.25, px: 1.5, fontSize: '0.875rem', verticalAlign: 'middle', whiteSpace: 'nowrap' } } }} aria-label="Recent attendance">
         <TableHead>
           <TableRow>
             <TableCell>Employee</TableCell>
