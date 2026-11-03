@@ -64,7 +64,7 @@ class WithdrawBottomSheet extends GetView<LeaveController> {
                 ),
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 25),
             Row(
               children: [
                 Expanded(
