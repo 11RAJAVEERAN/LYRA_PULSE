@@ -37,7 +37,19 @@ const navItems = [
   { label: 'Leaves', path: '/leaves', icon: NotebookPen },
   { label: 'Branches', path: '/branches', icon: Building2 },
   { label: 'Devices', path: '/devices', icon: BadgeCheck },
-  { label: 'Reports', path: '/reports', icon: ClipboardList },
+  {
+    label: 'Reports',
+    icon: ClipboardList,
+    children: [
+      { label: 'Attendance Master', path: '/reports/attendance-master' },
+      { label: 'Daily Punch Report', path: '/reports/daily-punch-report' },
+      { label: 'Shift Wise Report', path: '/reports/shift-wise-report' },
+      { label: 'Working Hours Report', path: '/reports/working-hours' },
+      { label: 'Muster Report', path: '/reports/muster-report' },
+      { label: 'Branch Wise Punch Report', path: '/reports/branch-wise-punch' },
+      { label: 'Leave Taken Report', path: '/reports/leave-taken' },
+    ],
+  },
   { label: 'Admin Users', path: '/admin-users', icon: UserCog, superadminOnly: true },
 ]
 

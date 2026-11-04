@@ -14,6 +14,13 @@ import { DepartmentsPage } from '../../features/departments/pages/DepartmentsPag
 import { DesignationsPage } from '../../features/designations/pages/DesignationsPage'
 import { ShiftsPage } from '../../features/shifts/pages/ShiftsPage'
 import { ShiftAssignmentsPage } from '../../features/shifts/pages/ShiftAssignmentsPage'
+import AttendanceMasterPage from '../../reports/AttendanceMasterPage'
+import DailyPunchReportPage from '../../reports/DailyPunchReportPage'
+import ShiftWiseReportPage from '../../reports/ShiftWiseReportPage'
+import WorkingHoursReportPage from '../../reports/WorkingHoursReportPage'
+import MusterReportPage from '../../reports/MusterReportPage'
+import BranchWisePunchReportPage from '../../reports/BranchWisePunchReportPage'
+import LeaveTakenReportPage from '../../reports/LeaveTakenReportPage'
 
 export const routes = [
   {
@@ -65,10 +72,17 @@ export const routes = [
             path: ROUTES.adminUsers,
             element: <SuperAdminRoute><AdminUsersPage /></SuperAdminRoute>,
           },
+          { path: ROUTES.reports, element: <Navigate to="/reports/attendance-master" replace /> },
+          { path: '/reports/attendance-master', element: <AttendanceMasterPage /> },
+          { path: '/reports/daily-punch-report', element: <DailyPunchReportPage /> },
+          { path: '/reports/shift-wise-report', element: <ShiftWiseReportPage /> },
+          { path: '/reports/working-hours', element: <WorkingHoursReportPage /> },
+          { path: '/reports/muster-report', element: <MusterReportPage /> },
+          { path: '/reports/branch-wise-punch', element: <BranchWisePunchReportPage /> },
+          { path: '/reports/leave-taken', element: <LeaveTakenReportPage /> },
           ...[
             ROUTES.leaves,
             ROUTES.branches,
-            ROUTES.reports,
             ROUTES.settings,
           ].map((path) => ({
             path,
