@@ -1,4 +1,4 @@
-import { createTheme } from '@mui/material/styles'
+import { alpha, createTheme } from '@mui/material/styles'
 import { colors, palette } from './colors'
 import { typography } from './typography'
 
@@ -55,6 +55,8 @@ const selectionControl = {
 
 export function createAppTheme(mode = 'light') {
   const t = modeTokens[mode] ?? modeTokens.light
+  const scrollbarThumb = alpha(t.textSecondary, 0.32)
+  const scrollbarThumbHover = alpha(t.textSecondary, 0.48)
 
   return createTheme({
     palette: {
@@ -97,7 +99,22 @@ export function createAppTheme(mode = 'light') {
           html: { minWidth: 320, scrollBehavior: 'smooth' },
           body: { backgroundColor: t.background, color: t.textPrimary, minHeight: '100vh' },
           '#root': { minHeight: '100vh' },
-          '*': { boxSizing: 'border-box' },
+          '*': {
+            boxSizing: 'border-box',
+            scrollbarWidth: 'thin',
+            scrollbarColor: 'transparent transparent',
+            '&::-webkit-scrollbar': { width: 4, height: 4 },
+            '&::-webkit-scrollbar-track, &::-webkit-scrollbar-corner': { backgroundColor: 'transparent' },
+            '&::-webkit-scrollbar-thumb': {
+              backgroundColor: 'transparent',
+              borderRadius: 4,
+              transition: 'background-color 160ms ease',
+            },
+            '&:hover': { scrollbarColor: `${scrollbarThumb} transparent` },
+            '&:hover::-webkit-scrollbar-thumb': { backgroundColor: scrollbarThumb },
+            '&::-webkit-scrollbar-thumb:hover': { backgroundColor: scrollbarThumbHover },
+            '&::-webkit-scrollbar-thumb:active': { backgroundColor: scrollbarThumbHover },
+          },
           '::selection': { backgroundColor: colors.selection },
         },
       },
