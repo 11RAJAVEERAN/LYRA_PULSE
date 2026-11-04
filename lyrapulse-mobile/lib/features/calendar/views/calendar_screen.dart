@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../../../app/theme/app_colors.dart';
 import 'package:get/get.dart';
 
 import '../controllers/calendar_controller.dart';
@@ -15,14 +17,11 @@ class CalendarScreen extends StatelessWidget {
       ? Get.find<CalendarController>()
       : Get.put(CalendarController());
 
-  static const Color backgroundColor = Color(0xFFF7F9FC);
-  static const Color primaryColor = Color(0xFF1677B8);
-  static const Color textColor = Color(0xFF182638);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: AppColors.secondarySoft,
       body: SafeArea(
         child: Obx(
           () => Column(
@@ -31,7 +30,7 @@ class CalendarScreen extends StatelessWidget {
               Expanded(
                 child: SingleChildScrollView(
                   physics: const BouncingScrollPhysics(),
-                  padding: const EdgeInsets.fromLTRB(18, 18, 18, 28),
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -57,26 +56,26 @@ class CalendarScreen extends StatelessWidget {
 
   Widget _buildHeader() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 16, 16, 18),
+      padding: const EdgeInsets.fromLTRB(10, 10, 10, 14),
       decoration: const BoxDecoration(
-        color: Colors.white,
+        // color: AppColors.surface,
         boxShadow: [
           BoxShadow(
-            color: Color(0x08000000),
-            blurRadius: 12,
-            offset: Offset(0, 4),
+            color: AppColors.secondarySoft,
+            blurRadius: 5,
+            // offset: Offset(0, 4),
           ),
         ],
       ),
       child: Row(
         children: [
-          const Expanded(
+          Expanded(
             child: Text(
               'Calendar',
-              style: TextStyle(
+              style: GoogleFonts.inter(
                 fontSize: 24,
                 fontWeight: FontWeight.w700,
-                color: textColor,
+                color: AppColors.textPrimary,
               ),
             ),
           ),
@@ -91,15 +90,15 @@ class CalendarScreen extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          padding: const EdgeInsets.fromLTRB(12, 14, 12, 18),
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 18),
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: const Color(0xFFEDF0F4)),
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.border),
             boxShadow: const [
               BoxShadow(
-                color: Color(0x080E2540),
-                blurRadius: 18,
+                color: AppColors.borderStrong,
+                blurRadius: 16,
                 offset: Offset(0, 5),
               ),
             ],
@@ -137,13 +136,13 @@ class CalendarScreen extends StatelessWidget {
       children: [
         Row(
           children: [
-            const Expanded(
+            Expanded(
               child: Text(
                 'Attendance Records',
-                style: TextStyle(
+                style: GoogleFonts.inter(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
-                  color: textColor,
+                  color: AppColors.textPrimary,
                 ),
               ),
             ),
@@ -163,21 +162,21 @@ class CalendarScreen extends StatelessWidget {
                   vertical: 11,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE8F4FB),
+                  color: AppColors.infoSurface,
                   borderRadius: BorderRadius.circular(13),
                 ),
-                child: const Row(
+                child: Row(
                   children: [
                     Icon(
                       Icons.tune_rounded,
                       size: 18,
-                      color: primaryColor,
+                      color: AppColors.primaryBlue,
                     ),
                     SizedBox(width: 7),
                     Text(
                       'Filters',
-                      style: TextStyle(
-                        color: primaryColor,
+                      style: GoogleFonts.inter(
+                        color: AppColors.primaryBlue,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -199,15 +198,15 @@ class CalendarScreen extends StatelessWidget {
   }) {
     return Row(
       children: [
-        Icon(icon, color: primaryColor, size: 23),
+        Icon(icon, color: AppColors.primaryBlue, size: 23),
         const SizedBox(width: 10),
         Expanded(
           child: Text(
             title,
-            style: const TextStyle(
+            style:  GoogleFonts.inter(
               fontSize: 18,
               fontWeight: FontWeight.w700,
-              color: textColor,
+              color: AppColors.textPrimary,
             ),
           ),
         ),
@@ -221,11 +220,11 @@ class CalendarScreen extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(17),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(17),
-        border: Border.all(color: const Color(0xFFE7ECF2)),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
       ),
       child: Row(
         children: [
@@ -233,12 +232,12 @@ class CalendarScreen extends StatelessWidget {
             width: 46,
             height: 46,
             decoration: BoxDecoration(
-              color: const Color(0xFFE8F4FB),
+              color: AppColors.infoSurface,
               borderRadius: BorderRadius.circular(13),
             ),
             child: const Icon(
               Icons.calendar_month_rounded,
-              color: primaryColor,
+              color: AppColors.primaryBlue,
             ),
           ),
           const SizedBox(width: 13),
@@ -248,18 +247,18 @@ class CalendarScreen extends StatelessWidget {
               children: [
                 Text(
                   '${date.day} ${controller.monthTitle}',
-                  style: const TextStyle(
+                  style:  GoogleFonts.inter(
                     fontWeight: FontWeight.w700,
                     fontSize: 14,
-                    color: textColor,
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 5),
                 Text(
                   controller.statusLabel(status),
-                  style: const TextStyle(
+                  style:  GoogleFonts.inter(
                     fontSize: 12,
-                    color: Color(0xFF758292),
+                    color: AppColors.textSecondary,
                   ),
                 ),
               ],
@@ -267,7 +266,7 @@ class CalendarScreen extends StatelessWidget {
           ),
           const Icon(
             Icons.chevron_right_rounded,
-            color: Color(0xFF8C98A5),
+            color: AppColors.textSecondary,
           ),
         ],
       ),
@@ -278,16 +277,16 @@ class CalendarScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFE8F3FF),
+        color: AppColors.infoSurface,
         borderRadius: BorderRadius.circular(18),
       ),
-      child: const Row(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(
             Icons.touch_app_rounded,
             size: 25,
-            color: primaryColor,
+            color: AppColors.primaryBlue,
           ),
           SizedBox(width: 12),
           Expanded(
@@ -296,10 +295,10 @@ class CalendarScreen extends StatelessWidget {
               children: [
                 Text(
                   'Need to correct attendance?',
-                  style: TextStyle(
+                  style: GoogleFonts.inter(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: textColor,
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 SizedBox(height: 6),
@@ -307,10 +306,10 @@ class CalendarScreen extends StatelessWidget {
                   'Select a date to view its attendance status. '
                   'Regularization can be connected to your existing '
                   'regularization screen.',
-                  style: TextStyle(
+                  style: GoogleFonts.inter(
                     fontSize: 12,
                     height: 1.6,
-                    color: Color(0xFF60758F),
+                    color: AppColors.textSecondary,
                   ),
                 ),
               ],

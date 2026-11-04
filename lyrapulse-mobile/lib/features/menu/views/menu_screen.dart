@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 
 import '../../../app/theme/app_colors.dart';
@@ -18,17 +19,17 @@ class MenuScreen extends StatelessWidget {
         : Get.put(LyraMenuController());
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F5F8),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Menu',
-          style: TextStyle(
+          style: GoogleFonts.inter(
             fontWeight: FontWeight.w700,
-            color: Color(0xFF17212D),
+            color: AppColors.textPrimary,
           ),
         ),
-        backgroundColor: AppColors.white,
-        surfaceTintColor: AppColors.white,
+        backgroundColor: AppColors.surface,
+        surfaceTintColor: AppColors.surface,
         elevation: 1,
         automaticallyImplyLeading: true,
       ),
@@ -151,6 +152,26 @@ class MenuScreen extends StatelessWidget {
 
             const SizedBox(height: 26),
 
+MenuSection(
+  title: 'Settings',
+  children: [
+    MenuOptionTile(
+      icon: Icons.language_rounded,
+      title: 'App Language',
+      onTap: controller.openAppLanguage,
+    ),
+    MenuOptionTile(
+      icon: Icons.palette_outlined,
+      title: 'App Theme',
+      onTap: controller.openAppTheme,
+    ),
+    MenuOptionTile(
+      icon: Icons.system_update_rounded,
+      title: 'Check for Updates',
+      onTap: controller.checkForUpdates,
+    ),
+  ],
+),
             // // Account
             // MenuSection(
             //   title: 'Account',
@@ -183,8 +204,8 @@ Widget _buildLogoutButton(LyraMenuController controller) {
         middleText: 'Are you sure you want to logout?',
         textCancel: 'Cancel',
         textConfirm: 'Logout',
-        confirmTextColor: Colors.white,
-        buttonColor: const Color(0xFFDC2626),
+        confirmTextColor: AppColors.surface,
+        buttonColor: AppColors.error,
         onConfirm: () {
           Get.back();
           controller.logout();
@@ -195,25 +216,25 @@ Widget _buildLogoutButton(LyraMenuController controller) {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 17),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFEEEE),
+        color: AppColors.errorBackground,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: const Color(0xFFFECACA),
+          color: AppColors.error.withValues(alpha: 0.25),
         ),
       ),
-      child: const Row(
+      child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
             Icons.logout_rounded,
-            color: Color(0xFFDC2626),
+            color: AppColors.error,
             size: 21,
           ),
           SizedBox(width: 10),
           Text(
             'Logout',
-            style: TextStyle(
-              color: Color(0xFFDC2626),
+            style: GoogleFonts.inter(
+              color: AppColors.error,
               fontSize: 15,
               fontWeight: FontWeight.w700,
             ),

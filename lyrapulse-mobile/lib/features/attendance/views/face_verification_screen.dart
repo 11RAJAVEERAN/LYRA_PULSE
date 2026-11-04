@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../../../app/theme/app_colors.dart';
 import 'package:get/get.dart';
 
 import 'attendance_confirmation_screen.dart';
@@ -25,11 +27,6 @@ class _FaceVerificationScreenState extends State<FaceVerificationScreen> {
   bool _isCapturing = false;
   String? _cameraError;
 
-  static const Color primary = Color(0xFF2878E5);
-  static const Color navy = Color(0xFF172B4D);
-  static const Color secondary = Color(0xFF71829B);
-  static const Color background = Color(0xFFF8FAFD);
-  static const Color borderColor = Color(0xFFE5EBF3);
 
   @override
   void initState() {
@@ -187,10 +184,10 @@ class _FaceVerificationScreenState extends State<FaceVerificationScreen> {
             ? const Icon(
                 Icons.no_photography_outlined,
                 size: 42,
-                color: secondary,
+                color: AppColors.textSecondary,
               )
             : const CircularProgressIndicator(
-                color: primary,
+                color: AppColors.primaryBlue,
                 strokeWidth: 2.5,
               ),
       );
@@ -224,25 +221,25 @@ class _FaceVerificationScreenState extends State<FaceVerificationScreen> {
         (screenHeight * 0.43).clamp(250.0, 390.0).toDouble();
 
     return Scaffold(
-      backgroundColor: background,
+      backgroundColor: AppColors.surfaceMuted,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
+        backgroundColor: AppColors.surface,
+        surfaceTintColor: AppColors.surface,
         elevation: 0,
         leading: IconButton(
           onPressed: () => Get.back(),
           icon: const Icon(
             Icons.arrow_back_ios_new_rounded,
             size: 20,
-            color: navy,
+            color: AppColors.primary,
           ),
         ),
-        title: const Text(
+        title: Text(
           'Lyra Pulse',
-          style: TextStyle(
+          style: GoogleFonts.inter(
             fontSize: 19,
             fontWeight: FontWeight.w700,
-            color: navy,
+            color: AppColors.primary,
           ),
         ),
         actions: const [
@@ -250,7 +247,7 @@ class _FaceVerificationScreenState extends State<FaceVerificationScreen> {
             padding: EdgeInsets.only(right: 18),
             child: Icon(
               Icons.verified_user_outlined,
-              color: primary,
+              color: AppColors.primaryBlue,
               size: 23,
             ),
           ),
@@ -263,21 +260,21 @@ class _FaceVerificationScreenState extends State<FaceVerificationScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text(
+              Text(
                 'Face verification',
-                style: TextStyle(
+                style: GoogleFonts.inter(
                   fontSize: 25,
                   fontWeight: FontWeight.w800,
-                  color: navy,
+                  color: AppColors.primary,
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 'Position your face inside the frame and capture a clear photo.',
-                style: TextStyle(
+                style: GoogleFonts.inter(
                   fontSize: 14,
                   height: 1.5,
-                  color: secondary,
+                  color: AppColors.textSecondary,
                 ),
               ),
               const SizedBox(height: 20),
@@ -286,7 +283,7 @@ class _FaceVerificationScreenState extends State<FaceVerificationScreen> {
               Container(
                 height: cameraHeight,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE9EEF5),
+                  color: AppColors.surfaceMuted,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 clipBehavior: Clip.antiAlias,
@@ -315,7 +312,7 @@ class _FaceVerificationScreenState extends State<FaceVerificationScreen> {
                           vertical: 8,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.95),
+                          color: AppColors.surface.withValues(alpha: 0.95),
                           borderRadius: BorderRadius.circular(24),
                         ),
                         child: Row(
@@ -327,8 +324,8 @@ class _FaceVerificationScreenState extends State<FaceVerificationScreen> {
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 color: _isCameraReady
-                                    ? const Color(0xFF22A06B)
-                                    : Colors.orange,
+                                    ? AppColors.success
+                                    : AppColors.warning,
                               ),
                             ),
                             const SizedBox(width: 7),
@@ -336,10 +333,10 @@ class _FaceVerificationScreenState extends State<FaceVerificationScreen> {
                               _isCameraReady
                                   ? 'Camera ready'
                                   : 'Starting camera',
-                              style: const TextStyle(
+                              style:  GoogleFonts.inter(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
-                                color: navy,
+                                color: AppColors.primary,
                               ),
                             ),
                           ],
@@ -356,9 +353,9 @@ class _FaceVerificationScreenState extends State<FaceVerificationScreen> {
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.surface,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: borderColor),
+                  border: Border.all(color: AppColors.border),
                 ),
                 child: Row(
                   children: [
@@ -366,34 +363,34 @@ class _FaceVerificationScreenState extends State<FaceVerificationScreen> {
                       width: 42,
                       height: 42,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFEAF3FF),
+                        color: AppColors.secondarySoft,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(
                         Icons.wb_sunny_outlined,
-                        color: primary,
+                        color: AppColors.primaryBlue,
                       ),
                     ),
                     const SizedBox(width: 12),
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             'Keep your face steady',
-                            style: TextStyle(
+                            style: GoogleFonts.inter(
                               fontSize: 13,
                               fontWeight: FontWeight.w700,
-                              color: navy,
+                              color: AppColors.primary,
                             ),
                           ),
                           SizedBox(height: 5),
                           Text(
                             'Ensure good lighting and keep your face clearly visible.',
-                            style: TextStyle(
+                            style: GoogleFonts.inter(
                               fontSize: 12,
                               height: 1.4,
-                              color: secondary,
+                              color: AppColors.textSecondary,
                             ),
                           ),
                         ],
@@ -408,8 +405,8 @@ class _FaceVerificationScreenState extends State<FaceVerificationScreen> {
                 Text(
                   _cameraError!,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Colors.red,
+                  style:  GoogleFonts.inter(
+                    color: AppColors.error,
                     fontSize: 12,
                   ),
                 ),
@@ -433,9 +430,9 @@ class _FaceVerificationScreenState extends State<FaceVerificationScreen> {
                   onPressed:
                       _isCameraReady && !_isCapturing ? _capturePhoto : null,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: primary,
-                    foregroundColor: Colors.white,
-                    disabledBackgroundColor: const Color(0xFFB8C8DE),
+                    backgroundColor: AppColors.primaryBlue,
+                    foregroundColor: AppColors.surface,
+                    disabledBackgroundColor: AppColors.disabled,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(13),
@@ -446,18 +443,18 @@ class _FaceVerificationScreenState extends State<FaceVerificationScreen> {
                           width: 22,
                           height: 22,
                           child: CircularProgressIndicator(
-                            color: Colors.white,
+                            color: AppColors.surface,
                             strokeWidth: 2,
                           ),
                         )
-                      : const Row(
+                      : Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(Icons.camera_alt_outlined, size: 20),
                             SizedBox(width: 9),
                             Text(
                               'Capture & Continue',
-                              style: TextStyle(
+                              style: GoogleFonts.inter(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w700,
                               ),
@@ -469,13 +466,13 @@ class _FaceVerificationScreenState extends State<FaceVerificationScreen> {
 
               const SizedBox(height: 14),
 
-              const Text(
+              Text(
                 'LYRA PULSE  •  EMPLOYEE ATTENDANCE',
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: GoogleFonts.inter(
                   fontSize: 10,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF96A3B5),
+                  color: AppColors.textSecondary,
                   letterSpacing: 1,
                 ),
               ),
@@ -491,7 +488,7 @@ class FaceFramePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = const Color(0xFF82BDFF)
+      ..color = AppColors.primaryBlue
       ..strokeWidth = 4
       ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.stroke;

@@ -2,7 +2,6 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from rest_framework import serializers, status
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenRefreshView
@@ -30,34 +29,56 @@ def employee_payload(user):
     return data
 
 
+def is_otp_login_eligible(user):
+    if user is None or not user.is_active:
+        return False
+    if user.role in (User.Role.HR, User.Role.SUPERADMIN):
+        return True
+    if user.role != User.Role.EMPLOYEE:
+        return False
+    employee = getattr(user, "employee", None)
+    return bool(
+        employee
+        and employee.is_active
+        and employee.branch_id
+        and employee.branch.is_active
+    )
+
+
 class SendOTPView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        return self._send_otp(request, include_development_otp=True)
+        return self._send_otp(request, include_development_otp=settings.DEBUG)
 
     def _send_otp(self, request, include_development_otp=False):
         serializer = PhoneSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         phone_number = serializer.validated_data["phone_number"]
-        user = User.objects.filter(phone_number=phone_number, role=User.Role.EMPLOYEE, is_active=True).first()
-        if not user or not hasattr(user, "employee") or not user.employee.is_active:
+        user = User.objects.filter(phone_number=phone_number).first()
+        if not is_otp_login_eligible(user):
             return success_response({"phone_number": phone_number}, "If the account exists, an OTP was sent")
         try:
             otp_record = create_otp(phone_number)
         except ValueError as exc:
             return success_response({"phone_number": phone_number, "resend_after": settings.OTP_RESEND_COOLDOWN_SECONDS}, str(exc), status.HTTP_429_TOO_MANY_REQUESTS)
-        if include_development_otp:
-            response_data = {"success": True, "message": "OTP sent successfully"}
-            if settings.DEBUG:
-                response_data["otp"] = otp_record._plain_otp
-            return Response(response_data, status=status.HTTP_200_OK)
-        return success_response({"phone_number": phone_number, "expires_in": settings.OTP_EXPIRY_SECONDS, "resend_after": settings.OTP_RESEND_COOLDOWN_SECONDS}, "OTP sent successfully", status.HTTP_200_OK)
+        response_data = {
+            "phone_number": phone_number,
+            "expires_in": settings.OTP_EXPIRY_SECONDS,
+            "resend_after": settings.OTP_RESEND_COOLDOWN_SECONDS,
+        }
+        if include_development_otp and settings.DEBUG:
+            response_data["otp"] = otp_record._plain_otp
+        return success_response(
+            response_data,
+            "OTP sent successfully",
+            status.HTTP_200_OK,
+        )
 
 
 class ResendOTPView(SendOTPView):
     def post(self, request):
-        return self._send_otp(request)
+        return self._send_otp(request, include_development_otp=settings.DEBUG)
 
 
 class VerifyOTPView(APIView):
@@ -71,8 +92,8 @@ class VerifyOTPView(APIView):
             verify_otp(phone_number, serializer.validated_data["otp"])
         except ValueError as exc:
             return success_response({}, str(exc), status.HTTP_400_BAD_REQUEST)
-        user = User.objects.filter(phone_number=phone_number, is_active=True).first()
-        if not user or not hasattr(user, "employee") or not user.employee.is_active:
+        user = User.objects.filter(phone_number=phone_number).first()
+        if not is_otp_login_eligible(user):
             return success_response({}, "Employee account is inactive", status.HTTP_403_FORBIDDEN)
         refresh = RefreshToken.for_user(user)
         return success_response({"access": str(refresh.access_token), "refresh": str(refresh), "user": employee_payload(user)}, "Login successful")

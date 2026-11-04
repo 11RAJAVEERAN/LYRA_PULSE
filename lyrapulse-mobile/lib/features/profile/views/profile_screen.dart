@@ -10,29 +10,26 @@ import '../controllers/profile_controller.dart';
 class ProfileScreen extends GetView<ProfileController> {
   const ProfileScreen({super.key});
 
-  static const Color navy = Color(0xFF172554);
-  static const Color background = Color(0xFFF4F6FA);
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: background,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.surface,
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
           onPressed: Get.back,
           icon: const Icon(
             Icons.arrow_back_ios_new,
-            color: navy,
+            color: AppColors.primary,
             size: 20,
           ),
         ),
         title: Text(
           'My Profile',
           style: GoogleFonts.inter(
-            color: navy,
+            color: AppColors.primary,
             fontSize: 19,
             fontWeight: FontWeight.w700,
           ),
@@ -64,9 +61,9 @@ class ProfileScreen extends GetView<ProfileController> {
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            Color(0xFF101D49),
-            Color(0xFF263D85),
-            Color(0xFF4F46A5),
+            AppColors.primaryDark,
+            AppColors.primary,
+            AppColors.secondary,
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -82,10 +79,10 @@ class ProfileScreen extends GetView<ProfileController> {
               Obx(
                 () => CircleAvatar(
                   radius: 52,
-                  backgroundColor: Colors.white,
+                  backgroundColor: AppColors.surface,
                   child: CircleAvatar(
                     radius: 48,
-                    backgroundColor: const Color(0xFFE0E7FF),
+                    backgroundColor: AppColors.secondarySoft,
                     backgroundImage: controller.selectedImagePath.value.isEmpty
                         ? null
                         : FileImage(
@@ -95,7 +92,7 @@ class ProfileScreen extends GetView<ProfileController> {
                         ? const Icon(
                             Icons.person,
                             size: 58,
-                            color: Color(0xFF334A91),
+                            color: AppColors.secondaryDark,
                           )
                         : null,
                   ),
@@ -109,16 +106,16 @@ class ProfileScreen extends GetView<ProfileController> {
                   child: Container(
                     padding: const EdgeInsets.all(9),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF06B6D4),
+                      color: AppColors.accent,
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: Colors.white,
+                        color: AppColors.surface,
                         width: 2,
                       ),
                     ),
                     child: const Icon(
                       Icons.camera_alt_outlined,
-                      color: Colors.white,
+                      color: AppColors.surface,
                       size: 18,
                     ),
                   ),
@@ -133,7 +130,7 @@ class ProfileScreen extends GetView<ProfileController> {
               style: GoogleFonts.inter(
                 fontSize: 22,
                 fontWeight: FontWeight.w700,
-                color: Colors.white,
+                color: AppColors.surface,
               ),
             ),
           ),
@@ -143,7 +140,7 @@ class ProfileScreen extends GetView<ProfileController> {
               'Employee ID: ${controller.employeeId.value}',
               style: GoogleFonts.inter(
                 fontSize: 13,
-                color: Colors.white70,
+                color: AppColors.surface,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -155,15 +152,15 @@ class ProfileScreen extends GetView<ProfileController> {
               vertical: 7,
             ),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.14),
+              color: AppColors.surface.withValues(alpha: 0.14),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.white24),
+              border: Border.all(color: AppColors.surface),
             ),
             child: Obx(
               () => Text(
                 controller.designation.value,
                 style: GoogleFonts.inter(
-                  color: Colors.white,
+                  color: AppColors.surface,
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                 ),
@@ -183,11 +180,11 @@ class ProfileScreen extends GetView<ProfileController> {
         () => Container(
           padding: const EdgeInsets.all(5),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(14),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.04),
+                color: AppColors.textPrimary.withValues(alpha: 0.04),
                 blurRadius: 12,
                 offset: const Offset(0, 4),
               ),
@@ -214,7 +211,7 @@ class ProfileScreen extends GetView<ProfileController> {
           duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.symmetric(vertical: 13),
           decoration: BoxDecoration(
-            color: selected ? navy : Colors.transparent,
+            color: selected ? AppColors.primary : AppColors.surface,
             borderRadius: BorderRadius.circular(10),
           ),
           child: Text(
@@ -223,7 +220,7 @@ class ProfileScreen extends GetView<ProfileController> {
             style: GoogleFonts.inter(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: selected ? Colors.white : Colors.grey.shade600,
+              color: selected ? AppColors.surface : AppColors.textSecondary,
             ),
           ),
         ),
@@ -293,11 +290,11 @@ class ProfileScreen extends GetView<ProfileController> {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.035),
+            color: AppColors.textPrimary.withValues(alpha: 0.035),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -311,7 +308,7 @@ class ProfileScreen extends GetView<ProfileController> {
             style: GoogleFonts.inter(
               fontSize: 16,
               fontWeight: FontWeight.w700,
-              color: navy,
+              color: AppColors.primary,
             ),
           ),
           const SizedBox(height: 18),
@@ -327,12 +324,12 @@ class ProfileScreen extends GetView<ProfileController> {
                       width: 42,
                       height: 42,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFEEF2FF),
+                        color: AppColors.secondarySoft,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(
                         item.icon,
-                        color: const Color(0xFF334A91),
+                        color: AppColors.secondaryDark,
                         size: 21,
                       ),
                     ),
@@ -345,7 +342,7 @@ class ProfileScreen extends GetView<ProfileController> {
                             item.title,
                             style: GoogleFonts.inter(
                               fontSize: 12,
-                              color: Colors.grey.shade500,
+                              color: AppColors.textSecondary,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -354,7 +351,7 @@ class ProfileScreen extends GetView<ProfileController> {
                             item.value,
                             style: GoogleFonts.inter(
                               fontSize: 14,
-                              color: const Color(0xFF172B3A),
+                              color: AppColors.textPrimary,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -367,7 +364,7 @@ class ProfileScreen extends GetView<ProfileController> {
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     child: Divider(
-                      color: Colors.grey.shade100,
+                      color: AppColors.border,
                       height: 1,
                     ),
                   ),
@@ -398,7 +395,7 @@ class ProfileScreen extends GetView<ProfileController> {
           ),
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primaryBlue,
-            foregroundColor: Colors.white,
+            foregroundColor: AppColors.surface,
             elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(15),

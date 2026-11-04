@@ -1,5 +1,8 @@
 
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+
+import '../../../app/theme/app_colors.dart';
 
 class ProfileInfoRow extends StatelessWidget {
   final IconData icon;
@@ -25,7 +28,7 @@ class ProfileInfoRow extends StatelessWidget {
             child: Icon(
               icon,
               size: 27,
-              color: const Color(0xFF596D7B),
+              color: AppColors.textSecondary,
             ),
           ),
           const SizedBox(width: 15),
@@ -35,18 +38,18 @@ class ProfileInfoRow extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: GoogleFonts.inter(
                     fontSize: 15,
-                    color: Color(0xFF98A2AA),
+                    color: AppColors.textSecondary,
                   ),
                 ),
                 const SizedBox(height: 7),
                 Text(
                   value.isEmpty ? 'Not available' : value,
-                  style: const TextStyle(
+                  style: GoogleFonts.inter(
                     fontSize: 17,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF172B3A),
+                    color: AppColors.textPrimary,
                   ),
                 ),
               ],

@@ -12,8 +12,8 @@ class UpcomingShiftsScreen extends StatelessWidget {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Upcoming Shifts'),
-        backgroundColor: AppColors.white,
-        surfaceTintColor: AppColors.white,
+        backgroundColor: AppColors.surface,
+        surfaceTintColor: AppColors.surface,
       ),
       body: Center(
         child: Padding(

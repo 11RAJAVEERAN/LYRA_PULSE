@@ -20,11 +20,11 @@ abstract final class AppTheme {
       textTheme: AppTextStyles.textTheme,
       appBarTheme: AppBarTheme(
         backgroundColor: AppColors.background,
-        foregroundColor: AppColors.hexFF172033,
+        foregroundColor: AppColors.textPrimary,
         elevation: 0,
         centerTitle: false,
         titleTextStyle: AppTextStyles.title.copyWith(
-          color: AppColors.hexFF172033,
+          color: AppColors.textPrimary,
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(

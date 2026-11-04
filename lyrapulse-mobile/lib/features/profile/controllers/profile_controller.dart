@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
+
+import '../../../app/theme/app_colors.dart';
 
 class ProfileController extends GetxController {
   // Profile details - API ready ஆகும் வரை local data.
@@ -57,7 +60,7 @@ class ProfileController extends GetxController {
     Get.bottomSheet(
       _editSheet(),
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.surface,
     );
   }
 
@@ -70,7 +73,7 @@ class ProfileController extends GetxController {
         bottom: MediaQuery.of(Get.context!).viewInsets.bottom + 24,
       ),
       decoration: const BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.vertical(
           top: Radius.circular(28),
         ),
@@ -85,18 +88,18 @@ class ProfileController extends GetxController {
                 width: 42,
                 height: 5,
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
+                  color: AppColors.borderStrong,
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
             ),
             const SizedBox(height: 22),
-            const Text(
+            Text(
               'Edit Profile',
-              style: TextStyle(
+              style: GoogleFonts.inter(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF172B3A),
+                color: AppColors.textPrimary,
               ),
             ),
             const SizedBox(height: 22),
@@ -113,17 +116,19 @@ class ProfileController extends GetxController {
                 () => ElevatedButton(
                   onPressed: isSaving.value ? null : saveProfile,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF172554),
-                    foregroundColor: Colors.white,
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: AppColors.surface,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
                   ),
                   child: isSaving.value
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text(
+                      ? const CircularProgressIndicator(
+                          color: AppColors.surface,
+                        )
+                      : Text(
                           'Save Changes',
-                          style: TextStyle(
+                          style: GoogleFonts.inter(
                             fontWeight: FontWeight.w600,
                             fontSize: 16,
                           ),
@@ -147,19 +152,19 @@ class ProfileController extends GetxController {
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: GoogleFonts.inter(
             fontWeight: FontWeight.w600,
             fontSize: 13,
-            color: Color(0xFF475569),
+            color: AppColors.textSecondary,
           ),
         ),
         const SizedBox(height: 8),
         TextField(
           controller: controller,
           decoration: InputDecoration(
-            prefixIcon: Icon(icon, color: const Color(0xFF64748B)),
+            prefixIcon: Icon(icon, color: AppColors.textSecondary),
             filled: true,
-            fillColor: const Color(0xFFF5F7FB),
+            fillColor: AppColors.background,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(13),
               borderSide: BorderSide.none,

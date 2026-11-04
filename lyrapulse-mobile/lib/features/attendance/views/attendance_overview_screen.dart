@@ -8,20 +8,12 @@ import '../../../app/theme/app_colors.dart';
 class AttendanceOverviewScreen extends StatelessWidget {
   const AttendanceOverviewScreen({super.key});
 
-  static const Color background = AppColors.hexFFF7FAFE;
-  static const Color navy = AppColors.hexFF19356C;
-  static const Color purple = AppColors.hexFF6C63E8;
-  static const Color green = AppColors.hexFF18A66A;
-  static const Color orange = AppColors.warning;
 
-  static const Color primaryText = AppColors.hexFF172B4D;
-  static const Color secondaryText = AppColors.hexFF65758B;
-  static const Color border = AppColors.hexFFE3EAF3;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: background,
+      backgroundColor: AppColors.surfaceMuted,
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
@@ -50,7 +42,7 @@ class AttendanceOverviewScreen extends StatelessWidget {
               Text(
                 'Attendance Overview',
                 style: GoogleFonts.inter(
-                  color: primaryText,
+                  color: AppColors.primary,
                   fontSize: 24,
                   fontWeight: FontWeight.w800,
                 ),
@@ -61,7 +53,7 @@ class AttendanceOverviewScreen extends StatelessWidget {
               Text(
                 'Your attendance summary at a glance',
                 style: GoogleFonts.inter(
-                  color: secondaryText,
+                  color: AppColors.textSecondary,
                   fontSize: 11,
                 ),
               ),
@@ -76,12 +68,12 @@ class AttendanceOverviewScreen extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
-                  color: AppColors.white,
+                  color: AppColors.surface,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: border),
+                  border: Border.all(color: AppColors.border),
                   boxShadow: [
                     BoxShadow(
-                      color: navy.withValues(alpha: 0.05),
+                      color: AppColors.primary.withValues(alpha: 0.05),
                       blurRadius: 20,
                       offset: const Offset(0, 8),
                     ),
@@ -96,12 +88,12 @@ class AttendanceOverviewScreen extends StatelessWidget {
                           width: 44,
                           height: 44,
                           decoration: BoxDecoration(
-                            color: AppColors.hexFFEAF8F2,
+                            color: AppColors.successBackground,
                             borderRadius: BorderRadius.circular(13),
                           ),
                           child: const Icon(
                             Icons.event_available_rounded,
-                            color: green,
+                            color: AppColors.success,
                             size: 24,
                           ),
                         ),
@@ -113,7 +105,7 @@ class AttendanceOverviewScreen extends StatelessWidget {
                               Text(
                                 'Today',
                                 style: GoogleFonts.inter(
-                                  color: primaryText,
+                                  color: AppColors.primary,
                                   fontSize: 14,
                                   fontWeight: FontWeight.w700,
                                 ),
@@ -121,7 +113,7 @@ class AttendanceOverviewScreen extends StatelessWidget {
                               Text(
                                 'Attendance Status',
                                 style: GoogleFonts.inter(
-                                  color: secondaryText,
+                                  color: AppColors.textSecondary,
                                   fontSize: 9,
                                 ),
                               ),
@@ -134,13 +126,13 @@ class AttendanceOverviewScreen extends StatelessWidget {
                             vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColors.hexFFEAF8F2,
+                            color: AppColors.successBackground,
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
                             'Present',
                             style: GoogleFonts.inter(
-                              color: green,
+                              color: AppColors.success,
                               fontSize: 9,
                               fontWeight: FontWeight.w700,
                             ),
@@ -156,7 +148,7 @@ class AttendanceOverviewScreen extends StatelessWidget {
                             Icons.login_rounded,
                             'Check In',
                             '09:30 AM',
-                            navy,
+                            AppColors.primary,
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -165,7 +157,7 @@ class AttendanceOverviewScreen extends StatelessWidget {
                             Icons.logout_rounded,
                             'Check Out',
                             '--',
-                            purple,
+                            AppColors.secondary,
                           ),
                         ),
                       ],
@@ -183,7 +175,7 @@ class AttendanceOverviewScreen extends StatelessWidget {
               Text(
                 'MONTHLY SUMMARY',
                 style: GoogleFonts.inter(
-                  color: secondaryText,
+                  color: AppColors.textSecondary,
                   fontSize: 9,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 1.4,
@@ -199,8 +191,8 @@ class AttendanceOverviewScreen extends StatelessWidget {
                       icon: Icons.check_circle_outline_rounded,
                       title: 'Present',
                       value: '22',
-                      color: green,
-                      backgroundColor: AppColors.hexFFEAF8F2,
+                      color: AppColors.success,
+                      backgroundColor: AppColors.successBackground,
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -209,8 +201,8 @@ class AttendanceOverviewScreen extends StatelessWidget {
                       icon: Icons.cancel_outlined,
                       title: 'Absent',
                       value: '2',
-                      color: AppColors.hexFFE05260,
-                      backgroundColor: AppColors.hexFFFFEFF1,
+                      color: AppColors.error,
+                      backgroundColor: AppColors.errorBackground,
                     ),
                   ),
                 ],
@@ -225,8 +217,8 @@ class AttendanceOverviewScreen extends StatelessWidget {
                       icon: Icons.schedule_rounded,
                       title: 'Late',
                       value: '3',
-                      color: orange,
-                      backgroundColor: AppColors.hexFFFFF6E5,
+                      color: AppColors.warning,
+                      backgroundColor: AppColors.warningBackground,
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -235,8 +227,8 @@ class AttendanceOverviewScreen extends StatelessWidget {
                       icon: Icons.timelapse_rounded,
                       title: 'Working',
                       value: '8h',
-                      color: purple,
-                      backgroundColor: AppColors.hexFFF0EEFF,
+                      color: AppColors.secondary,
+                      backgroundColor: AppColors.secondarySoft,
                     ),
                   ),
                 ],
@@ -251,7 +243,7 @@ class AttendanceOverviewScreen extends StatelessWidget {
               Text(
                 'ATTENDANCE RATE',
                 style: GoogleFonts.inter(
-                  color: secondaryText,
+                  color: AppColors.textSecondary,
                   fontSize: 9,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 1.4,
@@ -264,9 +256,9 @@ class AttendanceOverviewScreen extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
-                  color: AppColors.white,
+                  color: AppColors.surface,
                   borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: border),
+                  border: Border.all(color: AppColors.border),
                 ),
                 child: Column(
                   children: [
@@ -276,7 +268,7 @@ class AttendanceOverviewScreen extends StatelessWidget {
                           child: Text(
                             'Monthly Attendance',
                             style: GoogleFonts.inter(
-                              color: primaryText,
+                              color: AppColors.primary,
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                             ),
@@ -285,7 +277,7 @@ class AttendanceOverviewScreen extends StatelessWidget {
                         Text(
                           '88%',
                           style: GoogleFonts.inter(
-                            color: green,
+                            color: AppColors.success,
                             fontSize: 20,
                             fontWeight: FontWeight.w800,
                           ),
@@ -298,9 +290,9 @@ class AttendanceOverviewScreen extends StatelessWidget {
                       child: LinearProgressIndicator(
                         value: 0.88,
                         minHeight: 9,
-                        backgroundColor: AppColors.hexFFEAF0F5,
+                        backgroundColor: AppColors.surfaceBorder,
                         valueColor: const AlwaysStoppedAnimation<Color>(
-                          green,
+                          AppColors.success,
                         ),
                       ),
                     ),
@@ -310,7 +302,7 @@ class AttendanceOverviewScreen extends StatelessWidget {
                       child: Text(
                         '22 present days out of 25 working days',
                         style: GoogleFonts.inter(
-                          color: secondaryText,
+                          color: AppColors.textSecondary,
                           fontSize: 9,
                         ),
                       ),
@@ -337,8 +329,8 @@ class AttendanceOverviewScreen extends StatelessWidget {
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: navy,
-                    foregroundColor: AppColors.white,
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: AppColors.surface,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
@@ -374,7 +366,7 @@ class AttendanceOverviewScreen extends StatelessWidget {
                 child: Text(
                   'LYRA PULSE',
                   style: GoogleFonts.inter(
-                    color: AppColors.hexFF8A99AA,
+                    color: AppColors.borderStrong,
                     fontSize: 8,
                     fontWeight: FontWeight.w600,
                     letterSpacing: 3,
@@ -401,7 +393,7 @@ class AttendanceOverviewScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(13),
       decoration: BoxDecoration(
-        color: AppColors.hexFFF7FAFE,
+        color: AppColors.surfaceMuted,
         borderRadius: BorderRadius.circular(13),
       ),
       child: Row(
@@ -419,7 +411,7 @@ class AttendanceOverviewScreen extends StatelessWidget {
                 Text(
                   title,
                   style: GoogleFonts.inter(
-                    color: secondaryText,
+                    color: AppColors.textSecondary,
                     fontSize: 8,
                   ),
                 ),
@@ -427,7 +419,7 @@ class AttendanceOverviewScreen extends StatelessWidget {
                 Text(
                   value,
                   style: GoogleFonts.inter(
-                    color: primaryText,
+                    color: AppColors.primary,
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                   ),
@@ -454,9 +446,9 @@ class AttendanceOverviewScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(17),
-        border: Border.all(color: border),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -478,7 +470,7 @@ class AttendanceOverviewScreen extends StatelessWidget {
           Text(
             value,
             style: GoogleFonts.inter(
-              color: primaryText,
+              color: AppColors.primary,
               fontSize: 20,
               fontWeight: FontWeight.w800,
             ),
@@ -486,7 +478,7 @@ class AttendanceOverviewScreen extends StatelessWidget {
           Text(
             title,
             style: GoogleFonts.inter(
-              color: secondaryText,
+              color: AppColors.textSecondary,
               fontSize: 9,
               fontWeight: FontWeight.w500,
             ),
@@ -505,15 +497,15 @@ class AttendanceOverviewScreen extends StatelessWidget {
       width: 42,
       height: 42,
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(13),
-        border: Border.all(color: border),
+        border: Border.all(color: AppColors.border),
       ),
       child: IconButton(
         onPressed: () => Get.back(),
         icon: const Icon(
           Icons.arrow_back_rounded,
-          color: navy,
+          color: AppColors.primary,
           size: 20,
         ),
       ),
@@ -531,10 +523,10 @@ class AttendanceOverviewScreen extends StatelessWidget {
         vertical: 7,
       ),
       decoration: BoxDecoration(
-        color: AppColors.hexFFEAF8F2,
+        color: AppColors.successBackground,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: AppColors.hexFFCBEBD9,
+          color: AppColors.border,
         ),
       ),
       child: Row(
@@ -544,14 +536,14 @@ class AttendanceOverviewScreen extends StatelessWidget {
             height: 6,
             decoration: const BoxDecoration(
               shape: BoxShape.circle,
-              color: green,
+              color: AppColors.success,
             ),
           ),
           const SizedBox(width: 6),
           Text(
             'SECURE',
             style: GoogleFonts.inter(
-              color: green,
+              color: AppColors.success,
               fontSize: 8,
               fontWeight: FontWeight.w700,
               letterSpacing: 1,

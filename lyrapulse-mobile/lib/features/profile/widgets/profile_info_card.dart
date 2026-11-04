@@ -1,6 +1,7 @@
 
 import 'package:flutter/material.dart';
 
+import '../../../app/theme/app_colors.dart';
 import 'profile_info_row.dart';
 
 class ProfileInfoCard extends StatelessWidget {
@@ -24,11 +25,11 @@ class ProfileInfoCard extends StatelessWidget {
         vertical: 10,
       ),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(22),
         boxShadow: [
           BoxShadow(
-            color: Colors.blueGrey.withValues(alpha: 0.06),
+            color: AppColors.textPrimary.withValues(alpha: 0.06),
             blurRadius: 18,
             offset: const Offset(0, 5),
           ),
@@ -49,7 +50,7 @@ class ProfileInfoCard extends StatelessWidget {
                 const Divider(
                   height: 1,
                   indent: 55,
-                  color: Color(0xFFE9EDF0),
+                  color: AppColors.border,
                 ),
             ],
           );

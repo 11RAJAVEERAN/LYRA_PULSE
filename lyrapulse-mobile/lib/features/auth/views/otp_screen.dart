@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
@@ -14,10 +15,6 @@ class OtpScreen extends StatefulWidget {
 }
 
 class _OtpScreenState extends State<OtpScreen> {
-  static const Color purple = AppColors.hexFF5B46F5;
-  static const Color dark = AppColors.hexFF171D38;
-  static const Color muted = AppColors.hexFF7887AD;
-  static const Color background = AppColors.hexFFFCFCFF;
 
   final List<TextEditingController> otpControllers =
       List.generate(6, (_) => TextEditingController());
@@ -120,7 +117,7 @@ class _OtpScreenState extends State<OtpScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: background,
+      backgroundColor: AppColors.surface,
       resizeToAvoidBottomInset: true,
       body: SizedBox.expand(
         child: LayoutBuilder(
@@ -132,7 +129,7 @@ class _OtpScreenState extends State<OtpScreen> {
               children: [
                 // Full viewport background.
                 const Positioned.fill(
-                  child: ColoredBox(color: background),
+                  child: ColoredBox(color: AppColors.surface),
                 ),
 
                 // Waves always stay at the bottom of the viewport.
@@ -176,22 +173,22 @@ class _OtpScreenState extends State<OtpScreen> {
                                     width: 44,
                                     height: 44,
                                     decoration: const BoxDecoration(
-                                      color: AppColors.hexFFF0EEFF,
+                                      color: AppColors.secondarySoft,
                                       shape: BoxShape.circle,
                                     ),
                                     child: const Icon(
                                       Icons.arrow_back_rounded,
-                                      color: purple,
+                                      color: AppColors.secondary,
                                       size: 22,
                                     ),
                                   ),
                                 ),
                               ),
                               SizedBox(height: compact ? 12 : 20),
-                              const Text(
+                              Text(
                                 'LYRA PULSE',
-                                style: TextStyle(
-                                  color: dark,
+                                style: GoogleFonts.inter(
+                                  color: AppColors.primaryDark,
                                   fontSize: 21,
                                   fontWeight: FontWeight.w800,
                                   letterSpacing: 3,
@@ -202,7 +199,7 @@ class _OtpScreenState extends State<OtpScreen> {
                                 width: 82,
                                 height: 82,
                                 decoration: const BoxDecoration(
-                                  color: AppColors.hexFFF0EEFF,
+                                  color: AppColors.secondarySoft,
                                   shape: BoxShape.circle,
                                 ),
                                 child: Center(
@@ -210,33 +207,33 @@ class _OtpScreenState extends State<OtpScreen> {
                                     width: 62,
                                     height: 62,
                                     decoration: const BoxDecoration(
-                                      color: AppColors.hexFFE5E0FF,
+                                      color: AppColors.surfaceBorder,
                                       shape: BoxShape.circle,
                                     ),
                                     child: const Icon(
                                       Icons.verified_user_rounded,
-                                      color: purple,
+                                      color: AppColors.secondary,
                                       size: 34,
                                     ),
                                   ),
                                 ),
                               ),
                               SizedBox(height: compact ? 16 : 22),
-                              const Text(
+                              Text(
                                 'Verify Your Number',
                                 textAlign: TextAlign.center,
-                                style: TextStyle(
+                                style: GoogleFonts.inter(
                                   fontSize: 25,
                                   fontWeight: FontWeight.w800,
-                                  color: dark,
+                                  color: AppColors.primaryDark,
                                 ),
                               ),
                               const SizedBox(height: 10),
-                              const Text(
+                              Text(
                                 'Enter the 6-digit OTP to continue.',
                                 textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: muted,
+                                style: GoogleFonts.inter(
+                                  color: AppColors.borderStrong,
                                   fontSize: 14,
                                 ),
                               ),
@@ -247,32 +244,32 @@ class _OtpScreenState extends State<OtpScreen> {
                                   vertical: 12,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: AppColors.white,
+                                  color: AppColors.surface,
                                   borderRadius: BorderRadius.circular(24),
                                   border: Border.all(
-                                    color: AppColors.hexFFE7E5FA,
+                                    color: AppColors.surfaceBorder,
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: purple.withValues(alpha: 0.05),
+                                      color: AppColors.secondary.withValues(alpha: 0.05),
                                       blurRadius: 15,
                                       offset: const Offset(0, 5),
                                     ),
                                   ],
                                 ),
-                                child: const Row(
+                                child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Icon(
                                       Icons.phone_iphone_rounded,
-                                      color: purple,
+                                      color: AppColors.secondary,
                                       size: 18,
                                     ),
                                     SizedBox(width: 10),
                                     Text(
                                       '+91 ••••••3210',
-                                      style: TextStyle(
-                                        color: dark,
+                                      style: GoogleFonts.inter(
+                                        color: AppColors.primaryDark,
                                         fontSize: 14,
                                         fontWeight: FontWeight.w600,
                                         letterSpacing: 1,
@@ -288,14 +285,14 @@ class _OtpScreenState extends State<OtpScreen> {
                                   vertical: 14,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: AppColors.white,
+                                  color: AppColors.surface,
                                   borderRadius: BorderRadius.circular(20),
                                   border: Border.all(
-                                    color: AppColors.hexFFE7E5FA,
+                                    color: AppColors.surfaceBorder,
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: purple.withValues(alpha: 0.04),
+                                      color: AppColors.secondary.withValues(alpha: 0.04),
                                       blurRadius: 18,
                                       offset: const Offset(0, 6),
                                     ),
@@ -324,28 +321,28 @@ class _OtpScreenState extends State<OtpScreen> {
                                                 1,
                                               ),
                                             ],
-                                            style: const TextStyle(
-                                              color: dark,
+                                            style:  GoogleFonts.inter(
+                                              color: AppColors.primaryDark,
                                               fontSize: 21,
                                               fontWeight: FontWeight.w700,
                                             ),
                                             decoration: InputDecoration(
                                               counterText: '',
                                               filled: true,
-                                              fillColor: AppColors.hexFFFCFCFF,
+                                              fillColor: AppColors.surface,
                                               contentPadding: EdgeInsets.zero,
                                               enabledBorder: OutlineInputBorder(
                                                 borderRadius:
                                                     BorderRadius.circular(12),
                                                 borderSide: const BorderSide(
-                                                  color: AppColors.hexFFE2E0F5,
+                                                  color: AppColors.border,
                                                 ),
                                               ),
                                               focusedBorder: OutlineInputBorder(
                                                 borderRadius:
                                                     BorderRadius.circular(12),
                                                 borderSide: const BorderSide(
-                                                  color: purple,
+                                                  color: AppColors.secondary,
                                                   width: 1.8,
                                                 ),
                                               ),
@@ -367,14 +364,14 @@ class _OtpScreenState extends State<OtpScreen> {
                                   decoration: BoxDecoration(
                                     gradient: const LinearGradient(
                                       colors: [
-                                        AppColors.hexFF7965FF,
-                                        AppColors.hexFF5139E8,
+                                        AppColors.secondary,
+                                        AppColors.secondary,
                                       ],
                                     ),
                                     borderRadius: BorderRadius.circular(16),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: purple.withValues(alpha: 0.22),
+                                        color: AppColors.secondary.withValues(alpha: 0.22),
                                         blurRadius: 15,
                                         offset: const Offset(0, 6),
                                       ),
@@ -383,10 +380,10 @@ class _OtpScreenState extends State<OtpScreen> {
                                   child: ElevatedButton(
                                     onPressed: _isVerifying ? null : _verifyOtp,
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: AppColors.transparent,
+                                      backgroundColor: AppColors.surface,
                                       disabledBackgroundColor:
-                                          AppColors.transparent,
-                                      shadowColor: AppColors.transparent,
+                                          AppColors.surface,
+                                      shadowColor: AppColors.surface,
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(16),
                                       ),
@@ -397,25 +394,25 @@ class _OtpScreenState extends State<OtpScreen> {
                                             height: 22,
                                             child: CircularProgressIndicator(
                                               strokeWidth: 2,
-                                              color: AppColors.white,
+                                              color: AppColors.surface,
                                             ),
                                           )
-                                        : const Row(
+                                        : Row(
                                             mainAxisAlignment:
                                                 MainAxisAlignment.center,
                                             children: [
                                               Text(
                                                 'Verify OTP',
-                                                style: TextStyle(
+                                                style: GoogleFonts.inter(
                                                   fontSize: 16,
-                                                  color: AppColors.white,
+                                                  color: AppColors.surface,
                                                   fontWeight: FontWeight.w700,
                                                 ),
                                               ),
                                               SizedBox(width: 10),
                                               Icon(
                                                 Icons.arrow_forward_rounded,
-                                                color: AppColors.white,
+                                                color: AppColors.surface,
                                                 size: 20,
                                               ),
                                             ],
@@ -427,10 +424,10 @@ class _OtpScreenState extends State<OtpScreen> {
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  const Text(
+                                  Text(
                                     "Didn't receive the code? ",
-                                    style: TextStyle(
-                                      color: muted,
+                                    style: GoogleFonts.inter(
+                                      color: AppColors.borderStrong,
                                       fontSize: 12,
                                     ),
                                   ),
@@ -443,9 +440,9 @@ class _OtpScreenState extends State<OtpScreen> {
                                           seconds == 0
                                               ? 'Resend OTP'
                                               : 'Resend in 00:${seconds.toString().padLeft(2, '0')}',
-                                          style: TextStyle(
+                                          style: GoogleFonts.inter(
                                             color:
-                                                seconds == 0 ? purple : muted,
+                                                seconds == 0 ? AppColors.secondary : AppColors.borderStrong,
                                             fontSize: 12,
                                             fontWeight: FontWeight.w700,
                                           ),
@@ -456,12 +453,12 @@ class _OtpScreenState extends State<OtpScreen> {
                                 ],
                               ),
                               SizedBox(height: compact ? 18 : 24),
-                              const Row(
+                              Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Icon(
                                     Icons.lock_outline_rounded,
-                                    color: muted,
+                                    color: AppColors.borderStrong,
                                     size: 16,
                                   ),
                                   SizedBox(width: 8),
@@ -469,8 +466,8 @@ class _OtpScreenState extends State<OtpScreen> {
                                     child: Text(
                                       'Your verification helps keep your account secure.',
                                       textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        color: muted,
+                                      style: GoogleFonts.inter(
+                                        color: AppColors.borderStrong,
                                         fontSize: 11,
                                       ),
                                     ),
@@ -497,13 +494,13 @@ class _OtpScreenState extends State<OtpScreen> {
                         Container(
                           width: 24,
                           height: 1,
-                          color: AppColors.hexFFC8C4E8,
+                          color: AppColors.border,
                         ),
                         const SizedBox(width: 10),
-                        const Text(
+                        Text(
                           'POWERED BY LYRA TECH',
-                          style: TextStyle(
-                            color: muted,
+                          style: GoogleFonts.inter(
+                            color: AppColors.borderStrong,
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
                             letterSpacing: 2.1,
@@ -513,7 +510,7 @@ class _OtpScreenState extends State<OtpScreen> {
                         Container(
                           width: 24,
                           height: 1,
-                          color: AppColors.hexFFC8C4E8,
+                          color: AppColors.border,
                         ),
                       ],
                     ),
@@ -547,7 +544,7 @@ class BottomWavesPainter extends CustomPainter {
 
     canvas.drawPath(
       firstWave,
-      Paint()..color = AppColors.hexFFF0EFFF,
+      Paint()..color = AppColors.secondarySoft,
     );
 
     final secondWave = Path()
@@ -566,7 +563,7 @@ class BottomWavesPainter extends CustomPainter {
 
     canvas.drawPath(
       secondWave,
-      Paint()..color = AppColors.hexFFE7E6FF,
+      Paint()..color = AppColors.surfaceBorder,
     );
   }
 
