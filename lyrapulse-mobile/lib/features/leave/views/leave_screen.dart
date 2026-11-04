@@ -115,7 +115,7 @@ class LeaveScreen extends GetView<LeaveController> {
                 Icons.pending_actions,
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox( width: 12),
             Expanded(
               child: _summary(
                 'History',
