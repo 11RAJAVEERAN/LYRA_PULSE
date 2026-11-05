@@ -4,7 +4,7 @@ import time
 
 from config import FINGERPRINT_COOLDOWN, FINGER_REMOVAL_SETTLE_SECONDS
 from drivers.oled import OledDisplay
-from drivers.r307 import R307, R307PacketError
+from drivers.r307 import R307, R307CommunicationError, R307PacketError
 from hardware.buzzer import Buzzer
 from hardware.status_led import StatusLed
 from hardware.touch_sensor import TouchSensor
@@ -34,67 +34,37 @@ def poll_enrollment_command(api_client, device_id):
 
 def run_enrollment(command, device_id, api_client, fingerprint_service, oled, buzzer, led):
     oled.show_enrollment()
-    led.enrollment_blink_start()
+    led.green_off()
     sensor_faulted = False
     try:
-        fingerprint_service.enroll_from_command(
-            command,
-            oled,
-            api_client,
-            device_id,
-            on_wait=led.enrollment_blink_tick,
-        )
+        fingerprint_service.enroll_from_command(command, oled, api_client, device_id)
         buzzer.success_beep()
-        led.enrollment_success()
+        led.green_on()
     except EnrollmentError as exc:
-        cancelled = exc.error_code == "SCAN_CANCELLED"
-        state_pending = exc.error_code in (
-            "DEVICE_API_ERROR",
-            "SLOT_VERIFICATION_FAILED",
-            "STORAGE_PENDING",
-        )
         sensor_faulted = exc.error_code in (
             "SENSOR_TIMEOUT",
             "SENSOR_COMMUNICATION_ERROR",
-            "SENSOR_TEMPLATE_READ_ERROR",
         )
         log("ENROLL", "Enrollment failed (%s): %s" % (exc.error_code, exc))
-        if not state_pending and not cancelled:
-            response = api_client.report_enrollment_status(
-                device_id,
-                command.get("enrollment_id"),
-                "FAILED",
-                error_code=exc.error_code,
-            )
-            if not response.get("success"):
-                log("ENROLL", "Could not record enrollment failure with the server")
-        elif state_pending:
-            log(
-                "ENROLL",
-                "Enrollment state preserved; the device will resume from server polling",
-            )
-        if cancelled:
-            oled.show_ready()
-            led.ready_status()
-            buzzer.off()
-        elif state_pending and exc.error_code == "DEVICE_API_ERROR":
-            oled.show_api_error()
-            led.api_error()
-            buzzer.off()
-        elif sensor_faulted:
+        response = api_client.report_enrollment_status(
+            device_id,
+            command.get("enrollment_id"),
+            "FAILED",
+            error_code=exc.error_code,
+        )
+        if not response.get("success"):
+            log("ENROLL", "Could not record enrollment failure with the server")
+        if sensor_faulted:
             oled.show_sensor_error()
             led.sensor_error()
             buzzer.off()
-        elif state_pending:
-            oled.show_enrollment_failed(str(exc))
-            led.sensor_error()
-            buzzer.off()
         else:
-            oled.show_enrollment_failed(str(exc))
+            oled.show_enrollment_failed()
             buzzer.error_beep()
-            led.enrollment_failure()
+            led.red_on()
             time.sleep(1.5)
-            led.ready_status()
+            led.red_off()
+            led.green_on()
     return sensor_faulted
 
 
@@ -124,8 +94,9 @@ def run_attendance_scan(
         else:
             image_ready = fingerprint_service.wait_for_finger(on_wait=on_wait)
         if image_ready is not True:
-            log("FINGER", "Touch ended before image capture; returning to ready")
-            return False
+            raise R307CommunicationError(
+                "GetImage did not confirm a captured image; conversion skipped"
+            )
         finger_detected = True
         oled.show_finger_detected()
         log("SCAN", "state=CONVERTING_IMAGE")
@@ -138,13 +109,19 @@ def run_attendance_scan(
         if fingerprint_slot is None:
             log("SCAN", "state=MATCH_FAILURE")
             led.match_failed()
-            buzzer.attendance_mismatch_beep()
+            buzzer.beep_twice()
             show_feedback(oled, "show_not_found")
             time.sleep(0.5)
             return
 
         response = api_client.send_attendance(device_id, fingerprint_slot)
         if not response.get("success"):
+            if response.get("queued"):
+                log("QUEUE", "Scan stored locally for later synchronization")
+                led.match_success()
+                show_feedback(oled, "show_queued")
+                time.sleep(0.75)
+                return
             details = response.get("error")
             if details is None:
                 api_response = response.get("response")
@@ -181,21 +158,19 @@ def run_attendance_scan(
             return
         name = name.strip()
         attendance_status = data["status"]
-        score = getattr(fingerprint_service, "last_match_score", None)
         log(
             "API",
-            "HTTP %s resolved slot %s score=%s to %s: %s"
+            "HTTP %s resolved slot %s to %s: %s"
             % (
                 response.get("http_status", "success"),
                 fingerprint_slot,
-                score,
                 name,
                 attendance_status,
             ),
         )
         log("SCAN", "state=MATCH_SUCCESS")
         led.match_success()
-        buzzer.attendance_success_beep()
+        buzzer.beep_once()
         show_feedback(
             oled,
             "show_attendance_success",
@@ -262,10 +237,9 @@ def main():
     api_client = AttendanceAPIClient()
     fingerprint_service = FingerprintService(r307, touch_sensor)
 
-    oled.show_welcome()
-    time.sleep(2)
+    oled.show_startup()
     buzzer.off()
-    led.all_leds_off()
+    led.ready_status()
 
     sensor_ready = False
     sensor_retry_delay_seconds = 2
@@ -274,6 +248,8 @@ def main():
         r307.begin()
         sensor_ready = True
         log("R307", "Sensor initialized")
+        led.ready_status()
+        oled.show_ready()
     except R307PacketError as exc:  # pragma: no cover - hardware may not be attached during test
         log("SENSOR", "Temporary initialization failure (%s)" % exc.__class__.__name__)
         led.sensor_error()
@@ -281,7 +257,7 @@ def main():
 
     if not wifi.ensure_connected():
         oled.show_api_error()
-        led.api_error()
+        led.ready_status()
         log("WIFI ERROR", "Connection failed; device will retry")
 
     while True:
@@ -294,9 +270,8 @@ def main():
                     time.sleep(1)
                 else:
                     oled.show_api_error()
-                    led.api_error()
+                    led.ready_status()
                     time.sleep(1)
-                    continue
 
             if not sensor_ready:
                 log(
@@ -330,8 +305,13 @@ def main():
             led.ready_status()
             oled.show_ready()
 
-            log("DEVICE", "UART idle; polling enrollment API")
-            enrollment_command = poll_enrollment_command(api_client, device_id)
+            if wifi.is_connected():
+                pending = api_client.sync_pending(device_id)
+                if pending:
+                    log("QUEUE", "Synchronized %d offline attendance event(s)" % len(pending))
+
+            log("DEVICE", "UART idle; polling enrollment API when online")
+            enrollment_command = poll_enrollment_command(api_client, device_id) if wifi.is_connected() else None
             if isinstance(enrollment_command, dict):
                 sensor_faulted = run_enrollment(
                     enrollment_command,
@@ -342,6 +322,8 @@ def main():
                     buzzer,
                     led,
                 )
+                if not sensor_faulted:
+                    fingerprint_service.wait_for_finger_removed()
                 if sensor_faulted:
                     sensor_ready = False
                 time.sleep(FINGERPRINT_COOLDOWN)
@@ -350,6 +332,8 @@ def main():
             enrollment_sensor_faulted = [False]
 
             def poll_enrollment_while_waiting():
+                if not wifi.is_connected():
+                    return None
                 command = poll_enrollment_command(api_client, device_id)
                 if isinstance(command, dict):
                     enrollment_sensor_faulted[0] = run_enrollment(
@@ -361,7 +345,7 @@ def main():
                         buzzer,
                         led,
                     )
-                    return False
+                    fingerprint_service.wait_for_finger_removed()
                 return None
 
             sensor_faulted = run_attendance_scan(

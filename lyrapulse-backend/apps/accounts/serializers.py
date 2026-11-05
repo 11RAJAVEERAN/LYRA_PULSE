@@ -21,3 +21,11 @@ class PhoneSerializer(serializers.Serializer):
 
 class VerifyOTPSerializer(PhoneSerializer):
     otp = serializers.RegexField(regex=r"^\d{6}$")
+
+
+class AdminOTPSendSerializer(serializers.Serializer):
+    identifier = serializers.CharField(max_length=254)
+
+
+class AdminOTPVerifySerializer(AdminOTPSendSerializer):
+    otp = serializers.RegexField(regex=r"^\d{6}$")

@@ -1,23 +1,89 @@
-from collections.abc import Mapping
+import math
 
 from rest_framework import serializers
 
-
-class FingerprintAttendanceSerializer(serializers.Serializer):
-    device_id = serializers.CharField(max_length=100)
-    fingerprint_slot = serializers.IntegerField(min_value=0)
-
-    def to_internal_value(self, data):
-        unknown_fields = set(data) - set(self.fields) if isinstance(data, Mapping) else set()
-        if unknown_fields:
-            raise serializers.ValidationError({
-                "non_field_errors": [
-                    "Unknown field(s): %s" % ", ".join(sorted(unknown_fields))
-                ]
-            })
-        return super().to_internal_value(data)
+from .services import MAX_GPS_ACCURACY_METERS
+from .validators import MAX_PHOTO_BYTES, validate_attendance_photo
 
 
-class AttendanceHistoryQuerySerializer(serializers.Serializer):
-    employee_id = serializers.IntegerField(min_value=1)
-    date = serializers.DateField()
+def _float_field(label, low, high, *, required=True):
+    message = f"{label} must be a number between {low} and {high}."
+    return serializers.FloatField(required=required, min_value=low, max_value=high, error_messages={
+        "required": f"{label} is required.", "null": f"{label} is required.", "invalid": message,
+        "min_value": message, "max_value": message,
+    })
+
+
+class LocationSerializer(serializers.Serializer):
+    """Device location sent by the Flutter app. Employee and branch are NEVER read from the request."""
+    latitude = _float_field("Latitude", -90, 90)
+    longitude = _float_field("Longitude", -180, 180)
+    accuracy = _float_field("GPS accuracy", 0, MAX_GPS_ACCURACY_METERS)
+
+    def _finite(self, value, label):
+        if not math.isfinite(value):  # NaN would otherwise slip past min/max validators
+            raise serializers.ValidationError(f"{label} must be a finite number.")
+        return value
+
+    def validate_latitude(self, value):
+        return self._finite(value, "Latitude")
+
+    def validate_longitude(self, value):
+        return self._finite(value, "Longitude")
+
+    def validate_accuracy(self, value):
+        return self._finite(value, "GPS accuracy")
+
+
+class AttendanceActionSerializer(LocationSerializer):
+    """multipart/form-data body for check-in and check-out."""
+    latitude = _float_field("Latitude", -90, 90, required=False)
+    longitude = _float_field("Longitude", -180, 180, required=False)
+    accuracy = _float_field("GPS accuracy", 0, MAX_GPS_ACCURACY_METERS, required=False)
+    photo = serializers.FileField(
+        required=False,
+        validators=[validate_attendance_photo],
+        help_text=f"JPEG or PNG image, at most {MAX_PHOTO_BYTES // (1024 * 1024)} MB. Content is verified server-side.",
+        error_messages={
+            "required": "A photo is required.", "empty": "The uploaded photo is empty.",
+            "invalid": "Photo must be uploaded as a file.", "no_file": "A photo is required.",
+        },
+    )
+
+
+class BranchBriefSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    name = serializers.CharField()
+
+
+class VerifyLocationResultSerializer(serializers.Serializer):
+    verified = serializers.BooleanField()
+    branch = BranchBriefSerializer()
+    distance_meters = serializers.FloatField(allow_null=True)
+    allowed_radius_meters = serializers.IntegerField(allow_null=True)
+    accuracy_meters = serializers.FloatField(allow_null=True)
+
+
+class CheckInResultSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    attendance_date = serializers.DateField()
+    check_in_at = serializers.DateTimeField()
+    location_verified = serializers.BooleanField(source="check_in_location_verified")
+    distance_meters = serializers.FloatField(source="check_in_distance_meters")
+
+
+class CheckOutResultSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    attendance_date = serializers.DateField()
+    check_in_at = serializers.DateTimeField()
+    check_out_at = serializers.DateTimeField()
+    location_verified = serializers.BooleanField(source="check_out_location_verified")
+    distance_meters = serializers.FloatField(source="check_out_distance_meters")
+
+
+class TodayStateSerializer(serializers.Serializer):
+    attendance_date = serializers.DateField()
+    state = serializers.ChoiceField(choices=["NOT_CHECKED_IN", "CHECKED_IN", "CHECKED_OUT"])
+    check_in_at = serializers.DateTimeField(allow_null=True)
+    check_out_at = serializers.DateTimeField(allow_null=True)
+    sessions = serializers.ListField(child=serializers.DictField(), required=False)

@@ -12,8 +12,8 @@ abstract final class AppSnackbar {
       margin: const EdgeInsets.all(16),
       borderRadius: 14,
       backgroundColor: AppColors.primaryDark,
-      colorText: AppColors.surface,
-      icon: const Icon(Icons.info_outline_rounded, color: AppColors.surface),
+      colorText: Colors.white,
+      icon: const Icon(Icons.info_outline_rounded, color: Colors.white),
     );
   }
 }

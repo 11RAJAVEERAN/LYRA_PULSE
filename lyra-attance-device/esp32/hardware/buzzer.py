@@ -40,14 +40,6 @@ class Buzzer:
         time.sleep(0.05)
         self._beep(0.12)
 
-    def attendance_success_beep(self):
-        self._beep(3)
-
-    def attendance_mismatch_beep(self):
-        for _ in range(3):
-            self._beep(0.15)
-            time.sleep(0.15)
-
     def error_beep(self):
         self._beep(0.25)
         time.sleep(0.08)

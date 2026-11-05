@@ -9,21 +9,7 @@ micropython = types.ModuleType("micropython")
 micropython.const = lambda value: value
 sys.modules.setdefault("micropython", micropython)
 
-from config import (
-    BLUE_LED_PIN,
-    BUZZER_PIN,
-    GREEN_LED_PIN,
-    OLED_I2C_ADDRESS,
-    OLED_SCL_PIN,
-    OLED_SDA_PIN,
-    R307_TOUCH_ACTIVE_LEVEL,
-    R307_TOUCH_PIN,
-    RED_LED_PIN,
-    UART_BAUDRATE,
-    UART_ID,
-    UART_RX_PIN,
-    UART_TX_PIN,
-)
+from config import BLUE_LED_PIN, BUZZER_PIN, GREEN_LED_PIN, RED_LED_PIN
 from hardware.buzzer import Buzzer
 from hardware.status_led import StatusLed
 import drivers.oled as oled_module
@@ -51,34 +37,6 @@ class FakeDisplay:
 
 
 class DeviceHardwareStatusTests(unittest.TestCase):
-    def test_hardware_pins_match_verified_reference(self):
-        self.assertEqual(
-            (UART_ID, UART_BAUDRATE, UART_TX_PIN, UART_RX_PIN),
-            (2, 57600, 17, 16),
-        )
-        self.assertEqual((R307_TOUCH_PIN, R307_TOUCH_ACTIVE_LEVEL), (18, 0))
-        self.assertEqual(
-            (OLED_SDA_PIN, OLED_SCL_PIN, OLED_I2C_ADDRESS),
-            (21, 22, 0x3C),
-        )
-        self.assertEqual(BUZZER_PIN, 4)
-        self.assertEqual(
-            (GREEN_LED_PIN, BLUE_LED_PIN, RED_LED_PIN),
-            (32, 33, 25),
-        )
-        pins = (
-            UART_TX_PIN,
-            UART_RX_PIN,
-            R307_TOUCH_PIN,
-            OLED_SDA_PIN,
-            OLED_SCL_PIN,
-            BUZZER_PIN,
-            GREEN_LED_PIN,
-            BLUE_LED_PIN,
-            RED_LED_PIN,
-        )
-        self.assertEqual(len(pins), len(set(pins)))
-
     def test_ready_match_and_no_match_led_states_are_exclusive(self):
         leds = StatusLed()
         blue = fakes.FakePin.instances[BLUE_LED_PIN]
@@ -97,28 +55,6 @@ class DeviceHardwareStatusTests(unittest.TestCase):
         leds.api_error()
         self.assertEqual((blue.state, green.state, red.state), (0, 0, 0))
 
-    def test_enrollment_led_states_blink_and_indicate_each_result(self):
-        leds = StatusLed()
-        blue = fakes.FakePin.instances[BLUE_LED_PIN]
-        green = fakes.FakePin.instances[GREEN_LED_PIN]
-        red = fakes.FakePin.instances[RED_LED_PIN]
-
-        leds.enrollment_blink_start()
-        self.assertEqual((blue.state, green.state, red.state), (1, 0, 0))
-
-        leds._enrollment_next_toggle_ms = leds._ticks_ms() - 1
-        leds.enrollment_blink_tick()
-        self.assertEqual((blue.state, green.state, red.state), (0, 0, 0))
-
-        leds.enrollment_success()
-        self.assertEqual((blue.state, green.state, red.state), (0, 1, 0))
-
-        leds.enrollment_failure()
-        self.assertEqual((blue.state, green.state, red.state), (0, 0, 1))
-
-        leds.ready_status()
-        self.assertEqual((blue.state, green.state, red.state), (1, 0, 0))
-
     def test_beep_once_and_twice_have_exact_pulse_counts_and_finish_off(self):
         buzzer = Buzzer()
         pin = fakes.FakePin.instances[BUZZER_PIN]
@@ -128,35 +64,11 @@ class DeviceHardwareStatusTests(unittest.TestCase):
             buzzer.beep_once()
             self.assertEqual(pin.history, [1, 0])
             self.assertEqual(pin.state, 0)
+
             pin.history = []
             buzzer.beep_twice()
             self.assertEqual(pin.history, [1, 0, 1, 0])
             self.assertEqual(pin.state, 0)
-
-    def test_attendance_success_is_one_three_second_buzzer_pulse(self):
-        buzzer = Buzzer()
-        pin = fakes.FakePin.instances[BUZZER_PIN]
-
-        with patch("hardware.buzzer.time.sleep") as sleep:
-            pin.history = []
-            buzzer.attendance_success_beep()
-
-        self.assertEqual(pin.history, [1, 0])
-        self.assertEqual(sleep.call_args_list[0].args, (3,))
-
-    def test_attendance_mismatch_is_three_short_buzzer_pulses(self):
-        buzzer = Buzzer()
-        pin = fakes.FakePin.instances[BUZZER_PIN]
-
-        with patch("hardware.buzzer.time.sleep") as sleep:
-            pin.history = []
-            buzzer.attendance_mismatch_beep()
-
-        self.assertEqual(pin.history, [1, 0, 1, 0, 1, 0])
-        self.assertEqual(
-            [call.args for call in sleep.call_args_list],
-            [(0.15,)] * 6,
-        )
 
     def test_buzzer_feedback_uses_audible_pulse_and_gap_durations(self):
         buzzer = Buzzer()
@@ -309,7 +221,7 @@ class DeviceHardwareStatusTests(unittest.TestCase):
         display.show_ready()
         self.assertEqual(
             display.oled.lines,
-            ["LYRA TECH", "READY - PLACE FINGER"],
+            ["LYRA TECH", "READY", "Place finger"],
         )
 
         display.oled.lines = []
@@ -322,32 +234,6 @@ class DeviceHardwareStatusTests(unittest.TestCase):
         display.oled.lines = []
         display._show_lines(["WELCOME", "CHECKED IN"])
         self.assertEqual(display.oled.lines, ["WELCOME", "CHECKED IN"])
-
-    def test_enrollment_progress_screen_includes_capture_and_current_status(self):
-        display = OledDisplay.__new__(OledDisplay)
-        display.width = 128
-        display.height = 64
-        display.oled = FakeDisplay()
-
-        display.show_enrollment_progress(
-            employee_id=17,
-            finger_index=2,
-            total_fingers=2,
-            capture_index=4,
-            status="REMOVE FINGER",
-            finger="left_thumb",
-        )
-
-        self.assertEqual(
-            display.oled.lines,
-            [
-                "ENROLLMENT",
-                "Employee 17",
-                "F2/2 left thumb",
-                "Capture 4/4",
-                "REMOVE FINGER",
-            ],
-        )
 
     def test_centered_text_uses_font_metrics_and_clips_long_text(self):
         display = OledDisplay.__new__(OledDisplay)

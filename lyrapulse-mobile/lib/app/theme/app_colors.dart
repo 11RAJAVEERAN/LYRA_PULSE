@@ -19,8 +19,6 @@ abstract final class AppColors {
   static const Color background = Color(0xFFF5F7FB);
   static const Color surface = Colors.white;
   static const Color surfaceMuted = Color(0xFFF8FAFC);
-  static const Color surfaceBorder = Color(0xFFE9EDF5);
-  static const Color infoSurface = Color(0xFFEEF4FF);
 
   // Text
   static const Color textPrimary = Color(0xFF0F172A);
@@ -45,4 +43,22 @@ abstract final class AppColors {
   static const Color error = Color(0xFFDC2626);
   static const Color errorDark = Color(0xFFB91C1C);
   static const Color errorBackground = Color(0xFFFEF2F2);
+
+  static const Color info = Color(0xFF2563EB);
+  static const Color infoDark = Color(0xFF1D4ED8);
+  static const Color infoBackground = Color(0xFFEFF6FF);
+
+  // Sidebar
+  static const Color sidebarText = Color(0xFFCBD5E1);
+  static const Color sidebarMuted = Color(0xFF94A3B8);
+
+  // Transparent UI states
+  static const Color sidebarActive = Color.fromRGBO(37, 99, 235, 0.24);
+  static const Color sidebarHover = Color.fromRGBO(203, 213, 225, 0.09);
+  static const Color sidebarDivider = Color.fromRGBO(203, 213, 225, 0.12);
+
+  static const Color focusRing = Color.fromRGBO(37, 99, 235, 0.12);
+  static const Color focusSubtle = Color.fromRGBO(37, 99, 235, 0.10);
+  static const Color selection = Color.fromRGBO(37, 99, 235, 0.18);
+  static const Color selected = Color.fromRGBO(37, 99, 235, 0.08);
 }

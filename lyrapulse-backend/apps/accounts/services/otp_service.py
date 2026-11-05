@@ -39,8 +39,8 @@ def create_otp(phone_number, purpose=OTPVerification.Purpose.LOGIN):
         max_attempts=settings.OTP_MAX_ATTEMPTS,
         expires_at=timezone.now() + timedelta(seconds=settings.OTP_EXPIRY_SECONDS),
     )
-    # Keep the plaintext OTP transiently available to the development response only.
-    record._plain_otp = otp
+    if settings.DEBUG and settings.SMS_PROVIDER == "mock":
+        record._dev_otp = otp
     get_sms_service().send_otp(phone_number, otp)
     return record
 

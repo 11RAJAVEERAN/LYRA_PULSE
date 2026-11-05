@@ -1,45 +1,32 @@
 import 'package:get/get.dart';
 
+import '../../core/network/dio_client.dart';
+import '../../core/storage/secure_storage_service.dart';
+import '../../data/providers/api_provider.dart';
+import '../../core/services/location_service.dart';
+import '../../data/repositories/attendance_repository.dart';
+import '../../data/repositories/auth_repository.dart';
+import '../../features/attendance/controllers/attendance_controller.dart';
 import '../../features/auth/controllers/auth_controller.dart';
 import '../../features/home/controllers/home_controller.dart';
-import '../../features/splash/controllers/splash_controller.dart';
+import '../../features/profile/controllers/profile_controller.dart';
 
-// Leave imports
-import '../../features/leave/controllers/leave_controller.dart';
-import '../../features/leave/services/leave_service.dart';
-
+/// App-wide dependencies. SplashController is intentionally NOT registered
+/// here; it is bound to the splash routes in AppPages so it only lives while
+/// the splash screen is active.
 class InitialBinding extends Bindings {
   @override
   void dependencies() {
-    Get.put<SplashController>(
-      SplashController(),
-      permanent: true,
-    );
-
-    Get.put<AuthController>(
-      AuthController(),
-      permanent: true,
-    );
-
-    Get.put<HomeController>(
-      HomeController(),
-      permanent: true,
-    );
-
-    // Leave Service
-    if (!Get.isRegistered<LeaveService>()) {
-      Get.put<LeaveService>(
-        LeaveService(),
-        permanent: true,
-      );
-    }
-
-    // Leave Controller
-    if (!Get.isRegistered<LeaveController>()) {
-      Get.lazyPut<LeaveController>(
-        () => LeaveController(),
-        fenix: true,
-      );
-    }
+    Get.put<SecureStorageService>(SecureStorageService(), permanent: true);
+    Get.put<DioClient>(DioClient(secureStorage: Get.find()), permanent: true);
+    Get.put<ApiProvider>(ApiProvider(Get.find()), permanent: true);
+    Get.put<AuthRepository>(AuthRepository(Get.find(), Get.find()), permanent: true);
+    Get.put<AuthController>(AuthController(), permanent: true);
+    Get.put<LocationService>(LocationService(), permanent: true);
+    Get.put<AttendanceRepository>(AttendanceRepository(Get.find()), permanent: true);
+    // Permanent: it follows AuthController.employee, so it resets on logout and reloads on login.
+    Get.put<AttendanceController>(AttendanceController(), permanent: true);
+    Get.lazyPut<HomeController>(() => HomeController());
+    Get.lazyPut<ProfileController>(() => ProfileController());
   }
 }

@@ -1,186 +1,1145 @@
-import { Alert, Box, Button, Checkbox, CircularProgress, FormControlLabel, Link, Stack, TextField, Typography } from '@mui/material'
-import { useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
+import { useEffect, useRef, useState } from 'react'
+
+import {
+  Alert,
+  Box,
+  Button,
+  Checkbox,
+  CircularProgress,
+  Collapse,
+  FormControlLabel,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material'
+
+import { alpha } from '@mui/material/styles'
+import ArrowForwardRounded from '@mui/icons-material/ArrowForwardRounded'
+import CheckCircleRounded from '@mui/icons-material/CheckCircleRounded'
 import { useNavigate } from 'react-router-dom'
+
 import { useAuth } from '../hooks/useAuth'
 import { colors } from '../../../theme/colors'
+import loginIllustration from '../../../assets/lyra-login-img.png'
 
-const loginSchema = z.object({
-  email: z.string().trim().min(1, 'Please enter your email address').email('Please enter a valid email address'),
-  password: z.string().min(1, 'Please enter your password'),
+const OTP_LENGTH = 6
+const RESEND_SECONDS = 30
+
+const MOBILE_PATTERN = /^\+?\d{10,13}$/
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
+
+// Decides which flow the typed identifier belongs to.
+function detectIdentifierType(value) {
+  const trimmed = value.trim()
+
+  if (!trimmed) return 'unknown'
+  if (trimmed.includes('@')) return 'email'
+  if (/^[+\d\s-]+$/.test(trimmed)) return 'mobile'
+
+  return 'unknown'
+}
+
+// Pill-shaped primary action. The fill keeps the app-wide brand gradient (primary -> secondary) so the
+// Login button matches the Dashboard and Save Details actions.
+const primaryButtonSx = {
+  minHeight: { xs: 52, md: 'clamp(46px, 6.4vh, 58px)' },
+  borderRadius: 999,
+  fontSize: 16,
+  color: colors.surface,
+  background: `linear-gradient(90deg, ${colors.primary}, ${colors.secondary})`,
+  boxShadow: `0 10px 22px ${alpha(colors.primaryBlue, 0.22)}`,
+  transition: 'box-shadow 0.2s ease, transform 0.2s ease',
+
+  '&:hover': {
+    background: `linear-gradient(90deg, ${colors.primary}, ${colors.secondary})`,
+    boxShadow: `0 14px 28px ${alpha(colors.primaryBlue, 0.32)}`,
+    transform: 'translateY(-1px)',
+  },
+
+  '&.Mui-disabled': {
+    color: alpha(colors.textSecondary, 0.85),
+    background: alpha(colors.textSecondary, 0.12),
+    boxShadow: 'none',
+  },
+
+  '@media (prefers-reduced-motion: reduce)': {
+    transition: 'none',
+    '&:hover': { transform: 'none' },
+  },
+}
+
+// Rounded inputs with a soft primaryBlue focus ring.
+const makeFieldSx = (radius, height) => ({
+  '& .MuiOutlinedInput-root': {
+    borderRadius: radius,
+    minHeight: height,
+    backgroundColor: colors.surface,
+    transition: 'box-shadow 0.2s ease',
+
+    '& fieldset': {
+      borderColor: alpha(colors.textSecondary, 0.45),
+    },
+
+    '&:hover fieldset': {
+      borderColor: alpha(colors.primaryBlue, 0.6),
+    },
+
+    '&.Mui-focused': {
+      boxShadow: `0 0 0 4px ${alpha(colors.primaryBlue, 0.12)}`,
+    },
+
+    '&.Mui-focused fieldset': {
+      borderColor: colors.primaryBlue,
+      borderWidth: 2,
+    },
+
+    '&.Mui-error fieldset': {
+      borderColor: colors.error,
+    },
+  },
+
+  '& .MuiInputLabel-root.Mui-focused': {
+    color: colors.primaryBlue,
+  },
+
+  '& .MuiInputBase-input': {
+    px: 2.5,
+  },
 })
+
+function BrandMark() {
+  return (
+    <Stack direction="row" alignItems="center" spacing={2}>
+      <Box>
+        <Typography
+          sx={{
+            color: colors.primary,
+            fontSize: { xs: 22, md: 32 },
+            fontWeight: 800,
+            letterSpacing: '0.04em',
+            lineHeight: 1.05,
+          }}
+        >
+          LYRA PULSE
+        </Typography>
+
+        <Typography
+          sx={{
+            mt: 0.5,
+            color: colors.primaryBlue,
+            fontSize: { xs: 11, md: 13 },
+            fontWeight: 600,
+            letterSpacing: '0.45em',
+          }}
+        >
+          ADMIN
+        </Typography>
+      </Box>
+    </Stack>
+  )
+}
+
+function OtpInput({
+  value,
+  onChange,
+  disabled,
+  invalid,
+  inputRefs,
+  labelId,
+}) {
+  const latest = useRef(value)
+
+  useEffect(() => {
+    latest.current = value
+  }, [value])
+
+  const focusBox = (index) => {
+    const target =
+      inputRefs.current[
+        Math.max(0, Math.min(index, OTP_LENGTH - 1))
+      ]
+
+    if (target) target.focus()
+  }
+
+  const commit = (next, focusIndex) => {
+    latest.current = next
+    onChange(next)
+    focusBox(focusIndex)
+  }
+
+  const applyDigits = (index, digits) => {
+    const current = latest.current
+    const start = Math.min(index, current.length)
+
+    const next = (
+      current.slice(0, start) + digits
+    ).slice(0, OTP_LENGTH)
+
+    commit(next, next.length)
+  }
+
+  const handleChange = (index, raw) => {
+    const current = latest.current
+    const digits = raw.replace(/\D/g, '')
+
+    if (!digits) {
+      if (index < current.length) {
+        latest.current =
+          current.slice(0, index) +
+          current.slice(index + 1)
+
+        onChange(latest.current)
+      }
+
+      return
+    }
+
+    if (digits.length === 1 && index < current.length) {
+      commit(
+        current.slice(0, index) +
+          digits +
+          current.slice(index + 1),
+        index + 1,
+      )
+
+      return
+    }
+
+    applyDigits(index, digits)
+  }
+
+  const handleKeyDown = (index, event) => {
+    const current = latest.current
+
+    if (
+      event.key === 'Backspace' &&
+      !current[index] &&
+      index > 0
+    ) {
+      event.preventDefault()
+
+      commit(
+        current.slice(0, index - 1) +
+          current.slice(index),
+        index - 1,
+      )
+    } else if (event.key === 'ArrowLeft') {
+      event.preventDefault()
+      focusBox(index - 1)
+    } else if (event.key === 'ArrowRight') {
+      event.preventDefault()
+      focusBox(index + 1)
+    }
+  }
+
+  const handlePaste = (index, event) => {
+    const digits = event.clipboardData
+      .getData('text')
+      .replace(/\D/g, '')
+
+    if (!digits) return
+
+    event.preventDefault()
+
+    applyDigits(
+      index,
+      digits.slice(0, OTP_LENGTH),
+    )
+  }
+
+  const boxSx = makeFieldSx('16px', {
+    xs: 52,
+    md: 'clamp(46px, 6.4vh, 56px)',
+  })
+
+  return (
+    <Stack
+      direction="row"
+      role="group"
+      aria-labelledby={labelId}
+      spacing={{ xs: 0.75, sm: 1.25 }}
+    >
+      {Array.from(
+        { length: OTP_LENGTH },
+        (_, index) => (
+          <TextField
+            key={index}
+            value={value[index] ?? ''}
+            disabled={disabled}
+            error={invalid}
+            onChange={(event) =>
+              handleChange(index, event.target.value)
+            }
+            onKeyDown={(event) =>
+              handleKeyDown(index, event)
+            }
+            onPaste={(event) =>
+              handlePaste(index, event)
+            }
+            onFocus={(event) => {
+              if (index > latest.current.length) {
+                focusBox(latest.current.length)
+              } else {
+                event.target.select()
+              }
+            }}
+            inputRef={(node) => {
+              inputRefs.current[index] = node
+            }}
+            sx={{
+              ...boxSx,
+              flex: 1,
+              minWidth: 0,
+
+              '& .MuiInputBase-input': {
+                px: 0,
+                color: colors.textPrimary,
+              },
+            }}
+            slotProps={{
+              htmlInput: {
+                inputMode: 'numeric',
+                pattern: '[0-9]*',
+                autoComplete:
+                  index === 0
+                    ? 'one-time-code'
+                    : 'off',
+                'aria-label':
+                  `Verification code digit ${index + 1} of ${OTP_LENGTH}`,
+                style: {
+                  textAlign: 'center',
+                  fontSize: 22,
+                  fontWeight: 700,
+                  padding: '10px 0',
+                },
+              },
+            }}
+          />
+        ),
+      )}
+    </Stack>
+  )
+}
 
 export function LoginPage() {
   const navigate = useNavigate()
-  const { login, isLoading } = useAuth()
-  const [rememberMe, setRememberMe] = useState(false)
-  const [loginError, setLoginError] = useState('')
 
   const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm({
-    resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: '',
-      password: '',
-    },
-  })
+    sendOtp,
+    verifyOtp,
+    isLoading,
+  } = useAuth()
 
-  const onSubmit = async (values) => {
-    setLoginError('')
+  const [identifier, setIdentifier] = useState('')
+  const [otp, setOtp] = useState('')
+  const [step, setStep] = useState('identifier')
+  const [error, setError] = useState('')
+  const [otpInvalid, setOtpInvalid] = useState(false)
+  const [action, setAction] = useState('')
+  const [cooldown, setCooldown] = useState(0)
+  const [rememberMe, setRememberMe] = useState(false)
+  const [password, setPassword] = useState('')
+
+  const otpRefs = useRef([])
+  const identifierRef = useRef(null)
+
+  const otpSent = step === 'otp'
+
+  const identifierType =
+    detectIdentifierType(identifier)
+
+  const isEmail =
+    identifierType === 'email'
+
+  const isMobile =
+    identifierType === 'mobile'
+
+  const submitIdentifier = isMobile
+    ? identifier.replace(/[\s-]/g, '')
+    : identifier.trim()
+
+  const identifierValid = isEmail
+    ? EMAIL_PATTERN.test(submitIdentifier)
+    : isMobile
+      ? MOBILE_PATTERN.test(submitIdentifier)
+      : false
+
+  const otpComplete =
+    otp.length === OTP_LENGTH
+
+  const fieldLabel = isEmail
+    ? 'Email'
+    : isMobile
+      ? 'Mobile Number'
+      : 'Email or Mobile Number'
+
+  const hint = isMobile
+    ? 'We will send a 6-digit code to this number.'
+    : ''
+
+  useEffect(() => {
+    if (cooldown <= 0) {
+      return undefined
+    }
+
+    const timer = setTimeout(
+      () =>
+        setCooldown(
+          (seconds) => seconds - 1,
+        ),
+      1000,
+    )
+
+    return () => clearTimeout(timer)
+  }, [cooldown])
+
+  const sendCode = async (isResend = false) => {
+    if (isLoading || !identifierValid) return
+
+    setError('')
+    setOtpInvalid(false)
+    setAction(isResend ? 'resend' : 'send')
+
     try {
-      await login({ ...values, rememberMe })
-      navigate('/dashboard', { replace: true })
-    } catch (error) {
-      setLoginError(error.message || 'Unable to sign in.')
+      const otpResponse =
+        await sendOtp(submitIdentifier)
+
+      const responseData =
+        otpResponse?.data ?? otpResponse
+
+      const developmentOtp =
+        responseData?.dev_otp
+
+      setStep('otp')
+
+      setOtp(
+        typeof developmentOtp === 'string' &&
+          /^\d{6}$/.test(developmentOtp)
+          ? developmentOtp
+          : '',
+      )
+
+      setCooldown(RESEND_SECONDS)
+
+      setTimeout(
+        () => otpRefs.current[0]?.focus(),
+        380,
+      )
+    } catch (err) {
+      setError(
+        err.message ||
+          'Unable to send verification code.',
+      )
     }
   }
+
+  const verifyCode = async () => {
+    if (isLoading || !otpComplete) return
+
+    setError('')
+    setOtpInvalid(false)
+    setAction('verify')
+
+    try {
+      await verifyOtp({
+        identifier: submitIdentifier,
+        otp,
+        rememberMe,
+      })
+
+      navigate('/dashboard', {
+        replace: true,
+      })
+    } catch (err) {
+      setError(
+        err.message ||
+          'Unable to verify code.',
+      )
+
+      setOtpInvalid(true)
+
+      setTimeout(
+        () =>
+          otpRefs.current[
+            OTP_LENGTH - 1
+          ]?.focus(),
+        60,
+      )
+    }
+  }
+
+  const submitEmailPlaceholder = () => {
+    if (!identifierValid || !password) return
+
+    setError(
+      'Email and password sign-in is not available yet. Please sign in with your mobile number and OTP.',
+    )
+  }
+
+  const handleIdentifierChange = (value) => {
+    if (
+      detectIdentifierType(value) !==
+      identifierType
+    ) {
+      setError('')
+      setPassword('')
+    }
+
+    setIdentifier(value)
+  }
+
+  const handleSubmit = (event) => {
+    event.preventDefault()
+
+    if (isEmail) {
+      submitEmailPlaceholder()
+    } else if (otpSent) {
+      verifyCode()
+    } else {
+      sendCode(false)
+    }
+  }
+
+  const changeIdentifier = () => {
+    setStep('identifier')
+    setOtp('')
+    setError('')
+    setOtpInvalid(false)
+    setCooldown(0)
+
+    setTimeout(
+      () => identifierRef.current?.focus(),
+      60,
+    )
+  }
+
+  const sending =
+    isLoading && action === 'send'
+
+  const resending =
+    isLoading && action === 'resend'
+
+  const verifying =
+    isLoading && action === 'verify'
+
+  const errorAlert = error ? (
+    <Alert
+      severity="error"
+      sx={{
+        mt: 1.5,
+        borderRadius: 3,
+        py: 0.25,
+      }}
+    >
+      {error}
+    </Alert>
+  ) : null
 
   return (
     <Box
       sx={{
-        minHeight: '100vh',
+        position: 'relative',
+
+        minHeight: '100dvh',
+        height: {
+          md: '100dvh',
+        },
+
+        overflow: {
+          md: 'hidden',
+        },
+
         display: 'grid',
-        gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 1.08fr) minmax(420px, 0.92fr)' },
-        backgroundColor: colors.surface,
+
+        gridTemplateColumns: {
+          xs: '1fr',
+          md: '1.1fr 0.9fr',
+        },
+
+        gridTemplateRows: {
+          xs: 'auto 1fr',
+          md: '1fr',
+        },
+
+        backgroundImage: `linear-gradient(135deg, ${colors.surface} 0%, ${alpha(colors.primaryBlue, 0.05)} 50%, ${alpha(colors.primaryBlue, 0.13)} 100%)`,
       }}
     >
+      {/* Brand */}
       <Box
         sx={{
-          minHeight: { xs: 310, md: '100vh' },
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
-          position: 'relative',
-          overflow: 'hidden',
-          px: { xs: 3, sm: 5, lg: 8 },
-          py: { xs: 4, md: 6 },
-          color: colors.surface,
-          backgroundColor: colors.primaryDark,
-          backgroundImage: 'linear-gradient(135deg, rgba(37, 99, 235, 0.28), transparent 52%), repeating-linear-gradient(135deg, rgba(255,255,255,0.025) 0px, rgba(255,255,255,0.025) 1px, transparent 1px, transparent 18px)',
+          position: {
+            md: 'absolute',
+          },
+
+          top: {
+            md: 'clamp(20px, 4vh, 44px)',
+          },
+
+          left: {
+            md: 'clamp(32px, 4.5vw, 88px)',
+          },
+
+          px: {
+            xs: 3,
+            sm: 5,
+            md: 0,
+          },
+
+          pt: {
+            xs: 3,
+            md: 0,
+          },
+
+          zIndex: 1,
         }}
       >
-        <Box sx={{ position: 'relative', zIndex: 1 }}>
-          <Typography sx={{ fontSize: 19, fontWeight: 750, letterSpacing: 0, color: colors.surface }}>
-            Lyra Pulse
-          </Typography>
-          <Typography sx={{ mt: 0.5, color: 'rgba(255,255,255,0.62)', fontSize: 13 }}>
-            PEOPLE OPERATIONS
-          </Typography>
-        </Box>
-
-        <Box sx={{ position: 'relative', zIndex: 1, maxWidth: 650, py: { xs: 4, md: 7 } }}>
-          <Typography
-            component="h1"
-            sx={{
-              maxWidth: 600,
-              fontSize: { xs: 34, sm: 44, lg: 56 },
-              lineHeight: 1.12,
-              fontWeight: 650,
-              color: colors.surface,
-            }}
-          >
-            People, presence, and progress in one place.
-          </Typography>
-          <Typography sx={{ mt: 2.5, maxWidth: 490, color: 'rgba(255,255,255,0.72)', fontSize: 16, lineHeight: 1.7 }}>
-            A clearer view of your workforce, from daily attendance to the people shaping your business.
-          </Typography>
-
-          <Box
-            sx={{
-              mt: { xs: 4, md: 6 },
-              maxWidth: 510,
-              display: 'grid',
-              gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
-              borderTop: '1px solid rgba(255,255,255,0.18)',
-              pt: 2.5,
-              gap: 2,
-            }}
-          >
-            {[
-              ['1,284', 'Team members'],
-              ['98.4%', 'Attendance'],
-              ['12', 'Locations'],
-            ].map(([value, label]) => (
-              <Box key={label}>
-                <Typography sx={{ fontSize: 22, fontWeight: 700, color: colors.surface }}>{value}</Typography>
-                <Typography sx={{ mt: 0.5, color: 'rgba(255,255,255,0.6)', fontSize: 12 }}>{label}</Typography>
-              </Box>
-            ))}
-          </Box>
-        </Box>
-
-        <Typography sx={{ position: 'relative', zIndex: 1, color: 'rgba(255,255,255,0.52)', fontSize: 12 }}>
-          © 2026 Lyra Pulse · Secure workforce management
-        </Typography>
+        <BrandMark />
       </Box>
 
+      {/* Illustration */}
       <Box
         sx={{
-          minHeight: { xs: 500, md: '100vh' },
+          display: {
+            xs: 'none',
+            md: 'flex',
+          },
+
+          flexDirection: 'column',
+          minHeight: 0,
+
+          pt: 'clamp(84px, 14vh, 130px)',
+          pb: 'clamp(20px, 4vh, 48px)',
+          pl: 'clamp(32px, 4.5vw, 88px)',
+          pr: 2,
+        }}
+      >
+        <Box
+          sx={{
+            flex: 1,
+            minHeight: 0,
+            display: 'flex',
+            alignItems: 'center',
+          }}
+        >
+          <Box
+            component="img"
+            src={loginIllustration}
+            alt="Administrator signing in securely to Lyra Pulse from a phone and laptop"
+            sx={{
+              display: 'block',
+              maxWidth: '100%',
+              maxHeight: '100%',
+              objectFit: 'contain',
+              objectPosition: 'left center',
+            }}
+          />
+        </Box>
+      </Box>
+
+      {/* Login area */}
+      <Box
+        sx={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          px: { xs: 3, sm: 6, lg: 9 },
-          py: { xs: 6, md: 8 },
+
+          minHeight: 0,
+
+          px: {
+            xs: 2,
+            sm: 5,
+            md: 3,
+            lg: 6,
+          },
+
+          py: {
+            xs: 3,
+            md: 2,
+          },
         }}
       >
-        <Box sx={{ width: '100%', maxWidth: 440 }}>
-          <Typography sx={{ color: colors.primaryBlue, fontWeight: 700, fontSize: 13 }}>
-            LYRA PULSE ADMIN
-          </Typography>
-          <Typography component="h2" variant="h3" sx={{ mt: 1.5, fontSize: { xs: 30, md: 36 }, fontWeight: 650 }}>
-            Welcome back
-          </Typography>
-          <Typography color="text.secondary" sx={{ mt: 1 }}>
-            Sign in to continue to your workspace.
+        <Box
+          sx={{
+            width: '100%',
+            maxWidth: 540,
+
+            maxHeight: {
+              md: 'calc(100dvh - 32px)',
+            },
+
+            overflowY: {
+              md: 'auto',
+            },
+
+            p: {
+              xs: 3,
+              sm: 5,
+              md:
+                'clamp(24px, 5vh, 52px) clamp(28px, 3vw, 52px)',
+            },
+
+            borderRadius: {
+              xs: '28px',
+              md: '48px',
+            },
+
+            backgroundColor: colors.surface,
+
+            border: `1px solid ${alpha(colors.border, 0.8)}`,
+
+            boxShadow:
+              `0 28px 64px ${alpha(colors.primaryBlue, 0.14)}`,
+          }}
+        >
+          {/* Heading */}
+          <Typography
+            component="h1"
+            sx={{
+              color: colors.primary,
+              fontSize: {
+                xs: 30,
+                md: 'clamp(28px, 5vh, 42px)',
+              },
+              fontWeight: 800,
+              letterSpacing: '-0.02em',
+              lineHeight: 1.15,
+            }}
+          >
+            Welcome Back
           </Typography>
 
-          <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate sx={{ mt: 4 }}>
-            <Stack spacing={2.5}>
-              <TextField
-                label="Work email"
-                type="email"
-                fullWidth
-                autoComplete="username"
-                {...register('email')}
-                error={Boolean(errors.email)}
-                helperText={errors.email?.message}
-              />
-              <TextField
-                label="Password"
-                type="password"
-                fullWidth
-                autoComplete="current-password"
-                {...register('password')}
-                error={Boolean(errors.password)}
-                helperText={errors.password?.message}
-              />
+          <Typography
+            sx={{
+              mt: 1,
+              color: colors.textSecondary,
+              fontSize: {
+                xs: 15,
+                md: 'clamp(14px, 2.1vh, 17px)',
+              },
+              lineHeight: 1.5,
+            }}
+          >
+            {otpSent
+              ? 'Enter the OTP sent to your mobile number.'
+              : 'Enter your email or mobile number to continue.'}
+          </Typography>
 
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+          <Box
+            component="form"
+            onSubmit={handleSubmit}
+            noValidate
+            sx={{
+              mt: {
+                xs: 3,
+                md:
+                  'clamp(16px, 3.4vh, 32px)',
+              },
+            }}
+          >
+            <TextField
+              fullWidth
+              id="login-identifier"
+              label={fieldLabel}
+              placeholder="Email or mobile number"
+              value={identifier}
+              onChange={(event) =>
+                handleIdentifierChange(
+                  event.target.value,
+                )
+              }
+              inputRef={identifierRef}
+              autoFocus
+              sx={makeFieldSx('28px', {
+                xs: 56,
+                md:
+                  'clamp(48px, 7vh, 60px)',
+              })}
+              slotProps={{
+                inputLabel: {
+                  shrink: true,
+                },
+
+                input: {
+                  readOnly: otpSent,
+                },
+
+                htmlInput: {
+                  inputMode: isMobile
+                    ? 'tel'
+                    : 'text',
+
+                  autoComplete: 'username',
+                  autoCapitalize: 'none',
+                  spellCheck: false,
+
+                  'aria-describedby':
+                    'login-identifier-hint',
+                },
+              }}
+            />
+
+            <Collapse
+              in={
+                Boolean(hint) &&
+                !otpSent
+              }
+              timeout={250}
+            >
+              <Typography
+                id="login-identifier-hint"
+                sx={{
+                  mt: 0.75,
+                  ml: 2,
+                  color:
+                    colors.textSecondary,
+                  fontSize: 12.5,
+                  lineHeight: 1.4,
+                }}
+              >
+                {hint}
+              </Typography>
+            </Collapse>
+
+            {/* Send OTP */}
+            {!isEmail && (
+              <Button
+                type={
+                  otpSent
+                    ? 'button'
+                    : 'submit'
+                }
+                fullWidth
+                size="large"
+                variant="contained"
+                disabled={
+                  !identifierValid ||
+                  isLoading ||
+                  otpSent
+                }
+                endIcon={
+                  otpSent ? (
+                    <CheckCircleRounded />
+                  ) : sending ? null : (
+                    <ArrowForwardRounded />
+                  )
+                }
+                sx={{
+                  ...primaryButtonSx,
+
+                  mt:
+                    'clamp(12px, 2.2vh, 20px)',
+
+                  '&.Mui-disabled': {
+                    ...primaryButtonSx['&.Mui-disabled'],
+                    ...(otpSent
+                      ? {
+                        color: colors.success,
+                        background: alpha(colors.success, 0.1),
+                      }
+                      : {}),
+                  },
+                }}
+              >
+                {sending ? (
+                  <>
+                    <CircularProgress
+                      size={18}
+                      color="inherit"
+                      sx={{ mr: 1 }}
+                    />
+                    Sending OTP...
+                  </>
+                ) : otpSent ? (
+                  'OTP Sent'
+                ) : (
+                  'Send OTP'
+                )}
+              </Button>
+            )}
+
+            {/* Email password */}
+            <Collapse
+              in={isEmail}
+              timeout={250}
+              unmountOnExit
+            >
+              <Box
+                sx={{
+                  pt:
+                    'clamp(12px, 2.2vh, 20px)',
+                }}
+              >
+                <TextField
+                  fullWidth
+                  id="login-password"
+                  type="password"
+                  label="Password"
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(event) =>
+                    setPassword(
+                      event.target.value,
+                    )
+                  }
+                  sx={makeFieldSx('28px', {
+                    xs: 56,
+                    md:
+                      'clamp(48px, 7vh, 60px)',
+                  })}
+                  slotProps={{
+                    inputLabel: {
+                      shrink: true,
+                    },
+
+                    htmlInput: {
+                      autoComplete:
+                        'current-password',
+                    },
+                  }}
+                />
+
+                <Button
+                  type="submit"
+                  fullWidth
+                  size="large"
+                  variant="contained"
+                  disabled={
+                    !identifierValid ||
+                    !password
+                  }
+                  endIcon={
+                    <ArrowForwardRounded />
+                  }
+                  sx={{
+                    ...primaryButtonSx,
+
+                    mt:
+                      'clamp(12px, 2.2vh, 20px)',
+                  }}
+                >
+                  Login
+                </Button>
+              </Box>
+            </Collapse>
+
+            {!otpSent && errorAlert}
+
+            {/* OTP section */}
+            <Collapse
+              in={otpSent && !isEmail}
+              timeout={350}
+              unmountOnExit
+            >
+              <Box
+                sx={{
+                  pt:
+                    'clamp(14px, 2.6vh, 24px)',
+                }}
+              >
+                <Typography
+                  id="login-otp-label"
+                  component="label"
+                  sx={{
+                    display: 'block',
+                    mb: 1,
+                    color:
+                      colors.textPrimary,
+                    fontSize: 14,
+                    fontWeight: 700,
+                  }}
+                  role="status"
+                  aria-live="polite"
+                >
+                  Verification Code
+                </Typography>
+
+                <OtpInput
+                  value={otp}
+                  onChange={(next) => {
+                    setOtp(next)
+                    setOtpInvalid(false)
+                  }}
+                  disabled={
+                    !otpSent ||
+                    isLoading
+                  }
+                  invalid={otpInvalid}
+                  inputRefs={otpRefs}
+                  labelId="login-otp-label"
+                />
+
+                <Stack
+                  direction="row"
+                  alignItems="center"
+                  justifyContent="space-between"
+                  flexWrap="wrap"
+                  sx={{
+                    mt: 1,
+                    columnGap: 1,
+                  }}
+                >
+                  <Button
+                    type="button"
+                    size="small"
+                    onClick={
+                      changeIdentifier
+                    }
+                    disabled={isLoading}
+                    sx={{
+                      ml: -1,
+                      color:
+                        colors.textPrimary,
+                      fontWeight: 700,
+                    }}
+                  >
+                    {isEmail
+                      ? 'Change email'
+                      : 'Change number'}
+                  </Button>
+
+                  <Stack
+                    direction="row"
+                    alignItems="center"
+                    spacing={0.25}
+                  >
+                    <Typography
+                      sx={{
+                        color:
+                          colors.textSecondary,
+                        fontSize: 13,
+                      }}
+                    >
+                      Didn&apos;t receive
+                      the code?
+                    </Typography>
+
+                    <Button
+                      type="button"
+                      size="small"
+                      disabled={
+                        isLoading ||
+                        cooldown > 0
+                      }
+                      onClick={() =>
+                        sendCode(true)
+                      }
+                      sx={{
+                        mr: -1,
+                        color:
+                          colors.primaryBlue,
+                        fontWeight: 700,
+                      }}
+                    >
+                      {resending
+                        ? 'Sending...'
+                        : cooldown > 0
+                          ? `Resend in ${cooldown}s`
+                          : 'Resend OTP'}
+                    </Button>
+                  </Stack>
+                </Stack>
+
                 <FormControlLabel
-                  control={<Checkbox checked={rememberMe} onChange={(event) => setRememberMe(event.target.checked)} />}
+                  sx={{
+                    mt: 0,
+                    ml: -0.5,
+                    '& .MuiFormControlLabel-label': {
+                      fontSize: 14,
+                      color: colors.textPrimary,
+                    },
+                  }}
+                  control={
+                    <Checkbox
+                      size="small"
+                      checked={rememberMe}
+                      onChange={(event) =>
+                        setRememberMe(
+                          event.target
+                            .checked,
+                        )
+                      }
+                      sx={{
+                        color:
+                          alpha(colors.textSecondary, 0.7),
+
+                        '&.Mui-checked': {
+                          color:
+                            colors.primaryBlue,
+                        },
+                      }}
+                    />
+                  }
                   label="Remember me"
                 />
-                <Link href="#" underline="hover" color="primary.main" sx={{ fontSize: 14, fontWeight: 600 }}>
-                  Forgot password?
-                </Link>
-              </Box>
 
-              <Button type="submit" variant="contained" size="large" disabled={isLoading} sx={{ minHeight: 52 }}>
-                {isLoading ? <><CircularProgress size={18} color="inherit" sx={{ mr: 1 }} />Signing in...</> : 'Sign In'}
-              </Button>
-              {loginError ? <Alert severity="error">{loginError}</Alert> : null}
-            </Stack>
+                {errorAlert}
+
+                {/* Verify OTP */}
+                <Button
+                  type="submit"
+                  fullWidth
+                  size="large"
+                  variant="contained"
+                  disabled={
+                    !otpComplete ||
+                    isLoading
+                  }
+                  endIcon={
+                    verifying
+                      ? null
+                      : (
+                        <ArrowForwardRounded />
+                      )
+                  }
+                  sx={{
+                    ...primaryButtonSx,
+
+                    mt:
+                      'clamp(10px, 1.8vh, 16px)',
+                  }}
+                >
+                  {verifying ? (
+                    <>
+                      <CircularProgress
+                        size={18}
+                        color="inherit"
+                        sx={{ mr: 1 }}
+                      />
+                      Verifying...
+                    </>
+                  ) : (
+                    'Verify OTP'
+                  )}
+                </Button>
+              </Box>
+            </Collapse>
           </Box>
 
-          <Typography sx={{ mt: 4, textAlign: 'center', color: colors.textSecondary, fontSize: 12 }}>
-            Protected access for Lyra Pulse administrators
-          </Typography>
+          {/* Footer */}
+          <Box
+            sx={{
+              mt:
+                'clamp(14px, 3vh, 28px)',
+
+              pt:
+                'clamp(10px, 2vh, 20px)',
+
+              borderTop: `1px solid ${colors.border}`,
+            }}
+          >
+            <Typography
+              sx={{
+                textAlign: 'center',
+                color:
+                  colors.textSecondary,
+                fontSize: 12.5,
+              }}
+            >
+              Protected access for Lyra
+              Pulse administrators
+            </Typography>
+          </Box>
         </Box>
       </Box>
     </Box>

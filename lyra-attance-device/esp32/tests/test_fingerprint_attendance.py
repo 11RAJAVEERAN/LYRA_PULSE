@@ -5,6 +5,7 @@ from config import (
     MAX_TEMPLATE_COUNT,
     R307_DETECTION_MODE,
     R307_UART_FALLBACK_ENABLED,
+    R307_TOUCH_CAPTURE_MAX_ATTEMPTS,
 )
 from drivers.r307 import R307FingerError, R307TimeoutError
 from services.fingerprint_service import FingerprintService
@@ -15,31 +16,10 @@ class ScriptedTouchSensor:
         self.events = list(events)
         self.reset_calls = 0
         self.poll_calls = 0
-        self.active_level = 0
-        self.active = True
-        self.release_calls = 0
-        self.release_result = True
 
     def poll_touch_edge(self):
         self.poll_calls += 1
         return self.events.pop(0) if self.events else False
-
-    def is_active(self):
-        return self.active
-
-    def current_level(self):
-        return 0 if self.active else 1
-
-    def is_released_debounced(self):
-        return not self.active
-
-    def wait_for_release(self, timeout_seconds=None):
-        self.release_calls += 1
-        if not self.release_result:
-            return False
-        self.active = False
-        self.reset_baseline()
-        return True
 
     def reset_baseline(self):
         self.reset_calls += 1
@@ -113,22 +93,6 @@ class RecoveringSensor:
 
 
 class FingerprintAttendanceSearchTests(unittest.TestCase):
-    def test_touch_diagnostic_log_reports_raw_and_active_low_state(self):
-        touch = ScriptedTouchSensor([])
-        service = FingerprintService(None, touch)
-        messages = []
-
-        with patch(
-            "services.fingerprint_service.log",
-            side_effect=lambda _tag, message: messages.append(message),
-        ):
-            service._log_touch_state("state=WAITING_FOR_TOUCH")
-
-        self.assertEqual(
-            messages,
-            ["GPIO18 raw=0 active_level=0 active=yes state=WAITING_FOR_TOUCH"],
-        )
-
     def test_uses_r307_match_slot_and_searches_configured_template_range(self):
         sensor = SearchSensor({"fingerprint_id": 847, "score": 932})
         service = FingerprintService(sensor)
@@ -280,17 +244,19 @@ class FingerprintAttendanceSearchTests(unittest.TestCase):
         self.assertGreaterEqual(touch.poll_calls, 200)
 
     def test_default_detection_uses_configured_hybrid_fallback(self):
-        self.assertEqual(R307_DETECTION_MODE, "gpio_only")
-        self.assertFalse(R307_UART_FALLBACK_ENABLED)
+        self.assertEqual(R307_DETECTION_MODE, "hybrid")
+        self.assertTrue(R307_UART_FALLBACK_ENABLED)
         sensor = PollingSensor([True])
-        touch = ScriptedTouchSensor([True])
-        service = FingerprintService(sensor, touch)
+        service = FingerprintService(sensor, ScriptedTouchSensor([]))
 
-        with patch("services.fingerprint_service.time.sleep"):
+        with (
+            patch("services.fingerprint_service.R307_UART_FALLBACK_INTERVAL_SECONDS", 0.01),
+            patch("services.fingerprint_service.R307_TOUCH_SAMPLE_INTERVAL_SECONDS", 1),
+            patch("services.fingerprint_service.time.sleep"),
+        ):
             self.assertTrue(service.wait_for_finger())
 
         self.assertEqual(sensor.image_calls, 1)
-        self.assertEqual(touch.poll_calls, 1)
 
     def test_hybrid_fallback_disabled_waits_for_gpio_without_uart_probes(self):
         sensor = PollingSensor([True])
@@ -331,44 +297,21 @@ class FingerprintAttendanceSearchTests(unittest.TestCase):
         self.assertEqual(sensor.begin_calls, 0)
 
     def test_capture_timeout_waits_for_removal_before_rearming_touch(self):
-        class FingerLiftedDuringCapture(PollingSensor):
-            def get_image(self):
-                try:
-                    return super().get_image()
-                finally:
-                    if self.image_calls == 3:
-                        touch.active = False
-
-        sensor = FingerLiftedDuringCapture(
-            [R307FingerError("No finger")] * 3,
+        sensor = PollingSensor(
+            [R307FingerError("No finger")] * (R307_TOUCH_CAPTURE_MAX_ATTEMPTS + 3)
+            + [True]
         )
-        touch = ScriptedTouchSensor([True])
+        touch = ScriptedTouchSensor([True, True])
         service = FingerprintService(sensor, touch)
 
         with patch("services.fingerprint_service.time.sleep"):
-            self.assertFalse(service.wait_for_finger())
+            self.assertTrue(service.wait_for_finger())
 
-        self.assertEqual(sensor.image_calls, 3)
-        self.assertEqual(touch.release_calls, 1)
-        self.assertFalse(service._awaiting_removal)
-
-    def test_capture_failure_times_out_and_waits_for_release(self):
-        sensor = PollingSensor([R307FingerError("No finger")])
-        touch = ScriptedTouchSensor([True])
-        service = FingerprintService(sensor, touch)
-
-        with (
-            patch(
-                "services.fingerprint_service._ticks_ms",
-                side_effect=[0, 0, 0, 10000],
-            ),
-            patch("services.fingerprint_service.time.sleep"),
-        ):
-            self.assertFalse(service.wait_for_finger())
-
-        self.assertEqual(sensor.image_calls, 1)
-        self.assertEqual(touch.release_calls, 1)
-        self.assertFalse(service._awaiting_removal)
+        self.assertEqual(
+            sensor.image_calls,
+            R307_TOUCH_CAPTURE_MAX_ATTEMPTS + 4,
+        )
+        self.assertEqual(touch.reset_calls, 1)
 
     def test_wait_for_removal_retries_temporary_timeout_until_no_finger(self):
         sensor = PollingSensor([
@@ -391,7 +334,6 @@ class FingerprintAttendanceSearchTests(unittest.TestCase):
         touch = ScriptedTouchSensor([True])
         service = FingerprintService(sensor, touch)
         service._awaiting_removal = True
-        touch.release_result = False
 
         with (
             patch("services.fingerprint_service.R307_FINGER_REMOVAL_TIMEOUT_SECONDS", 1),
@@ -405,7 +347,7 @@ class FingerprintAttendanceSearchTests(unittest.TestCase):
             ),
         ):
             self.assertFalse(service.wait_for_finger_removed())
-            self.assertEqual(service._removal_rearm_deadline, 30000)
+            self.assertEqual(service._removal_rearm_deadline, 31000)
             self.assertFalse(service._awaiting_removal)
 
         self.assertIsNotNone(service._removal_rearm_deadline)

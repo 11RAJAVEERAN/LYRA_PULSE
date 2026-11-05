@@ -1,155 +1,261 @@
-from datetime import timedelta
-from zoneinfo import ZoneInfo
+"""Attendance business logic: location verification, employee/branch resolution, check-in and check-out.
 
-from django.conf import settings
+Views only orchestrate HTTP; everything that decides whether an attendance action is allowed lives here so
+check-in, check-out and the pre-camera "verify location" call share exactly the same rules.
+"""
+import logging
+import math
+from dataclasses import dataclass
+from decimal import Decimal
+from typing import Optional
+
 from django.db import IntegrityError, transaction
 from django.utils import timezone
-from rest_framework.exceptions import NotFound, PermissionDenied
 
-from apps.devices.models import Device
 from apps.employees.models import Employee
-from apps.fingerprints.models import EmployeeFingerprint
 
-from .models import Attendance
+from .exceptions import AttendanceError
+from .models import Attendance, AttendanceEvent
 
-def _attendance_response(mapping, attendance, status, duplicate=False):
-    employee = mapping.employee
-    data = {
-        "attendance_id": attendance.pk,
-        "employee": {
-            "id": employee.pk,
-            "name": employee.user.full_name,
-        },
-        "status": status,
-        "attendance_date": attendance.attendance_date,
-        "check_in_time": attendance.check_in_at,
-        "check_out_time": attendance.check_out_at,
-    }
-    if duplicate:
-        data["duplicate"] = True
-    return data
+logger = logging.getLogger(__name__)
+
+EARTH_RADIUS_METERS = 6_371_008.8  # IUGG mean Earth radius
+MAX_GPS_ACCURACY_METERS = 10_000  # sanity bound only; real GPS-quality policy can be added in verify_attendance_location
+
+CHECK_OUT_FIELDS = [
+    "check_out_at", "check_out_latitude", "check_out_longitude", "check_out_accuracy",
+    "check_out_distance_meters", "check_out_location_verified", "check_out_photo", "updated_at",
+]
 
 
-def _serialize_session(attendance):
-    status = "CHECKED_OUT" if attendance.check_out_at else "CHECKED_IN"
-    return {
-        "attendance_id": attendance.pk,
-        "check_in_time": attendance.check_in_at,
-        "check_out_time": attendance.check_out_at,
-        "status": status,
-        "source": attendance.source,
-        "branch_id": attendance.branch_id,
-        "device_id": attendance.device.device_id,
-    }
+# ----------------------------------------------------------------------------------------------------------------
+# Location
+# ----------------------------------------------------------------------------------------------------------------
+def calculate_distance_meters(lat1, lon1, lat2, lon2):
+    """Great-circle (haversine) distance in meters. Dependency-free and accurate at branch-radius scale."""
+    phi1, phi2 = math.radians(lat1), math.radians(lat2)
+    d_phi = math.radians(lat2 - lat1)
+    d_lambda = math.radians(lon2 - lon1)
+    a = math.sin(d_phi / 2) ** 2 + math.cos(phi1) * math.cos(phi2) * math.sin(d_lambda / 2) ** 2
+    return 2 * EARTH_RADIUS_METERS * math.asin(min(1.0, math.sqrt(a)))
 
 
-def get_employee_attendance_history(employee_id, attendance_date):
-    employee = Employee.objects.select_related("user").filter(pk=employee_id).first()
-    if employee is None:
-        raise NotFound("Employee does not exist.")
+@dataclass(frozen=True)
+class LocationVerification:
+    verified: bool
+    distance_meters: float
+    allowed_radius_meters: int
+    accuracy_meters: Optional[float] = None
 
-    sessions = list(
-        Attendance.objects.select_related("device")
-        .filter(employee=employee, attendance_date=attendance_date)
-        .order_by("check_in_at", "pk")
+
+def _finite_float(value, error):
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        raise error from None
+    if not math.isfinite(number):
+        raise error
+    return number
+
+
+def validate_coordinates(latitude, longitude, accuracy=None):
+    """Return (latitude, longitude, accuracy) as floats or raise AttendanceError. Never treats bad input as valid."""
+    lat = _finite_float(latitude, AttendanceError("INVALID_LATITUDE", "Latitude must be a number between -90 and 90."))
+    lon = _finite_float(longitude, AttendanceError("INVALID_LONGITUDE", "Longitude must be a number between -180 and 180."))
+    if not -90 <= lat <= 90:
+        raise AttendanceError("INVALID_LATITUDE", "Latitude must be a number between -90 and 90.")
+    if not -180 <= lon <= 180:
+        raise AttendanceError("INVALID_LONGITUDE", "Longitude must be a number between -180 and 180.")
+    acc = None
+    if accuracy is not None:
+        error = AttendanceError("INVALID_GPS_ACCURACY", f"GPS accuracy must be a number between 0 and {MAX_GPS_ACCURACY_METERS} meters.")
+        acc = _finite_float(accuracy, error)
+        if not 0 <= acc <= MAX_GPS_ACCURACY_METERS:
+            raise error
+    return lat, lon, acc
+
+
+def verify_attendance_location(branch, latitude, longitude, accuracy=None):
+    """Compare the device location with the branch attendance location.
+
+    Raises AttendanceError for invalid input or an unconfigured branch (it never defaults to 0/0).
+    Returns a LocationVerification; `verified` is True when the distance is within the branch radius.
+    GPS-quality policies (e.g. rejecting very poor accuracy) can be added here later.
+    """
+    lat, lon, acc = validate_coordinates(latitude, longitude, accuracy)
+    if not branch.has_attendance_location:
+        raise AttendanceError("BRANCH_LOCATION_NOT_CONFIGURED", "Attendance location is not configured for this branch.", 409)
+    distance = calculate_distance_meters(lat, lon, float(branch.latitude), float(branch.longitude))
+    radius = branch.attendance_radius_meters
+    return LocationVerification(
+        verified=distance <= radius,
+        distance_meters=round(distance, 2),
+        allowed_radius_meters=radius,
+        accuracy_meters=None if acc is None else round(acc, 2),
     )
-    total_working_seconds = int(sum(
-        (session.check_out_at - session.check_in_at).total_seconds()
-        for session in sessions
-        if session.check_out_at is not None
-    ))
-    return {
-        "employee": {
-            "id": employee.pk,
-            "name": employee.user.full_name,
-        },
-        "date": attendance_date,
-        "sessions": [_serialize_session(session) for session in sessions],
-        "total_working_seconds": total_working_seconds,
-        "total_working_hours": round(total_working_seconds / 3600, 2),
-    }
+
+
+def _outside_radius_error(verification):
+    return AttendanceError(
+        "OUTSIDE_ATTENDANCE_RADIUS", "You are outside the allowed attendance area.", 403,
+        distance_meters=verification.distance_meters, allowed_radius_meters=verification.allowed_radius_meters,
+    )
+
+
+# ----------------------------------------------------------------------------------------------------------------
+# Who is the employee, and which branch is valid for them (always decided by the server)
+# ----------------------------------------------------------------------------------------------------------------
+def resolve_employee(user):
+    employee = Employee.objects.select_related("branch__organization").filter(user=user).first()
+    if employee is None or not employee.is_active or not user.is_active:
+        raise AttendanceError("EMPLOYEE_PROFILE_NOT_FOUND", "Active employee profile not found.", 403)
+    return employee
+
+
+def resolve_branch(employee):
+    """An employee has one assigned branch. It must be active and, if it belongs to an organization, that must be active."""
+    branch = employee.branch
+    if branch is None or not branch.is_active or (branch.organization_id and not branch.organization.is_active):
+        raise AttendanceError("NO_VALID_BRANCH", "You are not assigned to an active branch.", 403)
+    return branch
+
+
+# ----------------------------------------------------------------------------------------------------------------
+# Check-in / check-out
+# ----------------------------------------------------------------------------------------------------------------
+def _decimal7(value):
+    return Decimal(f"{value:.7f}")
+
+
+def _require_accuracy(accuracy):
+    if accuracy is None:
+        raise AttendanceError("INVALID_GPS_ACCURACY", "GPS accuracy is required.")
+
+
+def _discard_file(field_file):
+    """Remove a photo that was written to storage by a save that did not complete."""
+    if field_file and getattr(field_file, "_committed", False):
+        try:
+            field_file.storage.delete(field_file.name)
+        except Exception:  # never mask the original error
+            logger.exception("Could not remove orphaned attendance photo")
+
+
+def _todays_attendance_exists(employee, today):
+    return Attendance.objects.filter(employee=employee, attendance_date=today).exists()
+
+
+def _is_open_attendance_conflict(error):
+    cause = error.__cause__
+    constraint = getattr(getattr(cause, "diag", None), "constraint_name", None)
+    if constraint == "one_open_attendance_per_employee_day":
+        return True
+    message = str(cause or error).lower()
+    return "one_open_attendance_per_employee_day" in message or (
+        "attendance_attendance.employee_id" in message and "attendance_attendance.attendance_date" in message
+    )
 
 
 @transaction.atomic
-def record_fingerprint_attendance(device, fingerprint_slot):
-    device = Device.objects.select_for_update().select_related("branch").get(pk=device.pk)
-    if not device.is_active:
-        raise PermissionDenied("The attendance device is inactive.")
-    if not device.branch.is_active:
-        raise PermissionDenied("The attendance device branch is inactive.")
+def check_in(*, employee, branch, latitude=None, longitude=None, accuracy=None, photo=None, location_required=True):
+    employee = Employee.objects.select_for_update().get(pk=employee.pk)
+    verification = None
+    if location_required:
+        _require_accuracy(accuracy)
+        verification = verify_attendance_location(branch, latitude, longitude, accuracy)
+        if not verification.verified:
+            raise _outside_radius_error(verification)
 
-    mapping = (
-        EmployeeFingerprint.objects.select_related("employee", "employee__user")
-        .filter(device=device, fingerprint_slot=fingerprint_slot, is_active=True)
-        .first()
+    now = timezone.now()  # server time; any client-supplied time is ignored
+    today = timezone.localdate(now)
+    already_checked_in = AttendanceError("ALREADY_CHECKED_IN", "You already have an open attendance session.", 409)
+    if _todays_attendance_exists(employee, today) and Attendance.objects.filter(
+        employee=employee, attendance_date=today, check_out_at__isnull=True
+    ).exists():
+        raise already_checked_in
+
+    lat, lon, _ = validate_coordinates(latitude, longitude) if location_required else (None, None, None)
+    attendance = Attendance(
+        employee=employee, branch=branch, attendance_date=today, check_in_at=now,
+        check_in_latitude=_decimal7(lat) if lat is not None else None,
+        check_in_longitude=_decimal7(lon) if lon is not None else None,
+        check_in_accuracy=verification.accuracy_meters if verification else None,
+        check_in_distance_meters=verification.distance_meters if verification else None,
+        check_in_location_verified=True if verification else None, check_in_photo=photo or "",
     )
-    if mapping is None:
-        raise NotFound("No active fingerprint mapping exists for this device and slot.")
-
-    employee = Employee.objects.select_for_update().select_related("user").get(pk=mapping.employee_id)
-    if not employee.is_active or not employee.user.is_active:
-        raise PermissionDenied("The employee is inactive.")
-    if employee.branch_id != device.branch_id:
-        raise PermissionDenied("The employee and attendance device are assigned to different branches.")
-
-    now = timezone.now()
-    attendance_date = timezone.localtime(now, ZoneInfo(settings.TIME_ZONE)).date()
-    attendance = (
-        Attendance.objects.select_for_update()
-        .filter(employee=employee, attendance_date=attendance_date)
-        .order_by("-check_in_at", "-pk")
-        .first()
-    )
-
-    cooldown_seconds = max(
-        0,
-        getattr(settings, "ATTENDANCE_FINGERPRINT_SCAN_COOLDOWN_SECONDS", 5),
-    )
-    cooldown = timedelta(seconds=cooldown_seconds)
-    last_action_at = None
-    if attendance is not None:
-        last_action_at = attendance.check_out_at or attendance.check_in_at
-    if last_action_at is not None and now - last_action_at < cooldown:
-        current_status = "CHECKED_OUT" if attendance.check_out_at else "CHECKED_IN"
-        return (
-            _attendance_response(mapping, attendance, current_status, duplicate=True),
-            "Duplicate scan ignored",
-        )
-
-    if attendance is not None and attendance.check_out_at is None:
-        attendance.check_out_at = now
-        attendance.save(update_fields=("check_out_at", "updated_at"))
-        return (
-            _attendance_response(mapping, attendance, "CHECKED_OUT"),
-            "Check-out successful",
-        )
-
     try:
         with transaction.atomic():
-            attendance = Attendance.objects.create(
-                employee=employee,
-                branch=device.branch,
-                device=device,
-                attendance_date=attendance_date,
-                check_in_at=now,
-                source="BIOMETRIC",
-            )
-    except IntegrityError:
-        open_attendance = (
-            Attendance.objects.select_for_update()
-            .filter(
-                employee=employee,
-                attendance_date=attendance_date,
-                check_out_at__isnull=True,
-            )
-            .order_by("-check_in_at", "-pk")
-            .first()
-        )
-        if open_attendance is None:
-            raise
-        return (
-            _attendance_response(mapping, open_attendance, "CHECKED_IN", duplicate=True),
-            "Duplicate scan ignored",
-        )
+            attendance.save(force_insert=True)  # writes the photo, then INSERTs
+            AttendanceEvent.objects.create(attendance=attendance, action=AttendanceEvent.Action.CHECK_IN, method=AttendanceEvent.Method.MOBILE_GPS, occurred_at=now)
+    except IntegrityError as error:
+        _discard_file(attendance.check_in_photo)
+        # Row locks serialize on databases that support them; this partial unique index is
+        # the final guard for backends where select_for_update is a no-op (including SQLite).
+        # Convert the expected race into the same conflict response as the pre-check.
+        if _is_open_attendance_conflict(error):
+            raise already_checked_in from error
+        raise
+    except Exception:
+        _discard_file(attendance.check_in_photo)
+        raise
+    return attendance
 
-    return _attendance_response(mapping, attendance, "CHECKED_IN"), "Check-in successful"
+
+@transaction.atomic
+def check_out(*, employee, branch, latitude=None, longitude=None, accuracy=None, photo=None, location_required=True):
+    employee = Employee.objects.select_for_update().get(pk=employee.pk)
+    verification = None
+    if location_required:
+        _require_accuracy(accuracy)
+        verification = verify_attendance_location(branch, latitude, longitude, accuracy)
+        if not verification.verified:
+            raise _outside_radius_error(verification)
+
+    now = timezone.now()
+    today = timezone.localdate(now)
+    lat, lon, _ = validate_coordinates(latitude, longitude) if location_required else (None, None, None)
+    attendance = None
+    try:
+        with transaction.atomic():
+            # Row lock serialises concurrent check-out taps: the second one sees check_out_at already set.
+            attendance = Attendance.objects.select_for_update().filter(
+                employee=employee, attendance_date=today, check_out_at__isnull=True
+            ).order_by("-check_in_at").first()
+            if attendance is None:
+                if Attendance.objects.filter(employee=employee, attendance_date=today, check_out_at__isnull=False).exists():
+                    raise AttendanceError("ALREADY_CHECKED_OUT", "There is no open session to check out.", 409)
+                raise AttendanceError("NOT_CHECKED_IN", "You do not have an open attendance session.", 409)
+            if attendance.branch_id != branch.pk:
+                raise AttendanceError("BRANCH_MISMATCH", "Your branch changed since check-in. Please contact HR.", 409)
+            attendance.check_out_at = now
+            attendance.check_out_latitude = _decimal7(lat) if lat is not None else None
+            attendance.check_out_longitude = _decimal7(lon) if lon is not None else None
+            attendance.check_out_accuracy = verification.accuracy_meters if verification else None
+            attendance.check_out_distance_meters = verification.distance_meters if verification else None
+            attendance.check_out_location_verified = True if verification else None
+            attendance.check_out_photo = photo or ""
+            attendance.save(update_fields=CHECK_OUT_FIELDS)
+            AttendanceEvent.objects.create(attendance=attendance, action=AttendanceEvent.Action.CHECK_OUT, method=AttendanceEvent.Method.MOBILE_GPS, occurred_at=now)
+    except AttendanceError:
+        raise
+    except Exception:
+        if attendance is not None:
+            _discard_file(attendance.check_out_photo)
+        raise
+    return attendance
+
+
+def today_state(employee):
+    today = timezone.localdate()
+    sessions = list(Attendance.objects.filter(employee=employee, attendance_date=today).order_by("check_in_at"))
+    open_session = Attendance.objects.filter(employee=employee, check_out_at__isnull=True).order_by("-check_in_at").first()
+    if open_session and open_session not in sessions:
+        sessions.append(open_session)
+    attendance = open_session or (sessions[-1] if sessions else None)
+    if attendance is None:
+        return {"attendance_date": today, "state": Attendance.State.NOT_CHECKED_IN.value, "check_in_at": None, "check_out_at": None, "sessions": []}
+    return {
+        "attendance_date": attendance.attendance_date, "state": attendance.state.value,
+        "check_in_at": attendance.check_in_at, "check_out_at": attendance.check_out_at,
+        "sessions": [{"id": row.pk, "check_in_at": row.check_in_at, "check_out_at": row.check_out_at, "source": row.source} for row in sessions],
+    }

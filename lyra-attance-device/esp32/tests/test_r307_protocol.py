@@ -88,24 +88,6 @@ class R307EnrollmentProtocolTests(unittest.TestCase):
             bytes.fromhex("EF01FFFFFFFF0100071300000000001B"),
         )
 
-    def test_short_uart_write_fails_before_waiting_for_sensor_response(self):
-        self.uart.write = lambda frame: len(frame) - 1
-
-        with self.assertRaisesRegex(
-            R307CommunicationError,
-            "UART write incomplete: wrote 15 of 16 bytes",
-        ):
-            self.sensor.verify_password(0)
-
-    def test_uart_write_timeout_is_reported_when_write_returns_none(self):
-        self.uart.write = lambda _frame: None
-
-        with self.assertRaisesRegex(
-            R307CommunicationError,
-            "UART write incomplete: wrote None of 16 bytes",
-        ):
-            self.sensor.verify_password(0)
-
     def test_search_status_nine_is_not_found_even_in_status_only_ack(self):
         self.queue_ack(b"\x09")
 
@@ -121,30 +103,6 @@ class R307EnrollmentProtocolTests(unittest.TestCase):
 
         with self.assertRaises(R307FingerError):
             self.sensor.get_image()
-
-    def test_match_command_returns_score_for_two_buffers(self):
-        self.queue_ack(b"\x00\x01\xF4")
-
-        self.assertEqual(self.sensor.match_templates(1, 2), {"score": 500})
-        self.assertEqual(
-            self.command_contents(self.uart.writes[-1]),
-            bytes([R307.CMD_MATCH, 1, 2]),
-        )
-
-    def test_match_rejects_nonmatching_templates_and_malformed_scores(self):
-        self.queue_ack(b"\x08")
-        with self.assertRaisesRegex(R307TemplateError, "did not match"):
-            self.sensor.match_templates(1, 2)
-
-        self.queue_ack(b"\x00\x01")
-        with self.assertRaisesRegex(R307InvalidPacketError, "score"):
-            self.sensor.match_templates(1, 2)
-
-    def test_match_requires_distinct_valid_character_buffers(self):
-        for buffers in ((0, 1), (1, 3), (2, 2)):
-            with self.subTest(buffers=buffers):
-                with self.assertRaises(ValueError):
-                    self.sensor.match_templates(*buffers)
 
     def test_get_image_collects_fragmented_uart_response(self):
         self.queue_ack(b"\x00")

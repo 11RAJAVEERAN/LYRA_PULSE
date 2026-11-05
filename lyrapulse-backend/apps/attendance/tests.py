@@ -1,480 +1,672 @@
-from datetime import datetime, timedelta, timezone as datetime_timezone
-from threading import Barrier
-from concurrent.futures import ThreadPoolExecutor
+import math
+import os
+import re
+import shutil
+import tempfile
+import unittest
+from datetime import datetime, timezone as dt_timezone
+from decimal import Decimal
+from io import BytesIO
 from unittest.mock import patch
 
-from django.contrib.auth.hashers import make_password
-from django.db import IntegrityError, close_old_connections, transaction
-from django.test import TestCase, TransactionTestCase, skipUnlessDBFeature
-from django.utils import timezone
+from django.contrib.auth.models import Permission
+from django.core.exceptions import ValidationError
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.db import IntegrityError, connection, transaction
+from django.test.utils import CaptureQueriesContext
+from django.test import SimpleTestCase, TestCase, override_settings
+from PIL import Image
 from rest_framework.test import APIClient
-from rest_framework_simplejwt.tokens import RefreshToken
 
 from apps.accounts.models import User
 from apps.branches.models import Branch
-from apps.devices.models import Device
-from apps.employees.models import Employee
-from apps.fingerprints.models import EmployeeFingerprint
+from apps.employees.models import AttendancePermissionAudit, Employee
+from apps.organizations.models import Organization
 
+from . import services
+from .exceptions import AttendanceError
 from .models import Attendance
 
+BRANCH_LAT, BRANCH_LON = Decimal("11.744700"), Decimal("79.768900")
+NEAR = {"latitude": 11.7450, "longitude": 79.7689, "accuracy": 7.4}  # ~33 m from the branch
+FAR = {"latitude": 11.7480, "longitude": 79.7689, "accuracy": 7.4}   # ~367 m from the branch
+BASE = "/api/v1/attendance/"
 
-class FingerprintAttendanceAPITests(TestCase):
+
+def image_file(name="selfie.jpg", fmt="JPEG", content_type=None):
+    buffer = BytesIO()
+    Image.new("RGB", (16, 16), "blue").save(buffer, format=fmt)
+    return SimpleUploadedFile(name, buffer.getvalue(), content_type=content_type or f"image/{fmt.lower()}")
+
+
+def unconfigured_branch(**extra):
+    return Branch(name="Test", code="T1", **extra)
+
+
+class BranchLocationTests(TestCase):
+    def make(self, **extra):
+        values = {"name": "Cuddalore", "code": "CDL", "latitude": BRANCH_LAT, "longitude": BRANCH_LON, "attendance_radius_meters": 100}
+        values.update(extra)
+        return Branch(**values)
+
+    def test_01_valid_branch_coordinates(self):
+        branch = self.make()
+        branch.full_clean()
+        self.assertTrue(branch.has_attendance_location)
+
+    def test_02_invalid_latitude(self):
+        for bad in (Decimal("90.5"), Decimal("-91")):
+            with self.assertRaises(ValidationError) as ctx:
+                self.make(latitude=bad).full_clean()
+            self.assertIn("latitude", ctx.exception.message_dict)
+
+    def test_03_invalid_longitude(self):
+        for bad in (Decimal("180.5"), Decimal("-181")):
+            with self.assertRaises(ValidationError) as ctx:
+                self.make(longitude=bad).full_clean()
+            self.assertIn("longitude", ctx.exception.message_dict)
+
+    def test_04_invalid_radius(self):
+        with self.assertRaises(ValidationError) as ctx:
+            self.make(attendance_radius_meters=0).full_clean()
+        self.assertIn("attendance_radius_meters", ctx.exception.message_dict)
+
+    def test_05_missing_location_configuration(self):
+        branch = self.make(latitude=None, longitude=None)
+        branch.full_clean()  # allowed: existing branches stay valid
+        self.assertFalse(branch.has_attendance_location)
+        with self.assertRaises(AttendanceError) as ctx:
+            services.verify_attendance_location(branch, 11.7, 79.7, 5)
+        self.assertEqual(ctx.exception.code, "BRANCH_LOCATION_NOT_CONFIGURED")
+        self.assertEqual(ctx.exception.message, "Attendance location is not configured for this branch.")
+
+    def test_only_one_coordinate_is_rejected(self):
+        with self.assertRaises(ValidationError):
+            self.make(longitude=None).full_clean()
+
+
+class LocationServiceTests(SimpleTestCase):
+    def branch(self, radius=100):
+        return Branch(name="Cuddalore", code="CDL", latitude=BRANCH_LAT, longitude=BRANCH_LON, attendance_radius_meters=radius)
+
+    def test_06_inside_radius(self):
+        result = services.verify_attendance_location(self.branch(), NEAR["latitude"], NEAR["longitude"], 7.4)
+        self.assertTrue(result.verified)
+        self.assertAlmostEqual(result.distance_meters, 33.4, delta=1.0)
+        self.assertEqual(result.allowed_radius_meters, 100)
+        self.assertEqual(result.accuracy_meters, 7.4)
+
+    def test_07_outside_radius(self):
+        result = services.verify_attendance_location(self.branch(), FAR["latitude"], FAR["longitude"], 7.4)
+        self.assertFalse(result.verified)
+        self.assertAlmostEqual(result.distance_meters, 367, delta=3.0)
+
+    def test_08_boundary(self):
+        distance = services.calculate_distance_meters(NEAR["latitude"], NEAR["longitude"], float(BRANCH_LAT), float(BRANCH_LON))
+        just_inside = self.branch(radius=math.ceil(distance))
+        just_outside = self.branch(radius=math.floor(distance))
+        self.assertTrue(services.verify_attendance_location(just_inside, NEAR["latitude"], NEAR["longitude"], 5).verified)
+        self.assertFalse(services.verify_attendance_location(just_outside, NEAR["latitude"], NEAR["longitude"], 5).verified)
+        # standing exactly on the branch point is distance 0
+        on_point = services.verify_attendance_location(self.branch(radius=1), float(BRANCH_LAT), float(BRANCH_LON), 5)
+        self.assertTrue(on_point.verified)
+        self.assertEqual(on_point.distance_meters, 0)
+
+    def test_haversine_known_distance(self):
+        # One degree of latitude is ~111.19 km
+        self.assertAlmostEqual(services.calculate_distance_meters(0, 0, 1, 0), 111195, delta=100)
+
+    def test_09_invalid_coordinates(self):
+        cases = [
+            ((91, 79.7, 5), "INVALID_LATITUDE"), ((-91, 79.7, 5), "INVALID_LATITUDE"), (("abc", 79.7, 5), "INVALID_LATITUDE"),
+            ((float("nan"), 79.7, 5), "INVALID_LATITUDE"),
+            ((11.7, 181, 5), "INVALID_LONGITUDE"), ((11.7, float("inf"), 5), "INVALID_LONGITUDE"),
+            ((11.7, 79.7, -1), "INVALID_GPS_ACCURACY"), ((11.7, 79.7, "x"), "INVALID_GPS_ACCURACY"),
+        ]
+        for args, code in cases:
+            with self.assertRaises(AttendanceError, msg=str(args)) as ctx:
+                services.verify_attendance_location(self.branch(), *args)
+            self.assertEqual(ctx.exception.code, code, msg=str(args))
+
+
+class AttendanceAPITestCase(TestCase):
     def setUp(self):
+        media = tempfile.mkdtemp(prefix="lyra_test_media_")
+        self.media_root = media
+        override = override_settings(MEDIA_ROOT=media, ROOT_URLCONF="config.urls")
+        override.enable()
+        self.addCleanup(override.disable)
+        self.addCleanup(shutil.rmtree, media, ignore_errors=True)
+
+        self.org = Organization.objects.create(name="Devi", code="DEVI")
+        self.branch = Branch.objects.create(
+            organization=self.org, name="Cuddalore", code="CDL",
+            latitude=BRANCH_LAT, longitude=BRANCH_LON, attendance_radius_meters=100,
+        )
+        self.user, self.employee = self.make_employee("EMP001", "9876500001", self.branch)
+        # Legacy attendance-flow tests model employees whose existing settings were preserved by
+        # the 0003/0004 data migrations. New employees remain disabled by default in model tests.
+        self.employee.mobile_gps_attendance_enabled = True
+        self.employee.photo_attendance_enabled = True
+        self.employee.location_attendance_enabled = True
+        self.employee.save(update_fields=("mobile_gps_attendance_enabled", "photo_attendance_enabled", "location_attendance_enabled"))
         self.client = APIClient()
-        self.branch = Branch.objects.create(name="Main", code="MAIN")
-        self.other_branch = Branch.objects.create(name="Other", code="OTHER")
-        self.employee_user = User.objects.create_user(
-            "9100000011",
-            first_name="Rajaveeran",
-            last_name="V",
-        )
-        self.employee = Employee.objects.create(
-            employee_code="ATT-EMP001",
-            user=self.employee_user,
-            branch=self.branch,
-        )
-        self.device_token = "attendance-test-device-token"
-        self.device = Device(
-            device_id="LYRA-ATTENDANCE-001",
-            branch=self.branch,
-            token_hash=make_password(self.device_token),
-        )
-        self.device.save()
-        self.mapping = EmployeeFingerprint.objects.create(
-            employee=self.employee,
-            device=self.device,
-            fingerprint_slot=25,
-            finger="right_index",
-        )
-        self.url = "/api/v1/attendance/fingerprint/"
-        self.history_url = "/api/v1/attendance/"
-        self.payload = {
-            "device_id": self.device.device_id,
-            "fingerprint_slot": self.mapping.fingerprint_slot,
-        }
+        self.client.force_authenticate(self.user)
 
-    def authenticated_client(self, token=None):
+    def make_employee(self, code, phone, branch):
+        user = User.objects.create_user(phone, role=User.Role.EMPLOYEE, first_name=code, last_name="Test")
+        return user, Employee.objects.create(employee_code=code, user=user, branch=branch)
+
+    def post_action(self, name, location=None, photo="default", client=None, **extra):
+        data = dict(NEAR if location is None else location)
+        if photo == "default":
+            photo = image_file()
+        if photo is not None:
+            data["photo"] = photo
+        data.update(extra)
+        return (client or self.client).post(f"{BASE}{name}/", data, format="multipart")
+
+    def check_in(self, **kwargs):
+        return self.post_action("check-in", **kwargs)
+
+    def check_out(self, **kwargs):
+        return self.post_action("check-out", **kwargs)
+
+    def media_files(self):
+        return [os.path.join(root, f) for root, _, files in os.walk(self.media_root) for f in files]
+
+    def error_code(self, response):
+        return response.json()["errors"]["code"]
+
+
+class AuthAndScopingTests(AttendanceAPITestCase):
+    def test_10_unauthenticated_verify_location_rejected(self):
+        response = APIClient().post(f"{BASE}verify-location/", NEAR, format="json")
+        self.assertEqual(response.status_code, 401)
+
+    def test_11_unauthenticated_check_in_and_others_rejected(self):
+        anonymous = APIClient()
+        self.assertEqual(self.check_in(client=anonymous).status_code, 401)
+        self.assertEqual(self.check_out(client=anonymous).status_code, 401)
+        self.assertEqual(anonymous.get(f"{BASE}today/").status_code, 401)
+        self.assertEqual(Attendance.objects.count(), 0)
+
+    def test_12_employee_cannot_create_attendance_for_another_employee(self):
+        _, other = self.make_employee("EMP002", "9876500002", self.branch)
+        response = self.check_in(employee_id=other.pk, employee=other.pk, branch_id=999, branch=999)
+        self.assertEqual(response.status_code, 201)
+        self.assertFalse(Attendance.objects.filter(employee=other).exists())
+        self.assertEqual(Attendance.objects.get().employee, self.employee)
+        self.assertEqual(Attendance.objects.get().branch, self.branch)
+
+    def test_34_branch_comes_from_the_employees_own_assignment(self):
+        other_org = Organization.objects.create(name="Other", code="OTH")
+        far_branch = Branch.objects.create(
+            organization=other_org, name="Elsewhere", code="ELS",
+            latitude=Decimal("28.613900"), longitude=Decimal("77.209000"), attendance_radius_meters=100,
+        )
+        # Client claims the far branch; server still verifies against the employee's own branch.
+        response = self.check_in(branch_id=far_branch.pk)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(Attendance.objects.get().branch, self.branch)
+        # An employee of the other branch cannot use this branch's coordinates
+        other_user, _ = self.make_employee("EMP003", "9876500003", far_branch)
+        Employee.objects.filter(user=other_user).update(
+            mobile_gps_attendance_enabled=True,
+            photo_attendance_enabled=True,
+            location_attendance_enabled=True,
+        )
         client = APIClient()
-        if token is not None:
-            client.credentials(HTTP_AUTHORIZATION="Device %s" % token)
-        return client
+        client.force_authenticate(other_user)
+        self.assertEqual(self.error_code(self.check_in(client=client)), "OUTSIDE_ATTENDANCE_RADIUS")
 
-    def scan(self, payload=None, token=None):
-        return self.authenticated_client(token or self.device_token).post(
-            self.url,
-            self.payload if payload is None else payload,
-            format="json",
-        )
-
-    def advance_last_action(self, attendance, seconds):
-        timestamp = timezone.now() - timedelta(seconds=seconds)
-        if attendance.check_out_at is None:
-            attendance.check_in_at = timestamp
-            attendance.save(update_fields=("check_in_at",))
-        else:
-            attendance.check_out_at = timestamp
-            attendance.save(update_fields=("check_out_at",))
-
-    def test_valid_fingerprint_checks_employee_in_and_returns_response_structure(self):
-        response = self.scan()
-
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data["success"], True)
-        self.assertEqual(response.data["message"], "Check-in successful")
-        data = response.data["data"]
-        self.assertEqual(
-            set(data),
-            {
-                "attendance_id",
-                "employee",
-                "status",
-                "attendance_date",
-                "check_in_time",
-                "check_out_time",
-            },
-        )
-        self.assertEqual(
-            data["employee"],
-            {"id": self.employee.id, "name": "Rajaveeran V"},
-        )
-        self.assertEqual(data["status"], "CHECKED_IN")
-        attendance = Attendance.objects.get(pk=data["attendance_id"])
-        self.assertIsNone(attendance.check_out_at)
-
-    def test_valid_fingerprint_checks_employee_out_after_duplicate_window(self):
-        checked_in = self.scan()
-        attendance = Attendance.objects.get(pk=checked_in.data["data"]["attendance_id"])
-        self.advance_last_action(attendance, 6)
-
-        checked_out = self.scan()
-
-        self.assertEqual(checked_out.status_code, 200)
-        self.assertEqual(checked_out.data["message"], "Check-out successful")
-        self.assertEqual(checked_out.data["data"]["status"], "CHECKED_OUT")
-        attendance.refresh_from_db()
-        self.assertIsNotNone(attendance.check_out_at)
-
-    def test_repeated_scan_within_duplicate_window_does_not_change_attendance(self):
-        self.scan()
-
-        duplicate = self.scan()
-
-        self.assertEqual(duplicate.status_code, 200)
-        self.assertEqual(duplicate.data["message"], "Duplicate scan ignored")
-        self.assertTrue(duplicate.data["data"]["duplicate"])
-        self.assertEqual(duplicate.data["data"]["status"], "CHECKED_IN")
-        self.assertEqual(Attendance.objects.count(), 1)
-        attendance = Attendance.objects.get()
-        self.assertIsNone(attendance.check_out_at)
-
-    def test_multiple_sessions_alternate_check_in_and_check_out(self):
-        expected = ("CHECKED_IN", "CHECKED_OUT", "CHECKED_IN", "CHECKED_OUT")
-        responses = []
-        for status in expected:
-            latest = Attendance.objects.order_by("-check_in_at", "-pk").first()
-            if latest is not None:
-                self.advance_last_action(latest, 6)
-            responses.append(self.scan())
-
-        self.assertEqual(
-            tuple(response.data["data"]["status"] for response in responses),
-            expected,
-        )
-        self.assertEqual(Attendance.objects.count(), 2)
-        self.assertTrue(all(record.check_out_at is not None for record in Attendance.objects.all()))
-
-    def test_multiple_sensor_slots_for_same_employee_finger_resolve_attendance(self):
-        slot_one_mapping = EmployeeFingerprint.objects.create(
-            employee=self.employee,
-            device=self.device,
-            fingerprint_slot=1,
-            finger=self.mapping.finger,
-        )
-        self.mapping.fingerprint_slot = 256
-        self.mapping.save(update_fields=("fingerprint_slot",))
-
-        first_scan = self.scan({
-            "device_id": self.device.device_id,
-            "fingerprint_slot": slot_one_mapping.fingerprint_slot,
-        })
-        self.assertEqual(first_scan.status_code, 200)
-        self.assertEqual(first_scan.data["data"]["employee"]["id"], self.employee.id)
-        self.assertEqual(first_scan.data["data"]["status"], "CHECKED_IN")
-
-        attendance = Attendance.objects.get()
-        self.advance_last_action(attendance, 6)
-        second_scan = self.scan({
-            "device_id": self.device.device_id,
-            "fingerprint_slot": 256,
-        })
-        self.assertEqual(second_scan.status_code, 200)
-        self.assertEqual(second_scan.data["data"]["employee"]["id"], self.employee.id)
-        self.assertEqual(second_scan.data["data"]["status"], "CHECKED_OUT")
-
-    def test_employee_can_start_new_session_after_checkout(self):
-        self.scan()
-        session = Attendance.objects.get()
-        self.advance_last_action(session, 6)
-        self.assertEqual(self.scan().data["data"]["status"], "CHECKED_OUT")
-
-        session.refresh_from_db()
-        self.advance_last_action(session, 6)
-        response = self.scan()
-
-        self.assertEqual(response.data["data"]["status"], "CHECKED_IN")
-        self.assertEqual(Attendance.objects.count(), 2)
-        self.assertIsNone(
-            Attendance.objects.get(pk=response.data["data"]["attendance_id"]).check_out_at
-        )
-
-    def test_database_rejects_a_second_open_session_for_same_employee_date(self):
-        self.scan()
-        existing = Attendance.objects.get()
-
-        with self.assertRaises(IntegrityError):
-            with transaction.atomic():
-                Attendance.objects.create(
-                    employee=self.employee,
-                    branch=self.branch,
-                    device=self.device,
-                    attendance_date=existing.attendance_date,
-                    check_in_at=timezone.now(),
-                    source="BIOMETRIC",
-                )
-
-        self.assertEqual(Attendance.objects.filter(check_out_at__isnull=True).count(), 1)
-
-    def test_unknown_fingerprint_slot_does_not_create_attendance(self):
-        response = self.scan({"device_id": self.device.device_id, "fingerprint_slot": 999})
-
-        self.assertEqual(response.status_code, 404)
-        self.assertFalse(Attendance.objects.exists())
-
-    def test_unmapped_sensor_slots_one_and_256_are_rejected(self):
-        for fingerprint_slot in (1, 256):
-            with self.subTest(fingerprint_slot=fingerprint_slot):
-                response = self.scan({
-                    "device_id": self.device.device_id,
-                    "fingerprint_slot": fingerprint_slot,
-                })
-                self.assertEqual(response.status_code, 404)
-        self.assertFalse(Attendance.objects.exists())
-
-    def test_inactive_fingerprint_mapping_is_rejected(self):
-        self.mapping.is_active = False
-        self.mapping.save(update_fields=("is_active",))
-
-        response = self.scan()
-
-        self.assertEqual(response.status_code, 404)
-        self.assertFalse(Attendance.objects.exists())
-
-    def test_inactive_employee_is_rejected(self):
-        self.employee.is_active = False
-        self.employee.save(update_fields=("is_active",))
-
-        response = self.scan()
-
-        self.assertEqual(response.status_code, 403)
-        self.assertFalse(Attendance.objects.exists())
-
-    def test_inactive_employee_user_is_rejected(self):
-        self.employee_user.is_active = False
-        self.employee_user.save(update_fields=("is_active",))
-
-        response = self.scan()
-
-        self.assertEqual(response.status_code, 403)
-        self.assertFalse(Attendance.objects.exists())
-
-    def test_unknown_device_is_rejected_by_existing_device_authentication(self):
-        response = self.scan({
-            "device_id": "UNKNOWN-DEVICE",
-            "fingerprint_slot": self.mapping.fingerprint_slot,
-        })
-
-        self.assertEqual(response.status_code, 401)
-        self.assertFalse(Attendance.objects.exists())
-
-    def test_inactive_device_is_rejected_by_existing_device_authentication(self):
-        self.device.is_active = False
-        self.device.save(update_fields=("is_active",))
-
-        response = self.scan()
-
-        self.assertEqual(response.status_code, 401)
-        self.assertFalse(Attendance.objects.exists())
-
-    def test_employee_device_branch_mismatch_is_rejected(self):
-        self.employee.branch = self.other_branch
-        self.employee.save(update_fields=("branch",))
-
-        response = self.scan()
-
-        self.assertEqual(response.status_code, 403)
-        self.assertFalse(Attendance.objects.exists())
-
-    def test_inactive_device_branch_is_rejected(self):
+    def test_34_employee_without_valid_branch(self):
         self.branch.is_active = False
-        self.branch.save(update_fields=("is_active",))
+        self.branch.save()
+        self.assertEqual(self.error_code(self.check_in()), "NO_VALID_BRANCH")
+        self.branch.is_active = True
+        self.branch.save()
+        self.org.is_active = False
+        self.org.save()
+        self.assertEqual(self.error_code(self.check_in()), "NO_VALID_BRANCH")
+        self.org.is_active = True
+        self.org.save()
+        Employee.objects.filter(pk=self.employee.pk).update(branch=None)
+        self.assertEqual(self.error_code(self.check_in()), "NO_VALID_BRANCH")
+        self.assertEqual(Attendance.objects.count(), 0)
 
-        response = self.scan()
-
+    def test_employee_profile_missing_or_inactive(self):
+        no_profile = User.objects.create_user("9876509999", role=User.Role.EMPLOYEE)
+        client = APIClient()
+        client.force_authenticate(no_profile)
+        response = client.get(f"{BASE}today/")
         self.assertEqual(response.status_code, 403)
-        self.assertFalse(Attendance.objects.exists())
+        self.assertEqual(self.error_code(response), "EMPLOYEE_PROFILE_NOT_FOUND")
+        Employee.objects.filter(pk=self.employee.pk).update(is_active=False)
+        self.assertEqual(self.error_code(self.check_in()), "EMPLOYEE_PROFILE_NOT_FOUND")
 
-    def test_different_employee_fingerprint_resolves_to_its_owner(self):
-        second_user = User.objects.create_user(
-            "9100000012",
-            first_name="Second",
-            last_name="Employee",
-        )
-        second_employee = Employee.objects.create(
-            employee_code="ATT-EMP002",
-            user=second_user,
-            branch=self.branch,
-        )
-        EmployeeFingerprint.objects.create(
-            employee=second_employee,
-            device=self.device,
-            fingerprint_slot=26,
-            finger="left_index",
-        )
+    def test_35_existing_role_permissions_intact(self):
+        # Admin-side roles are not employees: they cannot use the employee attendance APIs.
+        hr = User.objects.create_user("9111111111", role=User.Role.HR, organization=self.org)
+        hr.allowed_branches.add(self.branch)
+        hr.user_permissions.add(Permission.objects.get(codename="view_employee", content_type__app_label="employees"))
+        client = APIClient()
+        client.force_authenticate(hr)
+        self.assertEqual(client.get(f"{BASE}today/").status_code, 403)
+        self.assertEqual(self.check_in(client=client).status_code, 403)
+        # ...and existing employee/admin endpoints behave as before.
+        self.assertEqual(self.client.get("/api/v1/mobile/me/").status_code, 200)
+        self.assertEqual(client.get("/api/v1/employees/").status_code, 200)
+        self.assertEqual(self.client.get("/api/v1/employees/").status_code, 403)
 
-        response = self.scan({
-            "device_id": self.device.device_id,
-            "fingerprint_slot": 26,
-        })
 
+class VerifyLocationTests(AttendanceAPITestCase):
+    def test_inside(self):
+        response = self.client.post(f"{BASE}verify-location/", NEAR, format="json")
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data["data"]["employee"]["id"], second_employee.id)
-        self.assertEqual(response.data["data"]["employee"]["name"], "Second Employee")
-        self.assertNotEqual(response.data["data"]["employee"]["id"], self.employee.id)
+        data = response.json()["data"]
+        self.assertTrue(data["verified"])
+        self.assertEqual(data["branch"], {"id": self.branch.pk, "name": "Cuddalore"})
+        self.assertEqual(data["allowed_radius_meters"], 100)
+        self.assertLess(data["distance_meters"], 100)
+        self.assertEqual(Attendance.objects.count(), 0)  # verification never creates attendance
 
-    def test_attendance_date_uses_asia_kolkata_timezone(self):
-        instant = datetime(2026, 10, 7, 19, 0, tzinfo=datetime_timezone.utc)
-        with patch("apps.attendance.services.timezone.now", return_value=instant):
-            response = self.scan()
-
+    def test_outside(self):
+        response = self.client.post(f"{BASE}verify-location/", FAR, format="json")
         self.assertEqual(response.status_code, 200)
-        attendance = Attendance.objects.get(pk=response.data["data"]["attendance_id"])
-        self.assertEqual(attendance.attendance_date.isoformat(), "2026-10-08")
-        self.assertEqual(response.data["data"]["attendance_date"].isoformat(), "2026-10-08")
-        self.assertEqual(response.data["data"]["check_in_time"], instant)
+        self.assertFalse(response.json()["data"]["verified"])
+        self.assertEqual(response.json()["message"], "You are outside the allowed attendance area.")
 
-    def test_device_authentication_rejects_missing_or_invalid_token(self):
-        missing_token_response = self.authenticated_client().post(
-            self.url,
-            self.payload,
-            format="json",
-        )
-        invalid_token_response = self.scan(token="incorrect-token")
+    def test_invalid_input_and_unconfigured_branch(self):
+        for field, value in (("latitude", 95), ("longitude", -200), ("accuracy", -3), ("latitude", "nan"), ("accuracy", None)):
+            payload = {**NEAR, field: value}
+            response = self.client.post(f"{BASE}verify-location/", payload, format="json")
+            self.assertEqual(response.status_code, 400, msg=f"{field}={value}")
+            self.assertIn(field, response.json()["errors"])
+        Branch.objects.filter(pk=self.branch.pk).update(latitude=None, longitude=None)
+        response = self.client.post(f"{BASE}verify-location/", NEAR, format="json")
+        self.assertEqual(response.status_code, 409)
+        self.assertEqual(self.error_code(response), "BRANCH_LOCATION_NOT_CONFIGURED")
 
-        self.assertEqual(missing_token_response.status_code, 401)
-        self.assertEqual(invalid_token_response.status_code, 401)
-        self.assertFalse(Attendance.objects.exists())
 
-    def test_employee_id_is_not_accepted_from_device_payload(self):
-        response = self.scan({
-            "device_id": self.device.device_id,
-            "fingerprint_slot": self.mapping.fingerprint_slot,
-            "employee_id": self.employee.id,
-        })
-
-        self.assertEqual(response.status_code, 400)
-        self.assertFalse(Attendance.objects.exists())
-
-    def test_scan_immediately_after_check_out_is_ignored_during_cooldown(self):
-        self.scan()
-        attendance = Attendance.objects.get()
-        self.advance_last_action(attendance, 6)
-        self.assertEqual(self.scan().data["data"]["status"], "CHECKED_OUT")
-        attendance.refresh_from_db()
-
-        response = self.scan()
-
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data["data"]["status"], "CHECKED_OUT")
-        self.assertTrue(response.data["data"]["duplicate"])
+class CheckInTests(AttendanceAPITestCase):
+    def test_13_valid_check_in_and_response(self):
+        response = self.check_in()
+        self.assertEqual(response.status_code, 201)
+        body = response.json()
+        self.assertTrue(body["success"])
+        self.assertEqual(body["message"], "Check-in successful.")
+        attendance = body["data"]["attendance"]
+        self.assertTrue(attendance["location_verified"])
         self.assertEqual(Attendance.objects.count(), 1)
-        attendance.refresh_from_db()
-        self.assertEqual(attendance.check_out_at, response.data["data"]["check_out_time"])
+        self.assertEqual(attendance["id"], Attendance.objects.get().pk)
 
-    def test_history_returns_all_sessions_and_completed_working_time(self):
-        first = self.scan()
-        first_session = Attendance.objects.get(pk=first.data["data"]["attendance_id"])
-        now = timezone.now()
-        first_session.check_in_at = now - timedelta(hours=2)
-        first_session.check_out_at = now - timedelta(hours=1, minutes=45)
-        first_session.save(update_fields=("check_in_at", "check_out_at"))
+    def test_14_outside_radius_rejected(self):
+        response = self.check_in(location=FAR)
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(self.error_code(response), "OUTSIDE_ATTENDANCE_RADIUS")
+        self.assertEqual(response.json()["errors"]["allowed_radius_meters"], 100)
+        self.assertEqual(Attendance.objects.count(), 0)
+        self.assertEqual(self.media_files(), [])
 
-        second = self.scan()
-        second_session = Attendance.objects.get(pk=second.data["data"]["attendance_id"])
-        second_session.check_in_at = timezone.now() - timedelta(hours=1)
-        second_session.save(update_fields=("check_in_at",))
+    def test_15_missing_photo_rejected(self):
+        response = self.check_in(photo=None)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["errors"]["code"], "PHOTO_REQUIRED")
+        self.assertEqual(Attendance.objects.count(), 0)
 
-        admin = User.objects.create_superuser("9100000099", password="test-password")
-        self.client.force_authenticate(user=admin)
-        response = self.client.get(
-            self.history_url,
-            {"employee_id": self.employee.id, "date": timezone.localdate().isoformat()},
-        )
+    def test_16_invalid_photo_rejected(self):
+        bad = {
+            "text disguised as jpg": SimpleUploadedFile("evil.jpg", b"definitely not an image", content_type="image/jpeg"),
+            "executable": SimpleUploadedFile("run.exe", b"MZ\x90\x00", content_type="application/octet-stream"),
+            "pdf": SimpleUploadedFile("doc.pdf", b"%PDF-1.4 fake", content_type="application/pdf"),
+            "unsupported image format (GIF)": image_file("anim.gif", "GIF"),
+            "empty": SimpleUploadedFile("empty.jpg", b"", content_type="image/jpeg"),
+        }
+        for label, upload in bad.items():
+            response = self.check_in(photo=upload)
+            self.assertEqual(response.status_code, 400, msg=label)
+            self.assertIn("photo", response.json()["errors"], msg=label)
+        self.assertEqual(Attendance.objects.count(), 0)
+        self.assertEqual(self.media_files(), [])
 
+    def test_photo_too_large_rejected(self):
+        with patch("apps.attendance.validators.MAX_PHOTO_BYTES", 100):
+            response = self.check_in()
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("too large", response.json()["errors"]["photo"][0])
+        self.assertEqual(Attendance.objects.count(), 0)
+
+    def test_png_accepted_regardless_of_client_filename(self):
+        response = self.check_in(photo=image_file("../../etc/passwd.jpg", "PNG", "image/png"))
+        self.assertEqual(response.status_code, 201)
+        self.assertTrue(Attendance.objects.get().check_in_photo.name.endswith(".png"))
+
+    def test_17_duplicate_same_day_check_in_rejected(self):
+        self.assertEqual(self.check_in().status_code, 201)
+        files_before = self.media_files()
+        response = self.check_in()
+        self.assertEqual(response.status_code, 409)
+        self.assertEqual(self.error_code(response), "ALREADY_CHECKED_IN")
+        self.assertEqual(Attendance.objects.count(), 1)
+        self.assertEqual(self.media_files(), files_before)  # no orphaned second photo
+
+    def test_race_lost_to_unique_constraint_is_a_clean_error_without_orphan_file(self):
+        self.assertEqual(self.check_in().status_code, 201)
+        files_before = self.media_files()
+        # Simulate two simultaneous requests: the pre-check passes, the DB constraint is the last line of defence.
+        with patch("apps.attendance.services._todays_attendance_exists", return_value=False):
+            response = self.check_in()
+        self.assertEqual(response.status_code, 409)
+        self.assertEqual(self.error_code(response), "ALREADY_CHECKED_IN")
+        self.assertEqual(Attendance.objects.count(), 1)
+        self.assertEqual(self.media_files(), files_before)
+
+    def test_unique_constraint_exists_at_database_level(self):
+        self.check_in()
+        existing = Attendance.objects.get()
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            Attendance.objects.create(
+                employee=existing.employee, branch=existing.branch, attendance_date=existing.attendance_date,
+                check_in_at=existing.check_in_at, check_in_latitude=Decimal("11.7"), check_in_longitude=Decimal("79.7"),
+                check_in_accuracy=1, check_in_distance_meters=1, check_in_location_verified=True, check_in_photo="x.jpg",
+            )
+
+    def test_18_server_timestamp_and_timezone_date(self):
+        # 20:00 UTC on 17 Oct is 01:30 on 18 Oct in the project time zone (Asia/Kolkata).
+        fixed = datetime(2026, 10, 17, 20, 0, tzinfo=dt_timezone.utc)
+        with patch("django.utils.timezone.now", return_value=fixed):
+            response = self.check_in(check_in_at="2000-01-01T00:00:00Z", attendance_date="2000-01-01")
+        self.assertEqual(response.status_code, 201)
+        attendance = Attendance.objects.get()
+        self.assertEqual(attendance.check_in_at, fixed)  # client-supplied time ignored
+        self.assertEqual(str(attendance.attendance_date), "2026-10-18")
+
+    def test_19_to_22_stored_evidence(self):
+        self.check_in(location={"latitude": 11.7450123, "longitude": 79.7689456, "accuracy": 7.4})
+        attendance = Attendance.objects.get()
+        self.assertAlmostEqual(attendance.check_in_distance_meters, 35.1, delta=0.5)            # 19 distance
+        self.assertEqual(attendance.check_in_accuracy, 7.4)                                      # 20 accuracy
+        self.assertTrue(attendance.check_in_location_verified)                                   # 21 verified
+        self.assertEqual(attendance.check_in_latitude, Decimal("11.7450123"))
+        self.assertEqual(attendance.check_in_longitude, Decimal("79.7689456"))
+        name = attendance.check_in_photo.name                                                    # 22 photo path
+        self.assertRegex(name, r"^attendance/checkin/\d{4}/\d{2}/\d{2}/[0-9a-f]{8}-[0-9a-f-]{27}\.jpg$")
+        self.assertTrue(os.path.isfile(attendance.check_in_photo.path))
+        self.assertTrue(attendance.check_in_photo.path.startswith(self.media_root))
+        self.assertNotIn("selfie", name)
+        self.assertNotIn(self.user.phone_number, name)
+        self.assertIsNone(attendance.check_out_at)
+
+
+class CheckOutTests(AttendanceAPITestCase):
+    def test_23_valid_checkout_updates_same_row(self):
+        self.assertEqual(self.check_in().status_code, 201)
+        row = Attendance.objects.get()
+        response = self.check_out()
         self.assertEqual(response.status_code, 200)
-        data = response.data["data"]
-        self.assertEqual(data["employee"]["id"], self.employee.id)
-        self.assertEqual(data["date"], timezone.localdate())
-        self.assertEqual(len(data["sessions"]), 2)
-        self.assertEqual(data["sessions"][0]["status"], "CHECKED_OUT")
-        self.assertEqual(data["sessions"][1]["status"], "CHECKED_IN")
-        self.assertEqual(data["total_working_seconds"], 900)
-        self.assertEqual(data["total_working_hours"], 0.25)
+        self.assertEqual(response.json()["message"], "Check-out successful.")
+        self.assertEqual(Attendance.objects.count(), 1)
+        updated = Attendance.objects.get()
+        self.assertEqual(updated.pk, row.pk)
+        self.assertEqual(updated.check_in_at, row.check_in_at)
+        self.assertIsNotNone(updated.check_out_at)
+        self.assertGreaterEqual(updated.check_out_at, updated.check_in_at)
+        self.assertEqual(response.json()["data"]["attendance"]["id"], row.pk)
 
-    def test_history_requires_jwt_and_hr_or_superadmin_permissions(self):
-        params = {"employee_id": self.employee.id, "date": "2026-10-08"}
+    def test_24_checkout_without_check_in_rejected(self):
+        response = self.check_out()
+        self.assertEqual(response.status_code, 409)
+        self.assertEqual(self.error_code(response), "NOT_CHECKED_IN")
+        self.assertEqual(Attendance.objects.count(), 0)
+        self.assertEqual(self.media_files(), [])
 
-        unauthenticated = self.client.get(self.history_url, params)
-        self.assertEqual(unauthenticated.status_code, 401)
+    def test_25_duplicate_checkout_rejected(self):
+        self.check_in()
+        self.assertEqual(self.check_out().status_code, 200)
+        first = Attendance.objects.get()
+        files_before = self.media_files()
+        response = self.check_out()
+        self.assertEqual(response.status_code, 409)
+        self.assertEqual(self.error_code(response), "ALREADY_CHECKED_OUT")
+        again = Attendance.objects.get()
+        self.assertEqual(again.check_out_at, first.check_out_at)
+        self.assertEqual(again.check_out_photo.name, first.check_out_photo.name)
+        self.assertEqual(self.media_files(), files_before)
 
-        employee_client = APIClient()
-        employee_client.force_authenticate(user=self.employee_user)
-        forbidden = employee_client.get(self.history_url, params)
-        self.assertEqual(forbidden.status_code, 403)
+    def test_26_outside_radius_checkout_rejected(self):
+        self.check_in()
+        response = self.check_out(location=FAR)
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(self.error_code(response), "OUTSIDE_ATTENDANCE_RADIUS")
+        self.assertIsNone(Attendance.objects.get().check_out_at)
 
-        admin = User.objects.create_superuser("9100000099", password="test-password")
-        access_token = str(RefreshToken.for_user(admin).access_token)
-        self.client.credentials(HTTP_AUTHORIZATION="Bearer %s" % access_token)
-        allowed = self.client.get(self.history_url, params)
-        self.assertEqual(allowed.status_code, 200)
+    def test_27_missing_checkout_photo_rejected(self):
+        self.check_in()
+        response = self.check_out(photo=None)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["errors"]["code"], "PHOTO_REQUIRED")
+        self.assertIsNone(Attendance.objects.get().check_out_at)
 
-    def test_scan_after_midnight_uses_new_kolkata_attendance_date(self):
-        before_midnight = datetime(2026, 10, 7, 18, 29, 58, tzinfo=datetime_timezone.utc)
-        after_midnight = datetime(2026, 10, 7, 18, 30, 4, tzinfo=datetime_timezone.utc)
-        with patch("apps.attendance.services.timezone.now", return_value=before_midnight):
-            first = self.scan()
-        first_record = Attendance.objects.get(pk=first.data["data"]["attendance_id"])
+    def test_28_to_30_checkout_evidence_stored(self):
+        self.check_in()
+        self.check_out(location={"latitude": 11.7449, "longitude": 79.7690, "accuracy": 12.5})
+        attendance = Attendance.objects.get()
+        self.assertEqual(attendance.check_out_latitude, Decimal("11.7449000"))                 # 28 location
+        self.assertEqual(attendance.check_out_longitude, Decimal("79.7690000"))
+        self.assertEqual(attendance.check_out_accuracy, 12.5)
+        self.assertAlmostEqual(attendance.check_out_distance_meters, 24.8, delta=0.5)          # 29 distance
+        self.assertTrue(attendance.check_out_location_verified)
+        self.assertRegex(attendance.check_out_photo.name,                                      # 30 photo
+                         r"^attendance/checkout/\d{4}/\d{2}/\d{2}/[0-9a-f]{8}-[0-9a-f-]{27}\.jpg$")
+        self.assertTrue(os.path.isfile(attendance.check_out_photo.path))
+        self.assertNotEqual(attendance.check_in_photo.name, attendance.check_out_photo.name)
 
-        with patch("apps.attendance.services.timezone.now", return_value=after_midnight):
-            next_day = self.scan()
+    def test_checkout_rejected_if_branch_changed_since_check_in(self):
+        self.check_in()
+        other = Branch.objects.create(organization=self.org, name="Second", code="SEC",
+                                      latitude=BRANCH_LAT, longitude=BRANCH_LON, attendance_radius_meters=100)
+        Employee.objects.filter(pk=self.employee.pk).update(branch=other)
+        response = self.check_out()
+        self.assertEqual(response.status_code, 409)
+        self.assertEqual(self.error_code(response), "BRANCH_MISMATCH")
+        self.assertIsNone(Attendance.objects.get().check_out_at)
 
-        self.assertEqual(first_record.attendance_date.isoformat(), "2026-10-07")
-        self.assertEqual(next_day.data["data"]["attendance_date"].isoformat(), "2026-10-08")
+    def test_yesterdays_check_in_does_not_satisfy_todays_checkout(self):
+        yesterday = datetime(2026, 10, 16, 5, 0, tzinfo=dt_timezone.utc)
+        today = datetime(2026, 10, 17, 5, 0, tzinfo=dt_timezone.utc)
+        with patch("django.utils.timezone.now", return_value=yesterday):
+            self.assertEqual(self.check_in().status_code, 201)
+        with patch("django.utils.timezone.now", return_value=today):
+            self.assertEqual(self.error_code(self.check_out()), "NOT_CHECKED_IN")
+            self.assertEqual(self.check_in().status_code, 201)  # a new day gets its own row
         self.assertEqual(Attendance.objects.count(), 2)
 
 
-@skipUnlessDBFeature("has_select_for_update")
-class FingerprintAttendanceConcurrencyTests(TransactionTestCase):
+class TodayTests(AttendanceAPITestCase):
+    def today(self):
+        response = self.client.get(f"{BASE}today/")
+        self.assertEqual(response.status_code, 200)
+        return response.json()["data"]
+
+    def test_31_not_checked_in(self):
+        data = self.today()
+        self.assertEqual(data["state"], "NOT_CHECKED_IN")
+        self.assertIsNone(data["check_in_at"])
+        self.assertIsNone(data["check_out_at"])
+        self.assertRegex(data["attendance_date"], r"^\d{4}-\d{2}-\d{2}$")
+
+    def test_32_checked_in(self):
+        self.check_in()
+        data = self.today()
+        self.assertEqual(data["state"], "CHECKED_IN")
+        self.assertIsNotNone(data["check_in_at"])
+        self.assertIsNone(data["check_out_at"])
+
+    def test_33_checked_out(self):
+        self.check_in()
+        self.check_out()
+        data = self.today()
+        self.assertEqual(data["state"], "CHECKED_OUT")
+        self.assertIsNotNone(data["check_in_at"])
+        self.assertIsNotNone(data["check_out_at"])
+
+    def test_today_only_reports_own_attendance(self):
+        other_user, _ = self.make_employee("EMP002", "9876500002", self.branch)
+        other = APIClient()
+        other.force_authenticate(other_user)
+        self.check_in()
+        self.assertEqual(other.get(f"{BASE}today/").json()["data"]["state"], "NOT_CHECKED_IN")
+
+
+class AttendancePermissionApiTests(AttendanceAPITestCase):
+    permissions_url = "/api/v1/attendance-permissions/"
+
     def setUp(self):
-        branch = Branch.objects.create(name="Concurrent", code="CONCURRENT")
-        employee_user = User.objects.create_user("9100000021", first_name="Concurrent")
-        employee = Employee.objects.create(
-            employee_code="ATT-CONCURRENT",
-            user=employee_user,
-            branch=branch,
+        super().setUp()
+        Employee.objects.filter(pk=self.employee.pk).update(
+            mobile_gps_attendance_enabled=False,
+            photo_attendance_enabled=False,
+            location_attendance_enabled=False,
         )
-        self.device_token = "concurrent-test-device-token"
-        self.device = Device.objects.create(
-            device_id="LYRA-CONCURRENT",
-            branch=branch,
-            token_hash=make_password(self.device_token),
+        self.employee.refresh_from_db()
+
+    def admin_client(self, *, branch=None, role=User.Role.ADMIN):
+        admin = User.objects.create_user(
+            f"admin-{Employee.objects.count()}-{role.lower()}@example.test",
+            role=role,
+            organization=self.org if role != User.Role.SUPERADMIN else None,
         )
-        EmployeeFingerprint.objects.create(
-            employee=employee,
-            device=self.device,
-            fingerprint_slot=25,
-            finger="right_index",
+        if branch is not None:
+            admin.allowed_branches.add(branch)
+        client = APIClient()
+        client.force_authenticate(admin)
+        return client, admin
+
+    def assert_employee_only_lock(self, queries):
+        lock_queries = [query["sql"] for query in queries if "FOR UPDATE" in query["sql"].upper()]
+        self.assertTrue(lock_queries, "Expected the update query to lock employee rows.")
+        for sql in lock_queries:
+            self.assertRegex(sql, r'FOR UPDATE OF ("?employees_employee"?)')
+
+    @unittest.skipUnless(connection.vendor == "postgresql", "PostgreSQL row-lock SQL assertion")
+    def test_individual_patch_locks_only_employee_row(self):
+        client, _ = self.admin_client(branch=self.branch)
+        with CaptureQueriesContext(connection) as queries:
+            response = client.patch(
+                f"{self.permissions_url}{self.employee.pk}/",
+                {"mobile_gps_attendance_enabled": True},
+                format="json",
+            )
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assert_employee_only_lock(queries)
+
+    @unittest.skipUnless(connection.vendor == "postgresql", "PostgreSQL row-lock SQL assertion")
+    def test_bulk_patch_locks_only_employee_rows(self):
+        _, second = self.make_employee("EMP002", "9876500018", self.branch)
+        client, _ = self.admin_client(branch=self.branch)
+        with CaptureQueriesContext(connection) as queries:
+            response = client.post(self.permissions_url + "bulk/", {
+                "employee_ids": [self.employee.pk, second.pk],
+                "permissions": {"auto_punch_out_enabled": True},
+            }, format="json")
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assert_employee_only_lock(queries)
+
+    def test_scoped_listing_and_update_create_audit_record(self):
+        client, admin = self.admin_client(branch=self.branch)
+        response = client.get(self.permissions_url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual([row["id"] for row in response.json()["data"]["results"]], [self.employee.pk])
+        updated = client.patch(
+            f"{self.permissions_url}{self.employee.pk}/",
+            {"mobile_gps_attendance_enabled": True, "location_attendance_enabled": True},
+            format="json",
         )
+        self.assertEqual(updated.status_code, 200)
+        self.assertTrue(updated.json()["data"]["mobile_gps_attendance_enabled"])
+        audit = AttendancePermissionAudit.objects.get(employee=self.employee)
+        self.assertEqual(audit.actor, admin)
+        self.assertEqual(audit.previous_values["mobile_gps_attendance_enabled"], False)
+        self.assertEqual(audit.new_values["location_attendance_enabled"], True)
 
-    def test_simultaneous_scans_cannot_create_two_open_sessions(self):
-        barrier = Barrier(2)
+    def test_bulk_update_saves_permissions_and_audit_for_each_in_scope_employee(self):
+        _, second = self.make_employee("EMP002", "9876500017", self.branch)
+        client, admin = self.admin_client(branch=self.branch)
+        response = client.post(self.permissions_url + "bulk/", {
+            "employee_ids": [self.employee.pk, second.pk],
+            "permissions": {"biometric_attendance_enabled": True, "auto_punch_out_enabled": True},
+        }, format="json")
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(response.json()["data"]["updated"], 2)
+        self.assertEqual(AttendancePermissionAudit.objects.filter(actor=admin).count(), 2)
+        self.assertTrue(Employee.objects.get(pk=self.employee.pk).biometric_attendance_enabled)
+        self.assertTrue(Employee.objects.get(pk=second.pk).auto_punch_out_enabled)
 
-        def scan():
-            close_old_connections()
-            try:
-                barrier.wait(timeout=10)
-                client = APIClient()
-                client.credentials(
-                    HTTP_AUTHORIZATION="Device %s" % self.device_token
-                )
-                response = client.post(
-                    "/api/v1/attendance/fingerprint/",
-                    {
-                        "device_id": self.device.device_id,
-                        "fingerprint_slot": 25,
-                    },
-                    format="json",
-                )
-                return response.status_code, response.data
-            finally:
-                close_old_connections()
+    def test_employee_outside_branch_scope_cannot_be_updated(self):
+        other_org = Organization.objects.create(name="Other", code="OTHER")
+        other_branch = Branch.objects.create(organization=other_org, name="Elsewhere", code="OTHER-B")
+        _, other_employee = self.make_employee("EMP-OTHER", "9876500015", other_branch)
+        client, _ = self.admin_client(branch=self.branch)
+        response = client.patch(f"{self.permissions_url}{other_employee.pk}/", {"mobile_gps_attendance_enabled": True}, format="json")
+        self.assertEqual(response.status_code, 404)
+        self.assertFalse(other_employee.refresh_from_db() or other_employee.mobile_gps_attendance_enabled)
 
-        with ThreadPoolExecutor(max_workers=2) as executor:
-            results = list(executor.map(lambda _: scan(), range(2)))
+    def test_bulk_update_is_atomic_and_scope_checked(self):
+        other_org = Organization.objects.create(name="Other", code="OTHER")
+        other_branch = Branch.objects.create(organization=other_org, name="Elsewhere", code="OTHER-B")
+        _, other_employee = self.make_employee("EMP-OTHER", "9876500016", other_branch)
+        client, _ = self.admin_client(branch=self.branch)
+        response = client.post(self.permissions_url + "bulk/", {
+            "employee_ids": [self.employee.pk, other_employee.pk],
+            "permissions": {"biometric_attendance_enabled": True},
+        }, format="json")
+        self.assertEqual(response.status_code, 404)
+        self.employee.refresh_from_db()
+        self.assertFalse(self.employee.biometric_attendance_enabled)
+        self.assertEqual(AttendancePermissionAudit.objects.count(), 0)
 
-        self.assertEqual([status_code for status_code, _ in results], [200, 200])
-        self.assertEqual(Attendance.objects.count(), 1)
-        self.assertEqual(
-            Attendance.objects.filter(check_out_at__isnull=True).count(),
-            1,
-        )
+
+class IndependentLocationPermissionTests(AttendanceAPITestCase):
+    def enable_mobile(self, *, location=False, photo=False):
+        self.employee.mobile_gps_attendance_enabled = True
+        self.employee.location_attendance_enabled = location
+        self.employee.photo_attendance_enabled = photo
+        self.employee.save(update_fields=("mobile_gps_attendance_enabled", "location_attendance_enabled", "photo_attendance_enabled"))
+
+    def test_location_off_allows_check_in_and_check_out_without_gps(self):
+        self.enable_mobile(location=False)
+        response = self.client.post(f"{BASE}check-in/", {}, format="multipart")
+        self.assertEqual(response.status_code, 201, response.content)
+        attendance = Attendance.objects.get()
+        self.assertIsNone(attendance.check_in_location_verified)
+        self.assertIsNone(attendance.check_in_latitude)
+        response = self.client.post(f"{BASE}check-out/", {}, format="multipart")
+        self.assertEqual(response.status_code, 200, response.content)
+        attendance.refresh_from_db()
+        self.assertIsNone(attendance.check_out_location_verified)
+
+    def test_location_on_requires_gps_and_rejects_outside_radius(self):
+        self.enable_mobile(location=True)
+        missing = self.client.post(f"{BASE}check-in/", {}, format="multipart")
+        self.assertEqual(missing.status_code, 400)
+        outside = self.check_in(location=FAR, photo=None)
+        self.assertEqual(self.error_code(outside), "OUTSIDE_ATTENDANCE_RADIUS")
+        self.assertEqual(Attendance.objects.count(), 0)
+
+    def test_location_off_ignores_outside_coordinates(self):
+        self.enable_mobile(location=False)
+        response = self.check_in(location=FAR, photo=None)
+        self.assertEqual(response.status_code, 201, response.content)
+        self.assertIsNone(Attendance.objects.get().check_in_location_verified)
+
+
+class MediaIsolationTests(AttendanceAPITestCase):
+    def test_36_uploads_go_to_the_temporary_media_root(self):
+        from django.conf import settings
+        self.assertEqual(str(settings.MEDIA_ROOT), self.media_root)
+        self.assertIn("lyra_test_media_", self.media_root)
+        self.check_in()
+        files = self.media_files()
+        self.assertEqual(len(files), 1)
+        self.assertTrue(files[0].startswith(self.media_root))

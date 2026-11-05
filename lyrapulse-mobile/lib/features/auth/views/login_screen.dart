@@ -1,396 +1,403 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
 
-import '../controllers/auth_controller.dart';
 import '../../../app/theme/app_colors.dart';
+import '../../../app/theme/app_dimensions.dart';
+import '../../../app/theme/app_text_styles.dart';
+import '../../../core/constants/asset_paths.dart';
+import '../controllers/auth_controller.dart';
+import '../widgets/phone_input.dart';
 
 class LoginScreen extends GetView<AuthController> {
   const LoginScreen({super.key});
 
+  // Keeps the form phone-sized on Flutter Web / tablets.
+  static const double _maxContentWidth = 480;
+  static const double _maxIllustrationWidth = 560;
+
   @override
   Widget build(BuildContext context) {
-    final media = MediaQuery.of(context);
-    final size = media.size;
-    final keyboardOpen = media.viewInsets.bottom > 0;
-
-    const double designWidth = 441;
-    const double designHeight = 776;
-
-    final double sx = size.width / designWidth;
-    final double sy = size.height / designHeight;
-
-    SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(
-        statusBarColor: AppColors.surface,
-        statusBarIconBrightness: Brightness.dark,
-        statusBarBrightness: Brightness.light,
-        systemNavigationBarColor: AppColors.surfaceMuted,
-        systemNavigationBarIconBrightness: Brightness.dark,
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: Stack(
+        children: [
+          const Positioned.fill(
+            child: IgnorePointer(child: CustomPaint(painter: _BackdropPainter())),
+          ),
+          SafeArea(
+            child: LayoutBuilder(builder: (context, constraints) {
+              // The illustration keeps its aspect ratio; it only shrinks when
+              // height is tight (short phones, keyboard open).
+              final illustrationMaxHeight =
+                  (constraints.maxHeight * 0.36).clamp(110.0, 340.0).toDouble();
+              return SingleChildScrollView(
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
+                child: ConstrainedBox(
+                  constraints:
+                      BoxConstraints(minHeight: constraints.maxHeight),
+                  // IntrinsicHeight distributes spare height across the
+                  // section gaps while still scrolling on short screens.
+                  child: IntrinsicHeight(
+                    child: Column(
+                      children: [
+                        _LoginIllustration(
+                          maxWidth: _maxIllustrationWidth,
+                          maxHeight: illustrationMaxHeight,
+                        ),
+                        const SizedBox(height: 4),
+                        Semantics(
+                          header: true,
+                          child: Text('Employee Login',
+                              textAlign: TextAlign.center,
+                              style: AppTextStyles.display
+                                  .copyWith(color: AppColors.primary)),
+                        ),
+                        const SizedBox(height: 6),
+                        Text('Sign in to continue to your account',
+                            textAlign: TextAlign.center,
+                            style: AppTextStyles.bodySmall
+                                .copyWith(fontSize: 14)),
+                        const SizedBox(height: 12),
+                        const Spacer(),
+                        _ContentWidth(
+                            maxWidth: _maxContentWidth,
+                            horizontalPadding: 20,
+                            child: _LoginForm(controller: controller)),
+                        const SizedBox(height: 8),
+                        const Spacer(),
+                        const _ContentWidth(
+                            maxWidth: _maxContentWidth,
+                            horizontalInset: 16,
+                            child: _OrDivider()),
+                        const SizedBox(height: 8),
+                        const Spacer(),
+                        const _SecurityBadge(),
+                        const SizedBox(height: 12),
+                        const Spacer(),
+                        Text('POWERED BY LYRATECH',
+                            style: AppTextStyles.bodySmall.copyWith(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 1.4)),
+                        const SizedBox(height: 16),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ),
+        ],
       ),
     );
+  }
+}
 
-    return Scaffold(
-      backgroundColor: AppColors.surfaceMuted,
-      resizeToAvoidBottomInset: true,
-      body: GestureDetector(
-        onTap: () => FocusScope.of(context).unfocus(),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final double availableHeight = constraints.maxHeight;
-            final double contentHeight = keyboardOpen
-                ? availableHeight
-                : (776 * sy).clamp(0.0, double.infinity);
+/// Centers [child] with a max width and the standard page padding.
+class _ContentWidth extends StatelessWidget {
+  const _ContentWidth({
+    required this.maxWidth,
+    required this.child,
+    this.horizontalInset = 0,
+    this.horizontalPadding = AppDimensions.pagePadding,
+  });
 
-            return SingleChildScrollView(
-              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-              physics: keyboardOpen
-                  ? const ClampingScrollPhysics()
-                  : const NeverScrollableScrollPhysics(),
-              child: SizedBox(
-                width: size.width,
-                height: keyboardOpen ? availableHeight : contentHeight,
-                child: Stack(
-                  children: [
-                    // BACKGROUND
-                    Positioned.fill(
-                      child: Container(
-                        decoration: const BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              AppColors.surfaceMuted,
-                              AppColors.surfaceMuted,
-                              AppColors.surfaceMuted,
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
+  final double maxWidth;
+  final double horizontalInset;
+  final double horizontalPadding;
+  final Widget child;
 
-                    // TOP ILLUSTRATION
-                    Positioned(
-                      left: 0,
-                      top: 0,
-                      width: size.width,
-                      height: (keyboardOpen ? 220 : 300) * sy,
-                      child: Image.asset(
-                        'assets/images/login_illustration.png.png',
-                        fit: BoxFit.fill,
-                      ),
-                    ),
-
-                    // LYRA PULSE
-                    Positioned(
-                      top: (keyboardOpen ? 245 : 384) * sy,
-                      left: 0,
-                      right: 0,
-                      child: Text(
-                        'Lyra Pulse',
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.inter(
-                          color: AppColors.primary,
-                          fontSize: 28 * ((sx + sy) / 2),
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: -0.7,
-                          height: 1,
-                        ),
-                      ),
-                    ),
-
-                    // EMPLOYEE LOGIN
-                    Positioned(
-                      top: (keyboardOpen ? 278 : 418) * sy,
-                      left: 0,
-                      right: 0,
-                      child: Text(
-                        'Employee Login',
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.inter(
-                          color: AppColors.primary,
-                          fontSize: 12 * ((sx + sy) / 2),
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                    ),
-
-                    // PHONE NUMBER LABEL
-                    Positioned(
-                      top: (keyboardOpen ? 330 : 465) * sy,
-                      left: 28 * sx,
-                      child: Text(
-                        'Phone Number',
-                        style: GoogleFonts.inter(
-                          color: AppColors.primary,
-                          fontSize: 12 * ((sx + sy) / 2),
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-
-                    // PHONE NUMBER FIELD
-                    Positioned(
-                      top: (keyboardOpen ? 352 : 487) * sy,
-                      left: 28 * sx,
-                      right: 26 * sx,
-                      height: 48 * sy,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: AppColors.surface.withValues(alpha: 0.92),
-                          borderRadius: BorderRadius.circular(
-                            8 * ((sx + sy) / 2),
-                          ),
-                          border: Border.all(
-                            color: AppColors.border,
-                            width: 1,
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            // COUNTRY CODE
-                            Padding(
-                              padding: EdgeInsets.only(
-                                left: 15 * sx,
-                                right: 10 * sx,
-                              ),
-                              child: Row(
-                                children: [
-                                  Text(
-                                    '+91',
-                                    style: GoogleFonts.inter(
-                                      color: AppColors.textSecondary,
-                                      fontSize: 11 * ((sx + sy) / 2),
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  SizedBox(width: 3 * sx),
-                                  Icon(
-                                    Icons.keyboard_arrow_down_rounded,
-                                    size: 15 * ((sx + sy) / 2),
-                                    color: AppColors.textSecondary,
-                                  ),
-                                ],
-                              ),
-                            ),
-
-                            // DIVIDER
-                            Container(
-                              width: 1,
-                              height: 24 * sy,
-                              color: AppColors.border,
-                            ),
-
-                            // PHONE INPUT
-                            Expanded(
-                              child: TextField(
-                                controller: controller.phoneController,
-                                keyboardType: TextInputType.phone,
-                                textInputAction: TextInputAction.done,
-                                maxLength: 10,
-                                inputFormatters: [
-                                  FilteringTextInputFormatter.digitsOnly,
-                                ],
-                                style: GoogleFonts.inter(
-                                  color: AppColors.primary,
-                                  fontSize: 14 * ((sx + sy) / 2),
-                                  fontWeight: FontWeight.w600,
-                                ),
-                                decoration: InputDecoration(
-                                  counterText: '',
-                                  border: InputBorder.none,
-                                  hintText: 'Enter your phone number',
-                                  hintStyle: GoogleFonts.inter(
-                                    color: AppColors.borderStrong,
-                                    fontSize: 10.5 * ((sx + sy) / 2),
-                                    fontWeight: FontWeight.w400,
-                                  ),
-                                  contentPadding: EdgeInsets.symmetric(
-                                    horizontal: 12 * sx,
-                                    vertical: 0,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                    // LOGIN BUTTON
-                    Positioned(
-                      top: (keyboardOpen ? 420 : 554) * sy,
-                      left: 28 * sx,
-                      right: 26 * sx,
-                      height: 46 * sy,
-                      child: Material(
-                        color: AppColors.surface,
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(
-                            8 * ((sx + sy) / 2),
-                          ),
-                          onTap: () {
-                            FocusScope.of(context).unfocus();
-                            controller.sendOtp();
-                          },
-                          child: Ink(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(
-                                8 * ((sx + sy) / 2),
-                              ),
-                              gradient: const LinearGradient(
-                                begin: Alignment.centerLeft,
-                                end: Alignment.centerRight,
-                                colors: [
-                                  AppColors.secondaryDark,
-                                  AppColors.secondary,
-                                ],
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color:
-                                      AppColors.secondaryDark.withValues(alpha: 0.18),
-                                  blurRadius: 12,
-                                  offset: const Offset(0, 5),
-                                ),
-                              ],
-                            ),
-                            child: Center(
-                              child: Text(
-                                'Login',
-                                style: GoogleFonts.inter(
-                                  color: AppColors.surface,
-                                  fontSize: 12 * ((sx + sy) / 2),
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    // POWERED BY LYRATECH
-                    if (!keyboardOpen)
-                      Positioned(
-                        top: 699 * sy,
-                        left: 0,
-                        right: 0,
-                        child: Text(
-                          'POWERED BY LYRATECH',
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.inter(
-                            color: AppColors.borderStrong,
-                            fontSize: 8 * ((sx + sy) / 2),
-                            fontWeight: FontWeight.w500,
-                            letterSpacing: 1.3,
-                          ),
-                        ),
-                      ),
-
-                    // BOTTOM WAVES
-                    if (!keyboardOpen)
-                      Positioned(
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        height: 105 * sy,
-                        child: IgnorePointer(
-                          child: CustomPaint(
-                            painter: _LoginBottomWavePainter(),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            );
-          },
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: maxWidth),
+        child: Padding(
+          padding: EdgeInsets.symmetric(
+              horizontal: horizontalPadding + horizontalInset),
+          child: child,
         ),
       ),
     );
   }
 }
 
-// BOTTOM WAVES
-class _LoginBottomWavePainter extends CustomPainter {
+class _LoginForm extends StatelessWidget {
+  const _LoginForm({required this.controller});
+
+  final AuthController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppDimensions.cardRadius + 6),
+        border: Border.all(color: AppColors.border),
+        boxShadow: const [
+          BoxShadow(
+            color: AppColors.focusSubtle,
+            blurRadius: 24,
+            offset: Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 46,
+                height: 46,
+                decoration: const BoxDecoration(
+                    color: AppColors.infoBackground, shape: BoxShape.circle),
+                child: const Icon(Icons.smartphone_rounded,
+                    size: 24, color: AppColors.primaryBlue),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Phone Number',
+                        style: AppTextStyles.title
+                            .copyWith(fontSize: 17, color: AppColors.primary)),
+                    const SizedBox(height: 2),
+                    Text('Enter your registered mobile number',
+                        style: AppTextStyles.bodySmall),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          PhoneInput(
+            controller: controller.phoneController,
+            // Same send-OTP flow as the Login button (it guards against
+            // repeated submissions and runs the existing validation).
+            onSubmitted: (_) => controller.sendOtp(),
+          ),
+          const SizedBox(height: 16),
+          Obx(() {
+            final sending = controller.isSendingOtp.value;
+            return _LoginButton(
+              loading: sending,
+              onPressed: sending ? null : controller.sendOtp,
+            );
+          }),
+        ],
+      ),
+    );
+  }
+}
+
+/// Gradient Login button with a leading arrow badge. Private to this screen
+/// because `AppButton` only supports a trailing icon; the shared button is
+/// left untouched. Uses the same AppColors.primary -> secondary gradient.
+class _LoginButton extends StatelessWidget {
+  const _LoginButton({required this.loading, required this.onPressed});
+
+  final bool loading;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final radius = BorderRadius.circular(AppDimensions.cardRadius);
+    return Semantics(
+      button: true,
+      enabled: onPressed != null,
+      label: loading ? 'Logging in' : 'Login',
+      excludeSemantics: true,
+      onTap: onPressed,
+      child: SizedBox(
+        width: double.infinity,
+        height: AppDimensions.buttonHeight + 2,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: radius,
+            gradient: const LinearGradient(
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+              colors: [AppColors.primary, AppColors.secondary],
+            ),
+            boxShadow: const [
+              BoxShadow(
+                color: AppColors.selection,
+                blurRadius: 18,
+                offset: Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: radius,
+              onTap: onPressed,
+              child: Center(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 30,
+                      height: 30,
+                      decoration: const BoxDecoration(
+                          color: AppColors.surface, shape: BoxShape.circle),
+                      child: loading
+                          ? const Padding(
+                              padding: EdgeInsets.all(7),
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: AppColors.primaryBlue),
+                            )
+                          : const Icon(Icons.arrow_forward_rounded,
+                              size: 18, color: AppColors.primaryBlue),
+                    ),
+                    const SizedBox(width: 12),
+                    Text('Login',
+                        style: AppTextStyles.button.copyWith(fontSize: 17)),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Visual-only "OR" divider (no alternate login method exists).
+class _OrDivider extends StatelessWidget {
+  const _OrDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        const Expanded(child: Divider(height: 1, color: AppColors.border)),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          child: Text('OR',
+              style: AppTextStyles.bodySmall.copyWith(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 1)),
+        ),
+        const Expanded(child: Divider(height: 1, color: AppColors.border)),
+      ],
+    );
+  }
+}
+
+/// Visual-only trust badge.
+class _SecurityBadge extends StatelessWidget {
+  const _SecurityBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 9),
+      decoration: BoxDecoration(
+        color: AppColors.infoBackground,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.verified_user_rounded,
+              size: 18, color: AppColors.primaryBlue),
+          const SizedBox(width: 10),
+          Flexible(
+            child: Text('Secure · Fast · Reliable',
+                style: AppTextStyles.bodySmall
+                    .copyWith(fontWeight: FontWeight.w500)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LoginIllustration extends StatelessWidget {
+  const _LoginIllustration({required this.maxWidth, required this.maxHeight});
+
+  final double maxWidth;
+  final double maxHeight;
+
+  // Alpha-only fade masks: they soften the image edges into the page
+  // background; the transparent/black values are never painted.
+  static const _fadeColors = [
+    Colors.transparent,
+    Colors.black,
+    Colors.black,
+    Colors.transparent,
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    // No fixed size and no BoxFit.cover: the image scales to fit the width and
+    // `maxHeight` while preserving its aspect ratio (never stretched/cropped).
+    return Center(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: maxWidth, maxHeight: maxHeight),
+        child: ShaderMask(
+          blendMode: BlendMode.dstIn,
+          shaderCallback: (rect) => const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: _fadeColors,
+            stops: [0, 0.08, 0.94, 1],
+          ).createShader(rect),
+          child: ShaderMask(
+            blendMode: BlendMode.dstIn,
+            shaderCallback: (rect) => const LinearGradient(
+              colors: _fadeColors,
+              stops: [0, 0.05, 0.95, 1],
+            ).createShader(rect),
+            child: Image.asset(
+              AssetPaths.loginIllustration,
+              cacheWidth: 1000,
+              semanticLabel: 'Employee checking in on a laptop',
+              // A missing/corrupt asset must never crash the login screen.
+              errorBuilder: (context, error, stackTrace) =>
+                  const SizedBox.shrink(),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Subtle corner curves and a dot grid, drawn only with existing theme tokens.
+class _BackdropPainter extends CustomPainter {
+  const _BackdropPainter();
+
   @override
   void paint(Canvas canvas, Size size) {
-    final double w = size.width;
-    final double h = size.height;
+    final shape = Paint()..color = AppColors.selected;
+    final w = size.width;
+    final h = size.height;
+    canvas
+      ..drawCircle(Offset(0, h + w * 0.12), w * 0.38, shape)
+      ..drawCircle(Offset(w * 1.02, h + w * 0.06), w * 0.30, shape);
 
-    final Path wave1 = Path()
-      ..moveTo(0, h * 0.38)
-      ..cubicTo(
-        w * 0.18,
-        h * 0.12,
-        w * 0.35,
-        h * 0.48,
-        w * 0.54,
-        h * 0.56,
-      )
-      ..cubicTo(
-        w * 0.72,
-        h * 0.64,
-        w * 0.82,
-        h * 0.27,
-        w,
-        h * 0.12,
-      )
-      ..lineTo(w, h)
-      ..lineTo(0, h)
-      ..close();
-
-    final Paint paint1 = Paint()
-      ..shader = const LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [
-          AppColors.surfaceBorder,
-          AppColors.infoSurface,
-        ],
-      ).createShader(Rect.fromLTWH(0, 0, w, h));
-
-    canvas.drawPath(wave1, paint1);
-
-    final Path wave2 = Path()
-      ..moveTo(0, h * 0.58)
-      ..cubicTo(
-        w * 0.18,
-        h * 0.34,
-        w * 0.35,
-        h * 0.80,
-        w * 0.55,
-        h * 0.82,
-      )
-      ..cubicTo(
-        w * 0.76,
-        h * 0.84,
-        w * 0.84,
-        h * 0.36,
-        w,
-        h * 0.30,
-      )
-      ..lineTo(w, h)
-      ..lineTo(0, h)
-      ..close();
-
-    final Paint paint2 = Paint()
-      ..shader = const LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [
-          AppColors.secondarySoft,
-          AppColors.surfaceMuted,
-        ],
-      ).createShader(Rect.fromLTWH(0, 0, w, h));
-
-    canvas.drawPath(wave2, paint2);
+    final dot = Paint()..color = AppColors.selection;
+    const gap = 14.0;
+    final originX = w - AppDimensions.pagePadding - gap * 2;
+    final originY = h - 150;
+    for (var row = 0; row < 5; row++) {
+      for (var col = 0; col < 3; col++) {
+        canvas.drawCircle(
+            Offset(originX + col * gap, originY + row * gap), 1.6, dot);
+      }
+    }
   }
 
   @override
-  bool shouldRepaint(covariant _LoginBottomWavePainter oldDelegate) {
-    return false;
-  }
+  bool shouldRepaint(covariant _BackdropPainter oldDelegate) => false;
 }

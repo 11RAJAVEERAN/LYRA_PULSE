@@ -1,23 +1,32 @@
+import apiClient from '../../../services/apiClient'
+
+const unwrap = (response) => response.data?.data ?? response.data
+
+// The backend currently exposes employee data only (GET /employees/, scoped to the signed-in user's branches).
+// There is no attendance, leave or aggregate dashboard endpoint, so those sections are reported as `null`
+// (unavailable) instead of being estimated or filled with sample values.
 export const dashboardApi = {
-  getOverview: async () => ({
-    totalEmployees: 1284,
-    presentToday: 903,
-    absentToday: 142,
-    onLeave: 68,
-    lateToday: 61,
-    attendanceData: [
-      { day: 'Mon', present: 520, late: 46 },
-      { day: 'Tue', present: 650, late: 59 },
-      { day: 'Wed', present: 610, late: 53 },
-      { day: 'Thu', present: 690, late: 65 },
-      { day: 'Fri', present: 720, late: 61 },
-      { day: 'Sat', present: 470, late: 32 },
-    ],
-    leavesByType: [
-      { name: 'Annual', value: 52 },
-      { name: 'Sick', value: 25 },
-      { name: 'Casual', value: 18 },
-      { name: 'Maternity', value: 7 },
-    ],
-  }),
+  getOverview: async () => {
+    const data = unwrap(await apiClient.get('/employees/'))
+
+    if (!Array.isArray(data)) {
+      throw new Error('The employee list returned an unexpected response.')
+    }
+
+    const active = data.filter((employee) => employee.is_active === true).length
+    const branchIds = new Set(
+      data.map((employee) => employee.branch).filter((branch) => branch !== null && branch !== undefined),
+    )
+
+    return {
+      employees: {
+        total: data.length,
+        active,
+        inactive: data.length - active,
+        branchCount: branchIds.size,
+      },
+      attendance: null,
+      leaves: null,
+    }
+  },
 }

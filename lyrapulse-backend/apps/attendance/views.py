@@ -1,46 +1,146 @@
-from rest_framework import status
-from rest_framework.exceptions import PermissionDenied
-from rest_framework.generics import GenericAPIView
+from drf_spectacular.utils import OpenApiResponse, extend_schema, inline_serializer
+from rest_framework import serializers, status
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
-from apps.accounts.permissions import IsHROrAdmin
+from apps.accounts.permissions import IsEmployee
 from apps.common.responses import success_response
-from apps.devices.authentication import DeviceTokenAuthentication
-from apps.devices.permissions import IsAuthenticatedDevice
 
-from .serializers import AttendanceHistoryQuerySerializer, FingerprintAttendanceSerializer
-from .services import get_employee_attendance_history, record_fingerprint_attendance
+from . import services
+from .exceptions import AttendanceError
+from .serializers import (
+    AttendanceActionSerializer, CheckInResultSerializer, CheckOutResultSerializer, LocationSerializer,
+    TodayStateSerializer, VerifyLocationResultSerializer,
+)
 
 
-class FingerprintAttendanceView(GenericAPIView):
-    authentication_classes = [DeviceTokenAuthentication]
-    permission_classes = [IsAuthenticatedDevice]
-    serializer_class = FingerprintAttendanceSerializer
+def _envelope(name, data_serializer):
+    return inline_serializer(name=name, fields={
+        "success": serializers.BooleanField(), "message": serializers.CharField(), "data": data_serializer,
+    })
 
+
+_ERROR = inline_serializer(name="AttendanceErrorResponse", fields={
+    "success": serializers.BooleanField(),
+    "message": serializers.CharField(),
+    "errors": serializers.DictField(help_text="Field errors, or {code, ...} for business errors such as OUTSIDE_ATTENDANCE_RADIUS."),
+})
+_COMMON_ERRORS = {
+    401: OpenApiResponse(_ERROR, description="Authentication required"),
+    403: OpenApiResponse(_ERROR, description="Employee role required, no active employee profile, no valid branch, or outside radius"),
+    409: OpenApiResponse(_ERROR, description="Branch location not configured, or the action conflicts with today's attendance state"),
+}
+
+
+class AttendanceAPIView(APIView):
+    """Employee-only. The employee is always request.user's profile and the branch is always chosen by the server."""
+    permission_classes = [IsAuthenticated, IsEmployee]
+
+    def handle_exception(self, exc):
+        if isinstance(exc, AttendanceError):
+            return Response(
+                {"success": False, "message": exc.message, "errors": {"code": exc.code, **exc.extra}},
+                status=exc.status_code,
+            )
+        return super().handle_exception(exc)
+
+    def employee_and_branch(self, request):
+        employee = services.resolve_employee(request.user)
+        if not employee.mobile_gps_attendance_enabled:
+            raise AttendanceError("MOBILE_ATTENDANCE_DISABLED", "Mobile GPS attendance is not enabled for this employee.", 403)
+        return employee, services.resolve_branch(employee)
+
+
+class VerifyLocationView(AttendanceAPIView):
+    """Pre-camera UX check only. It is NOT an authorisation: check-in and check-out verify the location again."""
+    parser_classes = [JSONParser, FormParser, MultiPartParser]
+
+    @extend_schema(
+        request=LocationSerializer,
+        responses={200: _envelope("VerifyLocationResponse", VerifyLocationResultSerializer),
+                   400: OpenApiResponse(_ERROR, description="Invalid latitude, longitude or accuracy"), **_COMMON_ERRORS},
+        description="Checks the device location against the authenticated employee's branch. Returns 200 with `verified=false` when outside the radius.",
+    )
     def post(self, request):
-        serializer = self.get_serializer(data=request.data)
+        employee, branch = self.employee_and_branch(request)
+        if not employee.location_attendance_enabled:
+            data = VerifyLocationResultSerializer({
+                "verified": True,
+                "branch": {"id": branch.pk, "name": branch.name},
+                "distance_meters": None,
+                "allowed_radius_meters": None,
+                "accuracy_meters": None,
+            }).data
+            return success_response(data, "Location verification is not required for this employee.")
+        serializer = LocationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        if serializer.validated_data["device_id"] != request.auth.device_id:
-            raise PermissionDenied("The device ID does not match the authenticated device.")
+        result = services.verify_attendance_location(branch, **serializer.validated_data)
+        data = VerifyLocationResultSerializer({
+            "verified": result.verified, "branch": {"id": branch.pk, "name": branch.name},
+            "distance_meters": result.distance_meters, "allowed_radius_meters": result.allowed_radius_meters,
+            "accuracy_meters": result.accuracy_meters,
+        }).data
+        message = "Location verified." if result.verified else "You are outside the allowed attendance area."
+        return success_response(data, message)
 
-        data, message = record_fingerprint_attendance(
-            request.auth,
-            serializer.validated_data["fingerprint_slot"],
-        )
-        return success_response(data, message, status.HTTP_200_OK)
+
+class CheckInView(AttendanceAPIView):
+    parser_classes = [MultiPartParser, FormParser]
+
+    @extend_schema(
+        request={"multipart/form-data": AttendanceActionSerializer},
+        responses={201: _envelope("CheckInResponse", inline_serializer(name="CheckInData", fields={"attendance": CheckInResultSerializer()})),
+                   400: OpenApiResponse(_ERROR, description="Invalid coordinates, accuracy or photo"), **_COMMON_ERRORS},
+        description="Opens a new session using SERVER time. Location is re-verified; employee_id/branch_id/time in the request are ignored.",
+    )
+    def post(self, request):
+        employee, branch = self.employee_and_branch(request)
+        payload = request.data.copy()
+        if not employee.photo_attendance_enabled:
+            payload.pop("photo", None)
+        if not employee.location_attendance_enabled:
+            for field in ("latitude", "longitude", "accuracy"):
+                payload.pop(field, None)
+        serializer = AttendanceActionSerializer(data=payload)
+        serializer.is_valid(raise_exception=True)
+        if employee.photo_attendance_enabled and not serializer.validated_data.get("photo"):
+            raise AttendanceError("PHOTO_REQUIRED", "A photo is required for this attendance action.", 400)
+        attendance = services.check_in(employee=employee, branch=branch, location_required=employee.location_attendance_enabled, **serializer.validated_data)
+        return success_response({"attendance": CheckInResultSerializer(attendance).data}, "Check-in successful.", status.HTTP_201_CREATED)
 
 
-class AttendanceHistoryView(GenericAPIView):
-    permission_classes = [IsAuthenticated, IsHROrAdmin]
-    serializer_class = AttendanceHistoryQuerySerializer
+class CheckOutView(AttendanceAPIView):
+    parser_classes = [MultiPartParser, FormParser]
 
+    @extend_schema(
+        request={"multipart/form-data": AttendanceActionSerializer},
+        responses={200: _envelope("CheckOutResponse", inline_serializer(name="CheckOutData", fields={"attendance": CheckOutResultSerializer()})),
+                   400: OpenApiResponse(_ERROR, description="Invalid coordinates, accuracy or photo"), **_COMMON_ERRORS},
+        description="Closes the employee's currently open session using SERVER time. Location is re-verified.",
+    )
+    def post(self, request):
+        employee, branch = self.employee_and_branch(request)
+        payload = request.data.copy()
+        if not employee.photo_attendance_enabled:
+            payload.pop("photo", None)
+        if not employee.location_attendance_enabled:
+            for field in ("latitude", "longitude", "accuracy"):
+                payload.pop(field, None)
+        serializer = AttendanceActionSerializer(data=payload)
+        serializer.is_valid(raise_exception=True)
+        if employee.photo_attendance_enabled and not serializer.validated_data.get("photo"):
+            raise AttendanceError("PHOTO_REQUIRED", "A photo is required for this attendance action.", 400)
+        attendance = services.check_out(employee=employee, branch=branch, location_required=employee.location_attendance_enabled, **serializer.validated_data)
+        return success_response({"attendance": CheckOutResultSerializer(attendance).data}, "Check-out successful.")
+
+
+class TodayAttendanceView(AttendanceAPIView):
+    @extend_schema(
+        responses={200: _envelope("TodayAttendanceResponse", TodayStateSerializer), **_COMMON_ERRORS},
+        description="Today's attendance state (application time zone): NOT_CHECKED_IN, CHECKED_IN or CHECKED_OUT.",
+    )
     def get(self, request):
-        serializer = self.get_serializer(data=request.query_params)
-        serializer.is_valid(raise_exception=True)
-        return success_response(
-            get_employee_attendance_history(
-                serializer.validated_data["employee_id"],
-                serializer.validated_data["date"],
-            ),
-            "Attendance history retrieved",
-        )
+        employee = services.resolve_employee(request.user)
+        return success_response(TodayStateSerializer(services.today_state(employee)).data)

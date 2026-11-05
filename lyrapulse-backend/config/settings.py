@@ -9,11 +9,7 @@ load_dotenv(BASE_DIR / ".env")
 
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-only-change-this-secret-key-before-production-lyra-pulse")
 DEBUG = os.getenv("DEBUG", "True").lower() == "true"
-ALLOWED_HOSTS = [
-    host.strip()
-    for host in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1,*").split(",")
-    if host.strip()
-]
+ALLOWED_HOSTS = [host.strip() for host in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if host.strip()]
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -27,14 +23,16 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt.token_blacklist",
     "drf_spectacular",
     "apps.common",
+    "apps.organizations",
     "apps.branches",
     "apps.departments",
     "apps.designations",
     "apps.accounts",
     "apps.employees",
-    "apps.attendance.apps.AttendanceConfig",
-    "apps.devices.apps.DevicesConfig",
-    "apps.fingerprints.apps.FingerprintsConfig",
+    "apps.devices",
+    "apps.fingerprints",
+    "apps.attendance",
+    "apps.shifts",
 ]
 
 MIDDLEWARE = [
@@ -82,6 +80,10 @@ TIME_ZONE = "Asia/Kolkata"
 USE_I18N = True
 USE_TZ = True
 STATIC_URL = "static/"
+# Public media (attendance photos live under MEDIA_ROOT/attendance/...). Served by Django only when DEBUG=True;
+# in production serve MEDIA_ROOT from the web server / object storage.
+MEDIA_URL = "/media/"
+MEDIA_ROOT = Path(os.getenv("MEDIA_ROOT", str(BASE_DIR / "media")))
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 AUTH_USER_MODEL = "accounts.User"
 
@@ -92,8 +94,8 @@ REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(days=30),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=265),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
     "ROTATE_REFRESH_TOKENS": False,
     "BLACKLIST_AFTER_ROTATION": True,
     "AUTH_HEADER_TYPES": ("Bearer",),
@@ -104,21 +106,26 @@ SPECTACULAR_SETTINGS = {
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
 }
-CORS_ALLOWED_ORIGINS = [origin.strip() for origin in os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:3000").split(",") if origin.strip()]
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+# Lets the admin web app (a different origin) read the CSV filename on attendance export downloads.
+CORS_EXPOSE_HEADERS = ["Content-Disposition"]
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = "DENY"
 SESSION_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_SECURE = not DEBUG
 
+# Private (non-public) storage for employee legal documents; served only via the authenticated download API.
+PRIVATE_MEDIA_ROOT = Path(os.getenv("PRIVATE_MEDIA_ROOT", str(BASE_DIR / "private_media")))
+
 SMS_PROVIDER = os.getenv("SMS_PROVIDER", "mock")
 OTP_EXPIRY_SECONDS = 300
 OTP_RESEND_COOLDOWN_SECONDS = 30
 OTP_MAX_ATTEMPTS = 5
-FINGERPRINT_ENROLLMENT_TTL_SECONDS = int(os.getenv("FINGERPRINT_ENROLLMENT_TTL_SECONDS", "300"))
-R307_MAX_TEMPLATE_COUNT = int(os.getenv("R307_MAX_TEMPLATE_COUNT", "1000"))
-ATTENDANCE_FINGERPRINT_SCAN_COOLDOWN_SECONDS = int(
-    os.getenv("ATTENDANCE_FINGERPRINT_SCAN_COOLDOWN_SECONDS", "5")
-)
 
 LOGGING = {
     "version": 1,

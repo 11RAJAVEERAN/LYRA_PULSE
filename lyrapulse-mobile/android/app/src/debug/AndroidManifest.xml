@@ -4,4 +4,6 @@
          to allow setting breakpoints, to provide hot reload, etc.
     -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Dev API runs over plain HTTP on the LAN (see AppConfig.apiBaseUrl). Not enabled in release builds. -->
+    <application android:usesCleartextTraffic="true"/>
 </manifest>

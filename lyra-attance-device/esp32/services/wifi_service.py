@@ -14,6 +14,7 @@ from utils.logger import log
 class WiFiService:
     def __init__(self):
         self.wlan = None
+        self.time_synced = False
         if network is not None:
             self.wlan = network.WLAN(network.STA_IF)
             self.wlan.active(True)
@@ -27,6 +28,7 @@ class WiFiService:
             return False
 
         if self.is_connected():
+            self._sync_clock()
             return True
 
         try:
@@ -52,6 +54,7 @@ class WiFiService:
         while time.time() < deadline:
             if self.is_connected():
                 log("WIFI", "Connected")
+                self._sync_clock()
                 return True
             time.sleep(0.5)
             attempts += 1
@@ -84,3 +87,14 @@ class WiFiService:
             return self.wlan.ifconfig()[0]
         except Exception:
             return "0.0.0.0"
+
+    def _sync_clock(self):
+        if self.time_synced:
+            return
+        try:
+            import ntptime
+            ntptime.settime()
+            self.time_synced = True
+            log("CLOCK", "Device clock synchronized")
+        except Exception:
+            log("CLOCK", "Time synchronization unavailable; attendance scans require a valid clock")
