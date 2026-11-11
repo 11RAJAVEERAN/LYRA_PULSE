@@ -162,7 +162,7 @@ class CalendarScreen extends StatelessWidget {
                   vertical: 11,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.infoSurface,
+                  color: AppColors.infoBackground,
                   borderRadius: BorderRadius.circular(13),
                 ),
                 child: Row(
@@ -232,7 +232,7 @@ class CalendarScreen extends StatelessWidget {
             width: 46,
             height: 46,
             decoration: BoxDecoration(
-              color: AppColors.infoSurface,
+              color: AppColors.infoBackground,
               borderRadius: BorderRadius.circular(13),
             ),
             child: const Icon(
@@ -277,7 +277,7 @@ class CalendarScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.infoSurface,
+        color: AppColors.infoBackground,
         borderRadius: BorderRadius.circular(18),
       ),
       child: Row(

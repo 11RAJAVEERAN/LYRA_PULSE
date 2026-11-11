@@ -3,7 +3,6 @@ from .attendance_permission_views import AttendancePermissionBulkView, Attendanc
 from apps.fingerprints.views import EmployeeFingerprintEnrollmentStartView, EmployeeFingerprintEnrollmentStatusView
 
 from .views import (
-    BranchListView,
     EmployeeDocumentDetailView, EmployeeDocumentListCreateView, EmployeeFormAccessView,
     EmployeeManagementDetailView, EmployeeManagementListCreateView, EmployeeMeView,
     EmployeeTypeListView, PayrollGroupListView,
@@ -34,7 +33,6 @@ urlpatterns = [
     # ==========================================
     # READ-ONLY DROPDOWN DATA (Admin Web)
     # ==========================================
-    path("branches/", BranchListView.as_view(), name="branch-list"),
     path("employee-types/", EmployeeTypeListView.as_view(), name="employee-type-list"),
     path("payroll-groups/", PayrollGroupListView.as_view(), name="payroll-group-list"),
 ]

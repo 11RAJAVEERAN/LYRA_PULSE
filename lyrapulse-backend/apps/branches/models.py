@@ -3,6 +3,10 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 
+MIN_ATTENDANCE_RADIUS_METERS = 10
+MAX_ATTENDANCE_RADIUS_METERS = 100
+
+
 class Branch(models.Model):
     # Nullable on purpose: branches created before organizations existed keep working
     # until a SUPERADMIN assigns them (Django Admin -> Branches).
@@ -26,7 +30,7 @@ class Branch(models.Model):
         help_text="Longitude of the branch location used for employee attendance verification.",
     )
     attendance_radius_meters = models.PositiveIntegerField(
-        "allowed radius (meters)", default=3, validators=[MinValueValidator(1)],
+        "allowed radius (meters)", default=40, validators=[MinValueValidator(1)],
         help_text="Employees must be within this distance from the branch to check in or check out.",
     )
     is_active = models.BooleanField(default=True)
@@ -60,11 +64,41 @@ class Branch(models.Model):
     def clean(self):
         super().clean()
         self._check_admin_scope_on_organization_change()
+        if self._attendance_radius_changed():
+            self._validate_attendance_radius()
         if (self.latitude is None) != (self.longitude is None):
             raise ValidationError({
                 "latitude" if self.latitude is None else "longitude": "Set both latitude and longitude, or leave both empty.",
             })
 
+    def _validate_attendance_radius(self):
+        radius = self.attendance_radius_meters
+        if (
+            isinstance(radius, bool)
+            or not isinstance(radius, int)
+            or not MIN_ATTENDANCE_RADIUS_METERS <= radius <= MAX_ATTENDANCE_RADIUS_METERS
+        ):
+            raise ValidationError({
+                "attendance_radius_meters": (
+                    f"Attendance radius must be between {MIN_ATTENDANCE_RADIUS_METERS} and "
+                    f"{MAX_ATTENDANCE_RADIUS_METERS} metres."
+                ),
+            })
+
+    def _attendance_radius_changed(self):
+        if self._state.adding:
+            return True
+        previous_radius = type(self).objects.filter(pk=self.pk).values_list(
+            "attendance_radius_meters", flat=True,
+        ).first()
+        return previous_radius is None or previous_radius != self.attendance_radius_meters
+
     def save(self, *args, **kwargs):
         self._check_admin_scope_on_organization_change()
+        update_fields = kwargs.get("update_fields")
+        if (
+            (update_fields is None or "attendance_radius_meters" in update_fields)
+            and self._attendance_radius_changed()
+        ):
+            self._validate_attendance_radius()
         super().save(*args, **kwargs)

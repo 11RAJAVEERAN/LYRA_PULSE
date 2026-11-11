@@ -15,6 +15,19 @@ from apps.designations.models import Designation
 from apps.employees.models import Employee
 
 
+class SeedDemoDataTests(TestCase):
+    def test_seed_uses_new_branch_default_and_preserves_existing_radius(self):
+        call_command("seed_demo_data")
+        branch = Branch.objects.get(code="MAIN")
+        self.assertEqual(branch.attendance_radius_meters, 40)
+
+        branch.attendance_radius_meters = 50
+        branch.save(update_fields=("attendance_radius_meters", "updated_at"))
+        call_command("seed_demo_data")
+        branch.refresh_from_db()
+        self.assertEqual(branch.attendance_radius_meters, 50)
+
+
 @override_settings(ROOT_URLCONF="config.urls")
 class OTPAuthenticationTests(TestCase):
     def setUp(self):
@@ -61,6 +74,34 @@ class OTPAuthenticationTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertNotIn("dev_otp", response.data["data"])
 
+    @override_settings(DEBUG=False, SMS_PROVIDER="mock")
+    def test_employee_send_otp_response_does_not_disclose_account_eligibility(self):
+        eligible = self.client.post("/api/v1/auth/send-otp/", {"phone_number": "9876543210"})
+        unknown = self.client.post("/api/v1/auth/send-otp/", {"phone_number": "9876500000"})
+
+        self.assertEqual(eligible.status_code, unknown.status_code)
+        self.assertEqual(eligible.data["message"], unknown.data["message"])
+        eligible_data = dict(eligible.data["data"])
+        unknown_data = dict(unknown.data["data"])
+        eligible_data.pop("phone_number")
+        unknown_data.pop("phone_number")
+        self.assertEqual(eligible_data, unknown_data)
+
+    @override_settings(DEBUG=False, SMS_PROVIDER="mock", OTP_RESEND_COOLDOWN_SECONDS=300)
+    def test_employee_send_otp_cooldown_does_not_disclose_account_eligibility(self):
+        first = self.client.post("/api/v1/auth/send-otp/", {"phone_number": "9876543210"})
+        second = self.client.post("/api/v1/auth/send-otp/", {"phone_number": "9876543210"})
+        unknown = self.client.post("/api/v1/auth/send-otp/", {"phone_number": "9876500000"})
+
+        self.assertEqual(first.status_code, 200)
+        self.assertEqual(second.status_code, unknown.status_code)
+        self.assertEqual(second.data["message"], unknown.data["message"])
+        second_data = dict(second.data["data"])
+        unknown_data = dict(unknown.data["data"])
+        second_data.pop("phone_number")
+        unknown_data.pop("phone_number")
+        self.assertEqual(second_data, unknown_data)
+
     def test_expired_otp_is_rejected(self):
         record = create_otp("9876543210")
         record.expires_at = timezone.now() - timedelta(seconds=1)
@@ -90,7 +131,18 @@ class OTPAuthenticationTests(TestCase):
         self.assertEqual(response.status_code, 401)
 
     def test_admin_login_accepts_email_or_mobile_and_returns_jwt(self):
-        admin = User.objects.create_user("9123456789", email="admin@example.test", role=User.Role.ADMIN)
+        from apps.organizations.models import Organization
+        organization = Organization.objects.create(name="OTP Admin Company", code="OTP-ADMIN")
+        branch = Branch.objects.create(organization=organization, name="OTP Admin Branch", code="OTP-ADMIN-BRANCH")
+        admin = User.objects.create_user(
+            "9123456789",
+            email="admin@example.test",
+            role=User.Role.ADMIN,
+            organization=organization,
+        )
+        admin.allowed_branches.add(branch)
+        from apps.accounts.services.role_permissions import ensure_role_group
+        admin.groups.add(ensure_role_group(User.Role.ADMIN))
         with self.settings(DEBUG=True, SMS_PROVIDER="mock", OTP_RESEND_COOLDOWN_SECONDS=0):
             for identifier in (admin.email, admin.phone_number):
                 response = self.client.post("/api/v1/auth/admin/send-otp/", {"identifier": identifier})
@@ -113,7 +165,11 @@ class OTPAuthenticationTests(TestCase):
         self.assertFalse(OTPVerification.objects.filter(phone_number=self.user.phone_number, purpose=OTPVerification.Purpose.ADMIN_LOGIN).exists())
 
     def test_employee_management_requires_django_permission(self):
-        manager = User.objects.create_user("9123456789", role=User.Role.MANAGER)
+        from apps.organizations.models import Organization
+        organization = Organization.objects.create(name="Manager Test Company", code="MANAGER-TEST")
+        branch = Branch.objects.create(organization=organization, name="Manager Test Branch", code="MANAGER-TEST-BRANCH")
+        manager = User.objects.create_user("9123456789", role=User.Role.MANAGER, organization=organization)
+        manager.allowed_branches.add(branch)
         self.client.force_authenticate(user=manager)
         response = self.client.get("/api/v1/employees/")
         self.assertEqual(response.status_code, 403)
@@ -124,11 +180,14 @@ class OTPAuthenticationTests(TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_superadmin_can_manage_admin_users(self):
+        from apps.organizations.models import Organization
+        organization = Organization.objects.create(name="Admin User Test Company", code="ADMIN-USER-TEST")
+        branch = Branch.objects.create(organization=organization, name="Admin User Test Branch", code="ADMIN-USER-TEST-BRANCH")
         superadmin = User.objects.create_user("9000000000", role=User.Role.SUPERADMIN, is_superuser=True)
         self.client.force_authenticate(user=superadmin)
         response = self.client.post("/api/v1/auth/admin/users/", {
             "phone_number": "9123456789", "email": "manager@example.test", "first_name": "Mina",
-            "role": "MANAGER", "permissions": [],
+            "role": "MANAGER", "permissions": [], "organization": organization.pk, "branch_ids": [branch.pk],
         })
         self.assertEqual(response.status_code, 201)
         manager = User.objects.get(phone_number="9123456789")
@@ -261,12 +320,12 @@ class OrganizationScopeTests(TestCase):
     def test_customer_superadmin_without_active_organization_is_fail_closed(self):
         unassigned = User.objects.create_user("9000000003", role=User.Role.SUPERADMIN)
         self.client.force_authenticate(user=unassigned)
-        self.assertEqual(self._codes(self.client.get("/api/v1/employees/")), set())
-        self.assertEqual(self.client.get(f"/api/v1/employees/{self.emp_other_org.pk}/").status_code, 404)
+        self.assertEqual(self.client.get("/api/v1/employees/").status_code, 403)
+        self.assertEqual(self.client.get(f"/api/v1/employees/{self.emp_other_org.pk}/").status_code, 403)
         self.lyra.is_active = False
         self.lyra.save(update_fields=["is_active"])
         self.client.force_authenticate(user=self.lyra_owner)
-        self.assertEqual(self._codes(self.client.get("/api/v1/employees/")), set())
+        self.assertEqual(self.client.get("/api/v1/employees/").status_code, 403)
 
     def test_customer_superadmin_admin_user_api_is_tenant_scoped(self):
         dev_user = User.objects.create_user("9000000011", role=User.Role.HR, organization=self.devi)
@@ -294,8 +353,11 @@ class OrganizationScopeTests(TestCase):
 
     def test_customer_owner_cannot_create_organizations_or_branches_via_website_api(self):
         self.client.force_authenticate(user=self.devi_owner)
-        self.assertEqual(self.client.post("/api/v1/branches/", {"name": "New", "code": "NEW"}).status_code, 405)
-        self.assertEqual(self.client.post("/api/v1/organizations/", {"name": "New", "code": "NEW"}).status_code, 404)
+        branch_response = self.client.post("/api/v1/branches/", {"name": "New", "code": "NEW"}, format="json")
+        self.assertEqual(branch_response.status_code, 201)
+        self.assertEqual(branch_response.data["data"]["organization"]["id"], self.devi.pk)
+        company_response = self.client.post("/api/v1/organizations/", {"name": "New", "code": "NEW"}, format="json")
+        self.assertEqual(company_response.status_code, 403)
 
     def test_customer_superadmin_does_not_gain_django_admin_access_from_role(self):
         self.client.force_login(self.devi_owner)
@@ -307,7 +369,7 @@ class OrganizationScopeTests(TestCase):
         legacy = User.objects.create_user("9111111111", role=User.Role.ADMIN)
         legacy.groups.add(ensure_role_group(User.Role.ADMIN))
         self.client.force_authenticate(user=legacy)
-        self.assertEqual(self._codes(self.client.get("/api/v1/employees/")), set())
+        self.assertEqual(self.client.get("/api/v1/employees/").status_code, 403)
 
     def test_scoped_admin_cannot_create_employee_outside_scope(self):
         self.client.force_authenticate(user=self.murugan)

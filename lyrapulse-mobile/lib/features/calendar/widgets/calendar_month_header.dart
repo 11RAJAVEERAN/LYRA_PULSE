@@ -44,7 +44,7 @@ class CalendarMonthHeader extends StatelessWidget {
     required VoidCallback onTap,
   }) {
     return Material(
-      color: AppColors.infoSurface,
+      color: AppColors.infoBackground,
       borderRadius: BorderRadius.circular(30),
       child: InkWell(
         onTap: onTap,

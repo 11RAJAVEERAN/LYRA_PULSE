@@ -22,7 +22,8 @@ class LoginScreen extends GetView<AuthController> {
       body: Stack(
         children: [
           const Positioned.fill(
-            child: IgnorePointer(child: CustomPaint(painter: _BackdropPainter())),
+            child:
+                IgnorePointer(child: CustomPaint(painter: _BackdropPainter())),
           ),
           SafeArea(
             child: LayoutBuilder(builder: (context, constraints) {
@@ -34,8 +35,7 @@ class LoginScreen extends GetView<AuthController> {
                 keyboardDismissBehavior:
                     ScrollViewKeyboardDismissBehavior.onDrag,
                 child: ConstrainedBox(
-                  constraints:
-                      BoxConstraints(minHeight: constraints.maxHeight),
+                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
                   // IntrinsicHeight distributes spare height across the
                   // section gaps while still scrolling on short screens.
                   child: IntrinsicHeight(
@@ -56,20 +56,14 @@ class LoginScreen extends GetView<AuthController> {
                         const SizedBox(height: 6),
                         Text('Sign in to continue to your account',
                             textAlign: TextAlign.center,
-                            style: AppTextStyles.bodySmall
-                                .copyWith(fontSize: 14)),
+                            style:
+                                AppTextStyles.bodySmall.copyWith(fontSize: 14)),
                         const SizedBox(height: 12),
                         const Spacer(),
                         _ContentWidth(
                             maxWidth: _maxContentWidth,
                             horizontalPadding: 20,
                             child: _LoginForm(controller: controller)),
-                        const SizedBox(height: 8),
-                        const Spacer(),
-                        const _ContentWidth(
-                            maxWidth: _maxContentWidth,
-                            horizontalInset: 16,
-                            child: _OrDivider()),
                         const SizedBox(height: 8),
                         const Spacer(),
                         const _SecurityBadge(),
@@ -99,12 +93,10 @@ class _ContentWidth extends StatelessWidget {
   const _ContentWidth({
     required this.maxWidth,
     required this.child,
-    this.horizontalInset = 0,
     this.horizontalPadding = AppDimensions.pagePadding,
   });
 
   final double maxWidth;
-  final double horizontalInset;
   final double horizontalPadding;
   final Widget child;
 
@@ -114,8 +106,7 @@ class _ContentWidth extends StatelessWidget {
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: maxWidth),
         child: Padding(
-          padding: EdgeInsets.symmetric(
-              horizontal: horizontalPadding + horizontalInset),
+          padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
           child: child,
         ),
       ),
@@ -195,7 +186,7 @@ class _LoginForm extends StatelessWidget {
   }
 }
 
-/// Gradient Login button with a leading arrow badge. Private to this screen
+/// Gradient send-OTP button with a leading arrow badge. Private to this screen
 /// because `AppButton` only supports a trailing icon; the shared button is
 /// left untouched. Uses the same AppColors.primary -> secondary gradient.
 class _LoginButton extends StatelessWidget {
@@ -210,7 +201,7 @@ class _LoginButton extends StatelessWidget {
     return Semantics(
       button: true,
       enabled: onPressed != null,
-      label: loading ? 'Logging in' : 'Login',
+      label: loading ? 'Sending OTP' : 'Send OTP',
       excludeSemantics: true,
       onTap: onPressed,
       child: SizedBox(
@@ -250,15 +241,16 @@ class _LoginButton extends StatelessWidget {
                           ? const Padding(
                               padding: EdgeInsets.all(7),
                               child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: AppColors.primaryBlue),
+                                  strokeWidth: 2, color: AppColors.primaryBlue),
                             )
                           : const Icon(Icons.arrow_forward_rounded,
                               size: 18, color: AppColors.primaryBlue),
                     ),
                     const SizedBox(width: 12),
-                    Text('Login',
-                        style: AppTextStyles.button.copyWith(fontSize: 17)),
+                    Text(
+                      'Send OTP',
+                      style: AppTextStyles.button.copyWith(fontSize: 17),
+                    ),
                   ],
                 ),
               ),
@@ -266,29 +258,6 @@ class _LoginButton extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-/// Visual-only "OR" divider (no alternate login method exists).
-class _OrDivider extends StatelessWidget {
-  const _OrDivider();
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        const Expanded(child: Divider(height: 1, color: AppColors.border)),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14),
-          child: Text('OR',
-              style: AppTextStyles.bodySmall.copyWith(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 1)),
-        ),
-        const Expanded(child: Divider(height: 1, color: AppColors.border)),
-      ],
     );
   }
 }

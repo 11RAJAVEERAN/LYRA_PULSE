@@ -170,8 +170,8 @@ class ShiftSerializer(serializers.ModelSerializer):
         request = self.context.get("request")
         if request and not scope_queryset(Branch.objects.filter(pk=branch.pk), request.user, "id").exists():
             raise serializers.ValidationError("You do not have access to this branch.")
-        if not branch.is_active:
-            raise serializers.ValidationError("Select an active branch.")
+        if not branch.is_active or branch.organization_id is None or not branch.organization.is_active:
+            raise serializers.ValidationError("Select a branch in an active company.")
         return branch
 
     def validate(self, attrs):
@@ -310,6 +310,10 @@ class AssignmentWriteSerializer(serializers.Serializer):
             raise serializers.ValidationError({"shift_id": "Select a shift in your branch scope."})
         if employee.branch_id != shift.branch_id:
             raise serializers.ValidationError({"shift_id": "Employee and shift must belong to the same branch."})
+        if (employee.branch_id is None or not employee.branch.is_active or employee.branch.organization_id is None
+                or not employee.branch.organization.is_active or not shift.branch.is_active
+                or shift.branch.organization_id is None or not shift.branch.organization.is_active):
+            raise serializers.ValidationError("Employees and shifts must belong to an active company and branch.")
         if not shift.is_active:
             raise serializers.ValidationError({"shift_id": "Inactive shifts cannot receive new assignments."})
         if shift.schedule_for(attrs["effective_from"]) is None:
@@ -346,6 +350,11 @@ class BulkAssignmentWriteSerializer(serializers.Serializer):
             raise serializers.ValidationError({"employee_ids": "One or more employees are inactive, missing, or outside your branch scope."})
         if any(employee.branch_id != shift.branch_id for employee in employees):
             raise serializers.ValidationError({"employee_ids": "Employee and shift must belong to the same branch."})
+        if (shift.branch.organization_id is None or not shift.branch.organization.is_active
+                or any(employee.branch_id is None or not employee.branch.is_active
+                       or employee.branch.organization_id is None or not employee.branch.organization.is_active
+                       for employee in employees)):
+            raise serializers.ValidationError("Employees and shifts must belong to an active company and branch.")
         attrs["employees"] = employees
         attrs["shift"] = shift
         return attrs

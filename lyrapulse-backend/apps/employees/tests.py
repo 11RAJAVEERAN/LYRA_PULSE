@@ -100,9 +100,72 @@ class EmployeeDetailsFormTests(TestCase):
         self.create_employee()
         rows = self.client.get("/api/v1/employees/").data["data"]
         self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["organization"], self.org.pk)
+        self.assertEqual(rows[0]["organization_name"], self.org.name)
         for key in ("monthly_salary", "bank_name", "bank_account_number_masked", "bank_ifsc_code", "documents", "salary_type"):
             self.assertNotIn(key, rows[0])
         self.assertEqual(rows[0]["display_name"], "Palani")
+
+    def test_company_branch_search_and_status_filters_are_scoped(self):
+        employee = self.create_employee()
+        other_org = Organization.objects.create(name="Other Company", code="OTHER")
+        other_branch = Branch.objects.create(organization=other_org, name="Other Branch", code="OTH")
+        other_department = Department.objects.create(name="Other Department", branch=other_branch)
+        other_designation = Designation.objects.create(name="Other Designation", department=other_department)
+        other = self.create_employee(
+            employee_code="121", phone_number="9876500003", first_name="Other", last_name="Person",
+            branch=other_branch.pk, department=other_department.pk, designation=other_designation.pk,
+        )
+
+        self.client.force_authenticate(user=self.hr)
+        scoped = self.client.get("/api/v1/employees/").data["data"]
+        self.assertEqual([row["id"] for row in scoped], [employee["id"]])
+        self.assertEqual(
+            self.client.get(f"/api/v1/employees/?organization={other_org.pk}").data["data"],
+            [],
+        )
+        self.assertEqual(self.client.get(f"/api/v1/employees/{other['id']}/").status_code, 404)
+        cross_company_update = self.client.patch(
+            f"/api/v1/employees/{other['id']}/", {"display_name": "Unauthorized"}, format="json",
+        )
+        self.assertEqual(cross_company_update.status_code, 404)
+        for query in (
+            "search=120",
+            "search=9876500001",
+            f"branch={self.branch.pk}",
+            f"department={self.department.pk}",
+            f"designation={self.designation.pk}",
+        ):
+            result = self.client.get(f"/api/v1/employees/?{query}")
+            self.assertEqual(result.status_code, 200, result.data)
+            self.assertEqual([row["id"] for row in result.data["data"]], [employee["id"]], query)
+        self.assertEqual(self.client.get("/api/v1/employees/?status=unsupported").status_code, 400)
+        self.assertEqual(self.client.get("/api/v1/employees/?branch=invalid").data["data"], [])
+
+        self.client.force_authenticate(user=self.superadmin)
+        response = self.client.patch(
+            f"/api/v1/employees/{employee['id']}/", {"is_active": False}, format="json",
+        )
+        self.assertEqual(response.status_code, 200, response.data)
+        inactive = self.client.get("/api/v1/employees/?status=inactive").data["data"]
+        self.assertEqual([row["id"] for row in inactive], [employee["id"]])
+        self.assertEqual(self.client.get("/api/v1/employees/?status=active").data["data"][0]["id"], other["id"])
+        self.assertFalse(Employee.objects.get(pk=employee["id"]).user.is_active)
+
+    def test_update_preserves_employee_and_user_identity(self):
+        data = self.create_employee()
+        employee = Employee.objects.get(pk=data["id"])
+        user_id = employee.user_id
+
+        response = self.client.patch(
+            f"/api/v1/employees/{data['id']}/", {"display_name": "Updated"}, format="json",
+        )
+
+        self.assertEqual(response.status_code, 200, response.data)
+        employee.refresh_from_db()
+        self.assertEqual(employee.pk, data["id"])
+        self.assertEqual(employee.user_id, user_id)
+        self.assertEqual(employee.display_name, "Updated")
 
     def test_partial_update_keeps_account_number_when_blank(self):
         data = self.create_employee()
@@ -181,6 +244,10 @@ class EmployeeDetailsFormTests(TestCase):
 
     def test_option_endpoints_return_active_only(self):
         EmployeeType.objects.create(name="Retired", is_active=False)
+        self.client.force_authenticate(user=self.superadmin)
+        branch = self.client.get("/api/v1/branches/").data["data"][0]
+        self.assertEqual(branch["organization"]["id"], self.org.pk)
+        self.assertEqual(branch["organization"]["name"], self.org.name)
         self.client.force_authenticate(user=self.hr)
         self.assertEqual([i["name"] for i in self.client.get("/api/v1/employee-types/").data["data"]], ["Permanent"])
         self.assertEqual([i["name"] for i in self.client.get("/api/v1/payroll-groups/").data["data"]], ["Group A"])

@@ -53,7 +53,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
                 month: 'October 2026',
                 status: 'Present',
                 statusColor: AppColors.success,
-                statusBackground: AppColors.surfaceBorder,
+                statusBackground: AppColors.successBackground,
                 checkIn: '09:28 AM',
                 checkOut: '06:12 PM',
                 workingHours: '08h 44m',
@@ -95,7 +95,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
                 month: 'October 2026',
                 status: 'Present',
                 statusColor: AppColors.success,
-                statusBackground: AppColors.surfaceBorder,
+                statusBackground: AppColors.successBackground,
                 checkIn: '09:31 AM',
                 checkOut: '06:05 PM',
                 workingHours: '08h 34m',
@@ -213,7 +213,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
           const SizedBox(height: 18),
           const Divider(
             height: 1,
-            color: AppColors.surfaceBorder,
+            color: AppColors.border,
           ),
           const SizedBox(height: 16),
           Row(
@@ -296,7 +296,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
     return Container(
       height: 30,
       width: 1,
-      color: AppColors.surfaceBorder,
+      color: AppColors.border,
     );
   }
 
@@ -517,7 +517,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
               const SizedBox(height: 15),
               const Divider(
                 height: 1,
-                color: AppColors.surfaceBorder,
+                color: AppColors.border,
               ),
               const SizedBox(height: 14),
               Row(
@@ -533,7 +533,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
                   Container(
                     height: 40,
                     width: 1,
-                    color: AppColors.surfaceBorder,
+                    color: AppColors.border,
                   ),
                   Expanded(
                     child: Padding(
@@ -939,7 +939,7 @@ class AttendanceRecordsScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.infoSurface,
+        color: AppColors.infoBackground,
         borderRadius: BorderRadius.circular(15),
         border: Border.all(
           color: AppColors.border,

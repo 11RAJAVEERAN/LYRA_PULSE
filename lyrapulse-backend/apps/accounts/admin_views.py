@@ -10,7 +10,7 @@ from apps.branches.models import Branch
 from apps.common.responses import success_response
 from .permissions import IsSuperAdmin
 from .scope import validate_scope
-from .services.role_permissions import ensure_role_group
+from .services.role_permissions import ROLE_PERMISSION_CODES, ensure_role_group
 
 User = get_user_model()
 MANAGED_ROLES = {User.Role.ADMIN, User.Role.HR, User.Role.MANAGER}
@@ -19,9 +19,9 @@ MANAGED_ROLES = {User.Role.ADMIN, User.Role.HR, User.Role.MANAGER}
 class AdminUserSerializer(serializers.ModelSerializer):
     permissions = serializers.ListField(child=serializers.CharField(), required=False, write_only=True)
     permission_codenames = serializers.SerializerMethodField()
+    organization_name = serializers.CharField(source="organization.name", read_only=True)
+    branch_details = serializers.SerializerMethodField()
     is_active = serializers.BooleanField(required=False, default=True)
-    # Business scope: `organization` (id) and `branch_ids` (list of branch ids) are optional so the current
-    # React form keeps working; users without a scope are fail-closed and see no organization data.
     branch_ids = serializers.PrimaryKeyRelatedField(
         many=True, queryset=Branch.objects.all(), source="allowed_branches", required=False,
     )
@@ -29,8 +29,9 @@ class AdminUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ("id", "phone_number", "email", "first_name", "last_name", "role", "is_active",
-                  "organization", "branch_ids", "permissions", "permission_codenames")
-        read_only_fields = ("id", "permission_codenames")
+                  "organization", "organization_name", "branch_ids", "branch_details",
+                  "permissions", "permission_codenames")
+        read_only_fields = ("id", "organization_name", "branch_details", "permission_codenames")
 
     def validate_role(self, value):
         if value not in MANAGED_ROLES:
@@ -65,23 +66,50 @@ class AdminUserSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         # Resolve the final role/organization/branches (request values, else the stored ones) and check they agree.
         role = attrs.get("role", self.instance.role if self.instance else None)
+        if role not in MANAGED_ROLES:
+            raise serializers.ValidationError({"role": "Select an ADMIN, HR, or MANAGER role."})
         organization = attrs["organization"] if "organization" in attrs else (self.instance.organization if self.instance else None)
         if "allowed_branches" in attrs:
             branches = attrs["allowed_branches"]
         else:
             branches = list(self.instance.allowed_branches.all()) if self.instance else []
         actor = self.context["request"].user
-        if actor.role == User.Role.SUPERADMIN and not actor.has_global_scope:
+        if not actor.has_global_scope:
             if organization is not None and organization.pk != actor.organization_id:
                 raise serializers.ValidationError({"organization": "You can manage users only in your organization."})
             organization = actor.organization
             attrs["organization"] = organization
-            if any(branch.organization_id != actor.organization_id for branch in branches):
-                raise serializers.ValidationError({"branch_ids": "Branches must belong to your organization."})
+        if organization is None:
+            raise serializers.ValidationError({"organization": "Select a company for this account."})
+        if not organization.is_active:
+            raise serializers.ValidationError({"organization": "Select an active company."})
+        if not branches:
+            raise serializers.ValidationError({"branch_ids": "Assign at least one branch to this account."})
+        if any(
+            branch.organization_id != organization.pk
+            or not branch.is_active
+            or not branch.organization.is_active
+            for branch in branches
+        ):
+            raise serializers.ValidationError({
+                "branch_ids": "Select active branches that belong to the selected company."
+            })
         try:
-            validate_scope(role, organization, branches, require_organization=False)
+            validate_scope(role, organization, branches)
         except DjangoValidationError as exc:
             raise serializers.ValidationError(exc.message_dict)
+        permission_codes = attrs.get("permissions")
+        if permission_codes is not None:
+            allowed_permissions = set(ROLE_PERMISSION_CODES.get(role, set()))
+            if role in (User.Role.ADMIN, User.Role.HR):
+                allowed_permissions.update({
+                    "employees.view_employee_sensitive",
+                    "employees.change_employee_sensitive",
+                })
+            if set(permission_codes) - allowed_permissions:
+                raise serializers.ValidationError({
+                    "permissions": f"One or more permissions are not allowed for the {role} role."
+                })
         return attrs
 
     def validate_permissions(self, values):
@@ -99,6 +127,12 @@ class AdminUserSerializer(serializers.ModelSerializer):
 
     def get_permission_codenames(self, obj):
         return [f"{app}.{code}" for app, code in obj.user_permissions.values_list("content_type__app_label", "codename")]
+
+    def get_branch_details(self, obj):
+        return [
+            {"id": branch.pk, "name": branch.name, "code": branch.code}
+            for branch in obj.allowed_branches.all()
+        ]
 
     @transaction.atomic
     def create(self, validated_data):

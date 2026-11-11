@@ -197,6 +197,40 @@ class FingerprintEnrollmentAPITests(TestCase):
 
         self.assertEqual(response.status_code, 400)
 
+    def test_duplicate_existing_finger_mappings_are_preserved_and_rejected(self):
+        EmployeeFingerprint.objects.create(
+            employee=self.employee,
+            device=self.device,
+            fingerprint_slot=1,
+            finger="right_index",
+        )
+        EmployeeFingerprint.objects.create(
+            employee=self.employee,
+            device=self.device,
+            fingerprint_slot=256,
+            finger="right_index",
+        )
+
+        response = self.enroll()
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            EmployeeFingerprint.objects.filter(
+                employee=self.employee,
+                device=self.device,
+                finger="right_index",
+                is_active=True,
+            ).count(),
+            2,
+        )
+        self.assertFalse(
+            FingerprintEnrollment.objects.filter(
+                employee=self.employee,
+                device=self.device,
+                finger="right_index",
+            ).exists()
+        )
+
     def test_start_enrollment_requires_hr_or_admin_jwt(self):
         self.client.force_authenticate(self.employee_user)
 

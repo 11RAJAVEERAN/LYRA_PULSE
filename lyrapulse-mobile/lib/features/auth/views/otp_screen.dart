@@ -14,8 +14,7 @@ class OtpScreen extends StatefulWidget {
   State<OtpScreen> createState() => _OtpScreenState();
 }
 
-class _OtpScreenState extends State<OtpScreen>
-    with WidgetsBindingObserver {
+class _OtpScreenState extends State<OtpScreen> with WidgetsBindingObserver {
   // Keeps the content phone-sized on Flutter Web / tablets.
   static const double _maxContentWidth = 480;
 
@@ -38,9 +37,7 @@ class _OtpScreenState extends State<OtpScreen>
     _verifyWorker = ever<bool>(
       controller.isVerifying,
       (verifying) {
-        if (!verifying &&
-            controller.employee.value == null &&
-            mounted) {
+        if (!verifying && controller.employee.value == null && mounted) {
           setState(() => _hasError = true);
         }
       },
@@ -79,15 +76,14 @@ class _OtpScreenState extends State<OtpScreen>
         alignment: 1,
         duration: const Duration(milliseconds: 250),
         curve: Curves.easeInOut,
-        alignmentPolicy:
-            ScrollPositionAlignmentPolicy.keepVisibleAtEnd,
+        alignmentPolicy: ScrollPositionAlignmentPolicy.keepVisibleAtEnd,
       );
     });
   }
 
   String get _maskedPhone {
-    final digits = controller.phoneController.text
-        .replaceAll(RegExp(r'\D'), '');
+    final digits =
+        controller.phoneController.text.replaceAll(RegExp(r'\D'), '');
 
     if (digits.length < 4) {
       return '+91 $digits';
@@ -98,11 +94,9 @@ class _OtpScreenState extends State<OtpScreen>
   }
 
   String _formatCountdown(int seconds) {
-    final minutes =
-        (seconds ~/ 60).toString().padLeft(2, '0');
+    final minutes = (seconds ~/ 60).toString().padLeft(2, '0');
 
-    final secs =
-        (seconds % 60).toString().padLeft(2, '0');
+    final secs = (seconds % 60).toString().padLeft(2, '0');
 
     return '$minutes:$secs';
   }
@@ -110,8 +104,7 @@ class _OtpScreenState extends State<OtpScreen>
   void _verify() {
     FocusManager.instance.primaryFocus?.unfocus();
 
-    if (!RegExp(r'^\d{6}$')
-        .hasMatch(controller.otpController.text)) {
+    if (!RegExp(r'^\d{6}$').hasMatch(controller.otpController.text)) {
       setState(() => _hasError = true);
     }
 
@@ -171,9 +164,7 @@ class _OtpScreenState extends State<OtpScreen>
                   left: 24,
                   right: 24,
                   top: 12,
-                  bottom:
-                      MediaQuery.of(context).viewInsets.bottom +
-                          20,
+                  bottom: MediaQuery.of(context).viewInsets.bottom + 20,
                 ),
                 child: Center(
                   child: ConstrainedBox(
@@ -184,9 +175,7 @@ class _OtpScreenState extends State<OtpScreen>
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         _buildIllustration(),
-
                         const SizedBox(height: 23),
-
                         Semantics(
                           header: true,
                           child: Text(
@@ -194,57 +183,60 @@ class _OtpScreenState extends State<OtpScreen>
                             textAlign: TextAlign.center,
 
                             // Same heading style as Login screen.
-                            style:
-                                AppTextStyles.display.copyWith(
+                            style: AppTextStyles.display.copyWith(
                               color: AppColors.primary,
                             ),
                           ),
                         ),
-
                         const SizedBox(height: 12),
-
                         Text(
                           "We've sent a 6-digit OTP to your registered\n"
                           'mobile number',
                           textAlign: TextAlign.center,
 
                           // Same body style as Login screen.
-                          style:
-                              AppTextStyles.bodySmall.copyWith(
+                          style: AppTextStyles.bodySmall.copyWith(
                             fontSize: 14,
                           ),
                         ),
-
                         const SizedBox(height: 18),
-
                         _buildPhone(),
-
                         const SizedBox(height: 28),
-
                         AutofillGroup(
                           child: OtpInput(
-                            controller:
-                                controller.otpController,
+                            controller: controller.otpController,
                             hasError: _hasError,
                             onChanged: _clearError,
                           ),
                         ),
-
+                        AnimatedSize(
+                          duration: const Duration(milliseconds: 180),
+                          child: _hasError
+                              ? Padding(
+                                  padding: const EdgeInsets.only(top: 10),
+                                  child: Semantics(
+                                    liveRegion: true,
+                                    child: Text(
+                                      'We couldn’t verify that code. Check it and try again.',
+                                      textAlign: TextAlign.center,
+                                      style: AppTextStyles.bodySmall.copyWith(
+                                        color: AppColors.error,
+                                      ),
+                                    ),
+                                  ),
+                                )
+                              : const SizedBox.shrink(),
+                        ),
                         const SizedBox(height: 26),
-
                         _buildResend(),
-
                         const SizedBox(height: 30),
-
                         Obx(
                           () => _VerifyButton(
                             key: _verifyButtonKey,
-                            loading:
-                                controller.isVerifying.value,
+                            loading: controller.isVerifying.value,
                             onPressed: _verify,
                           ),
                         ),
-
                         const SizedBox(height: 32),
                       ],
                     ),
@@ -315,8 +307,7 @@ class _OtpScreenState extends State<OtpScreen>
                 color: AppColors.primary,
                 width: 5,
               ),
-              borderRadius:
-                  BorderRadius.circular(23),
+              borderRadius: BorderRadius.circular(23),
             ),
             child: const Align(
               alignment: Alignment.topCenter,
@@ -328,8 +319,7 @@ class _OtpScreenState extends State<OtpScreen>
                   child: DecoratedBox(
                     decoration: BoxDecoration(
                       color: AppColors.primary,
-                      borderRadius:
-                          BorderRadius.all(
+                      borderRadius: BorderRadius.all(
                         Radius.circular(8),
                       ),
                     ),
@@ -355,14 +345,12 @@ class _OtpScreenState extends State<OtpScreen>
                     AppColors.secondary,
                   ],
                 ),
-                borderRadius:
-                    BorderRadius.circular(13),
+                borderRadius: BorderRadius.circular(13),
               ),
               child: Center(
                 child: Text(
                   '✱ ✱ ✱ ✱ ✱ ✱',
-                  style:
-                      AppTextStyles.bodySmall.copyWith(
+                  style: AppTextStyles.bodySmall.copyWith(
                     color: AppColors.surface,
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
@@ -381,8 +369,7 @@ class _OtpScreenState extends State<OtpScreen>
               height: 50,
               decoration: BoxDecoration(
                 color: AppColors.primaryBlue,
-                borderRadius:
-                    BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(20),
               ),
               child: const Icon(
                 Icons.check_rounded,
@@ -398,17 +385,14 @@ class _OtpScreenState extends State<OtpScreen>
 
   Widget _buildPhone() {
     return Row(
-      mainAxisAlignment:
-          MainAxisAlignment.center,
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
         const Icon(
           Icons.call_rounded,
           color: AppColors.primaryBlue,
           size: 23,
         ),
-
         const SizedBox(width: 12),
-
         Text(
           _maskedPhone,
           style: AppTextStyles.title.copyWith(
@@ -422,90 +406,62 @@ class _OtpScreenState extends State<OtpScreen>
 
   Widget _buildResend() {
     return Obx(() {
-      final seconds =
-          controller.secondsRemaining.value;
+      final seconds = controller.secondsRemaining.value;
 
-      final resending =
-          controller.isResendingOtp.value;
+      final resending = controller.isResendingOtp.value;
 
-      final canResend =
-          seconds == 0 && !resending;
+      final canResend = seconds == 0 && !resending;
 
       return Row(
-        mainAxisAlignment:
-            MainAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const Icon(
             Icons.refresh_rounded,
             color: AppColors.primaryBlue,
             size: 26,
           ),
-
           const SizedBox(width: 9),
-
           Flexible(
             child: Wrap(
-              crossAxisAlignment:
-                  WrapCrossAlignment.center,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 Text(
-                  seconds > 0
-                      ? 'Resend OTP in '
-                      : 'Didn’t receive OTP? ',
-                  style:
-                      AppTextStyles.bodySmall.copyWith(
+                  seconds > 0 ? 'Resend OTP in ' : 'Didn’t receive OTP? ',
+                  style: AppTextStyles.bodySmall.copyWith(
                     fontSize: 14,
                   ),
                 ),
-
                 if (seconds > 0)
                   Text(
                     _formatCountdown(seconds),
-                    style: AppTextStyles.bodySmall
-                        .copyWith(
+                    style: AppTextStyles.bodySmall.copyWith(
                       fontSize: 14,
-                      fontWeight:
-                          FontWeight.w600,
-                      color:
-                          AppColors.primaryBlue,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primaryBlue,
                     ),
                   )
                 else if (resending)
                   const SizedBox(
                     width: 16,
                     height: 16,
-                    child:
-                        CircularProgressIndicator(
+                    child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      color:
-                          AppColors.primaryBlue,
+                      color: AppColors.primaryBlue,
                     ),
                   )
                 else
-                  GestureDetector(
-                    behavior:
-                        HitTestBehavior.opaque,
-                    onTap: canResend
-                        ? controller.resendOtp
-                        : null,
-                    child: Padding(
-                      padding:
-                          const EdgeInsets.symmetric(
-                        vertical: 8,
-                      ),
-                      child: Text(
-                        'Resend',
-                        style: AppTextStyles
-                            .bodySmall
-                            .copyWith(
-                          fontSize: 14,
-                          fontWeight:
-                              FontWeight.w600,
-                          color: AppColors
-                              .primaryBlue,
-                        ),
+                  TextButton(
+                    onPressed: canResend ? controller.resendOtp : null,
+                    style: TextButton.styleFrom(
+                      minimumSize: const Size(48, 40),
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      foregroundColor: AppColors.primaryBlue,
+                      textStyle: AppTextStyles.bodySmall.copyWith(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
+                    child: const Text('Resend'),
                   ),
               ],
             ),
@@ -531,8 +487,7 @@ class _VerifyButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final radius =
-        BorderRadius.circular(23);
+    final radius = BorderRadius.circular(23);
 
     return SizedBox(
       width: double.infinity,
@@ -562,42 +517,31 @@ class _VerifyButton extends StatelessWidget {
           color: Colors.transparent,
           child: InkWell(
             borderRadius: radius,
-            onTap:
-                loading ? null : onPressed,
+            onTap: loading ? null : onPressed,
             child: Center(
               child: loading
                   ? const SizedBox(
                       width: 24,
                       height: 24,
-                      child:
-                          CircularProgressIndicator(
+                      child: CircularProgressIndicator(
                         strokeWidth: 2.5,
-                        color:
-                            AppColors.surface,
+                        color: AppColors.surface,
                       ),
                     )
                   : Row(
-                      mainAxisSize:
-                          MainAxisSize.min,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
                           'Verify OTP',
-                          style: AppTextStyles
-                              .button
-                              .copyWith(
+                          style: AppTextStyles.button.copyWith(
                             fontSize: 17,
                           ),
                         ),
-
-                        const SizedBox(
-                            width: 18),
-
+                        const SizedBox(width: 18),
                         const Icon(
-                          Icons
-                              .arrow_forward_rounded,
+                          Icons.arrow_forward_rounded,
                           size: 29,
-                          color:
-                              AppColors.surface,
+                          color: AppColors.surface,
                         ),
                       ],
                     ),

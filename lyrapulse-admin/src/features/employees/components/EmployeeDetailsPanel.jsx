@@ -6,6 +6,7 @@ import {
 import { ChevronDown, X } from 'lucide-react'
 import { colors } from '../../../theme/colors'
 import { employeesApi } from '../api/employeesApi'
+import { attendancePermissionsApi } from '../../attendancePermissions/api/attendancePermissionsApi'
 import { DocumentSlot } from './DocumentSlot'
 import {
   DOCUMENT_SLOTS, checkDocumentFile, emptyEmployeeForm, employeeToForm, formToPayload, mapBackendErrors, validateEmployeeForm,
@@ -13,6 +14,13 @@ import {
 
 const sameId = (left, right) => left !== '' && left != null && right !== '' && right != null && String(left) === String(right)
 const digitsOnly = (value, max) => value.replace(/\D/g, '').slice(0, max)
+const ATTENDANCE_PERMISSION_FIELDS = [
+  'mobile_gps_attendance_enabled',
+  'location_attendance_enabled',
+  'photo_attendance_enabled',
+  'biometric_attendance_enabled',
+]
+const DEFAULT_ATTENDANCE_PERMISSIONS = Object.fromEntries(ATTENDANCE_PERMISSION_FIELDS.map((field) => [field, false]))
 
 const SECTIONS = [
   { id: 'basic', title: 'Basic Details' },
@@ -44,7 +52,7 @@ const formFieldStyles = {
   '& .MuiFormHelperText-root': { marginTop: 0.5, lineHeight: 1.35 },
 }
 
-export function EmployeeDetailsPanel({ open, employeeId, rows, options, optionsLoading, optionsError, onRetryOptions, onClose, onSaved }) {
+export function EmployeeDetailsPanel({ open, employeeId, viewOnly = false, rows, options, optionsLoading, optionsError, onRetryOptions, onClose, onSaved }) {
   const isEdit = Boolean(employeeId)
   const [form, setForm] = useState(emptyEmployeeForm)
   const [errors, setErrors] = useState({})
@@ -55,6 +63,7 @@ export function EmployeeDetailsPanel({ open, employeeId, rows, options, optionsL
   const [saving, setSaving] = useState(false)
   const [formError, setFormError] = useState('')
   const [access, setAccess] = useState({ can_view_sensitive: false, can_change_sensitive: false, can_edit_attendance_permissions: false })
+  const [permissionBaseline, setPermissionBaseline] = useState(DEFAULT_ATTENDANCE_PERMISSIONS)
   const [masters, setMasters] = useState({ employeeTypes: [], payrollGroups: [] })
   const [mastersError, setMastersError] = useState('')
   const [storedDocs, setStoredDocs] = useState([])
@@ -73,10 +82,12 @@ export function EmployeeDetailsPanel({ open, employeeId, rows, options, optionsL
     setLoading(true)
     setLoadError('')
     setMastersError('')
+    let permissionAccess = { can_edit_attendance_permissions: false }
     try {
       const [accessData, employeeTypes, payrollGroups] = await Promise.all([
         employeesApi.formAccess(), employeesApi.employeeTypes(), employeesApi.payrollGroups(),
       ])
+      permissionAccess = accessData
       setAccess(accessData)
       setMasters({ employeeTypes, payrollGroups })
     } catch (error) {
@@ -85,7 +96,15 @@ export function EmployeeDetailsPanel({ open, employeeId, rows, options, optionsL
     if (employeeId) {
       try {
         const employee = await employeesApi.get(employeeId)
-        setForm(employeeToForm(employee))
+        const permissions = permissionAccess.can_edit_attendance_permissions
+          ? await attendancePermissionsApi.get(employeeId)
+          : null
+        const employeeForm = employeeToForm(employee)
+        const savedPermissions = permissions
+          ? Object.fromEntries(ATTENDANCE_PERMISSION_FIELDS.map((field) => [field, Boolean(permissions[field])]))
+          : Object.fromEntries(ATTENDANCE_PERMISSION_FIELDS.map((field) => [field, Boolean(employeeForm[field])]))
+        setPermissionBaseline(savedPermissions)
+        setForm({ ...employeeForm, ...savedPermissions })
         setStoredDocs(employee.documents ?? [])
         setMaskedAccount(employee.bank_account_number_masked ?? '')
       } catch (error) {
@@ -104,12 +123,18 @@ export function EmployeeDetailsPanel({ open, employeeId, rows, options, optionsL
     setDocErrors({})
     setStoredDocs([])
     setMaskedAccount('')
+    setAccess({ can_view_sensitive: false, can_change_sensitive: false, can_edit_attendance_permissions: false })
+    setPermissionBaseline(DEFAULT_ATTENDANCE_PERMISSIONS)
     setExpanded(['basic'])
     setActiveEmployeeId(employeeId ?? null)
     if (!employeeId) {
       // Suggest the next numeric employee code; the backend still enforces uniqueness.
       const numeric = rows.map((row) => Number(row.employee_code)).filter((value) => Number.isInteger(value) && value > 0)
-      setForm({ ...emptyEmployeeForm, employee_code: numeric.length ? String(Math.max(...numeric) + 1) : '' })
+      setForm({
+        ...emptyEmployeeForm,
+        employee_code: numeric.length ? String(Math.max(...numeric) + 1) : '',
+        organization: companyItems.length === 1 ? companyItems[0].id : '',
+      })
     } else {
       setForm(emptyEmployeeForm)
     }
@@ -131,14 +156,29 @@ export function EmployeeDetailsPanel({ open, employeeId, rows, options, optionsL
   const touch = (name) => setTouched((current) => ({ ...current, [name]: true }))
 
   const inputProps = (name, extra = {}) => ({
-    name, fullWidth: true, size: 'small', value: form[name], disabled: saving,
+    name, fullWidth: true, size: 'small', value: form[name], disabled: saving || viewOnly,
     onChange: (event) => setValue(name, extra.digits ? digitsOnly(event.target.value, extra.digits) : event.target.value),
     onBlur: () => touch(name),
     error: Boolean(visibleError(name)), helperText: visibleError(name) || extra.helper || undefined,
     ...extra.props,
   })
 
-  const branchItems = useMemo(() => options.branches.filter((item) => item.is_active || sameId(item.id, form.branch)), [options.branches, form.branch])
+  const companyItems = [...new Map(options.branches
+    .map((branch) => {
+      const organization = branch.organization && typeof branch.organization === 'object'
+        ? branch.organization
+        : { id: branch.organization, name: branch.organization_name }
+      return organization.id == null ? null : [String(organization.id), {
+        id: organization.id,
+        name: organization.name || `Company #${organization.id}`,
+        is_active: organization.is_active,
+      }]
+    })
+    .filter(Boolean)).values()]
+  const branchItems = useMemo(() => options.branches.filter(
+    (item) => (item.is_active || sameId(item.id, form.branch))
+      && sameId(item.organization?.id ?? item.organization, form.organization),
+  ), [options.branches, form.branch, form.organization])
   const departmentItems = useMemo(
     () => options.departments.filter((item) => sameId(item.id, form.department) || (sameId(item.branch, form.branch) && item.is_active)),
     [options.departments, form.branch, form.department],
@@ -158,6 +198,10 @@ export function EmployeeDetailsPanel({ open, employeeId, rows, options, optionsL
       return { ...current, branch, department: keepDepartment ? current.department : '', designation: keepDesignation ? current.designation : '' }
     })
   }
+  const changeCompany = (event) => {
+    const organization = event.target.value
+    setForm((current) => ({ ...current, organization, branch: '', department: '', designation: '' }))
+  }
   const changeDepartment = (event) => {
     const department = event.target.value
     setForm((current) => {
@@ -172,7 +216,7 @@ export function EmployeeDetailsPanel({ open, employeeId, rows, options, optionsL
       value={form[name] !== '' && items.some((item) => sameId(item.id, form[name])) ? form[name] : ''}
       onChange={onChange ?? ((event) => setValue(name, event.target.value))}
       onBlur={() => touch(name)}
-      disabled={saving || optionsLoading || disabled}
+      disabled={saving || viewOnly || optionsLoading || disabled}
       error={Boolean(visibleError(name))} helperText={visibleError(name) || helper || undefined}
       slotProps={{ inputLabel: { shrink: true }, select: { displayEmpty: true, MenuProps: { slotProps: { paper: { sx: { maxHeight: 260 } } } } } }}
     >
@@ -189,7 +233,7 @@ export function EmployeeDetailsPanel({ open, employeeId, rows, options, optionsL
   )
 
   const radioGroup = (name, label, choices, required, disabled) => (
-    <FormControl error={Boolean(visibleError(name))} disabled={saving || disabled} sx={fullRow}>
+    <FormControl error={Boolean(visibleError(name))} disabled={saving || viewOnly || disabled} sx={fullRow}>
       <FormLabel id={`${name}-label`} required={required} sx={{ fontSize: 13, fontWeight: 500 }}>{label}</FormLabel>
       <RadioGroup row aria-labelledby={`${name}-label`} name={name} value={form[name]} onChange={(event) => setValue(name, event.target.value)}>
         {choices.map(([value, text]) => <FormControlLabel key={value} value={value} control={<Radio size="small" />} label={text} />)}
@@ -249,7 +293,7 @@ export function EmployeeDetailsPanel({ open, employeeId, rows, options, optionsL
   // ---- save ----
   const save = async (event) => {
     event?.preventDefault()
-    if (saving) return
+    if (saving || viewOnly) return
     setTouched(Object.fromEntries(Object.keys(form).map((name) => [name, true])))
     if (!isValid) {
       const sectionOf = (name) => (['monthly_salary', 'payroll_group'].includes(name) ? 'salary' : name.startsWith('bank_') ? 'bank'
@@ -260,7 +304,7 @@ export function EmployeeDetailsPanel({ open, employeeId, rows, options, optionsL
     }
     setSaving(true)
     setFormError('')
-    const payload = formToPayload(form, { sensitiveEditable, attendancePermissionsEditable: access.can_edit_attendance_permissions })
+    const payload = formToPayload(form, { sensitiveEditable })
     let savedId = activeEmployeeId
     try {
       const saved = savedId ? await employeesApi.update(savedId, payload) : await employeesApi.create(payload)
@@ -272,6 +316,28 @@ export function EmployeeDetailsPanel({ open, employeeId, rows, options, optionsL
       setFormError(general || (Object.keys(fieldErrors).length ? 'The server rejected some fields. Please review them.' : 'Unable to save the employee.'))
       setSaving(false)
       return
+    }
+
+    if (access.can_edit_attendance_permissions) {
+      const permissionChanges = Object.fromEntries(
+        ATTENDANCE_PERMISSION_FIELDS
+          .filter((field) => Boolean(form[field]) !== Boolean(permissionBaseline[field]))
+          .map((field) => [field, Boolean(form[field])]),
+      )
+      if (Object.keys(permissionChanges).length) {
+        try {
+          const savedPermissions = await attendancePermissionsApi.update(savedId, permissionChanges)
+          setPermissionBaseline(Object.fromEntries(
+            ATTENDANCE_PERMISSION_FIELDS.map((field) => [field, Boolean(savedPermissions[field])]),
+          ))
+        } catch (error) {
+          const message = mapBackendErrors(error).general || 'Attendance permissions could not be updated.'
+          setFormError(`Employee details were saved, but attendance permissions were not updated: ${message}`)
+          setSaving(false)
+          onSaved(null, { keepOpen: true })
+          return
+        }
+      }
     }
 
     const failures = []
@@ -313,9 +379,9 @@ export function EmployeeDetailsPanel({ open, employeeId, rows, options, optionsL
       <Box component="form" onSubmit={save} noValidate sx={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, color: colors.textPrimary, ...formFieldStyles }}>
         <Box sx={{ bgcolor: colors.surface, px: 3, py: 1.75, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, borderBottom: `1px solid ${colors.border}` }}>
           <Box sx={{ minWidth: 0 }}>
-            <Typography variant="h6" component="h2" sx={{ fontWeight: 650, lineHeight: 1.3 }}>{isEdit ? 'Edit Details' : 'Add Employee'}</Typography>
+            <Typography variant="h6" component="h2" sx={{ fontWeight: 650, lineHeight: 1.3 }}>{viewOnly ? 'Employee Details' : isEdit ? 'Edit Details' : 'Add Employee'}</Typography>
             <Typography variant="caption" sx={{ display: 'block', color: colors.textSecondary }}>
-              {isEdit ? 'Update this employee’s profile and documents.' : 'Enter the employee’s profile, payroll and documents.'}
+              {viewOnly ? 'View the employee’s profile and employment information.' : isEdit ? 'Update this employee’s profile and documents.' : 'Enter the employee’s profile, payroll and documents.'}
             </Typography>
           </Box>
           <IconButton aria-label="Close" onClick={handleClose} disabled={saving} size="small" sx={{ color: colors.textSecondary }}><X size={20} /></IconButton>
@@ -355,7 +421,8 @@ export function EmployeeDetailsPanel({ open, employeeId, rows, options, optionsL
                         <TextField {...inputProps('display_name')} label="Display Name" placeholder="Enter Display Name" />
                         {mobileField('phone_number', 'Mobile Number', true)}
                         <TextField {...inputProps('email')} label="Email" type="email" placeholder="Enter Employee Email" sx={fullRow} />
-                        {selectField({ name: 'branch', label: 'Master Branch', items: branchItems, onChange: changeBranch, placeholder: 'Select Master Branches' })}
+                        {selectField({ name: 'organization', label: 'Company', items: companyItems, onChange: changeCompany, placeholder: 'Select Company' })}
+                        {selectField({ name: 'branch', label: 'Master Branch', items: branchItems, onChange: changeBranch, placeholder: 'Select Master Branches', disabled: form.organization === '' })}
                         {selectField({ name: 'department', label: 'Department', required: true, items: departmentItems, onChange: changeDepartment, placeholder: 'Select Department', disabled: form.branch === '', helper: form.branch === '' ? 'Select a branch first' : undefined })}
                         {selectField({ name: 'designation', label: 'Designation', required: true, items: designationItems, placeholder: 'Select Designation', disabled: form.department === '', helper: form.department === '' ? 'Select a department first' : undefined })}
                         {selectField({ name: 'employee_type', label: 'Employee Type', items: masters.employeeTypes, placeholder: 'Select Employee Type', helper: masters.employeeTypes.length === 0 && !loading ? 'No employee types are configured yet.' : undefined })}
@@ -365,7 +432,7 @@ export function EmployeeDetailsPanel({ open, employeeId, rows, options, optionsL
                         <TextField sx={fullRow} {...inputProps('esic_number', { digits: 10 })} label="Employee State Insurance Corporation (ESIC)" placeholder="Enter 10-Digit ESIC IP Number" slotProps={{ htmlInput: { inputMode: 'numeric', maxLength: 10 } }} />
                         <TextField {...inputProps('address')} label="Address" multiline minRows={2} sx={fullRow} />
                         {isEdit ? (
-                          <FormControlLabel sx={fullRow} control={<Switch checked={form.is_active} onChange={(event) => setValue('is_active', event.target.checked)} disabled={saving} />}
+                          <FormControlLabel sx={fullRow} control={<Switch checked={form.is_active} onChange={(event) => setValue('is_active', event.target.checked)} disabled={saving || viewOnly} />}
                             label={form.is_active ? 'Active employee' : 'Inactive employee'} />
                         ) : null}
                       </Box>
@@ -378,7 +445,7 @@ export function EmployeeDetailsPanel({ open, employeeId, rows, options, optionsL
                           <>
                             {radioGroup('salary_type', 'Salary Type', [['MONTHLY', 'Monthly'], ['HOURLY', 'Hourly'], ['COMPLIANCE', 'Compliance']], true, !sensitiveEditable)}
                             {form.salary_type === 'MONTHLY' ? (
-                              <TextField {...inputProps('monthly_salary', { props: { disabled: saving || !sensitiveEditable } })} label="Monthly Salary" required type="number"
+                              <TextField {...inputProps('monthly_salary', { props: { disabled: saving || viewOnly || !sensitiveEditable } })} label="Monthly Salary" required type="number"
                                 slotProps={{ input: { startAdornment: <InputAdornment position="start">₹</InputAdornment> }, htmlInput: { min: 0, step: '0.01' } }} />
                             ) : null}
                             {selectField({ name: 'payroll_group', label: 'Payroll Group', required: requirePayrollGroup, items: masters.payrollGroups, placeholder: 'Select Payroll Group', disabled: !sensitiveEditable, helper: masters.payrollGroups.length === 0 && !loading ? 'No payroll groups are configured yet.' : undefined })}
@@ -390,11 +457,11 @@ export function EmployeeDetailsPanel({ open, employeeId, rows, options, optionsL
                     {section.id === 'bank' ? (
                       sensitiveVisible ? (
                         <Box sx={sectionBlock}>
-                          <TextField {...inputProps('bank_name', { props: { disabled: saving || !sensitiveEditable } })} label="Bank Name" placeholder="Enter Bank Name" />
-                          <TextField {...inputProps('bank_branch_name', { props: { disabled: saving || !sensitiveEditable } })} label="Branch Name" placeholder="Enter Branch Name" />
-                          <TextField {...inputProps('bank_account_number', { props: { disabled: saving || !sensitiveEditable }, helper: isEdit && maskedAccount ? `Saved account: ${maskedAccount}. Leave blank to keep it.` : undefined })}
+                          <TextField {...inputProps('bank_name', { props: { disabled: saving || viewOnly || !sensitiveEditable } })} label="Bank Name" placeholder="Enter Bank Name" />
+                          <TextField {...inputProps('bank_branch_name', { props: { disabled: saving || viewOnly || !sensitiveEditable } })} label="Branch Name" placeholder="Enter Branch Name" />
+                          <TextField {...inputProps('bank_account_number', { props: { disabled: saving || viewOnly || !sensitiveEditable }, helper: isEdit && maskedAccount ? `Saved account: ${maskedAccount}. Leave blank to keep it.` : undefined })}
                             label="Account No" placeholder="Enter Account No" autoComplete="off" />
-                          <TextField {...inputProps('bank_ifsc_code', { props: { disabled: saving || !sensitiveEditable } })} label="IFSC Code" placeholder="Enter IFSC Code"
+                          <TextField {...inputProps('bank_ifsc_code', { props: { disabled: saving || viewOnly || !sensitiveEditable } })} label="IFSC Code" placeholder="Enter IFSC Code"
                             onChange={(event) => setValue('bank_ifsc_code', event.target.value.toUpperCase().slice(0, 11))} />
                         </Box>
                       ) : sensitiveNote
@@ -413,7 +480,7 @@ export function EmployeeDetailsPanel({ open, employeeId, rows, options, optionsL
                                   const stored = slotStored(group.docType, side)
                                   return (
                                     <DocumentSlot key={key} label={label} stored={stored} staged={stagedDocs[key]} error={docErrors[key]} busy={busyDoc === key}
-                                      disabled={saving || !sensitiveEditable} onPick={(file) => pickDocument(key, file)} onRemoveStaged={() => unstageDocument(key)}
+                                      disabled={saving || viewOnly || !sensitiveEditable} onPick={(file) => pickDocument(key, file)} onRemoveStaged={() => unstageDocument(key)}
                                       onView={() => viewDocument(stored)} onRemoveStored={() => removeStoredDocument(stored)} />
                                   )
                                 })}
@@ -444,11 +511,12 @@ export function EmployeeDetailsPanel({ open, employeeId, rows, options, optionsL
                     {section.id === 'attendance' ? (
                       access.can_edit_attendance_permissions ? (
                         <Box sx={sectionBlock}>
-                          <Alert severity="info" sx={fullRow}>New employees have all attendance methods disabled. Mobile check-in and check-out require GPS; a photo is required for both actions when Photo Attendance is enabled.</Alert>
-                          <FormControlLabel control={<Switch checked={form.biometric_attendance_enabled} onChange={(event) => setValue('biometric_attendance_enabled', event.target.checked)} disabled={saving} />} label="Biometric Attendance" />
-                          <FormControlLabel control={<Switch checked={form.mobile_gps_attendance_enabled} onChange={(event) => setValue('mobile_gps_attendance_enabled', event.target.checked)} disabled={saving} />} label="Mobile GPS Attendance" />
-                          <FormControlLabel control={<Switch checked={form.photo_attendance_enabled} onChange={(event) => setValue('photo_attendance_enabled', event.target.checked)} disabled={saving} />} label="Photo Attendance" />
-                          {isEdit ? <Box sx={fullRow}><Button variant="outlined" onClick={recordManualAttendance} disabled={manualAttendanceBusy || saving}>{manualAttendanceBusy ? 'Recording…' : 'Record Admin Manual Attendance'}</Button>{manualAttendanceNotice ? <Typography role="status" variant="body2" sx={{ mt: 1 }}>{manualAttendanceNotice}</Typography> : null}<Typography variant="caption" display="block" color="text.secondary">This action alternates between check-in and check-out and is recorded with the acting administrator.</Typography></Box> : null}
+                          <Alert severity="info" sx={fullRow}>These permissions are saved through the attendance-permissions API. Photo Attendance controls photo capture only; it is not face verification.</Alert>
+                          <FormControlLabel control={<Switch checked={form.mobile_gps_attendance_enabled} onChange={(event) => setValue('mobile_gps_attendance_enabled', event.target.checked)} disabled={saving || viewOnly} />} label="Mobile Attendance" />
+                          <FormControlLabel control={<Switch checked={form.location_attendance_enabled} onChange={(event) => setValue('location_attendance_enabled', event.target.checked)} disabled={saving || viewOnly} />} label="Location Verification" />
+                          <FormControlLabel control={<Switch checked={form.photo_attendance_enabled} onChange={(event) => setValue('photo_attendance_enabled', event.target.checked)} disabled={saving || viewOnly} />} label="Photo Attendance" />
+                          <FormControlLabel control={<Switch checked={form.biometric_attendance_enabled} onChange={(event) => setValue('biometric_attendance_enabled', event.target.checked)} disabled={saving || viewOnly} />} label="Fingerprint Attendance" />
+                          {isEdit && !viewOnly ? <Box sx={fullRow}><Button variant="outlined" onClick={recordManualAttendance} disabled={manualAttendanceBusy || saving}>{manualAttendanceBusy ? 'Recording…' : 'Record Admin Manual Attendance'}</Button>{manualAttendanceNotice ? <Typography role="status" variant="body2" sx={{ mt: 1 }}>{manualAttendanceNotice}</Typography> : null}<Typography variant="caption" display="block" color="text.secondary">This action alternates between check-in and check-out and is recorded with the acting administrator.</Typography></Box> : null}
                         </Box>
                       ) : <Alert severity="info" sx={{ m: 3 }}>Attendance permissions can be changed by Super Admin and Admin users.</Alert>
                     ) : null}
@@ -461,9 +529,9 @@ export function EmployeeDetailsPanel({ open, employeeId, rows, options, optionsL
 
         <Box sx={{ flexShrink: 0, bgcolor: colors.surface, px: 3, py: 1.5, display: 'flex', justifyContent: 'flex-end', gap: 1.5, borderTop: `1px solid ${colors.border}`, boxShadow: '0 -2px 8px rgba(15, 23, 42, 0.04)' }}>
           <Button type="button" variant="outlined" color="inherit" onClick={handleClose} disabled={saving} sx={{ bgcolor: colors.surface }}>Close</Button>
-          <Button type="submit" variant="contained" disabled={saving || loading || Boolean(loadError) || !isValid}>
+          {!viewOnly ? <Button type="submit" variant="contained" disabled={saving || loading || Boolean(loadError) || !isValid}>
             {saving ? 'Saving…' : 'Save Details'}
-          </Button>
+          </Button> : null}
         </Box>
       </Box>
     </Drawer>

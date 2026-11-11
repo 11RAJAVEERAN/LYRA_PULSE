@@ -290,7 +290,7 @@ class AttendanceOverviewScreen extends StatelessWidget {
                       child: LinearProgressIndicator(
                         value: 0.88,
                         minHeight: 9,
-                        backgroundColor: AppColors.surfaceBorder,
+                        backgroundColor: AppColors.border,
                         valueColor: const AlwaysStoppedAnimation<Color>(
                           AppColors.success,
                         ),

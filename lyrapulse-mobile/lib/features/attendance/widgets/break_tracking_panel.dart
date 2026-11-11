@@ -113,7 +113,7 @@ class _BreakTrackingPanelState extends State<BreakTrackingPanel> {
         elevation: 2,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(18),
-          side: BorderSide(color: AppColors.infoSurface),
+          side: BorderSide(color: AppColors.border),
         ),
         child: Column(
           children: [
@@ -129,7 +129,7 @@ class _BreakTrackingPanelState extends State<BreakTrackingPanel> {
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: AppColors.infoSurface,
+                        color: AppColors.infoBackground,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(
@@ -321,10 +321,10 @@ class _BreakTrackingPanelState extends State<BreakTrackingPanel> {
                             margin: const EdgeInsets.only(bottom: 10),
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: AppColors.infoSurface,
+                              color: AppColors.infoBackground,
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
-                                color: AppColors.infoSurface,
+                                color: AppColors.border,
                               ),
                             ),
                             child: Column(

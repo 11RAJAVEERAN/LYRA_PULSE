@@ -22,6 +22,7 @@ const cells = {
   display_name: (row) => textOrDash(row.display_name),
   phone_number: (row) => textOrDash(row.phone_number),
   email: (row) => textOrDash(row.email),
+  company: (row) => textOrDash(row.organization_name),
   branch: (row, ctx) => textOrDash(ctx.branches.get(String(row.branch))),
   department: (row, ctx) => textOrDash(ctx.departments.get(String(row.department))),
   roles: (row, ctx) => {
@@ -43,7 +44,7 @@ const cells = {
   address: (row) => (row.address ? <Typography variant="body2" noWrap sx={{ maxWidth: 260 }} title={row.address}>{row.address}</Typography> : dash),
 }
 
-export function EmployeesTable({ rows, allRows, columns, ctx, sort, onSort, onSortTo, filters, onFilterChange, canEdit, onEdit }) {
+export function EmployeesTable({ rows, allRows, columns, ctx, sort, onSort, onSortTo, filters, onFilterChange, canEdit, onEdit, onView }) {
   return (
     <TableContainer sx={{ border: 0, borderRadius: 0 }}>
       <Table aria-label="Employees" size="small" sx={{ minWidth: 640 }}>
@@ -71,6 +72,7 @@ export function EmployeesTable({ rows, allRows, columns, ctx, sort, onSort, onSo
                 <TableCell key={column.id}>{cells[column.id](row, ctx)}</TableCell>
               ))}
               <TableCell align="right">
+                <Button size="small" onClick={() => onView(row)} aria-label={`View ${fullName(row) || row.employee_code}`}>View</Button>
                 {canEdit ? <Button size="small" onClick={() => onEdit(row)} aria-label={`Edit ${fullName(row) || row.employee_code}`}>Edit</Button> : null}
               </TableCell>
             </TableRow>

@@ -120,7 +120,7 @@ class LeaveScreen extends GetView<LeaveController> {
               child: _summary(
                 'History',
                 controller.historyLeaves.length.toString(),
-                AppColors.infoSurface,
+                AppColors.infoBackground,
                 AppColors.primaryBlue,
                 Icons.history,
               ),

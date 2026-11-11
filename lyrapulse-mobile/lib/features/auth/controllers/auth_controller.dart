@@ -26,6 +26,8 @@ class AuthController extends GetxController {
   final employee = Rxn<EmployeeModel>();
 
   Timer? _countdownTimer;
+  Future<EmployeeModel>? _profileRefresh;
+  int _sessionGeneration = 0;
 
   Future<void> sendOtp() async {
     if (isSendingOtp.value) return;
@@ -97,7 +99,10 @@ class AuthController extends GetxController {
     }
     isVerifying.value = true;
     try {
-      employee.value = await _authRepository.verifyOtp(_normalizedPhone, otpController.text);
+      final authenticatedEmployee =
+          await _authRepository.verifyOtp(_normalizedPhone, otpController.text);
+      _sessionGeneration++;
+      employee.value = authenticatedEmployee;
       stopCountdown();
       // Removes Login/OTP from the back stack.
       Get.offAllNamed(AppRoutes.home);
@@ -118,7 +123,9 @@ class AuthController extends GetxController {
     final token = await _secureStorage.readAccessToken();
     if (token == null || token.isEmpty) return false;
     try {
-      employee.value = await _authRepository.loadEmployeeProfile();
+      final restoredEmployee = await _authRepository.loadEmployeeProfile();
+      _sessionGeneration++;
+      employee.value = restoredEmployee;
       return true;
     } catch (error) {
       if (_isConnectivityProblem(error)) {
@@ -130,9 +137,36 @@ class AuthController extends GetxController {
     }
   }
 
+  Future<EmployeeModel> reloadEmployeeProfile() {
+    final pending = _profileRefresh;
+    if (pending != null) return pending;
+
+    final employeeId = employee.value?.id;
+    if (employeeId == null) {
+      return Future.error(StateError('There is no authenticated employee.'));
+    }
+
+    final generation = _sessionGeneration;
+    late final Future<EmployeeModel> refresh;
+    refresh = _authRepository.loadEmployeeProfile().then((profile) {
+      if (generation == _sessionGeneration &&
+          employee.value?.id == employeeId) {
+        employee.value = profile;
+      }
+      return profile;
+    }).whenComplete(() {
+      if (identical(_profileRefresh, refresh)) _profileRefresh = null;
+    });
+    _profileRefresh = refresh;
+    return refresh;
+  }
+
+  String errorMessage(Object error) => _errorMessage(error);
+
   Future<void> logout() async {
     if (isLoggingOut.value) return;
     isLoggingOut.value = true;
+    _sessionGeneration++;
     Object? logoutError;
     try {
       await _authRepository.logout();
@@ -146,7 +180,8 @@ class AuthController extends GetxController {
       Get.offAllNamed(AppRoutes.login);
     }
     if (logoutError != null) {
-      AppSnackbar.show('Signed out on this device. Server logout could not be confirmed.');
+      AppSnackbar.show(
+          'Signed out on this device. Server logout could not be confirmed.');
     }
   }
 
@@ -158,9 +193,7 @@ class AuthController extends GetxController {
   }
 
   void _populateDevOtp(String? devOtp) {
-    if (!kDebugMode ||
-        devOtp == null ||
-        !RegExp(r'^\d{6}$').hasMatch(devOtp)) {
+    if (!kDebugMode || devOtp == null || !RegExp(r'^\d{6}$').hasMatch(devOtp)) {
       return;
     }
     otpController.value = TextEditingValue(
@@ -169,7 +202,9 @@ class AuthController extends GetxController {
     );
   }
 
-  String get _normalizedPhone => phoneController.text.replaceAll(RegExp(r'\D'), '').replaceFirst(RegExp(r'^91(?=\d{10}$)'), '');
+  String get _normalizedPhone => phoneController.text
+      .replaceAll(RegExp(r'\D'), '')
+      .replaceFirst(RegExp(r'^91(?=\d{10}$)'), '');
 
   bool _isConnectivityProblem(Object error) {
     if (error is! DioException) return false;
@@ -189,20 +224,32 @@ class AuthController extends GetxController {
     if (error is DioException) {
       if (_isConnectivityProblem(error)) {
         final status = error.response?.statusCode;
-        if (status != null) return 'The server is unavailable right now. Please try again shortly.';
+        if (status != null) {
+          return 'The server is unavailable right now. Please try again shortly.';
+        }
         return 'Unable to reach Lyra Pulse. Check your internet connection and try again.';
       }
       final data = error.response?.data;
       if (data is Map) {
         if (data['detail'] != null) return data['detail'].toString();
-        if (data['message'] != null && data['message'] != 'Request failed') return data['message'].toString();
+        if (data['message'] != null && data['message'] != 'Request failed') {
+          return data['message'].toString();
+        }
         final errors = data['errors'];
-        if (errors is Map) return errors.values.expand((value) => value is List ? value : [value]).join(' ');
+        if (errors is Map) {
+          return errors.values
+              .expand((value) => value is List ? value : [value])
+              .join(' ');
+        }
       }
-      if (error.response?.statusCode == 401) return 'Your session has expired. Please sign in again.';
+      if (error.response?.statusCode == 401) {
+        return 'Your session has expired. Please sign in again.';
+      }
       return error.message ?? 'Something went wrong. Please try again.';
     }
-    if (error is FormatException) return 'Unexpected response from the server. Please try again.';
+    if (error is FormatException) {
+      return 'Unexpected response from the server. Please try again.';
+    }
     return 'Something went wrong. Please try again.';
   }
 

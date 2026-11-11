@@ -7,13 +7,15 @@ import { ROUTES } from '../../constants/routes'
 import { ProtectedRoute } from './ProtectedRoute'
 import { AdminLayout } from '../../components/layout/AdminLayout'
 import { AdminUsersPage } from '../../features/adminUsers/pages/AdminUsersPage'
-import { SuperAdminRoute } from './SuperAdminRoute'
 import { DevicesPage } from '../../features/devices/pages/DevicesPage'
 import { AttendancePermissionsPage } from '../../features/attendancePermissions/pages/AttendancePermissionsPage'
 import { DepartmentsPage } from '../../features/departments/pages/DepartmentsPage'
 import { DesignationsPage } from '../../features/designations/pages/DesignationsPage'
 import { ShiftsPage } from '../../features/shifts/pages/ShiftsPage'
 import { ShiftAssignmentsPage } from '../../features/shifts/pages/ShiftAssignmentsPage'
+import { CompaniesPage } from '../../features/companies/pages/CompaniesPage'
+import { BranchesPage } from '../../features/branches/pages/BranchesPage'
+import { PermissionRoute } from './PermissionRoute'
 
 export const routes = [
   {
@@ -37,37 +39,44 @@ export const routes = [
           },
           {
             path: ROUTES.employees,
-            element: <EmployeesPage />,
+            element: <PermissionRoute permission="employees.view_employee"><EmployeesPage /></PermissionRoute>,
           },
           {
             path: ROUTES.attendance,
-            element: <AttendancePage />,
+            element: <PermissionRoute permission="employees.view_employee"><AttendancePage /></PermissionRoute>,
           },
-          { path: ROUTES.shifts, element: <ShiftsPage /> },
-          { path: ROUTES.shiftAssignments, element: <ShiftAssignmentsPage /> },
+          { path: ROUTES.shifts, element: <PermissionRoute permission="shifts.view_shift"><ShiftsPage /></PermissionRoute> },
+          { path: ROUTES.shiftAssignments, element: <PermissionRoute permission="shifts.view_shift"><ShiftAssignmentsPage /></PermissionRoute> },
           {
             path: ROUTES.devices,
-            element: <DevicesPage />,
+            element: <PermissionRoute roles={['SUPERADMIN', 'ADMIN']}><DevicesPage /></PermissionRoute>,
           },
           {
             path: ROUTES.permissions,
-            element: <AttendancePermissionsPage />,
+            element: <PermissionRoute roles={['SUPERADMIN', 'ADMIN']}><AttendancePermissionsPage /></PermissionRoute>,
           },
           {
             path: ROUTES.departments,
-            element: <DepartmentsPage />,
+            element: <PermissionRoute permission="employees.view_employee"><DepartmentsPage /></PermissionRoute>,
           },
           {
             path: ROUTES.designations,
-            element: <DesignationsPage />,
+            element: <PermissionRoute permission="employees.view_employee"><DesignationsPage /></PermissionRoute>,
           },
           {
             path: ROUTES.adminUsers,
-            element: <SuperAdminRoute><AdminUsersPage /></SuperAdminRoute>,
+            element: <PermissionRoute roles={['SUPERADMIN']}><AdminUsersPage /></PermissionRoute>,
+          },
+          {
+            path: ROUTES.companies,
+            element: <PermissionRoute roles={['SUPERADMIN']}><CompaniesPage /></PermissionRoute>,
+          },
+          {
+            path: ROUTES.branches,
+            element: <PermissionRoute roles={['SUPERADMIN', 'ADMIN']}><BranchesPage /></PermissionRoute>,
           },
           ...[
             ROUTES.leaves,
-            ROUTES.branches,
             ROUTES.reports,
             ROUTES.settings,
           ].map((path) => ({
@@ -83,4 +92,3 @@ export const routes = [
     ],
   },
 ]
-

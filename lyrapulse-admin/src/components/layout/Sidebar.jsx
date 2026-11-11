@@ -5,6 +5,7 @@ import {
   ChevronRight,
   ClipboardList,
   LayoutDashboard,
+  MapPin,
   NotebookPen,
   UserCog,
   Users,
@@ -35,7 +36,8 @@ const navItems = [
     ],
   },
   { label: 'Leaves', path: '/leaves', icon: NotebookPen },
-  { label: 'Branches', path: '/branches', icon: Building2 },
+  { label: 'Companies', path: '/companies', icon: Building2 },
+  { label: 'Branches', path: '/branches', icon: MapPin },
   { label: 'Devices', path: '/devices', icon: BadgeCheck },
   { label: 'Reports', path: '/reports', icon: ClipboardList },
   { label: 'Admin Users', path: '/admin-users', icon: UserCog, superadminOnly: true },
@@ -98,10 +100,17 @@ export function Sidebar({ collapsed, onToggle, onNavigate, belowHeader = false }
 
   const canSee = ({ superadminOnly, path }) => {
     if (superadminOnly) return user?.role === 'SUPERADMIN'
-    if (path === '/employees') return user?.role === 'SUPERADMIN' || user?.permissions?.includes('employees.view_employee')
-    if (path === '/attendance') return user?.role === 'SUPERADMIN' || user?.permissions?.includes('employees.view_employee')
+    const hasPermission = (permission) => user?.role === 'SUPERADMIN'
+      || user?.permissions?.includes('*')
+      || user?.permissions?.includes(permission)
+    if (path === '/dashboard') return true
+    if (path === '/employees' || path === '/attendance' || path === '/departments' || path === '/designations') {
+      return hasPermission('employees.view_employee')
+    }
     if (path === '/permissions') return user?.role === 'SUPERADMIN' || user?.role === 'ADMIN'
-    if (path === '/shifts' || path === '/shift-assignments') return user?.role === 'SUPERADMIN' || user?.permissions?.includes('shifts.view_shift')
+    if (path === '/shifts' || path === '/shift-assignments') return hasPermission('shifts.view_shift')
+    if (path === '/devices') return user?.role === 'SUPERADMIN' || user?.role === 'ADMIN'
+    if (path === '/branches') return user?.role === 'SUPERADMIN' || user?.role === 'ADMIN'
     return user?.role === 'SUPERADMIN'
   }
 

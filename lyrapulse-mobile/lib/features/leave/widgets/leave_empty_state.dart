@@ -24,7 +24,7 @@ class LeaveEmptyState extends StatelessWidget {
               height: 120,
               width: 120,
               decoration: const BoxDecoration(
-                color: AppColors.infoSurface,
+                color: AppColors.infoBackground,
                 shape: BoxShape.circle,
               ),
               child: const Icon(

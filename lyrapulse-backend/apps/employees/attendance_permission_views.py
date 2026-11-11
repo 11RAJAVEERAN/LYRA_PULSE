@@ -43,7 +43,11 @@ class PermissionUpdateSerializer(serializers.Serializer):
 
 
 def _admin_allowed(user):
-    if user.role not in (user.Role.SUPERADMIN, user.Role.ADMIN):
+    if (
+        user.role not in (user.Role.SUPERADMIN, user.Role.ADMIN)
+        or not user.is_active
+        or not user.has_active_company_access
+    ):
         raise PermissionDenied("Only Super Admin and Admin users can manage attendance permissions.")
 
 

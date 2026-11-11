@@ -33,6 +33,10 @@ export const attendanceApi = {
   summary: async (params, signal) => unwrap(await apiClient.get('/attendance/admin/summary/', { params, signal })),
   detail: async (employeeId, date, signal) =>
     unwrap(await apiClient.get(`/attendance/admin/${employeeId}/`, { params: { date }, signal })),
+  photo: async (url, signal) => {
+    const response = await apiClient.get(url, { responseType: 'blob', signal })
+    return URL.createObjectURL(response.data)
+  },
   // Returns { blob, filename } for the backend-generated CSV (not paginated, same filters as the list).
   exportCsv: async (params) => {
     const response = await apiClient.get('/attendance/admin/export/', { params, responseType: 'blob', timeout: 120000 })

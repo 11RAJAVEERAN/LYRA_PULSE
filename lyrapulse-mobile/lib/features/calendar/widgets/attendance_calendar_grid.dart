@@ -24,7 +24,7 @@ class AttendanceCalendarGrid extends StatelessWidget {
       case 'weekOff':
         return AppColors.surfaceMuted;
       case 'holiday':
-        return AppColors.infoSurface;
+        return AppColors.infoBackground;
       case 'late':
       case 'punchError':
         return AppColors.warningBackground;
@@ -119,7 +119,7 @@ class AttendanceCalendarGrid extends StatelessWidget {
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 160),
                 decoration: BoxDecoration(
-                  color: selected ? AppColors.infoSurface : baseColor,
+                  color: selected ? AppColors.infoBackground : baseColor,
                   borderRadius: BorderRadius.circular(9),
                   border: Border.all(
                     color: selected

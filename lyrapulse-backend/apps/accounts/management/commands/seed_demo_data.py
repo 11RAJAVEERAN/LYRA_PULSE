@@ -13,7 +13,7 @@ class Command(BaseCommand):
     help = "Create the documented Lyra Pulse development records."
 
     def handle(self, *args, **options):
-        branch, _ = Branch.objects.get_or_create(code="MAIN", defaults={"name": "Main Branch", "attendance_radius_meters": 3})
+        branch, _ = Branch.objects.get_or_create(code="MAIN", defaults={"name": "Main Branch"})
         department, _ = Department.objects.get_or_create(branch=branch, name="Development")
         designation, _ = Designation.objects.get_or_create(department=department, name="Python Developer")
         user, _ = User.objects.get_or_create(phone_number="9876543210", defaults={"role": User.Role.EMPLOYEE, "first_name": "Demo", "last_name": "Employee"})

@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Avatar, Box, ButtonBase, Dialog, DialogContent, DialogTitle, Divider, Drawer, IconButton, Skeleton, Stack, Typography } from '@mui/material'
 import { BadgeCheck, Clock, ImageOff, MapPinOff, Maximize2, X } from 'lucide-react'
 import { ErrorState } from '../../../components/common/ErrorState'
 import { StatusChip } from '../../../components/common/StatusChip'
 import { useAttendanceDetail } from '../hooks/useAttendanceQueries'
+import { attendanceApi } from '../api/attendanceApi'
 import { attendanceErrorMessage } from '../utils/errors'
 import { todayIso } from '../utils/dateRange'
 import { NO_VALUE, formatAccuracy, formatCoordinate, formatDistance, formatLongDate, formatTime, initials } from '../utils/format'
@@ -38,8 +39,32 @@ function CheckCard({ title, data, emptyLabel }) {
 }
 
 function PhotoCard({ title, data, emptyLabel, onPreview }) {
-  const [failed, setFailed] = useState(false)
   const src = data?.photo
+  const [imageState, setImageState] = useState({ source: null, url: null, failed: false })
+  const imageSrc = imageState.source === src ? imageState.url : null
+  const failed = imageState.source === src && imageState.failed
+
+  useEffect(() => {
+    let active = true
+    let objectUrl
+    const controller = new AbortController()
+
+    if (src) {
+      attendanceApi.photo(src, controller.signal).then((url) => {
+        objectUrl = url
+        if (active) setImageState({ source: src, url, failed: false })
+        else URL.revokeObjectURL(url)
+      }).catch(() => {
+        if (active) setImageState({ source: src, url: null, failed: true })
+      })
+    }
+
+    return () => {
+      active = false
+      controller.abort()
+      if (objectUrl) URL.revokeObjectURL(objectUrl)
+    }
+  }, [src])
 
   return (
     <Box component="section" aria-label={title}>
@@ -48,12 +73,12 @@ function PhotoCard({ title, data, emptyLabel, onPreview }) {
         <Typography variant="body2" color="text.secondary">{emptyLabel}</Typography>
       ) : (
         <Stack direction="row" sx={{ gap: 1.5, p: 1, border: 1, borderColor: 'divider', borderRadius: 1.5 }}>
-          {src && !failed ? (
+          {imageSrc && !failed ? (
             <ButtonBase
-              onClick={() => onPreview({ src, title })} aria-label={`View ${title.toLowerCase()} larger`}
+              onClick={() => onPreview({ src: imageSrc, title })} aria-label={`View ${title.toLowerCase()} larger`}
               sx={{ position: 'relative', width: 96, height: 96, flexShrink: 0, borderRadius: 1, overflow: 'hidden' }}
             >
-              <Box component="img" src={src} alt={`${title} proof`} loading="lazy" onError={() => setFailed(true)} sx={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <Box component="img" src={imageSrc} alt={`${title} proof`} loading="lazy" onError={() => setImageState((current) => ({ ...current, failed: true }))} sx={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               <Box aria-hidden="true" sx={{ position: 'absolute', right: 4, bottom: 4, display: 'grid', placeItems: 'center', width: 22, height: 22, borderRadius: 0.75, bgcolor: 'background.paper', color: 'text.primary' }}>
                 <Maximize2 size={12} />
               </Box>
@@ -61,7 +86,7 @@ function PhotoCard({ title, data, emptyLabel, onPreview }) {
           ) : (
             <Stack sx={{ width: 96, height: 96, flexShrink: 0, alignItems: 'center', justifyContent: 'center', gap: 0.5, borderRadius: 1, bgcolor: 'background.default', color: 'text.secondary' }}>
               <ImageOff size={20} aria-hidden="true" />
-              <Typography variant="caption">{src ? 'Photo unavailable' : 'No photo'}</Typography>
+              <Typography variant="caption">{src ? (failed ? 'Photo unavailable' : 'Loading photo') : 'No photo'}</Typography>
             </Stack>
           )}
           <Stack sx={{ justifyContent: 'center', gap: 0.25, minWidth: 0 }}>

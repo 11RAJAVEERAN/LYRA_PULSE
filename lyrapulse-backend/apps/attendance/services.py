@@ -5,22 +5,26 @@ check-in, check-out and the pre-camera "verify location" call share exactly the 
 """
 import logging
 import math
+import time
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 from decimal import Decimal
 from typing import Optional
 
-from django.db import IntegrityError, transaction
+from django.db import IntegrityError, OperationalError, connection, transaction
 from django.utils import timezone
 
 from apps.employees.models import Employee
 
 from .exceptions import AttendanceError
-from .models import Attendance, AttendanceEvent
+from .models import Attendance, AttendanceEvent, MobileAttendanceRequest
 
 logger = logging.getLogger(__name__)
 
 EARTH_RADIUS_METERS = 6_371_008.8  # IUGG mean Earth radius
-MAX_GPS_ACCURACY_METERS = 10_000  # sanity bound only; real GPS-quality policy can be added in verify_attendance_location
+MAX_GPS_ACCURACY_METERS = 10_000
+MAX_LOCATION_FIX_AGE = timedelta(seconds=120)
+MAX_LOCATION_FUTURE_SKEW = timedelta(seconds=30)
 
 CHECK_OUT_FIELDS = [
     "check_out_at", "check_out_latitude", "check_out_longitude", "check_out_accuracy",
@@ -75,18 +79,39 @@ def validate_coordinates(latitude, longitude, accuracy=None):
     return lat, lon, acc
 
 
-def verify_attendance_location(branch, latitude, longitude, accuracy=None):
+def _validate_location_timestamp(location_timestamp, now=None):
+    if not isinstance(location_timestamp, datetime) or timezone.is_naive(location_timestamp):
+        raise AttendanceError("INVALID_LOCATION_TIMESTAMP", "A timezone-aware location timestamp is required.")
+    now = now or timezone.now()
+    age = now - location_timestamp
+    if age > MAX_LOCATION_FIX_AGE:
+        raise AttendanceError("STALE_LOCATION", "The location fix must be no more than 120 seconds old.")
+    if age < -MAX_LOCATION_FUTURE_SKEW:
+        raise AttendanceError("FUTURE_LOCATION", "The location fix cannot be more than 30 seconds in the future.")
+
+
+def verify_attendance_location(branch, latitude, longitude, accuracy=None, location_timestamp=None):
     """Compare the device location with the branch attendance location.
 
     Raises AttendanceError for invalid input or an unconfigured branch (it never defaults to 0/0).
     Returns a LocationVerification; `verified` is True when the distance is within the branch radius.
-    GPS-quality policies (e.g. rejecting very poor accuracy) can be added here later.
     """
+    if accuracy is None:
+        raise AttendanceError("INVALID_GPS_ACCURACY", "GPS accuracy is required.")
+    if location_timestamp is None:
+        raise AttendanceError("INVALID_LOCATION_TIMESTAMP", "A location timestamp is required.")
+    _validate_location_timestamp(location_timestamp)
     lat, lon, acc = validate_coordinates(latitude, longitude, accuracy)
     if not branch.has_attendance_location:
         raise AttendanceError("BRANCH_LOCATION_NOT_CONFIGURED", "Attendance location is not configured for this branch.", 409)
-    distance = calculate_distance_meters(lat, lon, float(branch.latitude), float(branch.longitude))
+    branch_lat, branch_lon, _ = validate_coordinates(branch.latitude, branch.longitude)
     radius = branch.attendance_radius_meters
+    if acc > radius:
+        raise AttendanceError(
+            "GPS_ACCURACY_EXCEEDS_RADIUS",
+            "GPS accuracy must be no worse than the configured branch attendance radius.",
+        )
+    distance = calculate_distance_meters(lat, lon, branch_lat, branch_lon)
     return LocationVerification(
         verified=distance <= radius,
         distance_meters=round(distance, 2),
@@ -157,12 +182,15 @@ def _is_open_attendance_conflict(error):
 
 
 @transaction.atomic
-def check_in(*, employee, branch, latitude=None, longitude=None, accuracy=None, photo=None, location_required=True):
+def check_in(
+    *, employee, branch, latitude=None, longitude=None, accuracy=None, location_timestamp=None, photo=None,
+    location_required=True,
+):
     employee = Employee.objects.select_for_update().get(pk=employee.pk)
     verification = None
     if location_required:
         _require_accuracy(accuracy)
-        verification = verify_attendance_location(branch, latitude, longitude, accuracy)
+        verification = verify_attendance_location(branch, latitude, longitude, accuracy, location_timestamp)
         if not verification.verified:
             raise _outside_radius_error(verification)
 
@@ -202,12 +230,15 @@ def check_in(*, employee, branch, latitude=None, longitude=None, accuracy=None, 
 
 
 @transaction.atomic
-def check_out(*, employee, branch, latitude=None, longitude=None, accuracy=None, photo=None, location_required=True):
+def check_out(
+    *, employee, branch, latitude=None, longitude=None, accuracy=None, location_timestamp=None, photo=None,
+    location_required=True,
+):
     employee = Employee.objects.select_for_update().get(pk=employee.pk)
     verification = None
     if location_required:
         _require_accuracy(accuracy)
-        verification = verify_attendance_location(branch, latitude, longitude, accuracy)
+        verification = verify_attendance_location(branch, latitude, longitude, accuracy, location_timestamp)
         if not verification.verified:
             raise _outside_radius_error(verification)
 
@@ -245,12 +276,95 @@ def check_out(*, employee, branch, latitude=None, longitude=None, accuracy=None,
     return attendance
 
 
+@dataclass(frozen=True)
+class MobilePunchResult:
+    status_code: int
+    body: dict
+    replayed: bool = False
+
+
+def idempotent_mobile_punch(*, key, employee, action, payload_fingerprint, perform, serialize_result, success_message, success_status):
+    for attempt in range(10):
+        try:
+            return _idempotent_mobile_punch_once(
+                key=key,
+                employee=employee,
+                action=action,
+                payload_fingerprint=payload_fingerprint,
+                perform=perform,
+                serialize_result=serialize_result,
+                success_message=success_message,
+                success_status=success_status,
+            )
+        except OperationalError as error:
+            if connection.vendor != "sqlite" or "locked" not in str(error).lower() or attempt == 9:
+                raise
+            time.sleep(0.02 * (attempt + 1))
+
+
+@transaction.atomic
+def _idempotent_mobile_punch_once(*, key, employee, action, payload_fingerprint, perform, serialize_result, success_message, success_status):
+    record, created = MobileAttendanceRequest.objects.get_or_create(
+        key=key,
+        defaults={
+            "employee": employee,
+            "action": action,
+            "payload_fingerprint": payload_fingerprint,
+        },
+    )
+    if not created:
+        record = MobileAttendanceRequest.objects.select_for_update().get(pk=record.pk)
+        if (
+            record.employee_id != employee.pk
+            or record.action != action
+            or record.payload_fingerprint != payload_fingerprint
+        ):
+            raise AttendanceError(
+                "IDEMPOTENCY_KEY_REUSED",
+                "This idempotency key was already used for a different request.",
+                409,
+            )
+        if record.http_status is None or not record.response:
+            raise AttendanceError(
+                "IDEMPOTENCY_REQUEST_IN_PROGRESS",
+                "A request with this idempotency key is still being processed.",
+                409,
+            )
+        if record.outcome == MobileAttendanceRequest.Outcome.PENDING:
+            raise AttendanceError(
+                "IDEMPOTENCY_REQUEST_IN_PROGRESS",
+                "A request with this idempotency key is still being processed.",
+                409,
+            )
+        return MobilePunchResult(record.http_status, record.response, replayed=True)
+
+    try:
+        attendance = perform()
+    except AttendanceError as error:
+        body = {"success": False, "message": error.message, "errors": {"code": error.code, **error.extra}}
+        record.outcome = MobileAttendanceRequest.Outcome.REJECTED
+        record.http_status = error.status_code
+        record.response = body
+        record.save(update_fields=("outcome", "http_status", "response"))
+        return MobilePunchResult(error.status_code, body)
+
+    body = {
+        "success": True,
+        "message": success_message,
+        "data": {"attendance": serialize_result(attendance)},
+    }
+    record.outcome = MobileAttendanceRequest.Outcome.SUCCEEDED
+    record.http_status = success_status
+    record.response = body
+    record.attendance = attendance
+    record.save(update_fields=("outcome", "http_status", "response", "attendance"))
+    return MobilePunchResult(success_status, body)
+
+
 def today_state(employee):
     today = timezone.localdate()
     sessions = list(Attendance.objects.filter(employee=employee, attendance_date=today).order_by("check_in_at"))
-    open_session = Attendance.objects.filter(employee=employee, check_out_at__isnull=True).order_by("-check_in_at").first()
-    if open_session and open_session not in sessions:
-        sessions.append(open_session)
+    open_session = next((row for row in reversed(sessions) if row.check_out_at is None), None)
     attendance = open_session or (sessions[-1] if sessions else None)
     if attendance is None:
         return {"attendance_date": today, "state": Attendance.State.NOT_CHECKED_IN.value, "check_in_at": None, "check_out_at": None, "sessions": []}

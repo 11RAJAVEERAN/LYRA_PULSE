@@ -85,14 +85,20 @@ ADMIN_ROLES = {User.Role.SUPERADMIN, User.Role.ADMIN, User.Role.HR, User.Role.MA
 def _admin_user_for_identifier(identifier):
     value = identifier.strip()
     if "@" in value:
-        matches = User.objects.filter(email__iexact=value, is_active=True, role__in=ADMIN_ROLES)
-        return matches.first() if matches.count() == 1 else None
-    from .serializers import normalize_phone_number
-    try:
-        phone = normalize_phone_number(value)
-    except serializers.ValidationError:
-        return None
-    return User.objects.filter(phone_number=phone, is_active=True, role__in=ADMIN_ROLES).first()
+        matches = User.objects.filter(email__iexact=value, is_active=True, role__in=ADMIN_ROLES).select_related("organization")
+        user = matches.first() if matches.count() == 1 else None
+    else:
+        from .serializers import normalize_phone_number
+        try:
+            phone = normalize_phone_number(value)
+        except serializers.ValidationError:
+            return None
+        user = User.objects.filter(
+            phone_number=phone,
+            is_active=True,
+            role__in=ADMIN_ROLES,
+        ).select_related("organization").first()
+    return user if user and user.has_active_company_access else None
 
 
 class AdminOTPSendView(APIView):
@@ -137,7 +143,6 @@ class SendOTPView(APIView):
     @extend_schema(request=PhoneSerializer, responses={
         200: OpenApiResponse(description="OTP accepted. dev_otp is included only when DEBUG=True and SMS_PROVIDER=mock."),
         400: _error_schema("SendOtpValidationError"),
-        429: OpenApiResponse(description="Resend cooldown"),
     })
     def post(self, request):
         return self._send_otp(request)
@@ -146,28 +151,30 @@ class SendOTPView(APIView):
         serializer = PhoneSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         phone_number = serializer.validated_data["phone_number"]
-        user = User.objects.filter(phone_number=phone_number, role=User.Role.EMPLOYEE, is_active=True).select_related("employee").first()
-        if not user or not hasattr(user, "employee") or not user.employee.is_active:
-            return success_response({"phone_number": phone_number}, "If the account exists, an OTP was sent")
-        try:
-            otp_record = create_otp(phone_number)
-        except ValueError as exc:
-            return success_response({"phone_number": phone_number, "resend_after": settings.OTP_RESEND_COOLDOWN_SECONDS}, str(exc), status.HTTP_429_TOO_MANY_REQUESTS)
+        user = User.objects.filter(phone_number=phone_number, role=User.Role.EMPLOYEE, is_active=True).select_related(
+            "employee__branch__organization", "organization",
+        ).first()
         response_data = {
             "phone_number": phone_number,
             "expires_in": settings.OTP_EXPIRY_SECONDS,
             "resend_after": settings.OTP_RESEND_COOLDOWN_SECONDS,
         }
+        generic_message = "If the account exists, an OTP was sent"
+        if not user or not hasattr(user, "employee") or not user.employee.is_active or not user.has_active_company_access:
+            return success_response(response_data, generic_message)
+        try:
+            otp_record = create_otp(phone_number)
+        except ValueError:
+            return success_response(response_data, generic_message)
         if settings.DEBUG and settings.SMS_PROVIDER == "mock":
             response_data["dev_otp"] = otp_record._dev_otp
-        return success_response(response_data, "OTP sent successfully", status.HTTP_200_OK)
+        return success_response(response_data, generic_message, status.HTTP_200_OK)
 
 
 class ResendOTPView(SendOTPView):
     @extend_schema(request=PhoneSerializer, responses={
         200: OpenApiResponse(description="OTP resent."),
         400: _error_schema("ResendOtpValidationError"),
-        429: OpenApiResponse(description="Resend cooldown"),
     })
     def post(self, request):
         return self._send_otp(request)
@@ -189,8 +196,10 @@ class VerifyOTPView(APIView):
         serializer = VerifyOTPSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         phone_number = serializer.validated_data["phone_number"]
-        user = User.objects.filter(phone_number=phone_number, role=User.Role.EMPLOYEE, is_active=True).select_related("employee", "employee__branch", "employee__department", "employee__designation").first()
-        if not user or not hasattr(user, "employee") or not user.employee.is_active:
+        user = User.objects.filter(phone_number=phone_number, role=User.Role.EMPLOYEE, is_active=True).select_related(
+            "employee__branch__organization", "employee__department", "employee__designation", "organization",
+        ).first()
+        if not user or not hasattr(user, "employee") or not user.employee.is_active or not user.has_active_company_access:
             return Response({"detail": "Employee account is inactive or unavailable."}, status=status.HTTP_403_FORBIDDEN)
         try:
             verify_otp(phone_number, serializer.validated_data["otp"])
@@ -209,6 +218,8 @@ class MeView(APIView):
         "employee": serializers.JSONField(allow_null=True),
     }), 401: OpenApiResponse(description="Authentication credentials are missing or invalid.")})
     def get(self, request):
+        if not request.user.has_active_company_access:
+            return Response({"detail": "Company access is inactive."}, status=status.HTTP_403_FORBIDDEN)
         employee = employee_payload(request.user) if request.user.role == User.Role.EMPLOYEE and hasattr(request.user, "employee") else None
         return success_response({"user": user_payload(request.user), "employee": employee})
 

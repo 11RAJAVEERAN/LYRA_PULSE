@@ -77,15 +77,18 @@ Business errors return `errors.code` (e.g. `OUTSIDE_ATTENDANCE_RADIUS`, `ALREADY
 - `POST /api/v1/attendance/check-in/` (multipart): `latitude`, `longitude`, `accuracy`, `photo` (JPEG/PNG, max 5 MB).
 - `POST /api/v1/attendance/check-out/` (multipart): same fields; updates today's existing row.
 - `GET  /api/v1/attendance/today/` -> `NOT_CHECKED_IN | CHECKED_IN | CHECKED_OUT`.
+- `GET  /api/v1/attendance/history/?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD&page=1&page_size=31` -> this authenticated employee's paginated sessions.
 
 Set each branch's location in Django Admin -> Branches -> *Attendance Location* (latitude, longitude, allowed radius in meters).
 A branch without coordinates rejects attendance with `BRANCH_LOCATION_NOT_CONFIGURED`. Photos are stored under
-`MEDIA_ROOT/attendance/{checkin,checkout}/YYYY/MM/DD/<uuid>.<jpg|png>` (served by Django only when `DEBUG=True`).
+`PRIVATE_MEDIA_ROOT/attendance/{checkin,checkout}/YYYY/MM/DD/<uuid>.<jpg|png>` and are served only through an authenticated, scope-checked photo endpoint. Public `/media/attendance/` delivery is blocked in Django debug URLs. Existing photo paths continue to read from `MEDIA_ROOT` for compatibility.
+
+Mobile check-in and check-out accept an optional `Idempotency-Key` header (up to 128 printable ASCII characters). Repeating the same key with the same employee, action, and payload returns the original response; reusing it for a different request returns `409`. Clients without the header keep the legacy behavior.
 
 ## Admin attendance API (web)
 
 Read-only APIs for the React admin Attendance page. They read the SAME `Attendance` table the mobile app writes
-to (no copies, no extra tables, no migrations), so a mobile check-in is visible to admins immediately.
+to, so a mobile check-in is visible to admins immediately.
 
 **Auth / permissions:** JWT (`Authorization: Bearer <access>`) + the existing `employees.view_employee` permission
 (ADMIN / HR / MANAGER role groups; SUPERADMIN always). EMPLOYEE-role users get `403`, anonymous `401`.
@@ -147,9 +150,9 @@ For one date these are per-day counts and always equal what the list shows. For 
 `404` when the employee is not in your scope (or not part of that date's population). Coordinates are returned for a
 map to render later; the backend calls no map service.
 
-**Photos:** the database keeps only the relative path (`attendance/checkin/YYYY/MM/DD/<uuid>.jpg`). The API returns an
-absolute URL built from the incoming request host (`request.build_absolute_uri`), or `null` when there is no photo. In
-production serve `MEDIA_ROOT` from the web server / object storage (Django serves it only when `DEBUG=True`).
+**Photos:** the database keeps only the relative path (`attendance/checkin/YYYY/MM/DD/<uuid>.jpg`). Admin APIs return an
+absolute URL to the authenticated, scope-checked photo endpoint, or `null` when there is no photo. Keep `PRIVATE_MEDIA_ROOT`
+outside all public static/media serving locations in production.
 
 **Export:** `text/csv; charset=utf-8` (UTF-8 BOM for Excel), `Content-Disposition: attachment;
 filename="attendance-report-<start>-to-<end>.csv"`, streamed. Same scope and filters as the list; one row per employee

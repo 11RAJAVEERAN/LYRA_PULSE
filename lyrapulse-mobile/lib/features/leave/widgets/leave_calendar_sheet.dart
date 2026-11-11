@@ -139,7 +139,7 @@ class LeaveCalendarSheet extends GetView<LeaveController> {
                           color: selected
                               ? AppColors.primaryBlue
                               : isBetween
-                                  ? AppColors.infoSurface
+                                  ? AppColors.infoBackground
                                   : AppColors.surface,
                           borderRadius: BorderRadius.circular(10),
                         ),

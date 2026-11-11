@@ -1,3 +1,5 @@
+import os
+
 """Central configuration for the Lyra Pulse ESP32 fingerprint attendance device."""
 
 # ------------------------------------------------------------
@@ -5,8 +7,8 @@
 # ------------------------------------------------------------
 # Use a 2.4 GHz Wi-Fi network; ESP32 does not support 5 GHz.
 # Replace these with your real values before flashing to a device.
-WIFI_SSID = "YOUR_WIFI_SSID"
-WIFI_PASSWORD = "YOUR_WIFI_PASSWORD"
+WIFI_SSID = os.getenv("LYRA_WIFI_SSID", "YOUR_WIFI_SSID")
+WIFI_PASSWORD = os.getenv("LYRA_WIFI_PASSWORD", "YOUR_WIFI_PASSWORD")
 WIFI_TIMEOUT_SECONDS = 20
 WIFI_RETRY_COUNT = 3
     
@@ -14,7 +16,7 @@ WIFI_RETRY_COUNT = 3
 # Device identity
 # ------------------------------------------------------------
 DEVICE_ID = "LYRA-DEVICE-001"
-DEVICE_TOKEN = ""
+DEVICE_TOKEN = os.getenv("LYRA_DEVICE_TOKEN", "")
 TEST_MODE = True
 
 # ------------------------------------------------------------

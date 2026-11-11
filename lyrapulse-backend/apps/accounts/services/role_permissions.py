@@ -10,7 +10,7 @@ ROLE_PERMISSION_CODES = {
     },
     User.Role.HR: {
         "employees.view_employee", "employees.add_employee", "employees.change_employee",
-        "shifts.view_shift", "shifts.manage_shifts", "shifts.view_shiftassignment", "shifts.assign_shiftassignment",
+        "shifts.view_shift", "shifts.view_shiftassignment",
     },
     User.Role.MANAGER: {"employees.view_employee", "shifts.view_shift", "shifts.view_shiftassignment"},
 }
@@ -18,6 +18,7 @@ ROLE_PERMISSION_CODES = {
 
 def ensure_role_group(role):
     group, _ = Group.objects.get_or_create(name=role)
+    permissions = []
     for permission_code in ROLE_PERMISSION_CODES.get(role, set()):
         app_label, codename = permission_code.split(".", 1)
         permission = Permission.objects.filter(
@@ -25,7 +26,8 @@ def ensure_role_group(role):
             codename=codename,
         ).first()
         if permission:
-            group.permissions.add(permission)
+            permissions.append(permission)
+    group.permissions.set(permissions)
     return group
 
 

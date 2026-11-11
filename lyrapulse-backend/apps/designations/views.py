@@ -107,7 +107,15 @@ class DesignationListCreateView(APIView):
 
     def post(self, request):
         department = get_object_or_404(
-            scope_queryset(Department.objects.filter(is_active=True), request.user, "branch"),
+            scope_queryset(
+                Department.objects.filter(
+                    is_active=True,
+                    branch__is_active=True,
+                    branch__organization__is_active=True,
+                ),
+                request.user,
+                "branch",
+            ),
             pk=_request_id(request, "department"),
         )
         try:
@@ -141,7 +149,15 @@ class DesignationDetailView(APIView):
             item.name = _request_name(request)
         if "department" in request.data:
             next_department = get_object_or_404(
-                scope_queryset(Department.objects.filter(is_active=True), request.user, "branch"),
+                scope_queryset(
+                    Department.objects.filter(
+                        is_active=True,
+                        branch__is_active=True,
+                        branch__organization__is_active=True,
+                    ),
+                    request.user,
+                    "branch",
+                ),
                 pk=_request_id(request, "department"),
             )
             if next_department.pk != item.department_id and item.employees.exists():

@@ -10,6 +10,7 @@ export const ROUTES = {
   attendanceDetails: '/attendance/:id',
   leaves: '/leaves',
   permissions: '/permissions',
+  companies: '/companies',
   branches: '/branches',
   departments: '/departments',
   designations: '/designations',

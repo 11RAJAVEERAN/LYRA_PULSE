@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
@@ -28,6 +29,10 @@ class AttendanceController extends GetxController {
   final today = Rxn<TodayAttendance>();
   final isLoadingToday = false.obs;
   final todayError = RxnString();
+  final profileError = RxnString();
+  Future<void>? _refreshFuture;
+  int _refreshGeneration = 0;
+  bool _employeePermissionsFresh = true;
 
   /// Ticks once a second while the employee is checked in; only drives the
   /// on-screen timer. The start time is always the backend `check_in_at`.
@@ -48,14 +53,34 @@ class AttendanceController extends GetxController {
   final isSubmitting = false.obs;
   final submitError = RxnString();
   final result = Rxn<AttendanceActionResult>();
+  String? _idempotencyKey;
+  bool _isStartingFlow = false;
+
+  // ---------------------------------------------------------------------------
+  // HISTORY
+  // ---------------------------------------------------------------------------
+  final attendanceHistory = <AttendanceHistoryRecord>[].obs;
+  final isLoadingHistory = false.obs;
+  final historyError = RxnString();
+  final historyHasNext = false.obs;
+  int _historyPage = 0;
+  int _historyGeneration = 0;
+  DateTime? _historyStartDate;
+  DateTime? _historyEndDate;
 
   bool get isCheckIn => action.value == AttendanceAction.checkIn;
-  bool get mobileAttendanceEnabled => _auth.employee.value?.mobileAttendanceEnabled ?? false;
-  bool get photoRequired => _auth.employee.value?.photoAttendanceEnabled ?? false;
-  bool get locationRequired => _auth.employee.value?.locationAttendanceEnabled ?? false;
+  bool get mobileAttendanceEnabled =>
+      _employeePermissionsFresh &&
+      (_auth.employee.value?.mobileAttendanceEnabled ?? false);
+  bool get photoRequired =>
+      _auth.employee.value?.photoAttendanceEnabled ?? false;
+  bool get locationRequired =>
+      _auth.employee.value?.locationAttendanceEnabled ?? false;
 
   AttendanceState? get state => today.value?.state;
-  bool get canCheckIn => state == AttendanceState.notCheckedIn || state == AttendanceState.checkedOut;
+  bool get canCheckIn =>
+      state == AttendanceState.notCheckedIn ||
+      state == AttendanceState.checkedOut;
   bool get canCheckOut => state == AttendanceState.checkedIn;
 
   /// Worked time derived from the backend timestamps. Reactive: read inside Obx.
@@ -96,26 +121,100 @@ class AttendanceController extends GetxController {
     super.onInit();
     _employeeWorker = ever<EmployeeModel?>(_auth.employee, (employee) {
       if (employee == null) {
+        _employeePermissionsFresh = false;
         _reset();
       } else {
+        _employeePermissionsFresh = true;
         unawaited(refreshToday());
       }
     });
     if (_auth.employee.value != null) unawaited(refreshToday());
   }
 
-  Future<void> refreshToday() async {
-    if (isLoadingToday.value) return;
+  Future<void> refreshToday() {
+    final pending = _refreshFuture;
+    if (pending != null) return pending;
+    if (_auth.employee.value == null) return Future<void>.value();
+
+    final generation = ++_refreshGeneration;
     isLoadingToday.value = true;
     todayError.value = null;
+    profileError.value = null;
+    final todayRequest = _repository.fetchToday().then<void>((value) {
+      if (generation == _refreshGeneration) _applyToday(value);
+    }, onError: (Object error) {
+      if (generation == _refreshGeneration) {
+        todayError.value = error is AttendanceFailure
+            ? error.message
+            : _auth.errorMessage(error);
+      }
+    });
+    final profileRequest = _auth.reloadEmployeeProfile().then<void>((_) {
+      if (generation == _refreshGeneration) {
+        _employeePermissionsFresh = true;
+      }
+    }, onError: (Object error) {
+      if (generation == _refreshGeneration) {
+        _employeePermissionsFresh = false;
+        profileError.value = _auth.errorMessage(error);
+      }
+    });
+
+    late final Future<void> refresh;
+    refresh =
+        Future.wait<void>([todayRequest, profileRequest]).whenComplete(() {
+      if (generation == _refreshGeneration) isLoadingToday.value = false;
+      if (identical(_refreshFuture, refresh)) _refreshFuture = null;
+    });
+    _refreshFuture = refresh;
+    return refresh;
+  }
+
+  Future<void> loadHistory(
+      {DateTime? startDate, DateTime? endDate, bool append = false}) async {
+    if (append && isLoadingHistory.value) return;
+    if (append && !historyHasNext.value) return;
+    if (!append) {
+      final today = DateTime.now();
+      _historyStartDate =
+          _dateOnly(startDate ?? DateTime(today.year, today.month));
+      _historyEndDate = _dateOnly(endDate ?? today);
+      _historyPage = 0;
+      historyHasNext.value = false;
+      attendanceHistory.clear();
+      historyError.value = null;
+      _historyGeneration++;
+    }
+
+    final generation = _historyGeneration;
+    final nextPage = append ? _historyPage + 1 : 1;
+    isLoadingHistory.value = true;
+    historyError.value = null;
     try {
-      _applyToday(await _repository.fetchToday());
+      final result = await _repository.fetchHistory(
+        startDate: _historyStartDate!,
+        endDate: _historyEndDate!,
+        page: nextPage,
+      );
+      if (generation != _historyGeneration) return;
+      if (append) {
+        attendanceHistory.addAll(result.results);
+      } else {
+        attendanceHistory.assignAll(result.results);
+      }
+      _historyPage = result.page;
+      historyHasNext.value = result.hasNext;
     } on AttendanceFailure catch (failure) {
-      todayError.value = failure.message;
+      if (generation == _historyGeneration) {
+        historyError.value = failure.message;
+      }
     } finally {
-      isLoadingToday.value = false;
+      if (generation == _historyGeneration) isLoadingHistory.value = false;
     }
   }
+
+  static DateTime _dateOnly(DateTime value) =>
+      DateTime(value.year, value.month, value.day);
 
   void _applyToday(TodayAttendance value) {
     today.value = value;
@@ -125,7 +224,8 @@ class AttendanceController extends GetxController {
   void _syncTicker() {
     if (state == AttendanceState.checkedIn) {
       _now.value = DateTime.now();
-      _ticker ??= Timer.periodic(const Duration(seconds: 1), (_) => _now.value = DateTime.now());
+      _ticker ??= Timer.periodic(
+          const Duration(seconds: 1), (_) => _now.value = DateTime.now());
     } else {
       _ticker?.cancel();
       _ticker = null;
@@ -138,7 +238,7 @@ class AttendanceController extends GetxController {
 
   /// Entry point from Home. Only starts when today's backend state allows it.
   Future<void> startFlow(AttendanceAction requested) async {
-    if (isSubmitting.value) return;
+    if (isSubmitting.value || _isStartingFlow) return;
     if (!mobileAttendanceEnabled) {
       AppSnackbar.show(_auth.employee.value?.biometricAttendanceEnabled == true
           ? 'Mobile attendance is disabled. Use your assigned biometric device.'
@@ -146,7 +246,8 @@ class AttendanceController extends GetxController {
       return;
     }
     if (state == null) {
-      AppSnackbar.show('Attendance status is not loaded yet. Please try again.');
+      AppSnackbar.show(
+          'Attendance status is not loaded yet. Please try again.');
       unawaited(refreshToday());
       return;
     }
@@ -162,15 +263,20 @@ class AttendanceController extends GetxController {
           : 'Check in before you check out.');
       return;
     }
-    await _resetFlow();
-    action.value = requested;
-    if (locationRequired) {
-      Get.toNamed(AppRoutes.attendanceLocation);
-      unawaited(verifyLocation());
-    } else if (photoRequired) {
-      Get.toNamed(AppRoutes.attendanceCamera);
-    } else {
-      unawaited(submit());
+    _isStartingFlow = true;
+    try {
+      await _resetFlow();
+      action.value = requested;
+      if (locationRequired) {
+        Get.toNamed(AppRoutes.attendanceLocation);
+        unawaited(verifyLocation());
+      } else if (photoRequired) {
+        Get.toNamed(AppRoutes.attendanceCamera);
+      } else {
+        unawaited(submit());
+      }
+    } finally {
+      _isStartingFlow = false;
     }
   }
 
@@ -187,9 +293,7 @@ class AttendanceController extends GetxController {
       final fix = await _location.getCurrentPosition();
       position.value = fix;
       final checked = await _repository.verifyLocation(
-        latitude: fix.latitude,
-        longitude: fix.longitude,
-        accuracy: fix.accuracy,
+        fix: fix,
       );
       verification.value = checked;
       if (checked.verified) {
@@ -220,10 +324,13 @@ class AttendanceController extends GetxController {
 
   void continueToCamera() {
     if (locationStatus.value != LocationStatus.verified) return;
-    Get.toNamed(photoRequired ? AppRoutes.attendanceCamera : AppRoutes.attendanceConfirm);
+    Get.toNamed(photoRequired
+        ? AppRoutes.attendanceCamera
+        : AppRoutes.attendanceConfirm);
   }
 
   void setPhoto(String path) {
+    if (photoPath.value != path) _idempotencyKey = null;
     unawaited(_deletePhotoFile(photoPath.value));
     photoPath.value = path;
   }
@@ -232,6 +339,7 @@ class AttendanceController extends GetxController {
   Future<void> discardPhoto() async {
     final path = photoPath.value;
     photoPath.value = null;
+    _idempotencyKey = null;
     await _deletePhotoFile(path);
   }
 
@@ -246,45 +354,86 @@ class AttendanceController extends GetxController {
     if (isSubmitting.value) return;
     final fix = position.value;
     final path = photoPath.value;
-    if ((locationRequired && (fix == null || verification.value?.verified != true)) ||
+    if ((locationRequired &&
+            (fix == null || verification.value?.verified != true)) ||
         (photoRequired && path == null)) {
       AppSnackbar.show(locationRequired
-          ? (photoRequired ? 'Verify your location and take a photo first.' : 'Verify your location first.')
+          ? (photoRequired
+              ? 'Verify your location and take a photo first.'
+              : 'Verify your location first.')
           : 'Take your attendance photo first.');
       return;
     }
     isSubmitting.value = true;
     submitError.value = null;
+    _idempotencyKey ??= _newIdempotencyKey();
     try {
       final done = isCheckIn
           ? await _repository.checkIn(
-              latitude: fix?.latitude, longitude: fix?.longitude, accuracy: fix?.accuracy, photoPath: path)
+              idempotencyKey: _idempotencyKey!,
+              location: locationRequired ? fix : null,
+              photoPath: path)
           : await _repository.checkOut(
-              latitude: fix?.latitude, longitude: fix?.longitude, accuracy: fix?.accuracy, photoPath: path);
+              idempotencyKey: _idempotencyKey!,
+              location: locationRequired ? fix : null,
+              photoPath: path);
       result.value = done;
       await discardPhoto();
       // Backend is the source of truth: re-fetch rather than patching local state.
-      // (Clear the loading flag so a refresh already in flight cannot swallow this one.)
-      isLoadingToday.value = false;
-      await refreshToday();
-      Get.offNamedUntil(AppRoutes.attendanceSuccess, (route) => route.settings.name == AppRoutes.home);
+      await _refreshAfterAction();
+      Get.offNamedUntil(AppRoutes.attendanceSuccess,
+          (route) => route.settings.name == AppRoutes.home);
     } on AttendanceFailure catch (failure) {
       if (_isStateConflict(failure.code)) {
         // Today's state changed on the server (e.g. checked in from another device).
         await discardPhoto();
-        await refreshToday();
+        await _refreshAfterAction();
         Get.until((route) => route.settings.name == AppRoutes.home);
         AppSnackbar.show(failure.message);
       } else {
+        if (!failure.isConnectivity) _idempotencyKey = null;
         submitError.value = failure.message;
+        if (Get.currentRoute == AppRoutes.home) {
+          AppSnackbar.show(failure.message);
+        }
+        if (_requiresFreshLocation(failure.code)) {
+          position.value = null;
+          verification.value = null;
+          locationStatus.value = LocationStatus.failed;
+          locationMessage.value = failure.message;
+          Get.offNamed(AppRoutes.attendanceLocation);
+        }
+        await _refreshAfterAction();
       }
     } finally {
       isSubmitting.value = false;
     }
   }
 
+  Future<void> _refreshAfterAction() async {
+    final pending = _refreshFuture;
+    if (pending != null) await pending;
+    await refreshToday();
+  }
+
   static bool _isStateConflict(String? code) =>
-      code == 'ALREADY_CHECKED_IN' || code == 'ALREADY_CHECKED_OUT' || code == 'NOT_CHECKED_IN';
+      code == 'ALREADY_CHECKED_IN' ||
+      code == 'ALREADY_CHECKED_OUT' ||
+      code == 'NOT_CHECKED_IN';
+
+  static bool _requiresFreshLocation(String? code) =>
+      code == 'STALE_LOCATION' ||
+      code == 'FUTURE_LOCATION' ||
+      code == 'INVALID_LOCATION_TIMESTAMP' ||
+      code == 'INVALID_GPS_ACCURACY' ||
+      code == 'GPS_ACCURACY_EXCEEDS_RADIUS' ||
+      code == 'OUTSIDE_ATTENDANCE_RADIUS';
+
+  static String _newIdempotencyKey() {
+    final random = Random.secure();
+    return List.generate(32, (_) => random.nextInt(16).toRadixString(16))
+        .join();
+  }
 
   Future<void> _resetFlow() async {
     await discardPhoto();
@@ -296,6 +445,7 @@ class AttendanceController extends GetxController {
     submitError.value = null;
     result.value = null;
     isSubmitting.value = false;
+    _idempotencyKey = null;
   }
 
   void _reset() {
@@ -303,17 +453,30 @@ class AttendanceController extends GetxController {
     _ticker = null;
     today.value = null;
     todayError.value = null;
+    profileError.value = null;
+    _refreshGeneration++;
+    _refreshFuture = null;
     isLoadingToday.value = false;
+    _historyGeneration++;
+    attendanceHistory.clear();
+    isLoadingHistory.value = false;
+    historyError.value = null;
+    historyHasNext.value = false;
+    _historyPage = 0;
     unawaited(_resetFlow());
   }
 
   Future<void> _deletePhotoFile(String? path) async {
-    if (path == null) return;
+    if (path == null) {
+      return;
+    }
     try {
       final file = File(path);
       if (await file.exists()) await file.delete();
     } catch (error) {
-      if (kDebugMode) debugPrint('Could not delete temporary attendance photo: $error');
+      if (kDebugMode) {
+        debugPrint('Could not delete temporary attendance photo: $error');
+      }
     }
   }
 
@@ -321,6 +484,7 @@ class AttendanceController extends GetxController {
   void onClose() {
     _ticker?.cancel();
     _employeeWorker?.dispose();
+    _refreshGeneration++;
     super.onClose();
   }
 }

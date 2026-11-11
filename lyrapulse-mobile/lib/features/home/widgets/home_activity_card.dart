@@ -168,7 +168,7 @@ class HomeActivityCard extends StatelessWidget {
               vertical: 5,
             ),
             decoration: BoxDecoration(
-              color: AppColors.infoSurface,
+              color: AppColors.infoBackground,
               borderRadius: BorderRadius.circular(30),
               border: Border.all(
                 color: AppColors.border,
@@ -222,8 +222,8 @@ class HomeActivityCard extends StatelessWidget {
           height: 40,
           decoration: BoxDecoration(
             color: isPunchIn
-                ? AppColors.infoSurface
-                : AppColors.infoSurface,
+                ? AppColors.infoBackground
+                : AppColors.infoBackground,
             shape: BoxShape.circle,
           ),
           child: Icon(

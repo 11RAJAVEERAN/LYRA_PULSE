@@ -3,13 +3,14 @@
 
 export const emptyEmployeeForm = {
   employee_code: '', name: '', display_name: '', phone_number: '', email: '',
-  branch: '', department: '', designation: '', employee_type: '', door_lock_permission: 'yes',
+  organization: '', branch: '', department: '', designation: '', employee_type: '', door_lock_permission: 'yes',
   pf_number: '', uan_number: '', esic_number: '', address: '',
   joining_date: '', salary_type: 'MONTHLY', monthly_salary: '', payroll_group: '',
   bank_name: '', bank_branch_name: '', bank_account_number: '', bank_ifsc_code: '',
   emergency_contact_number: '', emergency_contact_name: '', emergency_contact_relation: '', emergency_contact_address: '',
   date_of_birth: '', is_active: true,
-  biometric_attendance_enabled: false, mobile_gps_attendance_enabled: false, photo_attendance_enabled: false,
+  biometric_attendance_enabled: false, mobile_gps_attendance_enabled: false,
+  location_attendance_enabled: false, photo_attendance_enabled: false,
 }
 
 export const DOCUMENT_SLOTS = [
@@ -66,6 +67,7 @@ export function employeeToForm(employee) {
   Object.assign(form, {
     employee_code: employee.employee_code ?? '', name, display_name: employee.display_name ?? '',
     phone_number: employee.phone_number ?? '', email: employee.email ?? '',
+    organization: employee.organization ?? '',
     branch: employee.branch ?? '', department: employee.department ?? '', designation: employee.designation ?? '',
     employee_type: employee.employee_type ?? '', door_lock_permission: employee.door_lock_permission === false ? 'no' : 'yes',
     pf_number: employee.pf_number ?? '', uan_number: employee.uan_number ?? '', esic_number: employee.esic_number ?? '',
@@ -79,12 +81,13 @@ export function employeeToForm(employee) {
     date_of_birth: employee.date_of_birth ?? '', is_active: employee.is_active ?? true,
     biometric_attendance_enabled: employee.biometric_attendance_enabled ?? false,
     mobile_gps_attendance_enabled: employee.mobile_gps_attendance_enabled ?? false,
+    location_attendance_enabled: employee.location_attendance_enabled ?? false,
     photo_attendance_enabled: employee.photo_attendance_enabled ?? false,
   })
   return form
 }
 
-export function formToPayload(form, { sensitiveEditable, attendancePermissionsEditable = false }) {
+export function formToPayload(form, { sensitiveEditable }) {
   const [firstName, ...rest] = form.name.trim().split(/\s+/)
   const payload = {
     employee_code: form.employee_code.trim(), first_name: firstName ?? '', last_name: rest.join(' '),
@@ -104,11 +107,6 @@ export function formToPayload(form, { sensitiveEditable, attendancePermissionsEd
     payload.bank_branch_name = form.bank_branch_name.trim()
     payload.bank_ifsc_code = form.bank_ifsc_code.trim().toUpperCase()
     if (form.bank_account_number.trim()) payload.bank_account_number = form.bank_account_number.replace(/\s+/g, '')
-  }
-  if (attendancePermissionsEditable) {
-    payload.biometric_attendance_enabled = Boolean(form.biometric_attendance_enabled)
-    payload.mobile_gps_attendance_enabled = Boolean(form.mobile_gps_attendance_enabled)
-    payload.photo_attendance_enabled = Boolean(form.photo_attendance_enabled)
   }
   return payload
 }

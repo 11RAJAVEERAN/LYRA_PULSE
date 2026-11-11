@@ -100,7 +100,11 @@ class DepartmentListCreateView(APIView):
 
     def post(self, request):
         branch = get_object_or_404(
-            scope_queryset(Branch.objects.filter(is_active=True), request.user, "id"),
+            scope_queryset(
+                Branch.objects.filter(is_active=True, organization__is_active=True),
+                request.user,
+                "id",
+            ),
             pk=_request_id(request, "branch"),
         )
         try:
@@ -130,7 +134,11 @@ class DepartmentDetailView(APIView):
             item.name = _request_name(request)
         if "branch" in request.data:
             next_branch = get_object_or_404(
-                scope_queryset(Branch.objects.filter(is_active=True), request.user, "id"),
+                scope_queryset(
+                    Branch.objects.filter(is_active=True, organization__is_active=True),
+                    request.user,
+                    "id",
+                ),
                 pk=_request_id(request, "branch"),
             )
             if next_branch.pk != item.branch_id and (item.employees.exists() or item.designations.exists()):

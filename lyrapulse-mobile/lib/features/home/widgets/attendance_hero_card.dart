@@ -1,5 +1,3 @@
-import 'dart:ui' show FontFeature;
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -37,76 +35,169 @@ class AttendanceHeroCard extends GetView<AttendanceController> {
       ),
       child: Obx(() {
         final state = controller.state;
-        final hasError = controller.todayError.value != null;
+        final hasError = controller.todayError.value != null ||
+            controller.profileError.value != null;
         final loading = controller.isLoadingToday.value;
         final showTimer = state != null;
         return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(children: [
-            _Pill(
-              dot: state == AttendanceState.checkedIn ? AppColors.success : AppColors.sidebarMuted,
-              label: controller.statusLabel.toUpperCase(),
-            ),
-            const Spacer(),
-            Text(
-              Formatters.dayLabel(DateTime.now()),
-              style: AppTextStyles.bodySmall.copyWith(
-                  color: Colors.white.withValues(alpha: .75), fontWeight: FontWeight.w600),
-            ),
-          ]),
+          Row(
+            children: [
+              Flexible(
+                child: _Pill(
+                  dot: state == AttendanceState.checkedIn
+                      ? AppColors.success
+                      : AppColors.sidebarMuted,
+                  label: controller.statusLabel.toUpperCase(),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  Formatters.dayLabel(DateTime.now()),
+                  textAlign: TextAlign.end,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: Colors.white.withValues(alpha: .75),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 16),
           Text('Working time',
-              style: AppTextStyles.label.copyWith(color: Colors.white.withValues(alpha: .85))),
+              style: AppTextStyles.label
+                  .copyWith(color: Colors.white.withValues(alpha: .85))),
           const SizedBox(height: 4),
           Text(
-            showTimer ? Formatters.durationHms(controller.workingDuration) : '--:--:--',
+            showTimer
+                ? Formatters.durationHms(controller.workingDuration)
+                : '--:--:--',
             style: AppTextStyles.display.copyWith(
               color: Colors.white,
               fontSize: 34,
               fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),
+          if (loading && state == null) ...[
+            const SizedBox(height: 8),
+            const Row(
+              children: [
+                SizedBox(
+                  width: 15,
+                  height: 15,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                ),
+                SizedBox(width: 8),
+                Text(
+                  'Loading attendance…',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ],
+            ),
+          ],
           if (hasError) ...[
             const SizedBox(height: 8),
             Row(children: [
-              Icon(Icons.cloud_off_rounded, size: 16, color: Colors.white.withValues(alpha: .85)),
+              Icon(Icons.cloud_off_rounded,
+                  size: 16, color: Colors.white.withValues(alpha: .85)),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
-                  showTimer ? 'Couldn\'t refresh attendance.' : (controller.todayError.value ?? ''),
-                  style: AppTextStyles.bodySmall.copyWith(color: Colors.white.withValues(alpha: .85)),
+                  controller.profileError.value ??
+                      (showTimer
+                          ? 'Couldn\'t refresh attendance.'
+                          : (controller.todayError.value ?? '')),
+                  style: AppTextStyles.bodySmall
+                      .copyWith(color: Colors.white.withValues(alpha: .85)),
                 ),
               ),
               TextButton(
                 onPressed: loading ? null : controller.refreshToday,
                 style: TextButton.styleFrom(
-                    foregroundColor: Colors.white, minimumSize: const Size(0, 30), padding: const EdgeInsets.symmetric(horizontal: 8)),
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(0, 30),
+                    padding: const EdgeInsets.symmetric(horizontal: 8)),
                 child: const Text('Retry'),
               ),
             ]),
+            if (state != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 2, left: 22),
+                child: Text(
+                  'Showing the last synced attendance status.',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: Colors.white.withValues(alpha: .75),
+                  ),
+                ),
+              ),
           ],
           const SizedBox(height: 18),
-          Row(children: [
-            Expanded(
-              child: _ActionButton(
-                icon: Icons.login_rounded,
-                label: 'Check In',
-                enabled: controller.canCheckIn,
-                onTap: () => controller.startFlow(AttendanceAction.checkIn),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _ActionButton(
-                icon: Icons.logout_rounded,
-                label: 'Check Out',
-                enabled: controller.canCheckOut,
-                onTap: () => controller.startFlow(AttendanceAction.checkOut),
-              ),
-            ),
-          ]),
+          AttendanceActionControls(
+            visible:
+                controller.mobileAttendanceEnabled && controller.state != null,
+            canCheckIn: controller.canCheckIn,
+            canCheckOut: controller.canCheckOut,
+            isSubmitting: controller.isSubmitting.value,
+            submittingCheckIn: controller.isCheckIn,
+            onCheckIn: () => controller.startFlow(AttendanceAction.checkIn),
+            onCheckOut: () => controller.startFlow(AttendanceAction.checkOut),
+          ),
         ]);
       }),
     );
+  }
+}
+
+class AttendanceActionControls extends StatelessWidget {
+  const AttendanceActionControls({
+    super.key,
+    required this.visible,
+    required this.canCheckIn,
+    required this.canCheckOut,
+    this.isSubmitting = false,
+    this.submittingCheckIn = true,
+    required this.onCheckIn,
+    required this.onCheckOut,
+  });
+
+  final bool visible;
+  final bool canCheckIn;
+  final bool canCheckOut;
+  final bool isSubmitting;
+  final bool submittingCheckIn;
+  final VoidCallback onCheckIn;
+  final VoidCallback onCheckOut;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!visible) return const SizedBox.shrink();
+    final showCheckIn = isSubmitting ? submittingCheckIn : canCheckIn;
+    final showCheckOut = isSubmitting ? !submittingCheckIn : canCheckOut;
+    if (showCheckIn == showCheckOut) return const SizedBox.shrink();
+    return Row(children: [
+      Expanded(
+        child: showCheckIn
+            ? _ActionButton(
+                icon: Icons.login_rounded,
+                label: 'Check In',
+                enabled: !isSubmitting,
+                loading: isSubmitting,
+                onTap: onCheckIn,
+              )
+            : _ActionButton(
+                icon: Icons.logout_rounded,
+                label: 'Check Out',
+                enabled: !isSubmitting,
+                loading: isSubmitting,
+                onTap: onCheckOut,
+              ),
+      ),
+    ]);
   }
 }
 
@@ -124,26 +215,43 @@ class _Pill extends StatelessWidget {
           borderRadius: BorderRadius.circular(30),
         ),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Container(width: 7, height: 7, decoration: BoxDecoration(color: dot, shape: BoxShape.circle)),
+          Container(
+              width: 7,
+              height: 7,
+              decoration: BoxDecoration(color: dot, shape: BoxShape.circle)),
           const SizedBox(width: 7),
-          Text(label,
-              style: AppTextStyles.bodySmall.copyWith(
-                  color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1)),
+          Flexible(
+            child: Text(label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTextStyles.bodySmall.copyWith(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1)),
+          ),
         ]),
       );
 }
 
 class _ActionButton extends StatelessWidget {
-  const _ActionButton({required this.icon, required this.label, required this.enabled, required this.onTap});
+  const _ActionButton(
+      {required this.icon,
+      required this.label,
+      required this.enabled,
+      required this.loading,
+      required this.onTap});
 
   final IconData icon;
   final String label;
   final bool enabled;
+  final bool loading;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final foreground = enabled ? AppColors.primary : Colors.white.withValues(alpha: .55);
+    final foreground =
+        enabled ? AppColors.primary : Colors.white.withValues(alpha: .55);
     return Material(
       color: enabled ? Colors.white : Colors.white.withValues(alpha: .14),
       borderRadius: BorderRadius.circular(AppDimensions.inputRadius),
@@ -153,9 +261,21 @@ class _ActionButton extends StatelessWidget {
         child: SizedBox(
           height: 48,
           child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-            Icon(icon, size: 19, color: foreground),
+            if (loading)
+              SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(foreground),
+                ),
+              )
+            else
+              Icon(icon, size: 19, color: foreground),
             const SizedBox(width: 8),
-            Text(label, style: AppTextStyles.label.copyWith(color: foreground, fontWeight: FontWeight.w700)),
+            Text(label,
+                style: AppTextStyles.label
+                    .copyWith(color: foreground, fontWeight: FontWeight.w700)),
           ]),
         ),
       ),

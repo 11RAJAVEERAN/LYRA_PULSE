@@ -10,6 +10,7 @@ from apps.branches.models import Branch
 from apps.devices.models import Device
 from apps.employees.models import Employee
 from apps.fingerprints.models import EmployeeFingerprint
+from apps.organizations.models import Organization
 
 from .models import Attendance, AttendanceEvent, DeviceAttendanceEvent
 from .tests import image_file
@@ -17,7 +18,8 @@ from .tests import image_file
 
 class IntegrationRulesTests(TestCase):
     def setUp(self):
-        self.branch = Branch.objects.create(name="Main", code="MAIN", latitude=Decimal("11.744700"), longitude=Decimal("79.768900"), attendance_radius_meters=100)
+        self.organization = Organization.objects.create(name="Main Company", code="MAIN-COMPANY")
+        self.branch = Branch.objects.create(organization=self.organization, name="Main", code="MAIN", latitude=Decimal("11.744700"), longitude=Decimal("79.768900"), attendance_radius_meters=100)
         self.user = User.objects.create_user("9000000001", role=User.Role.EMPLOYEE)
         self.employee = Employee.objects.create(employee_code="E001", user=self.user, branch=self.branch)
         self.client = APIClient()
@@ -26,7 +28,7 @@ class IntegrationRulesTests(TestCase):
         self.location = {"latitude": 11.745, "longitude": 79.7689, "accuracy": 5}
 
     def post_mobile(self, action, photo="send"):
-        data = dict(self.location)
+        data = {**self.location, "location_timestamp": timezone.now().isoformat()}
         if photo == "send":
             data["photo"] = image_file()
         return self.client.post(self.base + action + "/", data, format="multipart")
@@ -52,6 +54,30 @@ class IntegrationRulesTests(TestCase):
         response = self.post_mobile("check-in")
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.json()["errors"]["code"], "MOBILE_ATTENDANCE_DISABLED")
+
+    def test_mobile_location_and_fingerprint_permissions_are_independent(self):
+        for mobile in (False, True):
+            for location in (False, True):
+                for fingerprint in (False, True):
+                    with self.subTest(mobile=mobile, location=location, fingerprint=fingerprint):
+                        self.employee.mobile_gps_attendance_enabled = mobile
+                        self.employee.location_attendance_enabled = location
+                        self.employee.biometric_attendance_enabled = fingerprint
+                        self.employee.save(update_fields=(
+                            "mobile_gps_attendance_enabled",
+                            "location_attendance_enabled",
+                            "biometric_attendance_enabled",
+                        ))
+
+                        response = self.post_mobile("check-in")
+                        self.assertEqual(response.status_code, 201 if mobile else 403)
+                        if mobile:
+                            attendance = Attendance.objects.get(employee=self.employee)
+                            self.assertEqual(attendance.check_in_location_verified, True if location else None)
+                        else:
+                            self.assertEqual(response.json()["errors"]["code"], "MOBILE_ATTENDANCE_DISABLED")
+                        AttendanceEvent.objects.filter(attendance__employee=self.employee).delete()
+                        Attendance.objects.filter(employee=self.employee).delete()
 
     def test_photo_on_requires_photo_for_check_in_and_check_out(self):
         self.employee.mobile_gps_attendance_enabled = True
@@ -87,7 +113,11 @@ class IntegrationRulesTests(TestCase):
         self.employee.save(update_fields=("mobile_gps_attendance_enabled", "photo_attendance_enabled", "location_attendance_enabled"))
         missing_photo = self.post_mobile("check-in", photo=None)
         self.assertEqual(missing_photo.status_code, 400)
-        outside = self.client.post(self.base + "check-in/", {**self.location, "latitude": 11.748, "photo": image_file()}, format="multipart")
+        outside = self.client.post(
+            self.base + "check-in/",
+            {**self.location, "latitude": 11.748, "location_timestamp": timezone.now().isoformat(), "photo": image_file()},
+            format="multipart",
+        )
         self.assertEqual(outside.status_code, 403)
         self.assertEqual(Attendance.objects.count(), 0)
 

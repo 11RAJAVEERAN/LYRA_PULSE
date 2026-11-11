@@ -1,4 +1,5 @@
 from django.db import transaction
+from django.db.models import Q
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers, status
@@ -34,7 +35,9 @@ class EmployeeManagementListCreateView(ListCreateAPIView):
     serializer_class = EmployeeManagementSerializer
 
     def get_queryset(self):
-        queryset = Employee.objects.select_related("user", "branch", "department", "designation", "employee_type", "payroll_group").order_by("employee_code")
+        queryset = Employee.objects.select_related(
+            "user", "branch__organization", "department", "designation", "employee_type", "payroll_group",
+        ).order_by("employee_code")
         queryset = scope_queryset(queryset, self.request.user, "branch")
         for parameter, field in (("branch", "branch_id"), ("department", "department_id"), ("designation", "designation_id")):
             value = self.request.query_params.get(parameter)
@@ -43,9 +46,39 @@ class EmployeeManagementListCreateView(ListCreateAPIView):
                     queryset = queryset.filter(**{field: int(value)})
                 except (TypeError, ValueError):
                     queryset = queryset.none()
+        organization = self.request.query_params.get("organization")
+        if organization:
+            if not organization.isdecimal():
+                queryset = queryset.none()
+            elif not self.request.user.has_global_scope and str(self.request.user.organization_id) != organization:
+                queryset = queryset.none()
+            else:
+                queryset = queryset.filter(branch__organization_id=organization)
+        search = self.request.query_params.get("search", "").strip()
+        if search:
+            queryset = queryset.filter(
+                Q(user__first_name__icontains=search)
+                | Q(user__last_name__icontains=search)
+                | Q(user__phone_number__icontains=search)
+                | Q(employee_code__icontains=search)
+            )
+        state = self.request.query_params.get("status")
+        if state == "active":
+            queryset = queryset.filter(is_active=True, user__is_active=True)
+        elif state == "inactive":
+            queryset = queryset.filter(Q(is_active=False) | Q(user__is_active=False))
+        elif state:
+            raise serializers.ValidationError({"status": "Use 'active' or 'inactive'."})
         return queryset
 
-    @extend_schema(responses={200: inline_serializer(name="EmployeeListResponse", fields={
+    @extend_schema(parameters=[
+        OpenApiParameter("search", str, description="Search employee name, code, or mobile number."),
+        OpenApiParameter("organization", int, description="Filter by company; results remain role-scoped."),
+        OpenApiParameter("branch", int, description="Filter by branch."),
+        OpenApiParameter("department", int, description="Filter by department."),
+        OpenApiParameter("designation", int, description="Filter by designation."),
+        OpenApiParameter("status", str, enum=["active", "inactive"], description="Filter by employment status."),
+    ], responses={200: inline_serializer(name="EmployeeListResponse", fields={
         "success": serializers.BooleanField(),
         "message": serializers.CharField(),
         "data": EmployeeManagementSerializer(many=True),
@@ -73,7 +106,9 @@ class EmployeeManagementDetailView(RetrieveUpdateAPIView):
     serializer_class = EmployeeManagementSerializer
 
     def get_queryset(self):
-        queryset = Employee.objects.select_related("user", "branch", "department", "designation", "employee_type", "payroll_group").prefetch_related("documents")
+        queryset = Employee.objects.select_related(
+            "user", "branch__organization", "department", "designation", "employee_type", "payroll_group",
+        ).prefetch_related("documents")
         return scope_queryset(queryset, self.request.user, "branch")
 
     @extend_schema(responses={200: inline_serializer(name="EmployeeDetailResponse", fields={
@@ -102,7 +137,8 @@ class EmployeeMeView(RetrieveAPIView):
 
     def get_object(self):
         employee = getattr(self.request.user, "employee", None)
-        if not employee or not employee.is_active or not self.request.user.is_active:
+        if (not employee or not employee.is_active or not self.request.user.is_active
+                or not self.request.user.has_active_company_access):
             raise NotFound("Active employee profile not found")
         return employee
 
@@ -284,5 +320,3 @@ class EmployeeDocumentDetailView(EmployeeDocumentMixin, APIView):
             document.delete()
             transaction.on_commit(lambda: file.storage.delete(file.name))
         return success_response(None, "Document removed successfully")
-
-

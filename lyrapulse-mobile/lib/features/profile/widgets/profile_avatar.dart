@@ -15,7 +15,7 @@ class ProfileAvatar extends GetView<ProfileController> {
     return Container(
       width: double.infinity,
       height: 220,
-      color: AppColors.infoSurface,
+      color: AppColors.infoBackground,
       child: Center(
         child: Obx(() {
           final localPath = controller.selectedImagePath.value;

@@ -7,6 +7,7 @@ from rest_framework.test import APIClient
 from apps.accounts.models import User
 from apps.branches.models import Branch
 from apps.employees.models import Employee
+from apps.organizations.models import Organization
 from apps.shifts.models import Shift, ShiftAssignment, ShiftDaySchedule, Weekday
 
 
@@ -26,7 +27,8 @@ class ShiftManagementTests(TestCase):
         self.client = APIClient()
         self.admin = User.objects.create_user("9000000001", role=User.Role.SUPERADMIN, is_superuser=True)
         self.client.force_authenticate(self.admin)
-        self.branch = Branch.objects.create(name="Main", code="MAIN")
+        organization = Organization.objects.create(name="Main Company", code="MAIN-COMPANY")
+        self.branch = Branch.objects.create(organization=organization, name="Main", code="MAIN")
         self.employee_user = User.objects.create_user("9000000002", first_name="Ada", last_name="Lovelace")
         self.employee = Employee.objects.create(employee_code="EMP-1", user=self.employee_user, branch=self.branch)
 

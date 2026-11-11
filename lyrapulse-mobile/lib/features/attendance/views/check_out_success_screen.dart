@@ -236,7 +236,7 @@ class CheckOutSuccessScreen extends StatelessWidget {
                         value: 'Verified',
                         iconColor: AppColors.accent,
                         titleColor: AppColors.accent,
-                        iconBackgroundColor: AppColors.infoSurface,
+                        iconBackgroundColor: AppColors.infoBackground,
                         valueColor: AppColors.success,
                       ),
 

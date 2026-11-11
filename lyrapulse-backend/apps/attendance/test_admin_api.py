@@ -445,15 +445,15 @@ class DetailTests(AdminAttendanceTestCase):
 
     def test_22_photo_urls(self):
         data = self.detail(self.arun).json()["data"]
-        self.assertEqual(data["check_in"]["photo"], f"http://testserver/media/{IN_PHOTO}")
-        self.assertEqual(data["check_out"]["photo"], f"http://testserver/media/{OUT_PHOTO}")
+        self.assertEqual(data["check_in"]["photo"], f"http://testserver/api/v1/attendance/{self.arun_att.pk}/photos/check-in/")
+        self.assertEqual(data["check_out"]["photo"], f"http://testserver/api/v1/attendance/{self.arun_att.pk}/photos/check-out/")
         # the database still holds only the relative path
         self.arun_att.refresh_from_db()
         self.assertEqual(self.arun_att.check_in_photo.name, IN_PHOTO)
         # URL follows the request host (no hard-coded domain)
         with override_settings(ALLOWED_HOSTS=["hr.example.com"]):
             response = self.api(self.admin_all).get(f"{ADMIN}{self.arun.pk}/", HTTP_HOST="hr.example.com")
-        self.assertTrue(response.json()["data"]["check_in"]["photo"].startswith("http://hr.example.com/media/"))
+        self.assertTrue(response.json()["data"]["check_in"]["photo"].startswith("http://hr.example.com/api/v1/attendance/"))
         # no profile photo -> null
         self.assertIsNone(data["employee"]["profile_photo"])
 
@@ -551,8 +551,8 @@ class ExportTests(AdminAttendanceTestCase):
         self.assertEqual(arun["Working Hours"], "8h 56m")
         self.assertEqual(arun["Check-in Verified"], "Yes")
         self.assertEqual(arun["Check-in Latitude"], "11.7450000")
-        self.assertEqual(arun["Check-in Photo"], f"http://testserver/media/{IN_PHOTO}")
-        self.assertEqual(arun["Check-out Photo"], f"http://testserver/media/{OUT_PHOTO}")
+        self.assertEqual(arun["Check-in Photo"], f"http://testserver/api/v1/attendance/{self.arun_att.pk}/photos/check-in/")
+        self.assertEqual(arun["Check-out Photo"], f"http://testserver/api/v1/attendance/{self.arun_att.pk}/photos/check-out/")
         divya = cells["EMP002"]
         self.assertEqual((divya["Check Out"], divya["Working Hours"], divya["Check-out Photo"]), ("", "", ""))
         absent = cells["EMP003"]
@@ -609,13 +609,15 @@ class IntegrationWithMobileFlowTests(AdminAttendanceTestCase):
     def setUp(self):
         super().setUp()
         media = tempfile.mkdtemp(prefix="lyra_admin_test_media_")
-        override = override_settings(MEDIA_ROOT=media)
+        private_media = tempfile.mkdtemp(prefix="lyra_admin_test_private_media_")
+        override = override_settings(MEDIA_ROOT=media, PRIVATE_MEDIA_ROOT=private_media)
         override.enable()
         self.addCleanup(override.disable)
         self.addCleanup(shutil.rmtree, media, ignore_errors=True)
+        self.addCleanup(shutil.rmtree, private_media, ignore_errors=True)
 
     def mobile_post(self, employee, action):
-        data = dict(NEAR, photo=image_file())
+        data = dict(NEAR, location_timestamp=timezone.now().isoformat(), photo=image_file())
         return self.api(employee.user).post(f"{BASE}{action}/", data, format="multipart")
 
     def test_30_mobile_check_in_and_out_are_visible_to_admin_and_unchanged(self):
@@ -638,14 +640,24 @@ class IntegrationWithMobileFlowTests(AdminAttendanceTestCase):
         self.assertTrue(data["check_in"]["location_verified"])
         self.assertAlmostEqual(data["check_in"]["latitude"], NEAR["latitude"], places=6)
         self.assertEqual(data["check_in"]["accuracy_m"], NEAR["accuracy"])
-        self.assertRegex(data["check_in"]["photo"], r"^http://testserver/media/attendance/checkin/\d{4}/\d{2}/\d{2}/[0-9a-f-]+\.jpg$")
+        self.assertEqual(
+            data["check_in"]["photo"],
+            f"http://testserver/api/v1/attendance/{Attendance.objects.get(employee=self.karthik).pk}/photos/check-in/",
+        )
+        self.assertEqual(
+            self.get(f"{BASE}{Attendance.objects.get(employee=self.karthik).pk}/photos/check-in/").status_code,
+            200,
+        )
         self.assertEqual(self.get(f"{ADMIN}summary/").json()["data"]["present"], 3)
 
         response = self.mobile_post(self.karthik, "check-out")
         self.assertEqual(response.status_code, 200, response.content)
         data = self.get(f"{ADMIN}{self.karthik.pk}/").json()["data"]
         self.assertEqual(data["state"], "CHECKED_OUT")
-        self.assertRegex(data["check_out"]["photo"], r"/media/attendance/checkout/")
+        self.assertEqual(
+            data["check_out"]["photo"],
+            f"http://testserver/api/v1/attendance/{Attendance.objects.get(employee=self.karthik).pk}/photos/check-out/",
+        )
         self.assertIsNotNone(data["working_seconds"])
         self.assertEqual(Attendance.objects.filter(employee=self.karthik).count(), 1)  # same row, never duplicated
         # the mobile "today" endpoint is untouched

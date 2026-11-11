@@ -9,7 +9,7 @@ load_dotenv(BASE_DIR / ".env")
 
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-only-change-this-secret-key-before-production-lyra-pulse")
 DEBUG = os.getenv("DEBUG", "True").lower() == "true"
-ALLOWED_HOSTS = [host.strip() for host in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if host.strip()]
+ALLOWED_HOSTS = [host.strip() for host in os.getenv("ALLOWED_HOSTS", "localhost,192.168.1.2").split(",") if host.strip()]
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -80,8 +80,7 @@ TIME_ZONE = "Asia/Kolkata"
 USE_I18N = True
 USE_TZ = True
 STATIC_URL = "static/"
-# Public media (attendance photos live under MEDIA_ROOT/attendance/...). Served by Django only when DEBUG=True;
-# in production serve MEDIA_ROOT from the web server / object storage.
+# Public media is for non-sensitive uploads only. Attendance photos are stored privately.
 MEDIA_URL = "/media/"
 MEDIA_ROOT = Path(os.getenv("MEDIA_ROOT", str(BASE_DIR / "media")))
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
@@ -119,13 +118,15 @@ X_FRAME_OPTIONS = "DENY"
 SESSION_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_SECURE = not DEBUG
 
-# Private (non-public) storage for employee legal documents; served only via the authenticated download API.
+# Private (non-public) storage for employee legal documents and attendance photos.
 PRIVATE_MEDIA_ROOT = Path(os.getenv("PRIVATE_MEDIA_ROOT", str(BASE_DIR / "private_media")))
 
 SMS_PROVIDER = os.getenv("SMS_PROVIDER", "mock")
 OTP_EXPIRY_SECONDS = 300
 OTP_RESEND_COOLDOWN_SECONDS = 30
 OTP_MAX_ATTEMPTS = 5
+# Devices are Online when a valid heartbeat was received within this interval.
+DEVICE_ONLINE_THRESHOLD_SECONDS = max(1, int(os.getenv("DEVICE_ONLINE_THRESHOLD_SECONDS", "300")))
 
 LOGGING = {
     "version": 1,

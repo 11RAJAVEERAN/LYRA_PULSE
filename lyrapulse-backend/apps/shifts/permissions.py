@@ -10,6 +10,7 @@ class _ShiftPermission(BasePermission):
         user = request.user
         return bool(
             user and user.is_authenticated and user.is_active
+            and user.has_active_company_access
             and (user.role == User.Role.SUPERADMIN or user.has_perm(self.permission_code))
         )
 
@@ -24,4 +25,3 @@ class CanManageShifts(_ShiftPermission):
 
 class CanAssignShifts(_ShiftPermission):
     permission_code = "shifts.assign_shiftassignment"
-

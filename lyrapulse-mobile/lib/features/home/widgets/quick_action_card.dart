@@ -11,12 +11,14 @@ class QuickActionCard extends StatelessWidget {
     required this.color,
     required this.onTap,
     this.subtitle,
+    this.isComingSoon = false,
     super.key,
   });
 
   final IconData icon;
   final String title;
   final String? subtitle;
+  final bool isComingSoon;
   final Color color;
   final VoidCallback onTap;
 
@@ -25,28 +27,38 @@ class QuickActionCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppDimensions.cardRadius),
         onTap: onTap,
         child: Container(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
                 color: AppColors.surface,
                 borderRadius: BorderRadius.circular(AppDimensions.cardRadius),
                 border: Border.all(color: AppColors.border)),
             child: Row(children: [
               Container(
-                  width: 40,
-                  height: 40,
+                  width: 34,
+                  height: 34,
                   decoration: BoxDecoration(
                       color: color.withValues(alpha: .1),
                       borderRadius: BorderRadius.circular(12)),
                   child: Icon(icon, color: color, size: 20)),
-              const SizedBox(width: 12),
+              const SizedBox(width: 8),
               Expanded(
                 child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(title, style: AppTextStyles.label, maxLines: 1, overflow: TextOverflow.ellipsis),
+                      Text(title,
+                          style: AppTextStyles.label.copyWith(fontSize: 13),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis),
                       if (subtitle != null)
-                        Text(subtitle!, style: AppTextStyles.bodySmall, maxLines: 1, overflow: TextOverflow.ellipsis),
+                        Text(subtitle!,
+                            style: AppTextStyles.bodySmall.copyWith(
+                              fontSize: 11,
+                              color:
+                                  isComingSoon ? AppColors.textSecondary : null,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis),
                     ]),
               ),
             ])),

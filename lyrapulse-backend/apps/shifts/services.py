@@ -16,13 +16,13 @@ def assign_shift(*, employee_id, shift_id, effective_from, effective_to, week_of
     """Create one assignment, safely closing the prior period while preserving its history row."""
     # Employee.branch is nullable, so select_related("branch") introduces an outer join.
     # Lock only the Employee row; that row lock serializes assignments for this employee.
-    employee = Employee.objects.select_for_update(of=("self",)).filter(
+    employee = Employee.objects.select_for_update(of=("self",)).select_related("branch__organization", "user").filter(
         pk=employee_id, is_active=True, user__is_active=True,
     ).first()
     if employee is None or employee.branch_id is None:
         raise ValidationError({"employee_id": "Select an active employee with a branch."})
     # Only the Shift row is needed to serialize deactivation against assignment creation.
-    shift = Shift.objects.select_for_update(of=("self",)).filter(pk=shift_id).first()
+    shift = Shift.objects.select_for_update(of=("self",)).select_related("branch__organization").filter(pk=shift_id).first()
     if shift is None:
         raise ValidationError({"shift_id": "Select a shift in your branch scope."})
     if not scope_queryset(Branch.objects.filter(pk=employee.branch_id), actor, "id").exists():
@@ -31,6 +31,10 @@ def assign_shift(*, employee_id, shift_id, effective_from, effective_to, week_of
         raise ValidationError({"shift_id": "Shift is outside your branch scope."})
     if employee.branch_id != shift.branch_id:
         raise ValidationError({"shift_id": "Employee and shift must belong to the same branch."})
+    if (not employee.branch.is_active or employee.branch.organization_id is None
+            or not employee.branch.organization.is_active or not shift.branch.is_active
+            or shift.branch.organization_id is None or not shift.branch.organization.is_active):
+        raise ValidationError("Employees and shifts must belong to an active company and branch.")
     if not shift.is_active:
         raise ValidationError({"shift_id": "Inactive shifts cannot receive new assignments."})
     if effective_to is not None and effective_to < effective_from:

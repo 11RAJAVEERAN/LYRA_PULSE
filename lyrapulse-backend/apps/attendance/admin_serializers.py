@@ -1,9 +1,6 @@
-"""Serializers for the Admin attendance APIs: query-string validation and read-only representations.
-
-Photo fields are returned as absolute URLs built from the request (`request.build_absolute_uri`), so the same
-API works behind any host/domain. The database keeps only the relative storage path.
-"""
+"""Serializers for the Admin attendance APIs: query validation and read-only representations."""
 from django.utils import timezone
+from django.urls import reverse
 from rest_framework import serializers
 
 from apps.accounts.scope import scope_queryset
@@ -136,6 +133,16 @@ def media_url(request, field_file):
         return None
 
 
+def attendance_photo_url(request, attendance, kind):
+    field_file = attendance.check_in_photo if kind == "check-in" else attendance.check_out_photo
+    if not field_file:
+        return None
+    return request.build_absolute_uri(reverse(
+        "attendance-photo",
+        kwargs={"attendance_id": attendance.pk, "kind": kind},
+    ))
+
+
 _DATETIME = serializers.DateTimeField()
 
 
@@ -214,7 +221,7 @@ class AdminAttendanceDetailSerializer(_RowSerializer):
             "accuracy_m": attendance.check_in_accuracy,
             "distance_from_branch_m": attendance.check_in_distance_meters,
             "location_verified": attendance.check_in_location_verified,
-            "photo": media_url(self._request(), attendance.check_in_photo),
+            "photo": attendance_photo_url(self._request(), attendance, "check-in"),
         }
 
     def _check_out(self, attendance):
@@ -227,7 +234,7 @@ class AdminAttendanceDetailSerializer(_RowSerializer):
             "accuracy_m": attendance.check_out_accuracy,
             "distance_from_branch_m": attendance.check_out_distance_meters,
             "location_verified": attendance.check_out_location_verified,
-            "photo": media_url(self._request(), attendance.check_out_photo),
+            "photo": attendance_photo_url(self._request(), attendance, "check-out"),
         }
 
     def to_representation(self, row):

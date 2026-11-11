@@ -188,7 +188,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color: item.isRead
-                        ? AppColors.surfaceBorder
+                        ? AppColors.border
                         : AppColors.primaryBlue.withValues(alpha: 0.18),
                   ),
                 ),

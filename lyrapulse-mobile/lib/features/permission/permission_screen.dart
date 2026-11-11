@@ -151,7 +151,7 @@ class _PermissionScreenState extends State<PermissionScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
-                  color: AppColors.infoSurface,
+                  color: AppColors.infoBackground,
                   borderRadius: BorderRadius.circular(18),
                 ),
                 child: Row(
@@ -427,7 +427,7 @@ class _TypeButton extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         height: 72,
         decoration: BoxDecoration(
-          color: selected ? AppColors.infoSurface : AppColors.surface,
+          color: selected ? AppColors.infoBackground : AppColors.surface,
           borderRadius: BorderRadius.circular(15),
           border: Border.all(
             color: selected ? AppColors.primaryBlue : AppColors.border,

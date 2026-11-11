@@ -256,7 +256,7 @@ class ApplyLeaveScreen extends GetView<LeaveController> {
             padding: const EdgeInsets.symmetric(vertical: 14),
             decoration: BoxDecoration(
               color: selected
-                  ? AppColors.infoSurface
+                  ? AppColors.infoBackground
                   : AppColors.surface,
               borderRadius: BorderRadius.circular(10),
               border: Border.all(

@@ -42,7 +42,7 @@ class LeaveCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.surfaceBorder),
+        border: Border.all(color: AppColors.border),
         boxShadow: [
           BoxShadow(
             color: AppColors.primaryDark.withValues(alpha: 0.035),
@@ -60,7 +60,7 @@ class LeaveCard extends StatelessWidget {
                 height: 42,
                 width: 42,
                 decoration: BoxDecoration(
-                  color: AppColors.infoSurface,
+                  color: AppColors.infoBackground,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(

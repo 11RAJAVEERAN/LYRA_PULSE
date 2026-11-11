@@ -1,14 +1,17 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Alert, Box, Button, Card, CardContent, FormControlLabel, Grid, MenuItem, Paper, Stack, Switch, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from '@mui/material'
+import { Alert, Box, Button, Card, CardContent, Checkbox, FormControl, FormControlLabel, Grid, InputLabel, ListItemText, MenuItem, Paper, Select, Stack, Switch, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from '@mui/material'
 import { EmptyState } from '../../../components/common/EmptyState'
 import { ErrorState } from '../../../components/common/ErrorState'
 import { LoadingState } from '../../../components/common/LoadingState'
 import { PageHeader } from '../../../components/common/PageHeader'
 import { StatusChip } from '../../../components/common/StatusChip'
+import { authService } from '../../../services/authService'
 import { adminUsersApi } from '../api/adminUsersApi'
+import { branchesApi } from '../../branches/api/branchesApi'
+import { companiesApi } from '../../companies/api/companiesApi'
 
-const emptyForm = { phone_number: '', email: '', first_name: '', last_name: '', role: 'ADMIN', is_active: true, permissions: '' }
+const emptyForm = (organization = '') => ({ phone_number: '', email: '', first_name: '', last_name: '', role: 'ADMIN', is_active: true, organization: String(organization || ''), branch_ids: [], permissions: '' })
 
 function getErrorMessage(error) {
   const data = error?.response?.data
@@ -20,12 +23,27 @@ function getErrorMessage(error) {
 }
 
 export function AdminUsersPage() {
+  const currentUser = authService.getCurrentUser()
+  const isPlatformAdmin = currentUser?.is_global === true
   const { data: users = [], error: queryError, isLoading, refetch, isFetching } = useQuery({ queryKey: ['admin-users'], queryFn: adminUsersApi.list })
-  const [form, setForm] = useState(emptyForm)
+  const [form, setForm] = useState(() => emptyForm(currentUser?.organization?.id))
   const [editingId, setEditingId] = useState(null)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
   const [busy, setBusy] = useState(false)
+  const companiesQuery = useQuery({
+    queryKey: ['companies', 'admin-user-options'],
+    queryFn: () => companiesApi.list({ status: 'all' }),
+    enabled: isPlatformAdmin,
+  })
+  const organizationId = isPlatformAdmin ? form.organization : currentUser?.organization?.id
+  const branchesQuery = useQuery({
+    queryKey: ['admin-user-branch-options', organizationId],
+    queryFn: () => branchesApi.list({ organization: organizationId, status: 'active' }),
+    enabled: Boolean(organizationId),
+  })
+  const companies = companiesQuery.data ?? []
+  const branches = branchesQuery.data ?? []
 
   const updateField = (field) => (event) => setForm((current) => ({ ...current, [field]: event.target.value }))
 
@@ -36,11 +54,16 @@ export function AdminUsersPage() {
     setError('')
     setMessage('')
     try {
-      const payload = { ...form, permissions: form.permissions.split(',').map((value) => value.trim()).filter(Boolean) }
+      const payload = {
+        ...form,
+        organization: Number(organizationId),
+        branch_ids: form.branch_ids.map(Number),
+        permissions: form.permissions.split(',').map((value) => value.trim()).filter(Boolean),
+      }
       if (editingId) await adminUsersApi.update(editingId, payload)
       else await adminUsersApi.create(payload)
       const wasEditing = Boolean(editingId)
-      setForm(emptyForm)
+      setForm(emptyForm(currentUser?.organization?.id))
       setEditingId(null)
       setMessage(wasEditing ? 'Account updated.' : 'Account created. The account can sign in with an OTP sent to its registered mobile.')
       await refetch()
@@ -70,6 +93,8 @@ export function AdminUsersPage() {
       last_name: user.last_name || '',
       role: user.role,
       is_active: user.is_active,
+      organization: String(user.organization ?? currentUser?.organization?.id ?? ''),
+      branch_ids: (user.branch_ids ?? []).map(String),
       permissions: (user.permission_codenames || []).join(', '),
     })
     setError('')
@@ -79,7 +104,7 @@ export function AdminUsersPage() {
 
   const cancelEdit = () => {
     setEditingId(null)
-    setForm(emptyForm)
+    setForm(emptyForm(currentUser?.organization?.id))
     setError('')
     setMessage('')
   }
@@ -98,12 +123,34 @@ export function AdminUsersPage() {
             <Box>
               <Typography variant="h6" component="h2">{editingId ? 'Edit account' : 'Create account'}</Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                Assign a role and optional Django permissions for this account.
+                Assign a role and at least one active branch. The server validates company and branch ownership.
               </Typography>
             </Box>
 
             <Box component="form" onSubmit={submitForm} noValidate>
               <Grid container spacing={2}>
+                {isPlatformAdmin ? (
+                  <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+                    <TextField
+                      select
+                      required
+                      fullWidth
+                      label="Company"
+                      value={form.organization}
+                      onChange={(event) => setForm((current) => ({ ...current, organization: event.target.value, branch_ids: [] }))}
+                      disabled={busy || companiesQuery.isLoading}
+                      error={Boolean(companiesQuery.error)}
+                      helperText={companiesQuery.error ? getErrorMessage(companiesQuery.error) : 'Assign this account to one company.'}
+                    >
+                      {companies.filter((company) => company.is_active).map((company) => <MenuItem key={company.id} value={String(company.id)}>{company.name}</MenuItem>)}
+                    </TextField>
+                  </Grid>
+                ) : null}
+                {!isPlatformAdmin ? (
+                  <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+                    <TextField fullWidth label="Company" value={currentUser?.organization?.name ?? ''} disabled />
+                  </Grid>
+                ) : null}
                 <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
                   <TextField required fullWidth label="Mobile number" value={form.phone_number} onChange={updateField('phone_number')} disabled={busy} />
                 </Grid>
@@ -120,6 +167,29 @@ export function AdminUsersPage() {
                   <TextField select fullWidth label="Role" value={form.role} onChange={updateField('role')} disabled={busy}>
                     {['ADMIN', 'HR', 'MANAGER'].map((role) => <MenuItem key={role} value={role}>{role}</MenuItem>)}
                   </TextField>
+                </Grid>
+                <Grid size={{ xs: 12 }}>
+                  <FormControl fullWidth required disabled={busy || !organizationId || branchesQuery.isLoading}>
+                    <InputLabel id="admin-user-branches-label">Authorized branches</InputLabel>
+                    <Select
+                      labelId="admin-user-branches-label"
+                      multiple
+                      value={form.branch_ids}
+                      label="Authorized branches"
+                      onChange={(event) => setForm((current) => ({ ...current, branch_ids: event.target.value }))}
+                      renderValue={(selected) => branches.filter((branch) => selected.includes(String(branch.id))).map((branch) => branch.name).join(', ')}
+                    >
+                      {branches.map((branch) => (
+                        <MenuItem key={branch.id} value={String(branch.id)}>
+                          <Checkbox checked={form.branch_ids.includes(String(branch.id))} />
+                          <ListItemText primary={branch.name} secondary={branch.code} />
+                        </MenuItem>
+                      ))}
+                    </Select>
+                    <Typography variant="caption" color={branchesQuery.error ? 'error' : 'text.secondary'} sx={{ mt: 0.75 }}>
+                      {branchesQuery.error ? getErrorMessage(branchesQuery.error) : branches.length ? 'Select one or more active branches in this company.' : 'This company has no active branches to assign.'}
+                    </Typography>
+                  </FormControl>
                 </Grid>
                 <Grid size={{ xs: 12 }}>
                   <TextField
@@ -140,7 +210,7 @@ export function AdminUsersPage() {
                     />
                     <Stack direction="row" justifyContent="flex-end" spacing={1}>
                       {editingId ? <Button type="button" variant="outlined" onClick={cancelEdit} disabled={busy}>Cancel</Button> : null}
-                      <Button type="submit" variant="contained" disabled={busy}>
+                      <Button type="submit" variant="contained" disabled={busy || !organizationId || form.branch_ids.length === 0 || branchesQuery.isLoading}>
                         {busy ? 'Saving…' : editingId ? 'Save changes' : 'Create account'}
                       </Button>
                     </Stack>
@@ -163,7 +233,9 @@ export function AdminUsersPage() {
                   <TableCell>Name</TableCell>
                   <TableCell>Mobile</TableCell>
                   <TableCell>Email</TableCell>
+                  <TableCell>Company</TableCell>
                   <TableCell>Role</TableCell>
+                  <TableCell>Authorized branches</TableCell>
                   <TableCell>Status</TableCell>
                   <TableCell>Direct permissions</TableCell>
                   <TableCell align="right">Actions</TableCell>
@@ -175,7 +247,9 @@ export function AdminUsersPage() {
                     <TableCell sx={{ fontWeight: 600 }}>{`${user.first_name} ${user.last_name}`.trim()}</TableCell>
                     <TableCell>{user.phone_number}</TableCell>
                     <TableCell>{user.email || '—'}</TableCell>
+                    <TableCell>{user.organization_name || (user.organization ? `#${user.organization}` : '—')}</TableCell>
                     <TableCell>{user.role}</TableCell>
+                    <TableCell>{(user.branch_details ?? []).map((branch) => branch.name).join(', ') || '—'}</TableCell>
                     <TableCell>
                       <Stack direction="row" alignItems="center" spacing={1}>
                         <StatusChip label={user.is_active ? 'Active' : 'Inactive'} />

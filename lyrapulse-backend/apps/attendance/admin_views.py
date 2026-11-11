@@ -20,7 +20,7 @@ from apps.common.responses import success_response
 from . import admin_services as services
 from .admin_serializers import (
     AdminAttendanceDetailSerializer, AdminAttendanceRowSerializer, DetailQuerySerializer, ExportQuerySerializer,
-    ListQuerySerializer, SummaryQuerySerializer, employee_name, media_url,
+    ListQuerySerializer, SummaryQuerySerializer, attendance_photo_url, employee_name, media_url,
 )
 from .pagination import AdminAttendancePagination
 
@@ -162,13 +162,13 @@ def csv_row(row, request):
         _plain(attendance.check_in_accuracy) if attendance else "",
         _plain(attendance.check_in_distance_meters) if attendance else "",
         _yes_no(attendance.check_in_location_verified) if attendance else "",
-        _plain(media_url(request, attendance.check_in_photo)) if attendance else "",
+        _plain(attendance_photo_url(request, attendance, "check-in")) if attendance else "",
         _plain(attendance.check_out_latitude) if has_out else "",
         _plain(attendance.check_out_longitude) if has_out else "",
         _plain(attendance.check_out_accuracy) if has_out else "",
         _plain(attendance.check_out_distance_meters) if has_out else "",
         _yes_no(attendance.check_out_location_verified) if has_out else "",
-        _plain(media_url(request, attendance.check_out_photo)) if has_out else "",
+        _plain(attendance_photo_url(request, attendance, "check-out")) if has_out else "",
         len(row.sessions) if row.sessions else "",
         json.dumps([{"check_in": _local(s.check_in_at), "check_out": _local(s.check_out_at), "source": s.source,
                      "actions": [{"action": action.action, "method": action.method, "actor_id": action.actor_id, "at": _local(action.occurred_at)} for action in s.actions.all()],
