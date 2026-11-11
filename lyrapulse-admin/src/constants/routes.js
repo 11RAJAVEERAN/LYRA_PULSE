@@ -5,6 +5,7 @@ export const ROUTES = {
   employeeCreate: '/employees/create',
   employeeDetails: '/employees/:id',
   attendance: '/attendance',
+  bulkAttendanceAdjustments: '/payroll/bulk-attendance-adjustments',
   shifts: '/shifts',
   shiftAssignments: '/shift-assignments',
   attendanceDetails: '/attendance/:id',

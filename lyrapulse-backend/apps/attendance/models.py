@@ -117,3 +117,41 @@ class AttendanceEvent(models.Model):
 
     class Meta:
         ordering = ["occurred_at", "id"]
+
+
+class AttendanceAdjustment(models.Model):
+    """Audited payroll-facing day classification; does not rewrite check-in evidence."""
+
+    class Code(models.TextChoices):
+        FULL_DAY = "FD", "Full Day"
+        ABSENT = "A", "Absent"
+        HALF_DAY = "HD", "Half Day"
+        WEEK_OFF = "WO", "Week Off"
+
+    employee = models.ForeignKey(Employee, on_delete=models.PROTECT, related_name="attendance_adjustments")
+    attendance_date = models.DateField()
+    code = models.CharField(max_length=2, choices=Code.choices)
+    updated_by = models.ForeignKey("accounts.User", on_delete=models.PROTECT, related_name="attendance_adjustments")
+    reason = models.CharField(max_length=500, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["attendance_date", "employee__employee_code"]
+        constraints = [models.UniqueConstraint(fields=("employee", "attendance_date"), name="unique_attendance_adjustment_day")]
+        indexes = [models.Index(fields=("attendance_date", "employee"), name="att_adjustment_date_emp_idx")]
+
+
+class AttendanceAdjustmentAudit(models.Model):
+    adjustment = models.ForeignKey(AttendanceAdjustment, on_delete=models.PROTECT, related_name="audit_entries")
+    employee = models.ForeignKey(Employee, on_delete=models.PROTECT, related_name="attendance_adjustment_audits")
+    attendance_date = models.DateField()
+    previous_code = models.CharField(max_length=2, choices=AttendanceAdjustment.Code.choices, null=True, blank=True)
+    new_code = models.CharField(max_length=2, choices=AttendanceAdjustment.Code.choices)
+    actor = models.ForeignKey("accounts.User", on_delete=models.PROTECT, related_name="attendance_adjustment_audits")
+    reason = models.CharField(max_length=500, blank=True)
+    changed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-changed_at", "-id"]
+        indexes = [models.Index(fields=("employee", "attendance_date"), name="att_adjust_audit_emp_day_idx")]

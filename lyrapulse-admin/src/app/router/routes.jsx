@@ -21,6 +21,7 @@ import WorkingHoursReportPage from '../../reports/WorkingHoursReportPage'
 import MusterReportPage from '../../reports/MusterReportPage'
 import BranchWisePunchReportPage from '../../reports/BranchWisePunchReportPage'
 import LeaveTakenReportPage from '../../reports/LeaveTakenReportPage'
+import { BulkAttendanceAdjustmentsPage } from '../../features/payroll/pages/BulkAttendanceAdjustmentsPage'
 
 export const routes = [
   {
@@ -50,6 +51,7 @@ export const routes = [
             path: ROUTES.attendance,
             element: <AttendancePage />,
           },
+          { path: ROUTES.bulkAttendanceAdjustments, element: <BulkAttendanceAdjustmentsPage /> },
           { path: ROUTES.shifts, element: <ShiftsPage /> },
           { path: ROUTES.shiftAssignments, element: <ShiftAssignmentsPage /> },
           {
@@ -97,4 +99,3 @@ export const routes = [
     ],
   },
 ]
-

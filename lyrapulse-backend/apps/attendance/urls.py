@@ -5,6 +5,10 @@ from .admin_views import (
 )
 from .views import CheckInView, CheckOutView, TodayAttendanceView, VerifyLocationView
 from .device_views import AdminManualAttendanceView, FingerprintAttendanceEventView
+from .bulk_adjustment_api import (
+    AttendanceAdjustmentBulkUpdateView, AttendanceAdjustmentCodesView, AttendanceAdjustmentExportView,
+    AttendanceAdjustmentGridView,
+)
 
 urlpatterns = [
     # ==========================================
@@ -22,6 +26,10 @@ urlpatterns = [
     path("admin/", AdminAttendanceListView.as_view(), name="attendance-admin-list"),
     path("admin/summary/", AdminAttendanceSummaryView.as_view(), name="attendance-admin-summary"),
     path("admin/export/", AdminAttendanceExportView.as_view(), name="attendance-admin-export"),
+    path("admin/bulk-adjustments/", AttendanceAdjustmentGridView.as_view(), name="attendance-bulk-adjustments-grid"),
+    path("admin/bulk-adjustments/codes/", AttendanceAdjustmentCodesView.as_view(), name="attendance-bulk-adjustments-codes"),
+    path("admin/bulk-adjustments/save/", AttendanceAdjustmentBulkUpdateView.as_view(), name="attendance-bulk-adjustments-save"),
+    path("admin/bulk-adjustments/export/", AttendanceAdjustmentExportView.as_view(), name="attendance-bulk-adjustments-export"),
     path("admin/manual/", AdminManualAttendanceView.as_view(), name="attendance-admin-manual"),
     path("admin/<int:employee_id>/", AdminAttendanceDetailView.as_view(), name="attendance-admin-detail"),
 ]
