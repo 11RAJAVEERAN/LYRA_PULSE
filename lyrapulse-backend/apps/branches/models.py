@@ -2,6 +2,9 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
+MIN_ATTENDANCE_RADIUS_METERS = 1
+MAX_ATTENDANCE_RADIUS_METERS = 1000
+
 
 class Branch(models.Model):
     # Nullable on purpose: branches created before organizations existed keep working
@@ -60,6 +63,8 @@ class Branch(models.Model):
     def clean(self):
         super().clean()
         self._check_admin_scope_on_organization_change()
+        if self._attendance_radius_changed():
+            self._validate_attendance_radius()
         if (self.latitude is None) != (self.longitude is None):
             raise ValidationError({
                 "latitude" if self.latitude is None else "longitude": "Set both latitude and longitude, or leave both empty.",
@@ -67,4 +72,18 @@ class Branch(models.Model):
 
     def save(self, *args, **kwargs):
         self._check_admin_scope_on_organization_change()
+        update_fields = kwargs.get("update_fields")
+        if (update_fields is None or "attendance_radius_meters" in update_fields) and self._attendance_radius_changed():
+            self._validate_attendance_radius()
         super().save(*args, **kwargs)
+
+    def _attendance_radius_changed(self):
+        if self._state.adding:
+            return True
+        previous = type(self).objects.filter(pk=self.pk).values_list("attendance_radius_meters", flat=True).first()
+        return previous is None or previous != self.attendance_radius_meters
+
+    def _validate_attendance_radius(self):
+        radius = self.attendance_radius_meters
+        if isinstance(radius, bool) or not isinstance(radius, int) or not MIN_ATTENDANCE_RADIUS_METERS <= radius <= MAX_ATTENDANCE_RADIUS_METERS:
+            raise ValidationError({"attendance_radius_meters": f"Attendance radius must be between {MIN_ATTENDANCE_RADIUS_METERS} and {MAX_ATTENDANCE_RADIUS_METERS} metres."})

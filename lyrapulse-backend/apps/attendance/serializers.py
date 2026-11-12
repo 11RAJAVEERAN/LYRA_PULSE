@@ -2,6 +2,7 @@ import math
 
 from rest_framework import serializers
 
+from .admin_services import working_seconds
 from .services import MAX_GPS_ACCURACY_METERS
 from .validators import MAX_PHOTO_BYTES, validate_attendance_photo
 
@@ -19,6 +20,10 @@ class LocationSerializer(serializers.Serializer):
     latitude = _float_field("Latitude", -90, 90)
     longitude = _float_field("Longitude", -180, 180)
     accuracy = _float_field("GPS accuracy", 0, MAX_GPS_ACCURACY_METERS)
+    location_timestamp = serializers.DateTimeField(
+        required=False,
+        help_text="Timestamp of the GPS fix; the server rejects fixes over 120 seconds old or 30 seconds in the future.",
+    )
 
     def _finite(self, value, label):
         if not math.isfinite(value):  # NaN would otherwise slip past min/max validators
@@ -40,6 +45,10 @@ class AttendanceActionSerializer(LocationSerializer):
     latitude = _float_field("Latitude", -90, 90, required=False)
     longitude = _float_field("Longitude", -180, 180, required=False)
     accuracy = _float_field("GPS accuracy", 0, MAX_GPS_ACCURACY_METERS, required=False)
+    location_timestamp = serializers.DateTimeField(
+        required=False,
+        help_text="Required when location verification is enabled.",
+    )
     photo = serializers.FileField(
         required=False,
         validators=[validate_attendance_photo],
@@ -57,7 +66,7 @@ class BranchBriefSerializer(serializers.Serializer):
 
 
 class VerifyLocationResultSerializer(serializers.Serializer):
-    verified = serializers.BooleanField()
+    verified = serializers.BooleanField(allow_null=True)
     branch = BranchBriefSerializer()
     distance_meters = serializers.FloatField(allow_null=True)
     allowed_radius_meters = serializers.IntegerField(allow_null=True)
@@ -87,3 +96,21 @@ class TodayStateSerializer(serializers.Serializer):
     check_in_at = serializers.DateTimeField(allow_null=True)
     check_out_at = serializers.DateTimeField(allow_null=True)
     sessions = serializers.ListField(child=serializers.DictField(), required=False)
+
+
+class AttendanceHistorySerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    attendance_date = serializers.DateField()
+    check_in_at = serializers.DateTimeField()
+    check_out_at = serializers.DateTimeField(allow_null=True)
+    working_seconds = serializers.SerializerMethodField()
+    status = serializers.CharField(source="state")
+    source = serializers.CharField()
+    branch = BranchBriefSerializer()
+    check_in_location_verified = serializers.BooleanField(allow_null=True)
+    check_out_location_verified = serializers.BooleanField(allow_null=True)
+    check_in_photo_available = serializers.BooleanField(source="check_in_photo")
+    check_out_photo_available = serializers.BooleanField(source="check_out_photo")
+
+    def get_working_seconds(self, attendance):
+        return working_seconds(attendance)

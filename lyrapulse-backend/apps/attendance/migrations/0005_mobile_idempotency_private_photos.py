@@ -1,0 +1,48 @@
+import django.db.models.deletion
+from django.db import migrations, models
+
+import apps.attendance.storage
+
+
+class Migration(migrations.Migration):
+    dependencies = [
+        ("attendance", "0004_bulk_attendance_adjustments"),
+        ("employees", "0004_employee_location_and_auto_punch_permissions"),
+    ]
+
+    operations = [
+        migrations.AlterField(
+            model_name="attendance",
+            name="check_in_photo",
+            field=models.ImageField(
+                blank=True,
+                storage=apps.attendance.storage.private_attendance_storage,
+                upload_to="apps.attendance.models.check_in_photo_path",
+            ),
+        ),
+        migrations.AlterField(
+            model_name="attendance",
+            name="check_out_photo",
+            field=models.ImageField(
+                blank=True,
+                storage=apps.attendance.storage.private_attendance_storage,
+                upload_to="apps.attendance.models.check_out_photo_path",
+            ),
+        ),
+        migrations.CreateModel(
+            name="MobileAttendanceRequest",
+            fields=[
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("key", models.CharField(max_length=128, unique=True)),
+                ("action", models.CharField(choices=[("CHECK_IN", "Check-in"), ("CHECK_OUT", "Check-out")], max_length=12)),
+                ("payload_fingerprint", models.CharField(max_length=64)),
+                ("outcome", models.CharField(choices=[("PENDING", "Pending"), ("SUCCEEDED", "Succeeded"), ("REJECTED", "Rejected")], default="PENDING", max_length=12)),
+                ("response", models.JSONField(blank=True, default=dict)),
+                ("http_status", models.PositiveSmallIntegerField(blank=True, null=True)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("attendance", models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name="mobile_requests", to="attendance.attendance")),
+                ("employee", models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name="mobile_attendance_requests", to="employees.employee")),
+            ],
+            options={"ordering": ["created_at", "id"]},
+        ),
+    ]

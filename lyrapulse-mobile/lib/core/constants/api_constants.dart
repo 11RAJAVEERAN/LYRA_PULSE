@@ -12,4 +12,5 @@ abstract final class ApiConstants {
   static const String attendanceCheckIn = 'attendance/check-in/';
   static const String attendanceCheckOut = 'attendance/check-out/';
   static const String attendanceToday = 'attendance/today/';
+  static const String attendanceHistory = 'attendance/history/';
 }

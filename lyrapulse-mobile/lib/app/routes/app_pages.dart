@@ -8,6 +8,8 @@ import '../../features/attendance/views/location_check_screen.dart';
 import '../../features/auth/views/login_screen.dart';
 import '../../features/auth/views/otp_screen.dart';
 import '../../features/home/views/home_screen.dart';
+import '../../features/leave/bindings/leave_binding.dart';
+import '../../features/leave/views/apply_leave_screen.dart';
 import '../../features/splash/controllers/splash_controller.dart';
 import '../../features/splash/views/splash_screen.dart';
 import 'app_routes.dart';
@@ -32,6 +34,11 @@ abstract final class AppPages {
     GetPage(name: AppRoutes.login, page: () => const LoginScreen()),
     GetPage(name: AppRoutes.otp, page: () => const OtpScreen()),
     GetPage(name: AppRoutes.home, page: () => const HomeScreen()),
+    GetPage(
+      name: AppRoutes.applyLeave,
+      page: () => const ApplyLeaveScreen(),
+      binding: LeaveBinding(),
+    ),
 
     // ATTENDANCE FLOW (AttendanceController is app-wide, see InitialBinding)
     GetPage(name: AppRoutes.attendanceLocation, page: () => const LocationCheckScreen()),

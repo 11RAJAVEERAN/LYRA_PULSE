@@ -22,6 +22,9 @@ import MusterReportPage from '../../reports/MusterReportPage'
 import BranchWisePunchReportPage from '../../reports/BranchWisePunchReportPage'
 import LeaveTakenReportPage from '../../reports/LeaveTakenReportPage'
 import { BulkAttendanceAdjustmentsPage } from '../../features/payroll/pages/BulkAttendanceAdjustmentsPage'
+import { CompaniesPage } from '../../features/companies/pages/CompaniesPage'
+import { BranchesPage } from '../../features/branches/pages/BranchesPage'
+import { PermissionRoute } from './PermissionRoute'
 
 export const routes = [
   {
@@ -74,6 +77,14 @@ export const routes = [
             path: ROUTES.adminUsers,
             element: <SuperAdminRoute><AdminUsersPage /></SuperAdminRoute>,
           },
+          {
+            path: ROUTES.companies,
+            element: <PermissionRoute roles={['SUPERADMIN']}><CompaniesPage /></PermissionRoute>,
+          },
+          {
+            path: ROUTES.branches,
+            element: <PermissionRoute roles={['SUPERADMIN', 'ADMIN']}><BranchesPage /></PermissionRoute>,
+          },
           { path: ROUTES.reports, element: <Navigate to="/reports/attendance-master" replace /> },
           { path: '/reports/attendance-master', element: <AttendanceMasterPage /> },
           { path: '/reports/daily-punch-report', element: <DailyPunchReportPage /> },
@@ -84,7 +95,6 @@ export const routes = [
           { path: '/reports/leave-taken', element: <LeaveTakenReportPage /> },
           ...[
             ROUTES.leaves,
-            ROUTES.branches,
             ROUTES.settings,
           ].map((path) => ({
             path,

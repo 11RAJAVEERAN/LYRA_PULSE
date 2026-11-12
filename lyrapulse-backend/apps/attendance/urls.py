@@ -3,7 +3,10 @@ from django.urls import path
 from .admin_views import (
     AdminAttendanceDetailView, AdminAttendanceExportView, AdminAttendanceListView, AdminAttendanceSummaryView,
 )
-from .views import CheckInView, CheckOutView, TodayAttendanceView, VerifyLocationView
+from .views import (
+    AttendancePhotoView, CheckInView, CheckOutView, EmployeeAttendanceHistoryView,
+    TodayAttendanceView, VerifyLocationView,
+)
 from .device_views import AdminManualAttendanceView, FingerprintAttendanceEventView
 from .bulk_adjustment_api import (
     AttendanceAdjustmentBulkUpdateView, AttendanceAdjustmentCodesView, AttendanceAdjustmentExportView,
@@ -18,6 +21,8 @@ urlpatterns = [
     path("check-in/", CheckInView.as_view(), name="attendance-check-in"),
     path("check-out/", CheckOutView.as_view(), name="attendance-check-out"),
     path("today/", TodayAttendanceView.as_view(), name="attendance-today"),
+    path("history/", EmployeeAttendanceHistoryView.as_view(), name="attendance-history"),
+    path("<int:attendance_id>/photos/<str:kind>/", AttendancePhotoView.as_view(), name="attendance-photo"),
     path("fingerprint/events/", FingerprintAttendanceEventView.as_view(), name="attendance-fingerprint-event"),
 
     # ==========================================

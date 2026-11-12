@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 
+import '../../core/services/location_service.dart';
 import '../models/attendance_model.dart';
 import '../providers/api_provider.dart';
 
@@ -17,29 +18,43 @@ class AttendanceRepository {
         return TodayAttendance.fromJson(_data(response));
       });
 
+  Future<AttendanceHistoryPage> fetchHistory({
+    required DateTime startDate,
+    required DateTime endDate,
+    required int page,
+    int pageSize = 31,
+  }) =>
+      _guard(() async {
+        final response = await _api.getAttendanceHistory(
+          startDate: _date(startDate),
+          endDate: _date(endDate),
+          page: page,
+          pageSize: pageSize,
+        );
+        return AttendanceHistoryPage.fromJson(_data(response));
+      });
+
   Future<LocationVerification> verifyLocation({
-    required double latitude,
-    required double longitude,
-    required double accuracy,
+    required DevicePosition fix,
   }) =>
       _guard(() async {
         final response = await _api.verifyAttendanceLocation(
-          latitude: latitude,
-          longitude: longitude,
-          accuracy: accuracy,
+          latitude: fix.latitude,
+          longitude: fix.longitude,
+          accuracy: fix.accuracy,
+          locationTimestamp: fix.timestamp,
         );
         return LocationVerification.fromJson(_data(response));
       });
 
   Future<AttendanceActionResult> checkIn({
-    double? latitude,
-    double? longitude,
-    double? accuracy,
+    required String idempotencyKey,
+    DevicePosition? location,
     String? photoPath,
   }) =>
       _guard(() async {
-        final form = await _form(latitude, longitude, accuracy, photoPath);
-        final response = await _api.checkIn(form);
+        final form = await _form(location, photoPath);
+        final response = await _api.checkIn(form, idempotencyKey);
         return AttendanceActionResult.fromJson(
           AttendanceAction.checkIn,
           _asMap(_data(response)['attendance']),
@@ -47,14 +62,13 @@ class AttendanceRepository {
       });
 
   Future<AttendanceActionResult> checkOut({
-    double? latitude,
-    double? longitude,
-    double? accuracy,
+    required String idempotencyKey,
+    DevicePosition? location,
     String? photoPath,
   }) =>
       _guard(() async {
-        final form = await _form(latitude, longitude, accuracy, photoPath);
-        final response = await _api.checkOut(form);
+        final form = await _form(location, photoPath);
+        final response = await _api.checkOut(form, idempotencyKey);
         return AttendanceActionResult.fromJson(
           AttendanceAction.checkOut,
           _asMap(_data(response)['attendance']),
@@ -63,18 +77,20 @@ class AttendanceRepository {
 
   // ---------------------------------------------------------------------------
 
-  Future<FormData> _form(double? latitude, double? longitude, double? accuracy, String? photoPath) async {
-    final fields = <String, dynamic>{};
-    if (latitude != null && longitude != null && accuracy != null) {
-      fields.addAll({'latitude': latitude, 'longitude': longitude, 'accuracy': accuracy});
-    }
+  Future<FormData> _form(DevicePosition? location, String? photoPath) async {
+    final fields = <String, dynamic>{...?location?.toRequestFields()};
     if (photoPath != null) {
-      final extension = photoPath.toLowerCase().endsWith('.png') ? 'png' : 'jpg';
+      final extension =
+          photoPath.toLowerCase().endsWith('.png') ? 'png' : 'jpg';
       // Only the file bytes matter: the server validates content and names the file itself.
-      fields['photo'] = await MultipartFile.fromFile(photoPath, filename: 'photo.$extension');
+      fields['photo'] =
+          await MultipartFile.fromFile(photoPath, filename: 'photo.$extension');
     }
     return FormData.fromMap(fields);
   }
+
+  static String _date(DateTime value) =>
+      '${value.year.toString().padLeft(4, '0')}-${value.month.toString().padLeft(2, '0')}-${value.day.toString().padLeft(2, '0')}';
 
   Future<T> _guard<T>(Future<T> Function() request) async {
     try {
@@ -84,9 +100,11 @@ class AttendanceRepository {
     } on DioException catch (error) {
       throw _failureFrom(error);
     } on FileSystemException {
-      throw const AttendanceFailure('The captured photo could not be read. Please retake it.');
+      throw const AttendanceFailure(
+          'The captured photo could not be read. Please retake it.');
     } on FormatException {
-      throw const AttendanceFailure('Unexpected response from the server. Please try again.');
+      throw const AttendanceFailure(
+          'Unexpected response from the server. Please try again.');
     }
   }
 
@@ -113,7 +131,9 @@ class AttendanceRepository {
         code = errors['code']?.toString();
         if (code == null) {
           // DRF field errors, e.g. {"photo": ["A photo is required."]}
-          final flattened = errors.values.expand((value) => value is List ? value : [value]).join(' ');
+          final flattened = errors.values
+              .expand((value) => value is List ? value : [value])
+              .join(' ');
           if (flattened.trim().isNotEmpty) message = flattened;
         }
       }
@@ -126,7 +146,9 @@ class AttendanceRepository {
       );
     }
     if (status == 401) {
-      return const AttendanceFailure('Your session has expired. Please sign in again.', code: 'UNAUTHENTICATED');
+      return const AttendanceFailure(
+          'Your session has expired. Please sign in again.',
+          code: 'UNAUTHENTICATED');
     }
     return AttendanceFailure(
       message ?? error.message ?? 'Something went wrong. Please try again.',
@@ -137,14 +159,17 @@ class AttendanceRepository {
   static Map<String, dynamic> _data(Response<dynamic> response) {
     final body = _asMap(response.data);
     if (body['success'] == false) {
-      throw AttendanceFailure(body['message']?.toString() ?? 'The request failed.');
+      throw AttendanceFailure(
+          body['message']?.toString() ?? 'The request failed.');
     }
     return _asMap(body['data']);
   }
 
   static Map<String, dynamic> _asMap(dynamic value) {
     if (value is Map<String, dynamic>) return value;
-    if (value is Map) return value.map((key, item) => MapEntry(key.toString(), item));
+    if (value is Map) {
+      return value.map((key, item) => MapEntry(key.toString(), item));
+    }
     return <String, dynamic>{};
   }
 }

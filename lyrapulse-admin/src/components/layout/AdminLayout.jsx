@@ -15,6 +15,7 @@ const pageTitles = {
   '/leaves': 'Leaves',
   '/permissions': 'Permissions',
   '/branches': 'Branches',
+  '/companies': 'Companies',
   '/departments': 'Departments',
   '/designations': 'Designations',
   '/devices': 'Devices',

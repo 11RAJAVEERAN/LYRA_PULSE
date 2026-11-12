@@ -111,6 +111,10 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:5173",
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+
+    # Flutter Web
+    "http://localhost:53162",
+    "http://127.0.0.1:53162",
 ]
 # Lets the admin web app (a different origin) read the CSV filename on attendance export downloads.
 CORS_EXPOSE_HEADERS = ["Content-Disposition"]
@@ -126,6 +130,8 @@ SMS_PROVIDER = os.getenv("SMS_PROVIDER", "mock")
 OTP_EXPIRY_SECONDS = 300
 OTP_RESEND_COOLDOWN_SECONDS = 30
 OTP_MAX_ATTEMPTS = 5
+# Devices are Online when a valid heartbeat was received within this interval.
+DEVICE_ONLINE_THRESHOLD_SECONDS = max(1, int(os.getenv("DEVICE_ONLINE_THRESHOLD_SECONDS", "300")))
 
 LOGGING = {
     "version": 1,

@@ -1,0 +1,583 @@
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:get/get.dart';
+
+import '../../app/theme/app_colors.dart';
+
+class PermissionScreen extends StatefulWidget {
+  const PermissionScreen({super.key});
+
+  @override
+  State<PermissionScreen> createState() => _PermissionScreenState();
+}
+
+class _PermissionScreenState extends State<PermissionScreen> {
+  String selectedType = 'Personal';
+
+  final TextEditingController reasonController = TextEditingController();
+  final TextEditingController noteController = TextEditingController();
+
+  TimeOfDay? startTime;
+  TimeOfDay? returnTime;
+
+  @override
+  void dispose() {
+    reasonController.dispose();
+    noteController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _selectStartTime() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+    );
+
+    if (picked != null) {
+      setState(() {
+        startTime = picked;
+      });
+    }
+  }
+
+  Future<void> _selectReturnTime() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+    );
+
+    if (picked != null) {
+      setState(() {
+        returnTime = picked;
+      });
+    }
+  }
+
+  String _formatTime(TimeOfDay? time) {
+    if (time == null) {
+      return 'Select time';
+    }
+
+    final hour = time.hourOfPeriod == 0 ? 12 : time.hourOfPeriod;
+    final minute = time.minute.toString().padLeft(2, '0');
+    final period = time.period == DayPeriod.am ? 'AM' : 'PM';
+
+    return '$hour:$minute $period';
+  }
+
+  void _submitPermission() {
+    if (reasonController.text.trim().isEmpty) {
+      Get.snackbar(
+        'Reason Required',
+        'Please enter the reason for your permission.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: AppColors.surface,
+        colorText: AppColors.primary,
+        margin: const EdgeInsets.all(16),
+        borderRadius: 14,
+      );
+      return;
+    }
+
+    if (startTime == null) {
+      Get.snackbar(
+        'Start Time Required',
+        'Please select your permission start time.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: AppColors.surface,
+        colorText: AppColors.primary,
+        margin: const EdgeInsets.all(16),
+        borderRadius: 14,
+      );
+      return;
+    }
+
+    if (returnTime == null) {
+      Get.snackbar(
+        'Return Time Required',
+        'Please select your expected return time.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: AppColors.surface,
+        colorText: AppColors.primary,
+        margin: const EdgeInsets.all(16),
+        borderRadius: 14,
+      );
+      return;
+    }
+
+    Get.snackbar(
+      'Unavailable',
+      'Project A has no employee time-permission request API.',
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: AppColors.surface,
+      colorText: AppColors.primary,
+      margin: const EdgeInsets.all(16),
+      borderRadius: 14,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.surfaceMuted,
+      appBar: AppBar(
+        backgroundColor: AppColors.surfaceMuted,
+        elevation: 0,
+        centerTitle: true,
+        leading: IconButton(
+  onPressed: () {
+    Get.offAllNamed('/home');
+  },
+  icon: const Icon(
+    Icons.arrow_back_ios_new_rounded,
+    color: AppColors.primary,
+    size: 20,
+  ),
+),
+        title: Text(
+          'Request Permission',
+          style: GoogleFonts.inter(
+            color: AppColors.primary,
+            fontSize: 19,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 10, 20, 30),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: AppColors.infoBackground,
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 50,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      child: const Icon(
+                        Icons.directions_walk_rounded,
+                        color: AppColors.primaryBlue,
+                        size: 27,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Office Permission',
+                            style: GoogleFonts.inter(
+                              color: AppColors.primary,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          SizedBox(height: 5),
+                          Text(
+                            'Request permission before leaving the office.',
+                            style: GoogleFonts.inter(
+                              color: AppColors.textSecondary,
+                              fontSize: 12,
+                              height: 1.4,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 25),
+
+              // Permission Type
+              Text(
+                'Permission Type',
+                style: GoogleFonts.inter(
+                  color: AppColors.primary,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              Row(
+                children: [
+                  Expanded(
+                    child: _TypeButton(
+                      title: 'Personal',
+                      icon: Icons.person_outline_rounded,
+                      selected: selectedType == 'Personal',
+                      onTap: () {
+                        setState(() {
+                          selectedType = 'Personal';
+                        });
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _TypeButton(
+                      title: 'Official',
+                      icon: Icons.business_center_outlined,
+                      selected: selectedType == 'Official Work',
+                      onTap: () {
+                        setState(() {
+                          selectedType = 'Official Work';
+                        });
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _TypeButton(
+                      title: 'Emergency',
+                      icon: Icons.warning_amber_rounded,
+                      selected: selectedType == 'Emergency',
+                      onTap: () {
+                        setState(() {
+                          selectedType = 'Emergency';
+                        });
+                      },
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 24),
+
+              // Reason
+              Text(
+                'Reason',
+                style: GoogleFonts.inter(
+                  color: AppColors.primary,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              _InputBox(
+                controller: reasonController,
+                hint: 'Why are you leaving the office?',
+                icon: Icons.edit_note_rounded,
+                maxLines: 4,
+              ),
+
+              const SizedBox(height: 24),
+
+              // Start Time
+              Text(
+                'Permission Start Time',
+                style: GoogleFonts.inter(
+                  color: AppColors.primary,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              _TimeBox(
+                value: _formatTime(startTime),
+                icon: Icons.login_rounded,
+                onTap: _selectStartTime,
+              ),
+
+              const SizedBox(height: 24),
+
+              // Return Time
+              Text(
+                'Expected Return Time',
+                style: GoogleFonts.inter(
+                  color: AppColors.primary,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              _TimeBox(
+                value: _formatTime(returnTime),
+                icon: Icons.logout_rounded,
+                onTap: _selectReturnTime,
+              ),
+
+              const SizedBox(height: 24),
+
+              // Optional Note
+              Text(
+                'Additional Note',
+                style: GoogleFonts.inter(
+                  color: AppColors.primary,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              _InputBox(
+                controller: noteController,
+                hint: 'Add any additional information (optional)',
+                icon: Icons.notes_rounded,
+                maxLines: 3,
+              ),
+
+              const SizedBox(height: 24),
+
+              // Information Card
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(15),
+                decoration: BoxDecoration(
+                  color: AppColors.successBackground,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.info_outline_rounded,
+                      color: AppColors.success,
+                      size: 21,
+                    ),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Your permission request will be sent for approval. '
+                        'Please return to the office within the approved time.',
+                        style: GoogleFonts.inter(
+                          color: AppColors.successDark,
+                          fontSize: 12,
+                          height: 1.5,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 25),
+
+              // Submit Button - Home Page theme color
+              SizedBox(
+                width: double.infinity,
+                height: 54,
+                child: ElevatedButton(
+                  onPressed: _submitPermission,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: AppColors.surface,
+                    disabledBackgroundColor: AppColors.disabled,
+                    disabledForegroundColor: AppColors.surface,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                  ),
+                  child: Text(
+                    'Submit Permission',
+                    style: GoogleFonts.inter(
+                      color: AppColors.surface,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ------------------------------------------------------------
+// Permission Type Button
+// ------------------------------------------------------------
+
+class _TypeButton extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _TypeButton({
+    required this.title,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        height: 72,
+        decoration: BoxDecoration(
+          color: selected ? AppColors.infoBackground : AppColors.surface,
+          borderRadius: BorderRadius.circular(15),
+          border: Border.all(
+            color: selected ? AppColors.primaryBlue : AppColors.border,
+            width: selected ? 1.5 : 1,
+          ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              color: selected ? AppColors.primaryBlue : AppColors.textSecondary,
+              size: 22,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              title,
+              style: GoogleFonts.inter(
+                color: selected ? AppColors.primaryBlue : AppColors.textSecondary,
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ------------------------------------------------------------
+// Input Box
+// ------------------------------------------------------------
+
+class _InputBox extends StatelessWidget {
+  final TextEditingController controller;
+  final String hint;
+  final IconData icon;
+  final int maxLines;
+
+  const _InputBox({
+    required this.controller,
+    required this.hint,
+    required this.icon,
+    required this.maxLines,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: TextField(
+        controller: controller,
+        maxLines: maxLines,
+        style:  GoogleFonts.inter(
+          color: AppColors.primary,
+          fontSize: 14,
+        ),
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle:  GoogleFonts.inter(
+            color: AppColors.borderStrong,
+            fontSize: 13,
+          ),
+          prefixIcon: Padding(
+            padding: const EdgeInsets.only(
+              left: 14,
+              right: 10,
+              top: 12,
+            ),
+            child: Icon(
+              icon,
+              color: AppColors.borderStrong,
+              size: 21,
+            ),
+          ),
+          prefixIconConstraints: const BoxConstraints(minWidth: 45),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.all(15),
+        ),
+      ),
+    );
+  }
+}
+
+// ------------------------------------------------------------
+// Time Box
+// ------------------------------------------------------------
+
+class _TimeBox extends StatelessWidget {
+  final String value;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _TimeBox({
+    required this.value,
+    required this.icon,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isSelected = value != 'Select time';
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        height: 55,
+        padding: const EdgeInsets.symmetric(horizontal: 15),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(15),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              color: AppColors.primaryBlue,
+              size: 21,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                value,
+                style: GoogleFonts.inter(
+                  color: isSelected
+                      ? AppColors.primary
+                      : AppColors.borderStrong,
+                  fontSize: 14,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                ),
+              ),
+            ),
+            const Icon(
+              Icons.access_time_rounded,
+              color: AppColors.borderStrong,
+              size: 20,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

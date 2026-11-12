@@ -9,52 +9,89 @@ class ApiProvider {
   final DioClient _client;
 
   Future<Response<dynamic>> sendOtp(String phoneNumber) => _client.dio.post(
-    ApiConstants.sendOtp,
-    data: {'phone_number': phoneNumber},
-  );
+        ApiConstants.sendOtp,
+        data: {'phone_number': phoneNumber},
+      );
 
   Future<Response<dynamic>> resendOtp(String phoneNumber) => _client.dio.post(
-    ApiConstants.resendOtp,
-    data: {'phone_number': phoneNumber},
-  );
+        ApiConstants.resendOtp,
+        data: {'phone_number': phoneNumber},
+      );
 
-  Future<Response<dynamic>> verifyOtp(String phoneNumber, String otp) => _client.dio.post(
-    ApiConstants.verifyOtp,
-    data: {'phone_number': phoneNumber, 'otp': otp},
-  );
+  Future<Response<dynamic>> verifyOtp(String phoneNumber, String otp) =>
+      _client.dio.post(
+        ApiConstants.verifyOtp,
+        data: {'phone_number': phoneNumber, 'otp': otp},
+      );
 
-  Future<Response<dynamic>> getEmployeeProfile() => _client.dio.get(ApiConstants.employeeMe);
+  Future<Response<dynamic>> getEmployeeProfile() =>
+      _client.dio.get(ApiConstants.employeeMe);
 
-  Future<Response<dynamic>> getCurrentUser() => _client.dio.get(ApiConstants.currentUser);
+  Future<Response<dynamic>> getCurrentUser() =>
+      _client.dio.get(ApiConstants.currentUser);
 
   // ---------------------------------------------------------------------------
   // ATTENDANCE
   // ---------------------------------------------------------------------------
-  Future<Response<dynamic>> getTodayAttendance() => _client.dio.get(ApiConstants.attendanceToday);
+  Future<Response<dynamic>> getTodayAttendance() =>
+      _client.dio.get(ApiConstants.attendanceToday);
+
+  Future<Response<dynamic>> getAttendanceHistory({
+    required String startDate,
+    required String endDate,
+    required int page,
+    required int pageSize,
+  }) =>
+      _client.dio.get(
+        ApiConstants.attendanceHistory,
+        queryParameters: {
+          'start_date': startDate,
+          'end_date': endDate,
+          'page': page,
+          'page_size': pageSize,
+        },
+      );
 
   Future<Response<dynamic>> verifyAttendanceLocation({
     required double latitude,
     required double longitude,
     required double accuracy,
-  }) => _client.dio.post(
-    ApiConstants.attendanceVerifyLocation,
-    data: {'latitude': latitude, 'longitude': longitude, 'accuracy': accuracy},
-  );
+    required DateTime locationTimestamp,
+  }) =>
+      _client.dio.post(
+        ApiConstants.attendanceVerifyLocation,
+        data: {
+          'latitude': latitude,
+          'longitude': longitude,
+          'accuracy': accuracy,
+          'location_timestamp': locationTimestamp.toUtc().toIso8601String(),
+        },
+      );
 
-  Future<Response<dynamic>> checkIn(FormData form) => _client.dio.post(
-    ApiConstants.attendanceCheckIn,
-    data: form,
-    options: Options(sendTimeout: const Duration(seconds: 60), receiveTimeout: const Duration(seconds: 60)),
-  );
+  Future<Response<dynamic>> checkIn(FormData form, String idempotencyKey) =>
+      _client.dio.post(
+        ApiConstants.attendanceCheckIn,
+        data: form,
+        options: Options(
+          sendTimeout: const Duration(seconds: 60),
+          receiveTimeout: const Duration(seconds: 60),
+          headers: {'Idempotency-Key': idempotencyKey},
+        ),
+      );
 
-  Future<Response<dynamic>> checkOut(FormData form) => _client.dio.post(
-    ApiConstants.attendanceCheckOut,
-    data: form,
-    options: Options(sendTimeout: const Duration(seconds: 60), receiveTimeout: const Duration(seconds: 60)),
-  );
+  Future<Response<dynamic>> checkOut(FormData form, String idempotencyKey) =>
+      _client.dio.post(
+        ApiConstants.attendanceCheckOut,
+        data: form,
+        options: Options(
+          sendTimeout: const Duration(seconds: 60),
+          receiveTimeout: const Duration(seconds: 60),
+          headers: {'Idempotency-Key': idempotencyKey},
+        ),
+      );
 
   Future<Response<dynamic>> logout(String refreshToken) => _client.dio.post(
-    ApiConstants.logout,
-    data: {'refresh': refreshToken},
-  );
+        ApiConstants.logout,
+        data: {'refresh': refreshToken},
+      );
 }

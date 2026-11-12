@@ -2,7 +2,12 @@
 
 import time
 
-from config import FINGERPRINT_COOLDOWN, FINGER_REMOVAL_SETTLE_SECONDS
+from config import (
+    FINGERPRINT_COOLDOWN,
+    FINGER_REMOVAL_SETTLE_SECONDS,
+    HEARTBEAT_INTERVAL_SECONDS,
+    validate_runtime_config,
+)
 from drivers.oled import OledDisplay
 from drivers.r307 import R307, R307CommunicationError, R307PacketError
 from hardware.buzzer import Buzzer
@@ -227,7 +232,12 @@ def run_attendance_scan(
 def main():
     log("BOOT", "Lyra Pulse device starting")
 
-    device_id = get_device_id()
+    try:
+        device_id = get_device_id()
+        validate_runtime_config(device_id)
+    except Exception as exc:
+        log("CONFIG ERROR", str(exc))
+        return
     oled = OledDisplay()
     buzzer = Buzzer()
     led = StatusLed()
@@ -244,6 +254,24 @@ def main():
     sensor_ready = False
     sensor_retry_delay_seconds = 2
     sensor_retry_max_seconds = 30
+    next_heartbeat_at = 0
+
+    def send_heartbeat_if_due():
+        nonlocal next_heartbeat_at
+        if not wifi.is_connected():
+            return
+        now = time.time()
+        if now < next_heartbeat_at:
+            return
+        response = api_client.send_heartbeat(device_id)
+        if not response.get("success"):
+            log(
+                "HEARTBEAT",
+                "Heartbeat failed (HTTP %s)"
+                % response.get("status_code", "network error"),
+            )
+        next_heartbeat_at = now + HEARTBEAT_INTERVAL_SECONDS
+
     try:
         r307.begin()
         sensor_ready = True
@@ -272,6 +300,8 @@ def main():
                     oled.show_api_error()
                     led.ready_status()
                     time.sleep(1)
+
+            send_heartbeat_if_due()
 
             if not sensor_ready:
                 log(
@@ -334,6 +364,7 @@ def main():
             def poll_enrollment_while_waiting():
                 if not wifi.is_connected():
                     return None
+                send_heartbeat_if_due()
                 command = poll_enrollment_command(api_client, device_id)
                 if isinstance(command, dict):
                     enrollment_sensor_faulted[0] = run_enrollment(

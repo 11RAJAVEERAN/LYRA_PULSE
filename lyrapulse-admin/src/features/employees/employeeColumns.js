@@ -55,6 +55,13 @@ export const COLUMNS = [
   { id: 'phone_number', label: 'Phone Number', defaultVisible: false, sort: 'text', filter: 'select', value: (row) => clean(row.phone_number), option: distinctOption('phone_number') },
   { id: 'email', label: 'Email', defaultVisible: false, sort: 'text', filter: 'select', value: (row) => clean(row.email).toLowerCase(), option: distinctOption('email', { lower: true }) },
   {
+    id: 'company', label: 'Company', defaultVisible: true, sort: 'text', filter: 'select',
+    value: (row) => clean(row.organization_name).toLowerCase(),
+    option: (row) => (row.organization == null
+      ? { value: NONE, label: 'Unassigned' }
+      : { value: String(row.organization), label: clean(row.organization_name) || `Company #${row.organization}` }),
+  },
+  {
     id: 'branch', label: 'Master Branch', defaultVisible: true, sort: 'text', filter: 'select',
     value: (row, ctx) => lookup(ctx.branches, row.branch).toLowerCase(),
     option: (row, ctx) => (row.branch == null ? { value: NONE, label: 'Unassigned' } : { value: String(row.branch), label: lookup(ctx.branches, row.branch) || `Branch #${row.branch}` }),

@@ -26,7 +26,7 @@ class BottomNavBar extends StatelessWidget {
               icon: Icon(Icons.calendar_month_outlined),
               selectedIcon:
                   Icon(Icons.calendar_month_rounded, color: AppColors.primary),
-              label: 'Attendance'),
+              label: 'History'),
           NavigationDestination(
               icon: Icon(Icons.description_outlined),
               selectedIcon:

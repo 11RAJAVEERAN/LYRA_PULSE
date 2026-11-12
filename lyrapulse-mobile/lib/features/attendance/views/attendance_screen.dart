@@ -1,0 +1,691 @@
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
+
+import 'attendance_details_screen.dart';
+import '../../../app/theme/app_colors.dart';
+
+class AttendanceScreen extends StatelessWidget {
+  const AttendanceScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.textPrimary,
+      body: SafeArea(
+        child: Stack(
+          children: [
+            // =========================================================
+            // BACKGROUND GLOW
+            // =========================================================
+
+            Positioned(
+              top: -180,
+              right: -150,
+              child: _glow(
+                390,
+                AppColors.primaryBlue,
+              ),
+            ),
+
+            Positioned(
+              bottom: -220,
+              left: -170,
+              child: _glow(
+                420,
+                AppColors.accent,
+              ),
+            ),
+
+            // =========================================================
+            // CONTENT
+            // =========================================================
+
+            SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(
+                20,
+                18,
+                20,
+                30,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // =====================================================
+                  // HEADER
+                  // =====================================================
+
+                  Row(
+                    children: [
+                      _backButton(),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Text(
+                          'Attendance',
+                          style: GoogleFonts.inter(
+                            color: AppColors.surface,
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryDark,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: AppColors.primary,
+                          ),
+                        ),
+                        child: const Icon(
+                          Icons.calendar_month_rounded,
+                          color: AppColors.accent,
+                          size: 21,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 28),
+
+                  // =====================================================
+                  // TODAY TITLE
+                  // =====================================================
+
+                  Text(
+                    "TODAY'S ATTENDANCE",
+                    style: GoogleFonts.inter(
+                      color: AppColors.textSecondary,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 2,
+                    ),
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  // =====================================================
+                  // TODAY CARD
+                  // =====================================================
+
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(22),
+                      border: Border.all(
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              width: 52,
+                              height: 52,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: AppColors.primaryDark,
+                                border: Border.all(
+                                  color: AppColors.accent,
+                                ),
+                              ),
+                              child: const Icon(
+                                Icons.check_circle_outline_rounded,
+                                color: AppColors.accent,
+                                size: 27,
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '28 September 2026',
+                                    style: GoogleFonts.inter(
+                                      color: AppColors.surface,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 3),
+                                  Text(
+                                    'Today',
+                                    style: GoogleFonts.inter(
+                                      color: AppColors.borderStrong,
+                                      fontSize: 10,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            _statusBadge(
+                              'Present',
+                              AppColors.accent,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 22),
+                        const Divider(
+                          color: AppColors.primary,
+                          height: 1,
+                        ),
+                        const SizedBox(height: 18),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _timeItem(
+                                icon: Icons.login_rounded,
+                                title: 'Check In',
+                                value: '09:12 AM',
+                              ),
+                            ),
+                            Container(
+                              width: 1,
+                              height: 45,
+                              color: AppColors.primary,
+                            ),
+                            Expanded(
+                              child: _timeItem(
+                                icon: Icons.logout_rounded,
+                                title: 'Check Out',
+                                value: '06:18 PM',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 28),
+
+                  // =====================================================
+                  // SUMMARY
+                  // =====================================================
+
+                  Text(
+                    'ATTENDANCE SUMMARY',
+                    style: GoogleFonts.inter(
+                      color: AppColors.textSecondary,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 2,
+                    ),
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _summaryCard(
+                          icon: Icons.event_available_rounded,
+                          title: 'Present',
+                          value: '22',
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _summaryCard(
+                          icon: Icons.event_busy_rounded,
+                          title: 'Absent',
+                          value: '02',
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _summaryCard(
+                          icon: Icons.pending_actions_rounded,
+                          title: 'Leave',
+                          value: '02',
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 28),
+
+                  // =====================================================
+                  // HISTORY TITLE
+                  // =====================================================
+
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'ATTENDANCE HISTORY',
+                          style: GoogleFonts.inter(
+                            color: AppColors.textSecondary,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 2,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        'September',
+                        style: GoogleFonts.inter(
+                          color: AppColors.accent,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  // =====================================================
+                  // HISTORY ITEM 28
+                  // =====================================================
+
+                  _historyCard(
+                    date: '28',
+                    day: 'MON',
+                    checkIn: '09:12 AM',
+                    checkOut: '06:18 PM',
+                    status: 'Present',
+                    statusColor: AppColors.accent,
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  // =====================================================
+                  // HISTORY ITEM 27
+                  // =====================================================
+
+                  _historyCard(
+                    date: '27',
+                    day: 'SUN',
+                    checkIn: '09:08 AM',
+                    checkOut: '06:05 PM',
+                    status: 'Present',
+                    statusColor: AppColors.accent,
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  // =====================================================
+                  // HISTORY ITEM 26
+                  // =====================================================
+
+                  _historyCard(
+                    date: '26',
+                    day: 'SAT',
+                    checkIn: '--:--',
+                    checkOut: '--:--',
+                    status: 'Absent',
+                    statusColor: AppColors.error,
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  // =====================================================
+                  // HISTORY ITEM 25
+                  // =====================================================
+
+                  _historyCard(
+                    date: '25',
+                    day: 'FRI',
+                    checkIn: '09:15 AM',
+                    checkOut: '06:10 PM',
+                    status: 'Present',
+                    statusColor: AppColors.accent,
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  // =====================================================
+                  // HISTORY ITEM 24
+                  // =====================================================
+
+                  _historyCard(
+                    date: '24',
+                    day: 'THU',
+                    checkIn: '09:20 AM',
+                    checkOut: '06:22 PM',
+                    status: 'Present',
+                    statusColor: AppColors.accent,
+                  ),
+
+                  const SizedBox(height: 30),
+
+                  // =====================================================
+                  // FOOTER
+                  // =====================================================
+
+                  Center(
+                    child: Text(
+                      'LYRA PULSE',
+                      style: GoogleFonts.inter(
+                        color: AppColors.textSecondary,
+                        fontSize: 8,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 3,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ===============================================================
+  // BACK BUTTON
+  // ===============================================================
+
+  Widget _backButton() {
+    return Material(
+      color: AppColors.surface,
+      child: InkWell(
+        onTap: Get.back,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: AppColors.primaryDark,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: AppColors.primary,
+            ),
+          ),
+          child: const Icon(
+            Icons.arrow_back_rounded,
+            color: AppColors.surface,
+            size: 21,
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ===============================================================
+  // STATUS BADGE
+  // ===============================================================
+
+  Widget _statusBadge(
+    String text,
+    Color color,
+  ) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 10,
+        vertical: 6,
+      ),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: color.withValues(alpha: 0.30),
+        ),
+      ),
+      child: Text(
+        text,
+        style: GoogleFonts.inter(
+          color: color,
+          fontSize: 9,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+
+  // ===============================================================
+  // TIME ITEM
+  // ===============================================================
+
+  Widget _timeItem({
+    required IconData icon,
+    required String title,
+    required String value,
+  }) {
+    return Column(
+      children: [
+        Icon(
+          icon,
+          color: AppColors.accent,
+          size: 20,
+        ),
+        const SizedBox(height: 7),
+        Text(
+          title,
+          style: GoogleFonts.inter(
+            color: AppColors.textSecondary,
+            fontSize: 9,
+          ),
+        ),
+        const SizedBox(height: 3),
+        Text(
+          value,
+          style: GoogleFonts.inter(
+            color: AppColors.surface,
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ===============================================================
+  // SUMMARY CARD
+  // ===============================================================
+
+  Widget _summaryCard({
+    required IconData icon,
+    required String title,
+    required String value,
+  }) {
+    return Container(
+      height: 105,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.textPrimary,
+        borderRadius: BorderRadius.circular(17),
+        border: Border.all(
+          color: AppColors.primary,
+        ),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            icon,
+            color: AppColors.accent,
+            size: 22,
+          ),
+          const SizedBox(height: 7),
+          Text(
+            value,
+            style: GoogleFonts.inter(
+              color: AppColors.surface,
+              fontSize: 17,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          Text(
+            title,
+            style: GoogleFonts.inter(
+              color: AppColors.textSecondary,
+              fontSize: 8,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ===============================================================
+  // HISTORY CARD
+  // ===============================================================
+
+  Widget _historyCard({
+    required String date,
+    required String day,
+    required String checkIn,
+    required String checkOut,
+    required String status,
+    required Color statusColor,
+  }) {
+    return Material(
+      color: AppColors.surface,
+      child: InkWell(
+        onTap: () {
+          Get.to(
+            () => AttendanceDetailsScreen(
+              date: date,
+              day: day,
+              checkIn: checkIn,
+              checkOut: checkOut,
+              status: status,
+            ),
+          );
+        },
+        borderRadius: BorderRadius.circular(18),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(15),
+          decoration: BoxDecoration(
+            color: AppColors.primary,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: AppColors.primary,
+            ),
+          ),
+          child: Row(
+            children: [
+              // DATE
+              Container(
+                width: 48,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: AppColors.primaryDark,
+                  borderRadius: BorderRadius.circular(13),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      date,
+                      style: GoogleFonts.inter(
+                        color: AppColors.surface,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    Text(
+                      day,
+                      style: GoogleFonts.inter(
+                        color: AppColors.textSecondary,
+                        fontSize: 7,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(width: 13),
+
+              // CHECK IN / CHECK OUT
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.login_rounded,
+                          color: AppColors.accent,
+                          size: 14,
+                        ),
+                        const SizedBox(width: 5),
+                        Text(
+                          checkIn,
+                          style: GoogleFonts.inter(
+                            color: AppColors.border,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.logout_rounded,
+                          color: AppColors.borderStrong,
+                          size: 14,
+                        ),
+                        const SizedBox(width: 5),
+                        Text(
+                          checkOut,
+                          style: GoogleFonts.inter(
+                            color: AppColors.borderStrong,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              // STATUS
+              _statusBadge(
+                status,
+                statusColor,
+              ),
+
+              const SizedBox(width: 5),
+
+              // CLICK INDICATOR
+              const Icon(
+                Icons.chevron_right_rounded,
+                color: AppColors.textSecondary,
+                size: 20,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ===============================================================
+  // GLOW
+  // ===============================================================
+
+  Widget _glow(
+    double size,
+    Color color,
+  ) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: RadialGradient(
+          colors: [
+            color.withValues(alpha: 0.11),
+            color.withValues(alpha: 0.025),
+            AppColors.surface,
+          ],
+        ),
+      ),
+    );
+  }
+}

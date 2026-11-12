@@ -69,18 +69,32 @@ class User(AbstractBaseUser, PermissionsMixin):
         return f"{self.first_name} {self.last_name}".strip() or self.phone_number
 
     @property
+    def is_platform_superadmin(self):
+        return self.role == self.Role.SUPERADMIN and self.is_superuser
+
+    @property
     def has_global_scope(self):
-        # The application role controls actions; Django's trusted platform-superuser
-        # flag is the separate mechanism for cross-organization maintenance.
-        return self.is_superuser
+        return self.is_platform_superadmin
+
+    @property
+    def has_active_company_access(self):
+        if self.is_platform_superadmin:
+            return True
+        if self.role == self.Role.SUPERADMIN or self.role in self.BUSINESS_ROLES:
+            return bool(self.organization_id and self.organization.is_active)
+        if self.organization_id:
+            return self.organization.is_active
+        employee = getattr(self, "employee", None)
+        branch = getattr(employee, "branch", None)
+        return not branch or not branch.organization_id or branch.organization.is_active
 
     def scoped_branch_ids(self):
         """Branch ids available to this user within their active organization."""
         if self.organization_id is None or not self.organization.is_active:
             return []
         if self.role == self.Role.SUPERADMIN:
-            return list(self.organization.branches.values_list("id", flat=True))
-        return list(self.allowed_branches.filter(organization_id=self.organization_id).values_list("id", flat=True))
+            return list(self.organization.branches.filter(is_active=True).values_list("id", flat=True))
+        return list(self.allowed_branches.filter(organization_id=self.organization_id, is_active=True).values_list("id", flat=True))
 
     def clean(self):
         super().clean()

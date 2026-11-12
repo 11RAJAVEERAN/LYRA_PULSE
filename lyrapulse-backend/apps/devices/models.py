@@ -10,11 +10,18 @@ class Device(models.Model):
     name = models.CharField(max_length=150, blank=True)
     is_active = models.BooleanField(default=True)
     token_hash = models.CharField(max_length=128)
+    last_seen = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ["device_id"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=("branch",),
+                name="one_fingerprint_device_per_branch",
+            ),
+        ]
 
     def set_token(self, token):
         self.token_hash = make_password(token)

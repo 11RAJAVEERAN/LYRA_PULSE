@@ -64,6 +64,8 @@ class EmployeeManagementSerializer(serializers.ModelSerializer):
     last_name = serializers.CharField(write_only=True, max_length=100, required=False, allow_blank=True)
     phone_number = serializers.CharField(max_length=20, write_only=True)
     email = serializers.EmailField(write_only=True, required=False, allow_blank=True)
+    organization = serializers.SerializerMethodField()
+    organization_name = serializers.SerializerMethodField()
     emergency_contact_number = serializers.CharField(source="emergency_contact", max_length=20, required=False, allow_blank=True)
     employee_type = serializers.PrimaryKeyRelatedField(queryset=EmployeeType.objects.all(), required=False, allow_null=True)
     payroll_group = serializers.PrimaryKeyRelatedField(queryset=PayrollGroup.objects.all(), required=False, allow_null=True)
@@ -73,7 +75,7 @@ class EmployeeManagementSerializer(serializers.ModelSerializer):
     class Meta:
         model = Employee
         fields = ("id", "employee_code", "first_name", "last_name", "phone_number", "email",
-                  "branch", "department", "designation", "joining_date", "is_active",
+                  "organization", "organization_name", "branch", "department", "designation", "joining_date", "is_active",
                   # Basic details
                   "display_name", "employee_type", "door_lock_permission", "pf_number", "uan_number", "esic_number", "address",
                   # Personal information
@@ -85,6 +87,12 @@ class EmployeeManagementSerializer(serializers.ModelSerializer):
                   "bank_name", "bank_branch_name", "bank_account_number", "bank_ifsc_code",
                   "biometric_attendance_enabled", "mobile_gps_attendance_enabled", "photo_attendance_enabled")
         read_only_fields = ("id",)
+
+    def get_organization(self, obj):
+        return obj.branch.organization_id if obj.branch_id else None
+
+    def get_organization_name(self, obj):
+        return obj.branch.organization.name if obj.branch_id and obj.branch.organization_id else None
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -122,8 +130,13 @@ class EmployeeManagementSerializer(serializers.ModelSerializer):
             return attrs
         allowed = None if user.has_global_scope else set(user.scoped_branch_ids())
         errors = {}
+        branch = attrs.get("branch", getattr(self.instance, "branch", None))
+        if not self.instance or "branch" in attrs:
+            if branch is None:
+                errors["branch"] = "Select a company-owned branch for this employee."
+            elif (not branch.is_active or (branch.organization_id is not None and not branch.organization.is_active)):
+                errors["branch"] = "Employees can only be assigned to an active branch in an active company."
         if allowed is not None and ("branch" in attrs or not self.instance):
-            branch = attrs.get("branch")
             if branch is None or branch.pk not in allowed:
                 errors["branch"] = "Select a branch you are allowed to manage."
         department = attrs.get("department")
@@ -269,8 +282,4 @@ class PayrollGroupOptionSerializer(serializers.ModelSerializer):
         model = PayrollGroup
         fields = ("id", "name", "is_active")
         read_only_fields = fields
-
-
-
-
 

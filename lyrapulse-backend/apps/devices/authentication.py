@@ -23,14 +23,20 @@ class DeviceTokenAuthentication(BaseAuthentication):
             raise AuthenticationFailed("Device ID is required.")
 
         try:
-            device = Device.objects.get(device_id=device_id)
+            device = Device.objects.select_related("branch__organization").get(device_id=device_id)
         except Device.DoesNotExist as exc:
             raise AuthenticationFailed("Invalid device credentials.") from exc
         try:
             token = parts[1].decode("ascii")
         except UnicodeDecodeError as exc:
             raise AuthenticationFailed("Invalid device credentials.") from exc
-        if not device.is_active or not device.verify_token(token):
+        organization = device.branch.organization
+        if (
+            not device.is_active
+            or not device.branch.is_active
+            or (organization is not None and not organization.is_active)
+            or not device.verify_token(token)
+        ):
             raise AuthenticationFailed("Invalid device credentials.")
 
         return device, device

@@ -11,18 +11,34 @@ import { EmptyState } from '../../../components/common/EmptyState'
 import { LoadingState } from '../../../components/common/LoadingState'
 import { ErrorState } from '../../../components/common/ErrorState'
 import { attendancePermissionsApi } from '../api/attendancePermissionsApi'
+import { authService } from '../../../services/authService'
 
 const PAGE_SIZE = 25
 const fields = [
-  ['mobile_gps_attendance_enabled', 'Mobile'],
-  ['photo_attendance_enabled', 'Photo'],
-  ['location_attendance_enabled', 'Location'],
-  ['biometric_attendance_enabled', 'Biometric'],
+  ['mobile_gps_attendance_enabled', 'Mobile Attendance'],
+  ['location_attendance_enabled', 'Location Verification'],
+  ['photo_attendance_enabled', 'Photo Attendance'],
+  ['biometric_attendance_enabled', 'Fingerprint Attendance'],
   ['auto_punch_out_enabled', 'Auto punch out'],
 ]
 
+function errorText(error) {
+  const data = error?.response?.data
+  if (data?.detail) return data.detail
+  if (data?.errors) {
+    return Object.entries(data.errors)
+      .map(([field, messages]) => `${field}: ${Array.isArray(messages) ? messages.join(' ') : messages}`)
+      .join(' ')
+  }
+  if (error?.response?.status === 401) return 'Your session has expired. Sign in again to continue.'
+  if (error?.response?.status === 403) return 'You are not authorized to manage these attendance permissions.'
+  if (error?.response?.status === 404) return 'The employee is no longer available in your authorized branch scope.'
+  return data?.message ?? error?.message ?? 'The request could not be completed.'
+}
+
 export function AttendancePermissionsPage() {
   const queryClient = useQueryClient()
+  const user = authService.getCurrentUser()
   const [search, setSearch] = useState('')
   const [method, setMethod] = useState('all')
   const [branch, setBranch] = useState('all')
@@ -36,19 +52,33 @@ export function AttendancePermissionsPage() {
     page: page + 1,
     page_size: PAGE_SIZE,
   }), [search, method, branch, page])
-  const query = useQuery({ queryKey: ['attendance-permissions', params], queryFn: () => attendancePermissionsApi.list(params) })
-  const branchQuery = useQuery({ queryKey: ['attendance-permission-branches'], queryFn: attendancePermissionsApi.branches })
+  const query = useQuery({
+    queryKey: ['attendance-permissions', user?.id, params],
+    queryFn: () => attendancePermissionsApi.list(params),
+  })
+  const branchQuery = useQuery({
+    queryKey: ['attendance-permission-branches', user?.id],
+    queryFn: attendancePermissionsApi.branches,
+  })
 
-  const refresh = () => queryClient.invalidateQueries({ queryKey: ['attendance-permissions'] })
+  const refresh = () => queryClient.invalidateQueries({ queryKey: ['attendance-permissions', user?.id] })
   const save = useMutation({
     mutationFn: ({ employeeId, permissions }) => attendancePermissionsApi.update(employeeId, permissions),
-    onSuccess: () => { refresh(); setNotice({ severity: 'success', message: 'Attendance permission saved.' }) },
-    onError: (error) => setNotice({ severity: 'error', message: error.response?.data?.message || 'Could not save this change. Please try again.' }),
+    onSuccess: async () => {
+      await refresh()
+      setNotice({ severity: 'success', message: 'Attendance permission saved.' })
+    },
+    onError: (error) => setNotice({ severity: 'error', message: errorText(error) }),
   })
   const bulk = useMutation({
     mutationFn: ({ ids, permissions }) => attendancePermissionsApi.bulkUpdate(ids, permissions),
-    onSuccess: () => { setSelected([]); refresh(); setNotice({ severity: 'success', message: `Permissions updated for ${selected.length} employees.` }) },
-    onError: (error) => setNotice({ severity: 'error', message: error.response?.data?.message || 'Bulk update failed. No changes were applied.' }),
+    onSuccess: async () => {
+      const updatedCount = selected.length
+      setSelected([])
+      await refresh()
+      setNotice({ severity: 'success', message: `Permissions updated for ${updatedCount} employees.` })
+    },
+    onError: (error) => setNotice({ severity: 'error', message: errorText(error) }),
   })
 
   const rows = query.data?.results ?? []
@@ -60,14 +90,19 @@ export function AttendancePermissionsPage() {
   return (
     <Box>
       <PageHeader title="Attendance Permission" />
-      <Alert severity="info" sx={{ mb: 2 }}>Auto Punch Out settings are stored here. Automatic checkout needs a scheduler and shift end-time integration, which this project does not currently provide.</Alert>
+      <Alert severity="info" sx={{ mb: 2 }}>
+        Photo Attendance controls photo capture only; it is not face verification. Auto Punch Out settings are stored here, but automatic checkout needs a scheduler and shift end-time integration.
+      </Alert>
+      {branchQuery.isError ? (
+        <Alert severity="error" sx={{ mb: 2 }}>{errorText(branchQuery.error)}</Alert>
+      ) : null}
       <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
         <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} alignItems={{ md: 'center' }}>
           <TextField size="small" value={search} onChange={(event) => { setSearch(event.target.value); setPage(0) }} placeholder="Search employees" InputProps={{ startAdornment: <Search size={17} style={{ marginRight: 8 }} /> }} sx={{ minWidth: { md: 270 } }} />
           <FormControl size="small" sx={{ minWidth: 170 }}>
             <InputLabel id="permission-method-label">Attendance method</InputLabel>
             <Select labelId="permission-method-label" label="Attendance method" value={method} onChange={(event) => { setMethod(event.target.value); setPage(0) }}>
-              <MenuItem value="all">All methods</MenuItem><MenuItem value="mobile">Mobile</MenuItem><MenuItem value="biometric">Biometric</MenuItem><MenuItem value="none">Not enabled</MenuItem>
+              <MenuItem value="all">All methods</MenuItem><MenuItem value="mobile">Mobile</MenuItem><MenuItem value="biometric">Fingerprint</MenuItem><MenuItem value="none">Not enabled</MenuItem>
             </Select>
           </FormControl>
           <FormControl size="small" sx={{ minWidth: 180 }}>
@@ -87,7 +122,7 @@ export function AttendancePermissionsPage() {
         </Stack>}
       </Paper>
 
-      {query.isLoading ? <LoadingState /> : query.isError ? <ErrorState message="Attendance permissions could not be loaded." onRetry={() => query.refetch()} /> : rows.length === 0 ? (
+      {query.isLoading ? <LoadingState /> : query.isError ? <ErrorState message={errorText(query.error)} onRetry={() => query.refetch()} /> : rows.length === 0 ? (
         <EmptyState title="No employees found" description="Try another search or branch filter." />
       ) : <Paper variant="outlined" sx={{ overflow: 'hidden' }}>
         <TableContainer sx={{ maxHeight: 'calc(100vh - 330px)' }}>
@@ -96,20 +131,22 @@ export function AttendancePermissionsPage() {
               <TableCell padding="checkbox"><Checkbox checked={allOnPage} indeterminate={!allOnPage && someOnPage} onChange={(event) => setSelected((current) => event.target.checked ? [...new Set([...current, ...rows.map((row) => row.id)])] : current.filter((id) => !rows.some((row) => row.id === id)))} inputProps={{ 'aria-label': 'Select all employees on this page' }} /></TableCell>
               <TableCell>Employee</TableCell><TableCell>Role / Designation</TableCell><TableCell>Attendance method</TableCell>
               {fields.map(([, label]) => <TableCell key={label} align="center">{label}</TableCell>)}
-              <TableCell>Biometric device</TableCell>
+              <TableCell align="center">Face Verification</TableCell><TableCell>Fingerprint device</TableCell>
             </TableRow></TableHead>
             <TableBody>{rows.map((row) => <TableRow key={row.id} hover>
               <TableCell padding="checkbox"><Checkbox checked={selected.includes(row.id)} onChange={() => toggleSelected(row.id)} inputProps={{ 'aria-label': `Select ${row.name}` }} /></TableCell>
               <TableCell><Typography fontWeight={600}>{row.name}</Typography><Typography variant="caption" color="text.secondary">{row.employee_code}</Typography></TableCell>
               <TableCell>{row.role || '—'}</TableCell>
-              <TableCell><Chip size="small" variant="outlined" label={row.attendance_method} /></TableCell>
+              <TableCell><Chip size="small" variant="outlined" label={row.attendance_method?.replace('Biometric', 'Fingerprint')} /></TableCell>
               {fields.map(([field, label]) => {
-                const dependent = ['photo_attendance_enabled', 'location_attendance_enabled'].includes(field)
-                const disabled = (dependent && !row.mobile_gps_attendance_enabled) || save.isPending || bulk.isPending
-                const message = field === 'auto_punch_out_enabled' ? 'Saved as configuration; automatic execution requires a scheduler.' : dependent && !row.mobile_gps_attendance_enabled ? 'Enable Mobile attendance first. This saved setting is retained.' : `${label} attendance permission`
+                const disabled = save.isPending || bulk.isPending
+                const message = field === 'auto_punch_out_enabled'
+                  ? 'Saved as configuration; automatic execution requires a scheduler.'
+                  : `${label} permission`
                 return <TableCell key={field} align="center"><Tooltip title={message}><span><Switch size="small" checked={row[field]} disabled={disabled} onChange={(event) => updateOne(row, field, event.target.checked)} inputProps={{ 'aria-label': `${label} for ${row.name}` }} /></span></Tooltip></TableCell>
               })}
-              <TableCell>{row.biometric_devices?.length ? row.biometric_devices.map((device) => <Chip key={device.id} size="small" sx={{ mr: .5, mb: .5 }} label={device.name} />) : <Typography variant="body2" color="text.secondary">No assigned fingerprint</Typography>}</TableCell>
+              <TableCell align="center"><Tooltip title="Secure face matching and liveness verification are not configured. Photo capture is not face verification."><Chip size="small" variant="outlined" label="Unavailable" /></Tooltip></TableCell>
+              <TableCell>{row.biometric_devices?.length ? row.biometric_devices.map((device) => <Chip key={device.id} size="small" sx={{ mr: .5, mb: .5 }} label={device.name} />) : <Typography variant="body2" color="text.secondary">No assigned fingerprint device</Typography>}</TableCell>
             </TableRow>)}</TableBody>
           </Table>
         </TableContainer>

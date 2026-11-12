@@ -28,7 +28,10 @@ class WelcomeHeader extends StatelessWidget {
         child: CircleAvatar(
             radius: 25,
             backgroundColor: AppColors.accent,
-            child: Text(employeeName.isEmpty ? 'E' : employeeName.substring(0, 1).toUpperCase(),
+            child: Text(
+                employeeName.isEmpty
+                    ? 'E'
+                    : employeeName.substring(0, 1).toUpperCase(),
                 style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w700,
@@ -38,12 +41,20 @@ class WelcomeHeader extends StatelessWidget {
       Expanded(
           child:
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('Welcome, $employeeName 👋', style: AppTextStyles.title, maxLines: 1, overflow: TextOverflow.ellipsis),
+        Text('Welcome, $employeeName 👋',
+            style: AppTextStyles.title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis),
         const SizedBox(height: 4),
-        Text(employeeCode.isEmpty ? 'Employee account' : 'Employee ID: $employeeCode', style: AppTextStyles.bodySmall),
+        Text(
+            employeeCode.isEmpty
+                ? 'Employee account'
+                : 'Employee ID: $employeeCode',
+            style: AppTextStyles.bodySmall),
       ])),
       IconButton(
           onPressed: onNotificationTap,
+          tooltip: 'Notifications — coming soon',
           style: IconButton.styleFrom(backgroundColor: AppColors.surface),
           icon: const Icon(Icons.notifications_none_rounded,
               color: AppColors.textPrimary)),

@@ -52,7 +52,7 @@ class DeviceResultRequestTests(unittest.TestCase):
         api_service.requests = fake_requests
         try:
             client = self.make_client(
-                base_url="http://backend",
+                base_url="https://backend",
                 timeout=4,
                 retry_count=0,
             )
@@ -68,7 +68,7 @@ class DeviceResultRequestTests(unittest.TestCase):
         self.assertTrue(result["success"])
         self.assertEqual(
             fake_requests.post_arguments["url"],
-            "http://backend/api/v1/devices/LYRA-DEVICE-001/enrollment/enrollment-1/result/",
+            "https://backend/api/v1/devices/LYRA-DEVICE-001/enrollment/enrollment-1/result/",
         )
         self.assertEqual(
             json.loads(fake_requests.post_arguments["data"].decode("utf-8")),
@@ -87,7 +87,7 @@ class DeviceResultRequestTests(unittest.TestCase):
         api_service.DEVICE_TOKEN = "test-device-token"
         try:
             client = self.make_client(
-                base_url="http://backend",
+                base_url="https://backend",
                 timeout=4,
                 retry_count=0,
             )
@@ -99,7 +99,7 @@ class DeviceResultRequestTests(unittest.TestCase):
         self.assertTrue(result["success"])
         self.assertEqual(
             fake_requests.post_arguments["url"],
-            "http://backend/api/v1/attendance/fingerprint/events/",
+            "https://backend/api/v1/attendance/fingerprint/events/",
         )
         body = json.loads(fake_requests.post_arguments["data"].decode("utf-8"))
         self.assertEqual(body["device_id"], "LYRA-DEVICE-001")
@@ -126,7 +126,7 @@ class DeviceResultRequestTests(unittest.TestCase):
         api_service.requests = fake_requests
         try:
             client = self.make_client(
-                base_url="http://backend",
+                base_url="https://backend",
                 timeout=4,
                 retry_count=3,
             )
@@ -137,6 +137,46 @@ class DeviceResultRequestTests(unittest.TestCase):
         self.assertFalse(result["success"])
         self.assertEqual(fake_requests.post_count, 1)
         self.assertTrue(result["queued"])
+
+    def test_heartbeat_uses_device_auth_and_configured_timeout(self):
+        fake_requests = FakeRequests()
+        previous_requests = api_service.requests
+        previous_token = api_service.DEVICE_TOKEN
+        api_service.requests = fake_requests
+        api_service.DEVICE_TOKEN = "test-device-token"
+        try:
+            client = self.make_client(
+                base_url="https://backend",
+                timeout=4,
+                retry_count=0,
+            )
+            result = client.send_heartbeat("LYRA-DEVICE-001")
+        finally:
+            api_service.requests = previous_requests
+            api_service.DEVICE_TOKEN = previous_token
+
+        self.assertTrue(result["success"])
+        self.assertEqual(
+            fake_requests.post_arguments["url"],
+            "https://backend/api/v1/devices/LYRA-DEVICE-001/heartbeat/",
+        )
+        self.assertEqual(
+            fake_requests.post_arguments["headers"]["Authorization"],
+            "Device test-device-token",
+        )
+        self.assertEqual(fake_requests.post_arguments["timeout"], 4)
+
+    def test_http_base_url_is_rejected_before_credentials_are_sent(self):
+        fake_requests = FakeRequests()
+        previous_requests = api_service.requests
+        api_service.requests = fake_requests
+        try:
+            with self.assertRaisesRegex(ValueError, "requires an HTTPS"):
+                self.make_client(base_url="http://backend")
+        finally:
+            api_service.requests = previous_requests
+
+        self.assertEqual(fake_requests.post_count, 0)
 
 
 if __name__ == "__main__":

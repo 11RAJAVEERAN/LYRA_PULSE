@@ -107,7 +107,9 @@ class AdminManualAttendanceView(APIView):
         employee = scope_queryset(Employee.objects.select_related("user", "branch"), request.user, "branch").filter(pk=employee_id).first()
         if employee is None:
             raise NotFound("Employee not found in your scope.")
-        if not employee.is_active or not employee.user.is_active or employee.branch_id is None or not employee.branch.is_active:
+        if (not employee.is_active or not employee.user.is_active or employee.branch_id is None
+            or not employee.branch.is_active
+            or (employee.branch.organization_id is not None and not employee.branch.organization.is_active)):
             raise PermissionDenied("The employee or assigned branch is inactive.")
         with transaction.atomic():
             employee = Employee.objects.select_for_update().get(pk=employee.pk)

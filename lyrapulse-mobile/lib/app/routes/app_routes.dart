@@ -4,6 +4,7 @@ abstract final class AppRoutes {
   static const String login = '/login';
   static const String otp = '/otp';
   static const String home = '/home';
+  static const String applyLeave = '/apply-leave';
 
   // Attendance flow (Home -> location -> camera -> confirm -> success)
   static const String attendanceLocation = '/attendance/location';

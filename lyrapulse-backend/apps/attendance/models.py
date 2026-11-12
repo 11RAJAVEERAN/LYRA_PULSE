@@ -6,6 +6,7 @@ from django.utils import timezone
 
 from apps.branches.models import Branch
 from apps.employees.models import Employee
+from .storage import private_attendance_storage
 
 
 def _photo_path(kind, instance, filename):
@@ -48,7 +49,7 @@ class Attendance(models.Model):
     check_in_accuracy = models.FloatField(null=True, blank=True, help_text="GPS accuracy reported by the device, in meters.")
     check_in_distance_meters = models.FloatField(null=True, blank=True, help_text="Distance from the branch attendance location, in meters.")
     check_in_location_verified = models.BooleanField(null=True, blank=True)
-    check_in_photo = models.ImageField(upload_to=check_in_photo_path, blank=True)
+    check_in_photo = models.ImageField(upload_to=check_in_photo_path, storage=private_attendance_storage, blank=True)
 
     # --- Check-out (empty until the employee checks out) ---
     check_out_at = models.DateTimeField(null=True, blank=True)
@@ -57,7 +58,7 @@ class Attendance(models.Model):
     check_out_accuracy = models.FloatField(null=True, blank=True, help_text="GPS accuracy reported by the device, in meters.")
     check_out_distance_meters = models.FloatField(null=True, blank=True, help_text="Distance from the branch attendance location, in meters.")
     check_out_location_verified = models.BooleanField(null=True, blank=True)
-    check_out_photo = models.ImageField(upload_to=check_out_photo_path, blank=True)
+    check_out_photo = models.ImageField(upload_to=check_out_photo_path, storage=private_attendance_storage, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -117,6 +118,31 @@ class AttendanceEvent(models.Model):
 
     class Meta:
         ordering = ["occurred_at", "id"]
+
+
+class MobileAttendanceRequest(models.Model):
+    """Durable idempotency record for optional mobile punch request keys."""
+
+    class Outcome(models.TextChoices):
+        PENDING = "PENDING", "Pending"
+        SUCCEEDED = "SUCCEEDED", "Succeeded"
+        REJECTED = "REJECTED", "Rejected"
+
+    key = models.CharField(max_length=128, unique=True)
+    employee = models.ForeignKey(Employee, on_delete=models.PROTECT, related_name="mobile_attendance_requests")
+    action = models.CharField(max_length=12, choices=AttendanceEvent.Action.choices)
+    payload_fingerprint = models.CharField(max_length=64)
+    outcome = models.CharField(max_length=12, choices=Outcome.choices, default=Outcome.PENDING)
+    response = models.JSONField(default=dict, blank=True)
+    http_status = models.PositiveSmallIntegerField(null=True, blank=True)
+    attendance = models.ForeignKey(
+        Attendance, on_delete=models.PROTECT, null=True, blank=True,
+        related_name="mobile_requests",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at", "id"]
 
 
 class AttendanceAdjustment(models.Model):

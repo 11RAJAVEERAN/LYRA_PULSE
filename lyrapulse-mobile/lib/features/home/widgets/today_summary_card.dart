@@ -26,7 +26,9 @@ class TodaySummaryCard extends GetView<AttendanceController> {
           final hasCheckOut = today?.checkOutAt != null;
           final String hint;
           if (state == null) {
-            hint = controller.isLoadingToday.value ? 'Loading today\'s attendance…' : 'Attendance is unavailable right now.';
+            hint = controller.isLoadingToday.value
+                ? 'Loading today\'s attendance…'
+                : 'Attendance is unavailable right now.';
           } else if (state == AttendanceState.notCheckedIn) {
             hint = 'No attendance marked yet';
           } else if (state == AttendanceState.checkedIn) {
@@ -34,43 +36,51 @@ class TodaySummaryCard extends GetView<AttendanceController> {
           } else {
             hint = 'Attendance completed for today';
           }
-          return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Row(children: [
-              Expanded(child: Text('Today', style: AppTextStyles.title)),
-              Text(hint, style: AppTextStyles.bodySmall),
-            ]),
-            const SizedBox(height: 14),
-            _TimelineRow(
-              icon: Icons.login_rounded,
-              title: 'Check In',
-              subtitle: 'Branch entry',
-              time: Formatters.time12(today?.checkInAt, placeholder: '--'),
-              done: hasCheckIn,
-              color: AppColors.success,
-              showLine: true,
-            ),
-            _TimelineRow(
-              icon: Icons.logout_rounded,
-              title: 'Check Out',
-              subtitle: 'Branch exit',
-              time: Formatters.time12(today?.checkOutAt, placeholder: '--'),
-              done: hasCheckOut,
-              color: AppColors.warning,
-              showLine: false,
-            ),
-            if ((today?.sessions.length ?? 0) > 1) ...[
-              const SizedBox(height: 10),
-              Text(
-                today!.sessions.asMap().entries.map((entry) {
-                  final session = entry.value;
-                  final start = Formatters.time12(session.checkInAt, placeholder: '--');
-                  final end = Formatters.time12(session.checkOutAt, placeholder: 'Open');
-                  return '${entry.key + 1}. $start – $end';
-                }).join('   •   '),
-                style: AppTextStyles.bodySmall,
-              ),
-            ],
-          ]);
+          return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Today', style: AppTextStyles.title),
+                const SizedBox(height: 3),
+                Text(
+                  hint,
+                  style: AppTextStyles.bodySmall,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 14),
+                _TimelineRow(
+                  icon: Icons.login_rounded,
+                  title: 'Check In',
+                  subtitle: 'Branch entry',
+                  time: Formatters.time12(today?.checkInAt, placeholder: '--'),
+                  done: hasCheckIn,
+                  color: AppColors.success,
+                  showLine: true,
+                ),
+                _TimelineRow(
+                  icon: Icons.logout_rounded,
+                  title: 'Check Out',
+                  subtitle: 'Branch exit',
+                  time: Formatters.time12(today?.checkOutAt, placeholder: '--'),
+                  done: hasCheckOut,
+                  color: AppColors.warning,
+                  showLine: false,
+                ),
+                if ((today?.sessions.length ?? 0) > 1) ...[
+                  const SizedBox(height: 10),
+                  Text(
+                    today!.sessions.asMap().entries.map((entry) {
+                      final session = entry.value;
+                      final start = Formatters.time12(session.checkInAt,
+                          placeholder: '--');
+                      final end = Formatters.time12(session.checkOutAt,
+                          placeholder: 'Open');
+                      return '${entry.key + 1}. $start – $end';
+                    }).join('   •   '),
+                    style: AppTextStyles.bodySmall,
+                  ),
+                ],
+              ]);
         }),
       );
 }
@@ -105,11 +115,16 @@ class _TimelineRow extends StatelessWidget {
             Container(
               width: 34,
               height: 34,
-              decoration: BoxDecoration(color: tone.withValues(alpha: .12), shape: BoxShape.circle),
+              decoration: BoxDecoration(
+                  color: tone.withValues(alpha: .12), shape: BoxShape.circle),
               child: Icon(icon, size: 17, color: tone),
             ),
             if (showLine)
-              Expanded(child: Container(width: 2, margin: const EdgeInsets.symmetric(vertical: 4), color: AppColors.border)),
+              Expanded(
+                  child: Container(
+                      width: 2,
+                      margin: const EdgeInsets.symmetric(vertical: 4),
+                      color: AppColors.border)),
           ]),
         ),
         const SizedBox(width: 12),
@@ -118,12 +133,18 @@ class _TimelineRow extends StatelessWidget {
             padding: EdgeInsets.only(bottom: showLine ? 14 : 4, top: 2),
             child: Row(children: [
               Expanded(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(title, style: AppTextStyles.label),
-                  Text(subtitle, style: AppTextStyles.bodySmall),
-                ]),
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(title, style: AppTextStyles.label),
+                      Text(subtitle, style: AppTextStyles.bodySmall),
+                    ]),
               ),
-              Text(time, style: AppTextStyles.label.copyWith(color: done ? AppColors.textPrimary : AppColors.textSecondary)),
+              Text(time,
+                  style: AppTextStyles.label.copyWith(
+                      color: done
+                          ? AppColors.textPrimary
+                          : AppColors.textSecondary)),
             ]),
           ),
         ),

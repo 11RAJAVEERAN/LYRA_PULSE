@@ -54,6 +54,7 @@ export function EmployeesPage() {
   const [pageError, setPageError] = useState('')
   const [panelOpen, setPanelOpen] = useState(false)
   const [editingId, setEditingId] = useState(null)
+  const [viewOnly, setViewOnly] = useState(false)
   const [columnsOpen, setColumnsOpen] = useState(false)
   const [options, setOptions] = useState(emptyOptions)
   const [optionsLoading, setOptionsLoading] = useState(true)
@@ -145,11 +146,19 @@ export function EmployeesPage() {
 
   const openCreate = () => {
     setEditingId(null)
+    setViewOnly(false)
     setPanelOpen(true)
   }
 
   const openEdit = (row) => {
     setEditingId(row.id)
+    setViewOnly(false)
+    setPanelOpen(true)
+  }
+
+  const openView = (row) => {
+    setEditingId(row.id)
+    setViewOnly(true)
     setPanelOpen(true)
   }
 
@@ -242,6 +251,7 @@ export function EmployeesPage() {
               onFilterChange={changeFilter}
               canEdit={canEdit}
               onEdit={openEdit}
+              onView={openView}
             />
             <TablePagination
               component="div"
@@ -264,6 +274,7 @@ export function EmployeesPage() {
       <EmployeeDetailsPanel
         open={panelOpen}
         employeeId={editingId}
+        viewOnly={viewOnly}
         rows={rows}
         options={options}
         optionsLoading={optionsLoading}

@@ -21,7 +21,6 @@ class _SplashScreenState extends State<SplashScreen>
   late AnimationController _loaderController;
   late AnimationController _particleController;
 
-  late Animation<double> _logoScale;
   late Animation<double> _logoOpacity;
   late Animation<double> _textOpacity;
   late Animation<double> _contentSlide;
@@ -41,11 +40,6 @@ class _SplashScreenState extends State<SplashScreen>
     _mainController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1200),
-    );
-
-    _logoScale = CurvedAnimation(
-      parent: _mainController,
-      curve: Curves.easeOutBack,
     );
 
     _logoOpacity = CurvedAnimation(
@@ -223,8 +217,8 @@ class _SplashScreenState extends State<SplashScreen>
                 decoration: BoxDecoration(
                   gradient: RadialGradient(
                     colors: [
-                      const Color(0xFF156FFF).withOpacity(0.13),
-                      const Color(0xFF087DFF).withOpacity(0.05),
+                      const Color(0xFF156FFF).withValues(alpha: 0.13),
+                      const Color(0xFF087DFF).withValues(alpha: 0.05),
                       Colors.transparent,
                     ],
                   ),
@@ -344,7 +338,7 @@ class _SplashScreenState extends State<SplashScreen>
                                       boxShadow: [
                                         BoxShadow(
                                           color: const Color(0xFF008CFF)
-                                              .withOpacity(opacity),
+                                              .withValues(alpha: opacity),
                                           blurRadius: 45,
                                           spreadRadius: 12,
                                         ),
@@ -416,7 +410,7 @@ class _SplashScreenState extends State<SplashScreen>
                           shadows: [
                             Shadow(
                               color: const Color(0xFF2D79FF)
-                                  .withOpacity(0.30),
+                                  .withValues(alpha: 0.30),
                               blurRadius: 18,
                             ),
                           ],
@@ -512,8 +506,8 @@ class _SplashScreenState extends State<SplashScreen>
                                         BoxShadow(
                                           color:
                                               const Color(0xFF159CFF)
-                                                  .withOpacity(
-                                            opacity * 0.55,
+                                                  .withValues(
+                                            alpha: opacity * 0.55,
                                           ),
                                           blurRadius: 10,
                                         ),
@@ -556,8 +550,8 @@ class _SplashScreenState extends State<SplashScreen>
 
           gradient: RadialGradient(
             colors: [
-              color.withOpacity(opacity),
-              color.withOpacity(opacity * 0.35),
+              color.withValues(alpha: opacity),
+              color.withValues(alpha: opacity * 0.35),
               Colors.transparent,
             ],
           ),
@@ -696,7 +690,7 @@ class _LyraLogoPainter extends CustomPainter {
 
     final Paint glowPaint = Paint()
       ..isAntiAlias = true
-      ..color = const Color(0xFF008CFF).withOpacity(0.25)
+      ..color = const Color(0xFF008CFF).withValues(alpha: 0.25)
       ..maskFilter = const MaskFilter.blur(
         BlurStyle.normal,
         13,
@@ -748,7 +742,7 @@ class _LyraLogoPainter extends CustomPainter {
 
     final Paint highlightPaint = Paint()
       ..isAntiAlias = true
-      ..color = Colors.white.withOpacity(0.12);
+      ..color = Colors.white.withValues(alpha: 0.12);
 
     final Path highlightPath = Path();
 
@@ -828,8 +822,8 @@ class _LogoArcPainter extends CustomPainter {
         endAngle: progress * math.pi * 2 + math.pi * 1.5,
         colors: [
           Colors.transparent,
-          const Color(0xFF197BFF).withOpacity(0.15),
-          const Color(0xFF00D9FF).withOpacity(0.80),
+          const Color(0xFF197BFF).withValues(alpha: 0.15),
+          const Color(0xFF00D9FF).withValues(alpha: 0.80),
           Colors.transparent,
         ],
         stops: const [
@@ -942,7 +936,7 @@ class _ParticlePainter extends CustomPainter {
               0.45;
 
       final Paint paint = Paint()
-        ..color = particle.color.withOpacity(opacity)
+        ..color = particle.color.withValues(alpha: opacity)
         ..maskFilter = const MaskFilter.blur(
           BlurStyle.normal,
           3,
@@ -1151,7 +1145,7 @@ class _PremiumWavePainter extends CustomPainter {
       final Paint paint = Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 0.45
-        ..color = Colors.white.withOpacity(0.055);
+        ..color = Colors.white.withValues(alpha: 0.055);
 
       canvas.drawPath(
         path,
@@ -1285,7 +1279,7 @@ class _PremiumWavePainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth
       ..strokeCap = StrokeCap.round
-      ..color = color.withOpacity(opacity);
+      ..color = color.withValues(alpha: opacity);
 
     canvas.drawPath(
       path,

@@ -49,6 +49,7 @@ except ImportError:  # pragma: no cover - CPython fallback for local testing
 
 from config import (
     API_BASE_URL,
+    API_DEVICE_HEARTBEAT,
     API_DEVICE_ENROLLMENT_PENDING,
     API_DEVICE_ENROLLMENT_RESULT,
     API_FINGERPRINT_ENDPOINT,
@@ -81,6 +82,8 @@ def _utc_timestamp():
 class AttendanceAPIClient:
     def __init__(self, base_url=API_BASE_URL, timeout=API_TIMEOUT, retry_count=API_RETRY_COUNT, event_queue=None):
         self.base_url = base_url.rstrip("/")
+        if not self.base_url.startswith("https://"):
+            raise ValueError("Device API requires an HTTPS base URL")
         self.timeout = timeout
         self.retry_count = retry_count
         self.event_queue = event_queue or PersistentEventQueue()
@@ -103,6 +106,10 @@ class AttendanceAPIClient:
 
     def sync_pending(self, device_id):
         return self.event_queue.flush(self, device_id)
+
+    def send_heartbeat(self, device_id):
+        endpoint = API_DEVICE_HEARTBEAT.format(device_id=device_id)
+        return self._device_request("POST", endpoint, {}, retry_count=0)
 
     def _device_headers(self):
         headers = {"Content-Type": "application/json"}

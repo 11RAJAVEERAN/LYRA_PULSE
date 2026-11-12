@@ -1,32 +1,53 @@
 """Central configuration for the Lyra Pulse ESP32 fingerprint attendance device."""
 
+import os
+
+try:
+    import config_local as _local
+except ImportError:  # config_local.py is device-local and excluded from source control.
+    _local = None
+
+
+def _setting(name, environment_name, default):
+    value = _env(environment_name, default)
+    if value == default and _local is not None:
+        value = getattr(_local, name, default)
+    return value
+
+
+def _env(name, default):
+    environ_get = getattr(os, "getenv", None)
+    return environ_get(name, default) if environ_get else default
+
 # ------------------------------------------------------------
 # Wi-Fi
 # ------------------------------------------------------------
 # Use a 2.4 GHz Wi-Fi network; ESP32 does not support 5 GHz.
-# Replace these with your real values before flashing to a device.
-WIFI_SSID = ""
-WIFI_PASSWORD = ""
-WIFI_TIMEOUT_SECONDS = 20
-WIFI_RETRY_COUNT = 3
-    
+# Set these in the environment before flashing or running the device.
+WIFI_SSID = _setting("WIFI_SSID", "LYRA_WIFI_SSID", "")
+WIFI_PASSWORD = _setting("WIFI_PASSWORD", "LYRA_WIFI_PASSWORD", "")
+WIFI_TIMEOUT_SECONDS = int(_env("LYRA_WIFI_TIMEOUT_SECONDS", "20"))
+WIFI_RETRY_COUNT = int(_env("LYRA_WIFI_RETRY_COUNT", "3"))
+
 # ------------------------------------------------------------
 # Device identity
 # ------------------------------------------------------------
-DEVICE_ID = ""
-DEVICE_TOKEN = ""
-TEST_MODE = False
+DEVICE_ID = _setting("DEVICE_ID", "LYRA_DEVICE_ID", "")
+DEVICE_TOKEN = _setting("DEVICE_TOKEN", "LYRA_DEVICE_TOKEN", "")
+TEST_MODE = _env("LYRA_TEST_MODE", "false").lower() == "true"
 
 # ------------------------------------------------------------
 # API
 # ------------------------------------------------------------
 # Update to the actual Django backend URL before deployment.
-API_BASE_URL = "https://configure-your-backend.example"
+API_BASE_URL = _setting("API_BASE_URL", "LYRA_API_BASE_URL", "")
 API_FINGERPRINT_ENDPOINT = "/api/v1/attendance/fingerprint/events/"
+API_DEVICE_HEARTBEAT = "/api/v1/devices/{device_id}/heartbeat/"
 API_DEVICE_ENROLLMENT_PENDING = "/api/v1/devices/{device_id}/enrollment/pending/"
 API_DEVICE_ENROLLMENT_RESULT = "/api/v1/devices/{device_id}/enrollment/{enrollment_id}/result/"
-API_TIMEOUT = 10
-API_RETRY_COUNT = 2
+API_TIMEOUT = int(_env("LYRA_API_TIMEOUT", "10"))
+API_RETRY_COUNT = int(_env("LYRA_API_RETRY_COUNT", "2"))
+HEARTBEAT_INTERVAL_SECONDS = int(_env("LYRA_HEARTBEAT_INTERVAL_SECONDS", "60"))
 
 # ------------------------------------------------------------
 # UART fingerprint sensor
@@ -79,7 +100,7 @@ MAX_TEMPLATE_COUNT = 1000
 ENROLLMENT_STEP_TIMEOUT_SECONDS = 30
 
 # Linux / ESP32 serial configuration for MicroPython development
-SERIAL_PORT = "/dev/cu.usbserial-5B150103211"
+SERIAL_PORT = _env("LYRA_SERIAL_PORT", "/dev/ttyUSB0")
 
 # ------------------------------------------------------------
 # Optional: ensure no sensitive data is ever printed in logs
@@ -91,3 +112,20 @@ def safe_config_summary():
         "api_base_url": API_BASE_URL,
         "test_mode": TEST_MODE,
     }
+
+
+def validate_runtime_config(device_id=None):
+    if not WIFI_SSID or WIFI_SSID == "YOUR_WIFI_SSID":
+        raise ValueError("Configure WIFI_SSID in device-local config_local.py")
+    if not WIFI_PASSWORD or WIFI_PASSWORD == "YOUR_WIFI_PASSWORD":
+        raise ValueError("Configure WIFI_PASSWORD in device-local config_local.py")
+    if not DEVICE_TOKEN:
+        raise ValueError("Configure DEVICE_TOKEN in device-local config_local.py")
+    if not API_BASE_URL.startswith("https://"):
+        raise ValueError("Set API_BASE_URL to the reachable HTTPS backend URL")
+    host = API_BASE_URL[8:].split("/", 1)[0].split(":", 1)[0].strip("[]").lower()
+    if (not host or host in ("localhost", "127.0.0.1", "::1", "your-reachable-backend-host")
+            or host.startswith("127.")):
+        raise ValueError("API_BASE_URL must use the backend's reachable host, not localhost/loopback")
+    if not device_id:
+        raise ValueError("A stable device ID is required")

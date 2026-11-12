@@ -15,6 +15,9 @@ export function DevicesPage() {
   const [deviceId, setDeviceId] = useState('')
   const [finger, setFinger] = useState('right_index')
   const [token, setToken] = useState('')
+  const [tokenTitle, setTokenTitle] = useState('Copy device token')
+  const [rotationTarget, setRotationTarget] = useState(null)
+  const [rotatingDeviceId, setRotatingDeviceId] = useState('')
   const [notice, setNotice] = useState('')
   const [enrollment, setEnrollment] = useState(null)
 
@@ -53,6 +56,7 @@ export function DevicesPage() {
       const response = await apiClient.post('/devices/', form)
       const data = unwrap(response)
       setToken(data.provisioning_token || '')
+      setTokenTitle('Copy device token')
       setForm({ device_id: '', name: '', branch_id: '' })
       setNotice('Device provisioned. Copy the one-time token into secure device configuration.')
       await reload()
@@ -63,6 +67,30 @@ export function DevicesPage() {
       await apiClient.patch('/devices/', { device_id: device.device_id, is_active: !device.is_active })
       await reload()
     } catch (e) { setError(e?.response?.data?.message || 'Device update failed.') }
+  }
+  const rotateToken = async () => {
+    if (!rotationTarget) return
+    const device = rotationTarget
+    setError(''); setNotice(''); setRotatingDeviceId(device.device_id)
+    try {
+      const response = await apiClient.post(`/devices/${encodeURIComponent(device.device_id)}/rotate-token/`)
+      const data = unwrap(response)
+      setToken(data.rotated_token || '')
+      setTokenTitle('Copy rotated device token')
+      setRotationTarget(null)
+      setNotice('Device token rotated. The previous token is no longer valid.')
+      await reload()
+    } catch (e) { setError(e?.response?.data?.message || 'Device token rotation failed.') }
+    finally { setRotatingDeviceId('') }
+  }
+  const closeToken = () => setToken('')
+  const copyToken = async () => {
+    try {
+      await navigator.clipboard.writeText(token)
+      closeToken()
+    } catch {
+      setError('Unable to copy the token. Select and copy it manually before closing this dialog.')
+    }
   }
   const enroll = async (event) => {
     event.preventDefault(); setError(''); setNotice('')
@@ -91,8 +119,8 @@ export function DevicesPage() {
     </Paper>
     <Paper sx={{ p: 2 }}>
       <Typography variant="h6" sx={{ mb: 1 }}>Registered devices</Typography>
-      {loading ? <CircularProgress size={24} /> : <Table size="small" sx={{ '& .MuiTableBody-root .MuiTableRow-root': { height: 64, '& > .MuiTableCell-root': { py: 1.25, px: 1.5, fontSize: '0.875rem', verticalAlign: 'middle', whiteSpace: 'nowrap' } } }}><TableHead><TableRow><TableCell>Device</TableCell><TableCell>Branch</TableCell><TableCell>Active</TableCell><TableCell /></TableRow></TableHead><TableBody>
-        {devices.map(d => <TableRow key={d.device_id}><TableCell>{d.name || d.device_id}<Typography variant="caption" display="block">{d.device_id}</Typography></TableCell><TableCell>{d.branch_name}</TableCell><TableCell>{d.is_active ? 'Yes' : 'No'}</TableCell><TableCell><Switch checked={d.is_active} onChange={() => toggle(d)} inputProps={{ 'aria-label': `Activate ${d.device_id}` }} /></TableCell></TableRow>)}
+      {loading ? <CircularProgress size={24} /> : <Table size="small" sx={{ '& .MuiTableBody-root .MuiTableRow-root': { height: 64, '& > .MuiTableCell-root': { py: 1.25, px: 1.5, fontSize: '0.875rem', verticalAlign: 'middle', whiteSpace: 'nowrap' } } }}><TableHead><TableRow><TableCell>Device</TableCell><TableCell>Branch</TableCell><TableCell>Active</TableCell><TableCell>Status</TableCell><TableCell>Last seen</TableCell><TableCell>Actions</TableCell></TableRow></TableHead><TableBody>
+        {devices.map(d => <TableRow key={d.device_id}><TableCell>{d.name || d.device_id}<Typography variant="caption" display="block">{d.device_id}</Typography></TableCell><TableCell>{d.branch_name}</TableCell><TableCell>{d.is_active ? 'Yes' : 'No'}</TableCell><TableCell>{d.status || 'Offline'}</TableCell><TableCell>{d.last_seen ? new Date(d.last_seen).toLocaleString() : 'Never'}</TableCell><TableCell><Stack direction="row" alignItems="center"><Switch checked={d.is_active} onChange={() => toggle(d)} inputProps={{ 'aria-label': `Activate ${d.device_id}` }} /><Button size="small" disabled={Boolean(rotatingDeviceId)} onClick={() => setRotationTarget(d)}>{rotatingDeviceId === d.device_id ? <CircularProgress size={18} /> : 'Rotate token'}</Button></Stack></TableCell></TableRow>)}
       </TableBody></Table>}
     </Paper>
     <Paper component="form" onSubmit={enroll} sx={{ p: 2 }}>
@@ -104,6 +132,7 @@ export function DevicesPage() {
         <Button type="submit" variant="contained">Start enrollment</Button>
       </Stack>
     </Paper>
-    <Dialog open={Boolean(token)} onClose={() => setToken('')} fullWidth maxWidth="sm"><DialogTitle>Copy device token</DialogTitle><DialogContent><Alert severity="warning" sx={{ mb: 2 }}>This credential is shown once. Store it securely and configure device firmware for HTTPS.</Alert><TextField fullWidth multiline value={token} inputProps={{ readOnly: true }} /></DialogContent><DialogActions><Button onClick={() => { navigator.clipboard?.writeText(token); setToken('') }}>Copy and close</Button></DialogActions></Dialog>
+    <Dialog open={Boolean(rotationTarget)} onClose={() => rotatingDeviceId ? null : setRotationTarget(null)}><DialogTitle>Rotate device token?</DialogTitle><DialogContent><Typography>Rotating the token immediately invalidates the device's current credential. Update the device's secure configuration before it reconnects.</Typography></DialogContent><DialogActions><Button disabled={Boolean(rotatingDeviceId)} onClick={() => setRotationTarget(null)}>Cancel</Button><Button variant="contained" disabled={Boolean(rotatingDeviceId)} onClick={rotateToken}>{rotatingDeviceId ? <CircularProgress size={18} /> : 'Rotate token'}</Button></DialogActions></Dialog>
+    <Dialog open={Boolean(token)} onClose={closeToken} fullWidth maxWidth="sm"><DialogTitle>{tokenTitle}</DialogTitle><DialogContent><Alert severity="warning" sx={{ mb: 2 }}>This credential is shown once. Store it securely and configure device firmware for HTTPS.</Alert><TextField fullWidth multiline value={token} inputProps={{ readOnly: true }} /></DialogContent><DialogActions><Button onClick={copyToken}>Copy and close</Button><Button onClick={closeToken}>Done</Button></DialogActions></Dialog>
   </Box>
 }

@@ -5,6 +5,7 @@ import {
   ChevronRight,
   ClipboardList,
   LayoutDashboard,
+  MapPin,
   NotebookPen,
   Banknote,
   UserCog,
@@ -42,7 +43,8 @@ const navItems = [
     ],
   },
   { label: 'Leaves', path: '/leaves', icon: NotebookPen },
-  { label: 'Branches', path: '/branches', icon: Building2 },
+  { label: 'Companies', path: '/companies', icon: Building2, superadminOnly: true },
+  { label: 'Branches', path: '/branches', icon: MapPin },
   { label: 'Devices', path: '/devices', icon: BadgeCheck },
   {
     label: 'Reports',
@@ -122,6 +124,7 @@ export function Sidebar({ collapsed, onToggle, onNavigate, belowHeader = false }
     if (path === '/payroll/bulk-attendance-adjustments') return user?.role === 'SUPERADMIN' || user?.permissions?.includes('employees.view_employee')
     if (path === '/permissions') return user?.role === 'SUPERADMIN' || user?.role === 'ADMIN'
     if (path === '/shifts' || path === '/shift-assignments') return user?.role === 'SUPERADMIN' || user?.permissions?.includes('shifts.view_shift')
+    if (path === '/branches') return user?.role === 'SUPERADMIN' || user?.role === 'ADMIN'
     return user?.role === 'SUPERADMIN'
   }
 
