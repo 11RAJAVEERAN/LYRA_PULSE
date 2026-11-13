@@ -31,6 +31,7 @@ class TodayAttendance {
     this.checkInAt,
     this.checkOutAt,
     this.sessions = const [],
+    this.shiftSchedule,
   });
 
   final AttendanceState state;
@@ -38,6 +39,7 @@ class TodayAttendance {
   final DateTime? checkInAt;
   final DateTime? checkOutAt;
   final List<TodaySession> sessions;
+  final TodayShiftSchedule? shiftSchedule;
 
   factory TodayAttendance.fromJson(Map<String, dynamic> json) =>
       TodayAttendance(
@@ -52,7 +54,93 @@ class TodayAttendance {
                 .map((item) =>
                     TodaySession.fromJson(Map<String, dynamic>.from(item)))
                 .toList(growable: false),
+        shiftSchedule: json['shift_schedule'] is Map
+            ? TodayShiftSchedule.fromJson(
+                Map<String, dynamic>.from(json['shift_schedule'] as Map))
+            : null,
       );
+
+  Duration scheduledBreakDurationAt(DateTime now) {
+    final schedule = shiftSchedule;
+    final day = attendanceDate;
+    if (schedule == null || !schedule.isWorking || day == null) {
+      return Duration.zero;
+    }
+
+    final breakStart = schedule.timeOn(day, schedule.breakStartTime);
+    final breakEnd = schedule.timeOn(day, schedule.breakEndTime);
+    if (breakStart == null || breakEnd == null || !breakEnd.isAfter(breakStart)) {
+      return Duration.zero;
+    }
+
+    final attendanceSessions = sessions.isEmpty
+        ? [
+            TodaySession(
+              checkInAt: checkInAt,
+              checkOutAt: checkOutAt,
+            ),
+          ]
+        : sessions;
+    var total = Duration.zero;
+    for (final session in attendanceSessions) {
+      final start = session.checkInAt;
+      final end = session.checkOutAt ??
+          (state == AttendanceState.checkedIn ? now : null);
+      if (start == null || end == null) continue;
+
+      final overlapStart = start.isAfter(breakStart) ? start : breakStart;
+      final overlapEnd = end.isBefore(breakEnd) ? end : breakEnd;
+      if (overlapEnd.isAfter(overlapStart)) {
+        total += overlapEnd.difference(overlapStart);
+      }
+    }
+    return total;
+  }
+}
+
+class TodayShiftSchedule {
+  const TodayShiftSchedule({
+    required this.shiftName,
+    required this.isWorking,
+    this.startTime,
+    this.endTime,
+    this.breakStartTime,
+    this.breakEndTime,
+  });
+
+  final String shiftName;
+  final bool isWorking;
+  final String? startTime;
+  final String? endTime;
+  final String? breakStartTime;
+  final String? breakEndTime;
+
+  factory TodayShiftSchedule.fromJson(Map<String, dynamic> json) =>
+      TodayShiftSchedule(
+        shiftName: json['shift_name']?.toString() ?? '',
+        isWorking: json['is_working'] == true,
+        startTime: json['start_time']?.toString(),
+        endTime: json['end_time']?.toString(),
+        breakStartTime: json['break_start_time']?.toString(),
+        breakEndTime: json['break_end_time']?.toString(),
+      );
+
+  DateTime? timeOn(DateTime day, String? value) {
+    if (value == null) return null;
+    final parts = value.split(':');
+    if (parts.length < 2) return null;
+    final hour = int.tryParse(parts[0]);
+    final minute = int.tryParse(parts[1]);
+    if (hour == null ||
+        minute == null ||
+        hour < 0 ||
+        hour > 23 ||
+        minute < 0 ||
+        minute > 59) {
+      return null;
+    }
+    return DateTime(day.year, day.month, day.day, hour, minute);
+  }
 }
 
 class TodaySession {

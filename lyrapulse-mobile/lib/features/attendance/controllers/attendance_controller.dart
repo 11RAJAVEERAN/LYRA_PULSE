@@ -7,6 +7,7 @@ import 'package:get/get.dart';
 
 import '../../../app/routes/app_routes.dart';
 import '../../../core/services/location_service.dart';
+import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../data/models/attendance_model.dart';
 import '../../../data/models/employee_model.dart';
@@ -103,14 +104,48 @@ class AttendanceController extends GetxController {
     return total;
   }
 
-  /// B's home card expects a clock-style duration. The duration still comes
-  /// from Project A's server timestamps; the local ticker only updates it.
-  String get formattedWorkingDuration {
-    final duration = workingDuration;
-    final hours = duration.inHours.toString().padLeft(2, '0');
-    final minutes = (duration.inMinutes % 60).toString().padLeft(2, '0');
-    final seconds = (duration.inSeconds % 60).toString().padLeft(2, '0');
-    return '$hours:$minutes:$seconds';
+  String get formattedWorkingDuration =>
+      Formatters.durationHms(workingDuration);
+
+  Duration get totalBreakDuration =>
+      today.value?.scheduledBreakDurationAt(_now.value) ?? Duration.zero;
+
+  String get breakTimeLabel {
+    final schedule = today.value?.shiftSchedule;
+    if (schedule == null ||
+        !schedule.isWorking ||
+        schedule.breakStartTime == null ||
+        schedule.breakEndTime == null) {
+      return 'Not scheduled';
+    }
+    return Formatters.durationHms(totalBreakDuration);
+  }
+
+  String get shiftTimingLabel {
+    final schedule = today.value?.shiftSchedule;
+    if (schedule == null) return 'Not available';
+    if (!schedule.isWorking) return 'Week off';
+    final start = _formatShiftTime(schedule.startTime);
+    final end = _formatShiftTime(schedule.endTime);
+    if (start == null || end == null) return 'Not available';
+    return '$start - $end';
+  }
+
+  static String? _formatShiftTime(String? value) {
+    if (value == null) return null;
+    final parts = value.split(':');
+    if (parts.length < 2) return null;
+    final hour = int.tryParse(parts[0]);
+    final minute = int.tryParse(parts[1]);
+    if (hour == null ||
+        minute == null ||
+        hour < 0 ||
+        hour > 23 ||
+        minute < 0 ||
+        minute > 59) {
+      return null;
+    }
+    return Formatters.time12(DateTime(2000, 1, 1, hour, minute));
   }
 
   String get statusLabel {

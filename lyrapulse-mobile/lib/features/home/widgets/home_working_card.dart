@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -173,10 +172,12 @@ class HomeWorkingCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 10),
-              _infoRow(
-                Icons.coffee_rounded,
-                'Total Break Time',
-                'Not tracked',
+              Obx(
+                () => _infoRow(
+                  Icons.coffee_rounded,
+                  'Total Break Time',
+                  attendanceController.breakTimeLabel,
+                ),
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 6),
@@ -185,10 +186,12 @@ class HomeWorkingCard extends StatelessWidget {
                   height: 1,
                 ),
               ),
-              _infoRow(
-                Icons.access_time_rounded,
-                'Shift Timing',
-                'Not available',
+              Obx(
+                () => _infoRow(
+                  Icons.access_time_rounded,
+                  'Shift Timing',
+                  attendanceController.shiftTimingLabel,
+                ),
               ),
             ],
           ),

@@ -24,11 +24,57 @@ void main() {
         'check_out_at': '2026-10-18T12:28:00Z',
       });
       expect(today.state, AttendanceState.checkedOut);
-      expect(today.checkOutAt!.difference(today.checkInAt!), const Duration(hours: 8, minutes: 30));
+      expect(today.checkOutAt!.difference(today.checkInAt!),
+          const Duration(hours: 8, minutes: 30));
+    });
+
+    test('tracks scheduled break time and stops at check-out', () {
+      final active = TodayAttendance.fromJson({
+        'attendance_date': '2026-10-18',
+        'state': 'CHECKED_IN',
+        'check_in_at': '2026-10-18T09:00:00',
+        'check_out_at': null,
+        'shift_schedule': {
+          'shift_name': 'Day Shift',
+          'is_working': true,
+          'start_time': '09:00:00',
+          'end_time': '18:00:00',
+          'break_start_time': '13:00:00',
+          'break_end_time': '14:00:00',
+        },
+      });
+      expect(
+        active.scheduledBreakDurationAt(DateTime(2026, 10, 18, 13, 30)),
+        const Duration(minutes: 30),
+      );
+      expect(
+        active.scheduledBreakDurationAt(DateTime(2026, 10, 18, 15)),
+        const Duration(hours: 1),
+      );
+
+      final checkedOut = TodayAttendance.fromJson({
+        'attendance_date': '2026-10-18',
+        'state': 'CHECKED_OUT',
+        'check_in_at': '2026-10-18T09:00:00',
+        'check_out_at': '2026-10-18T13:20:00',
+        'shift_schedule': {
+          'shift_name': 'Day Shift',
+          'is_working': true,
+          'start_time': '09:00:00',
+          'end_time': '18:00:00',
+          'break_start_time': '13:00:00',
+          'break_end_time': '14:00:00',
+        },
+      });
+      expect(
+        checkedOut.scheduledBreakDurationAt(DateTime(2026, 10, 18, 15)),
+        const Duration(minutes: 20),
+      );
     });
 
     test('unknown state falls back to not checked in', () {
-      expect(AttendanceState.parse('SOMETHING_ELSE'), AttendanceState.notCheckedIn);
+      expect(AttendanceState.parse('SOMETHING_ELSE'),
+          AttendanceState.notCheckedIn);
       expect(AttendanceState.parse(null), AttendanceState.notCheckedIn);
     });
   });
@@ -51,8 +97,12 @@ void main() {
 
   group('Formatters', () {
     test('durationHms and durationShort', () {
-      expect(Formatters.durationHms(const Duration(hours: 1, minutes: 5, seconds: 9)), '01:05:09');
-      expect(Formatters.durationShort(const Duration(hours: 7, minutes: 5)), '7h 05m');
+      expect(
+          Formatters.durationHms(
+              const Duration(hours: 1, minutes: 5, seconds: 9)),
+          '01:05:09');
+      expect(Formatters.durationShort(const Duration(hours: 7, minutes: 5)),
+          '7h 05m');
     });
 
     test('time12 handles midnight, noon and missing values', () {
