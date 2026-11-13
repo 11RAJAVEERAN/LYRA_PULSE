@@ -27,6 +27,9 @@ class ApiProvider {
   Future<Response<dynamic>> getEmployeeProfile() =>
       _client.dio.get(ApiConstants.employeeMe);
 
+  Future<Response<dynamic>> getCurrentEmployeeShiftAssignment() =>
+      _client.dio.get(ApiConstants.currentEmployeeShiftAssignment);
+
   Future<Response<dynamic>> getCurrentUser() =>
       _client.dio.get(ApiConstants.currentUser);
 

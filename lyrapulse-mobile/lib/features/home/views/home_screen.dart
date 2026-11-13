@@ -17,6 +17,7 @@ import '../../leave/views/leave_screen.dart';
 import '../../notification/views/notification_screen.dart';
 import '../../profile/views/profile_screen.dart';
 import '../../menu/views/menu_screen.dart';
+import '../controllers/home_controller.dart';
 
 import '../../leave/bindings/leave_binding.dart';
 
@@ -36,6 +37,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   late final AttendanceController attendanceController;
+  late final HomeController homeController;
 
   Timer? _clockTimer;
   DateTime _now = DateTime.now();
@@ -53,6 +55,9 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
 
     LeaveBinding().dependencies();
+
+    homeController = Get.find<HomeController>();
+    unawaited(homeController.loadCurrentShiftTiming());
 
     if (Get.isRegistered<AttendanceController>()) {
       attendanceController = Get.find<AttendanceController>();
@@ -424,7 +429,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     strokeWidth: 3,
                     displacement: 45,
                     onRefresh: () async {
-                      await attendanceController.refreshToday();
+                      await Future.wait([
+                        attendanceController.refreshToday(),
+                        homeController.loadCurrentShiftTiming(),
+                      ]);
 
                       if (mounted) {
                         setState(() {});
@@ -438,12 +446,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
                       slivers: [
                         SliverToBoxAdapter(
-                          child: HomeHeader(
-                            employeeName: Get.find<AuthController>()
-                                    .employee.value?.name ??
-                                '—',
-                            onNotificationTap: () => _openPage(5),
-                          ),
+                          child: Obx(() {
+                            final employeeName = Get.find<AuthController>()
+                                    .employee.value?.name
+                                    .trim() ??
+                                '';
+                            return HomeHeader(
+                              employeeName: employeeName.isNotEmpty
+                                  ? employeeName
+                                  : '—',
+                              onNotificationTap: () => _openPage(5),
+                            );
+                          }),
                         ),
 
                         SliverPadding(
@@ -493,6 +507,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               HomeWorkingCard(
                                 attendanceController:
                                     attendanceController,
+                                shiftTiming: homeController.currentShiftTiming,
                               ),
 
                               const SizedBox(height: 17),

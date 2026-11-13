@@ -6,6 +6,8 @@ abstract final class ApiConstants {
   static const String currentUser = 'auth/me/';
   static const String logout = 'auth/logout/';
   static const String employeeMe = 'mobile/me/';
+  static const String currentEmployeeShiftAssignment =
+      'mobile/me/shift-assignment/';
 
   // Attendance (employee only; employee, branch and time are decided by the server)
   static const String attendanceVerifyLocation = 'attendance/verify-location/';

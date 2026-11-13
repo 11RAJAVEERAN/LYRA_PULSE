@@ -80,6 +80,60 @@ class ShiftManagementTests(TestCase):
         self.assertEqual(history.status_code, 200)
         self.assertEqual(history.data["data"]["count"], 2)
 
+    def test_employee_can_read_own_current_shift_and_assigned_times_when_today_is_off(self):
+        today = timezone.localdate()
+        today_weekday = today.strftime("%A").upper()
+        working_weekday = next(
+            weekday for weekday in Weekday.values if weekday != today_weekday
+        )
+        days = [
+            {
+                "weekday": weekday,
+                "is_working": weekday == working_weekday,
+                "start_time": "08:00" if weekday == working_weekday else None,
+                "end_time": "20:00" if weekday == working_weekday else None,
+                "break_start_time": None,
+                "break_end_time": None,
+            }
+            for weekday in Weekday.values
+        ]
+        shift = self.create_shift(days=days)
+        ShiftAssignment.objects.create(
+            employee=self.employee,
+            shift_id=shift["id"],
+            effective_from=today,
+        )
+
+        self.client.force_authenticate(self.employee_user)
+        response = self.client.get("/api/v1/mobile/me/shift-assignment/")
+
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertEqual(response.data["data"]["shift"]["id"], shift["id"])
+        self.assertEqual(response.data["data"]["branch_id"], self.employee.branch_id)
+        self.assertEqual(response.data["data"]["start_time"], "08:00:00")
+        self.assertEqual(response.data["data"]["end_time"], "20:00:00")
+
+    def test_employee_current_shift_ignores_future_and_expired_assignments(self):
+        shift = self.create_shift()
+        today = timezone.localdate()
+        ShiftAssignment.objects.create(
+            employee=self.employee,
+            shift_id=shift["id"],
+            effective_from=today + timedelta(days=1),
+        )
+        ShiftAssignment.objects.create(
+            employee=self.employee,
+            shift_id=shift["id"],
+            effective_from=today - timedelta(days=2),
+            effective_to=today - timedelta(days=1),
+        )
+
+        self.client.force_authenticate(self.employee_user)
+        response = self.client.get("/api/v1/mobile/me/shift-assignment/")
+
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertEqual(response.data["data"], {})
+
     def test_assignment_creation_with_nullable_employee_relations(self):
         # department, designation, branch, and optional profile fields are nullable in Employee.
         # PostgreSQL must lock only the Employee row, not the nullable select_related join side.

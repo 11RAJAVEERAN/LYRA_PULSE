@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.accounts.models import User
+from apps.accounts.permissions import IsEmployee
 from apps.accounts.scope import scope_queryset
 from apps.branches.models import Branch
 from apps.departments.models import Department
@@ -217,4 +218,65 @@ class ShiftAssignmentHistoryView(APIView):
         paginator = ShiftPagination()
         page = paginator.paginate_queryset(queryset, request, view=self)
         return paginator.get_paginated_response(AssignmentReadSerializer(page, many=True).data)
+
+
+class CurrentEmployeeShiftAssignmentView(APIView):
+    """Return only the authenticated employee's assignment effective today."""
+
+    permission_classes = [IsAuthenticated, IsEmployee]
+
+    def get(self, request):
+        employee = getattr(request.user, "employee", None)
+        if (employee is None or not employee.is_active
+                or not request.user.has_active_company_access):
+            raise NotFound("Active employee profile not found.")
+
+        branch = employee.branch
+        if branch is None:
+            return success_response({})
+        if request.user.organization_id and branch.organization_id != request.user.organization_id:
+            raise NotFound("Active employee profile not found.")
+
+        today = timezone.localdate()
+        assignment = (ShiftAssignment.objects
+            .select_related("shift", "employee__branch")
+            .filter(
+                employee=employee,
+                employee__branch_id=branch.pk,
+                shift__branch_id=branch.pk,
+                effective_from__lte=today,
+            )
+            .filter(Q(effective_to__isnull=True) | Q(effective_to__gte=today))
+            .order_by("-effective_from", "-pk")
+            .first())
+        if assignment is None:
+            return success_response({})
+
+        revision = assignment.shift.schedule_for(today)
+        day = None
+        if revision is not None:
+            weekday = today.strftime("%A").upper()
+            day = revision.days.filter(
+                weekday=weekday,
+                is_working=True,
+                start_time__isnull=False,
+                end_time__isnull=False,
+            ).first()
+            if day is None:
+                day = revision.days.filter(
+                    is_working=True,
+                    start_time__isnull=False,
+                    end_time__isnull=False,
+                ).order_by("weekday").first()
+
+        working_day = day is not None and day.is_working
+        return success_response({
+            "assignment_id": assignment.pk,
+            "effective_from": assignment.effective_from.isoformat(),
+            "effective_to": assignment.effective_to.isoformat() if assignment.effective_to else None,
+            "branch_id": branch.pk,
+            "shift": {"id": assignment.shift_id, "name": assignment.shift.name},
+            "start_time": day.start_time.isoformat() if working_day and day.start_time else None,
+            "end_time": day.end_time.isoformat() if working_day and day.end_time else None,
+        })
 

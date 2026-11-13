@@ -8,10 +8,12 @@ import '../../attendance/controllers/attendance_controller.dart';
 
 class HomeWorkingCard extends StatelessWidget {
   final AttendanceController attendanceController;
+  final RxString shiftTiming;
 
   const HomeWorkingCard({
     super.key,
     required this.attendanceController,
+    required this.shiftTiming,
   });
 
   Widget _infoRow(IconData icon, String label, String value) {
@@ -185,10 +187,12 @@ class HomeWorkingCard extends StatelessWidget {
                   height: 1,
                 ),
               ),
-              _infoRow(
-                Icons.access_time_rounded,
-                'Shift Timing',
-                'Not available',
+              Obx(
+                () => _infoRow(
+                  Icons.access_time_rounded,
+                  'Shift Timing',
+                  shiftTiming.value,
+                ),
               ),
             ],
           ),

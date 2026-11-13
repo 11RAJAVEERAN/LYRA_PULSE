@@ -1,8 +1,16 @@
 from django.urls import path
 
-from .views import ShiftAssignmentBulkView, ShiftAssignmentHistoryView, ShiftAssignmentListView, ShiftDetailView, ShiftListCreateView
+from .views import (
+    CurrentEmployeeShiftAssignmentView,
+    ShiftAssignmentBulkView,
+    ShiftAssignmentHistoryView,
+    ShiftAssignmentListView,
+    ShiftDetailView,
+    ShiftListCreateView,
+)
 
 urlpatterns = [
+    path("mobile/me/shift-assignment/", CurrentEmployeeShiftAssignmentView.as_view(), name="mobile-current-shift-assignment"),
     path("shifts/", ShiftListCreateView.as_view(), name="shift-list-create"),
     path("shifts/<int:pk>/", ShiftDetailView.as_view(), name="shift-detail"),
     path("shift-assignments/", ShiftAssignmentListView.as_view(), name="shift-assignment-list-create"),
