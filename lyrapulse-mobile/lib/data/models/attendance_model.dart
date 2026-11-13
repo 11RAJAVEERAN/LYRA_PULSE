@@ -2,12 +2,23 @@
 enum AttendanceState {
   notCheckedIn,
   checkedIn,
+  onBreak,
   checkedOut;
+
+  bool get allowsCheckIn =>
+      this == AttendanceState.notCheckedIn || this == AttendanceState.onBreak;
+
+  bool get allowsCheckOut => this == AttendanceState.checkedIn;
+
+  /// A completed-looking state is reloaded before treating it as final.
+  bool get mayNeedCheckInRefresh => this == AttendanceState.checkedOut;
 
   static AttendanceState parse(Object? value) {
     switch (value?.toString()) {
       case 'CHECKED_IN':
         return AttendanceState.checkedIn;
+      case 'ON_BREAK':
+        return AttendanceState.onBreak;
       case 'CHECKED_OUT':
         return AttendanceState.checkedOut;
       default:

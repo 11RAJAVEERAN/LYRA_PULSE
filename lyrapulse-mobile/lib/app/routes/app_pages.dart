@@ -8,6 +8,7 @@ import '../../features/attendance/views/location_check_screen.dart';
 import '../../features/auth/views/login_screen.dart';
 import '../../features/auth/views/otp_screen.dart';
 import '../../features/home/views/home_screen.dart';
+import '../../features/home/bindings/home_binding.dart';
 import '../../features/leave/bindings/leave_binding.dart';
 import '../../features/leave/views/apply_leave_screen.dart';
 import '../../features/splash/controllers/splash_controller.dart';
@@ -33,7 +34,11 @@ abstract final class AppPages {
     ),
     GetPage(name: AppRoutes.login, page: () => const LoginScreen()),
     GetPage(name: AppRoutes.otp, page: () => const OtpScreen()),
-    GetPage(name: AppRoutes.home, page: () => const HomeScreen()),
+    GetPage(
+      name: AppRoutes.home,
+      page: () => const HomeScreen(),
+      binding: HomeBinding(),
+    ),
     GetPage(
       name: AppRoutes.applyLeave,
       page: () => const ApplyLeaveScreen(),

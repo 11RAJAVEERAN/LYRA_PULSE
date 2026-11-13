@@ -1,7 +1,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-
+import 'package:get/get.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../attendance/controllers/attendance_controller.dart';
 
@@ -27,85 +27,100 @@ class HomeActivityCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final entries = <Widget>[];
-    final sessions = attendanceController.today.value?.sessions ?? const [];
-    for (final session in sessions) {
-      final checkIn = session.checkInAt;
-      final checkOut = session.checkOutAt;
-      if (checkIn != null &&
-          checkIn.year == now.year &&
-          checkIn.month == now.month &&
-          checkIn.day == now.day) {
-        entries.add(_activityRow('Punch In', _time(checkIn), true));
+    return Obx(() {
+      final entries = <Widget>[];
+      final sessions = attendanceController.today.value?.sessions ?? const [];
+      for (var index = 0; index < sessions.length; index++) {
+        final session = sessions[index];
+        final checkIn = session.checkInAt;
+        final checkOut = session.checkOutAt;
+        if (checkIn != null &&
+            checkIn.year == now.year &&
+            checkIn.month == now.month &&
+            checkIn.day == now.day) {
+          entries.add(_activityRow('Check In', _time(checkIn), true));
+        }
+        if (checkOut != null &&
+            checkOut.year == now.year &&
+            checkOut.month == now.month &&
+            checkOut.day == now.day) {
+          entries.add(_activityRow('Check Out', _time(checkOut), false));
+          final resumed = index + 1 < sessions.length
+              ? sessions[index + 1].checkInAt
+              : (attendanceController.isOnBreak ? now : null);
+          if (resumed != null) {
+            final duration = resumed.difference(checkOut);
+            if (!duration.isNegative) {
+              entries.add(_buildBreakCard(
+                duration,
+                index + 1 == sessions.length && attendanceController.isOnBreak,
+              ));
+            }
+          }
+        }
       }
-      if (checkOut != null &&
-          checkOut.year == now.year &&
-          checkOut.month == now.month &&
-          checkOut.day == now.day) {
-        entries.add(_activityRow('Punch Out', _time(checkOut), false));
-      }
-    }
 
-    if (entries.isEmpty) {
-      entries.add(
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Column(
-            children: [
-              Icon(
-                Icons.access_time_rounded,
-                size: 35,
-                color: AppColors.textSecondary.withValues(alpha: .6),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                'No attendance yet',
-                style: GoogleFonts.inter(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textSecondary,
+      if (entries.isEmpty) {
+        entries.add(
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Column(
+              children: [
+                Icon(
+                  Icons.access_time_rounded,
+                  size: 35,
+                  color: AppColors.textSecondary.withValues(alpha: .6),
                 ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Check in to start your day',
-                style: GoogleFonts.inter(
-                  fontSize: 12,
-                  color: AppColors.textSecondary,
+                const SizedBox(height: 10),
+                Text(
+                  'No attendance yet',
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textSecondary,
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 4),
+                Text(
+                  'Check in to start your day',
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
           ),
+        );
+      }
+
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.fromLTRB(15, 20, 15, 20),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(21),
+          border: Border.all(
+            color: AppColors.border.withValues(alpha: .75),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withValues(alpha: .035),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            for (int i = 0; i < entries.length; i++) ...[
+              if (i > 0) const SizedBox(height: 17),
+              entries[i],
+            ],
+          ],
         ),
       );
-    }
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(15, 20, 15, 20),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(21),
-        border: Border.all(
-          color: AppColors.border.withValues(alpha: .75),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withValues(alpha: .035),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          for (int i = 0; i < entries.length; i++) ...[
-            if (i > 0) const SizedBox(height: 17),
-            entries[i],
-          ],
-        ],
-      ),
-    );
+    });
   }
 
   Widget _buildBreakCard(Duration duration, bool isActive) {

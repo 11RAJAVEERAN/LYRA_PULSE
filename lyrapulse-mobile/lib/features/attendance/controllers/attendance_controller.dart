@@ -78,10 +78,13 @@ class AttendanceController extends GetxController {
       _auth.employee.value?.locationAttendanceEnabled ?? false;
 
   AttendanceState? get state => today.value?.state;
-  bool get canCheckIn =>
-      state == AttendanceState.notCheckedIn ||
-      state == AttendanceState.checkedOut;
-  bool get canCheckOut => state == AttendanceState.checkedIn;
+  bool get canCheckIn => state?.allowsCheckIn ?? false;
+  bool get canCheckOut => state?.allowsCheckOut ?? false;
+  bool get canAttemptCheckIn =>
+      canCheckIn || (state?.mayNeedCheckInRefresh ?? false);
+  bool get canTriggerAttendanceAction =>
+      canAttemptCheckIn || canCheckOut;
+  bool get isOnBreak => state == AttendanceState.onBreak;
 
   /// Worked time derived from the backend timestamps. Reactive: read inside Obx.
   Duration get workingDuration {
@@ -103,6 +106,34 @@ class AttendanceController extends GetxController {
     return total;
   }
 
+  /// Breaks are the gaps between preserved work-session rows. The last gap
+  /// keeps ticking while the backend reports that today's state is ON_BREAK.
+  Duration get breakDuration {
+    final sessions = today.value?.sessions ?? const <TodaySession>[];
+    var total = Duration.zero;
+    for (var index = 0; index < sessions.length; index++) {
+      final ended = sessions[index].checkOutAt;
+      if (ended == null) continue;
+      final resumed = index + 1 < sessions.length
+          ? sessions[index + 1].checkInAt
+          : (isOnBreak ? _now.value : null);
+      if (resumed == null) continue;
+      final gap = resumed.difference(ended);
+      if (!gap.isNegative) total += gap;
+    }
+    return total;
+  }
+
+  String get formattedBreakDuration {
+    final duration = breakDuration;
+    final hours = duration.inHours;
+    final minutes = duration.inMinutes % 60;
+    final seconds = duration.inSeconds % 60;
+    if (hours > 0) return '${hours}h ${minutes}m';
+    if (minutes > 0) return '${minutes}m ${seconds}s';
+    return '${seconds}s';
+  }
+
   /// B's home card expects a clock-style duration. The duration still comes
   /// from Project A's server timestamps; the local ticker only updates it.
   String get formattedWorkingDuration {
@@ -119,6 +150,8 @@ class AttendanceController extends GetxController {
         return 'Checked in';
       case AttendanceState.checkedOut:
         return 'Completed';
+      case AttendanceState.onBreak:
+        return 'On break';
       case AttendanceState.notCheckedIn:
         return 'Not checked in';
       case null:
@@ -232,7 +265,7 @@ class AttendanceController extends GetxController {
   }
 
   void _syncTicker() {
-    if (state == AttendanceState.checkedIn) {
+    if (state == AttendanceState.checkedIn || state == AttendanceState.onBreak) {
       _now.value = DateTime.now();
       _ticker ??= Timer.periodic(
           const Duration(seconds: 1), (_) => _now.value = DateTime.now());
@@ -261,20 +294,37 @@ class AttendanceController extends GetxController {
       unawaited(refreshToday());
       return;
     }
-    if (requested == AttendanceAction.checkIn && !canCheckIn) {
-      AppSnackbar.show(state == AttendanceState.checkedIn
-          ? 'You have already checked in today.'
-          : 'Today\'s attendance is already completed.');
-      return;
-    }
-    if (requested == AttendanceAction.checkOut && !canCheckOut) {
-      AppSnackbar.show(state == AttendanceState.checkedOut
-          ? 'You have already checked out today.'
-          : 'Check in before you check out.');
-      return;
-    }
     _isStartingFlow = true;
     try {
+      // A cached CHECKED_OUT state can become stale when the previous checkout
+      // was an in-shift break. Refresh from the server before blocking Check In.
+      if (requested == AttendanceAction.checkIn &&
+          (state?.mayNeedCheckInRefresh ?? false)) {
+        await refreshToday();
+        if (todayError.value != null || state == null) {
+          AppSnackbar.show(
+              'Attendance status could not be refreshed. Please try again.');
+          return;
+        }
+        if (!mobileAttendanceEnabled) {
+          AppSnackbar.show(_auth.employee.value?.biometricAttendanceEnabled == true
+              ? 'Mobile attendance is disabled. Use your assigned biometric device.'
+              : 'Mobile attendance is not enabled for your account. Contact your administrator.');
+          return;
+        }
+      }
+      if (requested == AttendanceAction.checkIn && !canCheckIn) {
+        AppSnackbar.show(state == AttendanceState.checkedIn
+            ? 'You have already checked in today.'
+            : 'Today\'s attendance is already completed.');
+        return;
+      }
+      if (requested == AttendanceAction.checkOut && !canCheckOut) {
+        AppSnackbar.show(state == AttendanceState.checkedOut
+            ? 'You have already checked out today.'
+            : 'Check in before you check out.');
+        return;
+      }
       await _resetFlow();
       action.value = requested;
       if (locationRequired) {

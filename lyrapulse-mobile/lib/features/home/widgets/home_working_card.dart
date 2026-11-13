@@ -175,11 +175,13 @@ class HomeWorkingCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 10),
-              _infoRow(
-                Icons.coffee_rounded,
-                'Total Break Time',
-                'Not tracked',
-              ),
+          Obx(
+            () => _infoRow(
+              Icons.coffee_rounded,
+              'Total Break Time',
+              attendanceController.formattedBreakDuration,
+            ),
+          ),
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 6),
                 child: Divider(

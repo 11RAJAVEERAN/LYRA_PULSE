@@ -1,5 +1,6 @@
-from datetime import timedelta
+from datetime import datetime, time, timedelta
 from decimal import Decimal
+from unittest.mock import patch
 
 from django.test import TestCase
 from django.utils import timezone
@@ -10,6 +11,7 @@ from apps.branches.models import Branch
 from apps.devices.models import Device
 from apps.employees.models import Employee
 from apps.fingerprints.models import EmployeeFingerprint
+from apps.shifts.models import Shift, ShiftAssignment, ShiftDaySchedule, ShiftScheduleRevision
 
 from .models import Attendance, AttendanceEvent, DeviceAttendanceEvent
 from .tests import image_file
@@ -101,6 +103,93 @@ class IntegrationRulesTests(TestCase):
         self.assertEqual(rows.count(), 2)
         self.assertEqual(AttendanceEvent.objects.filter(attendance__in=rows).count(), 4)
         self.assertEqual(self.client.get(self.base + "today/").json()["data"]["sessions"].__len__(), 2)
+
+    def test_break_workflow_is_identical_for_location_and_photo_permission_combinations(self):
+        today = timezone.localdate()
+        shift = Shift.objects.create(branch=self.branch, name="Permission workflow shift")
+        ShiftAssignment.objects.create(employee=self.employee, shift=shift, effective_from=today)
+        revision = ShiftScheduleRevision.objects.create(shift=shift, effective_from=today)
+        ShiftDaySchedule.objects.create(
+            revision=revision,
+            weekday=today.strftime("%A").upper(),
+            is_working=True,
+            start_time=time(8),
+            end_time=time(18),
+        )
+        local_tz = timezone.get_current_timezone()
+
+        def at(hour, minute=0):
+            return timezone.make_aware(datetime.combine(today, time(hour, minute)), local_tz)
+
+        for location_enabled, photo_enabled in (
+            (False, False), (True, False), (False, True), (True, True),
+        ):
+            with self.subTest(location=location_enabled, photo=photo_enabled):
+                AttendanceEvent.objects.all().delete()
+                Attendance.objects.all().delete()
+                self.employee.mobile_gps_attendance_enabled = True
+                self.employee.location_attendance_enabled = location_enabled
+                self.employee.photo_attendance_enabled = photo_enabled
+                self.employee.save(update_fields=(
+                    "mobile_gps_attendance_enabled", "location_attendance_enabled",
+                    "photo_attendance_enabled",
+                ))
+
+                for hour, minute, action, expected_status in (
+                    (8, 0, "check-in", 201),
+                    (12, 0, "check-out", 200),
+                ):
+                    with patch("django.utils.timezone.now", return_value=at(hour, minute)):
+                        response = self.post_mobile(
+                            action, photo="send" if photo_enabled else None,
+                        )
+                    self.assertEqual(response.status_code, expected_status, response.content)
+
+                with patch("django.utils.timezone.now", return_value=at(12)):
+                    state = self.client.get(self.base + "today/").data["data"]["state"]
+                self.assertEqual(state, "ON_BREAK")
+
+                with patch("django.utils.timezone.now", return_value=at(12, 30)):
+                    resumed = self.post_mobile("check-in", photo="send" if photo_enabled else None)
+                self.assertEqual(resumed.status_code, 201, resumed.content)
+                with patch("django.utils.timezone.now", return_value=at(15)):
+                    paused = self.post_mobile("check-out", photo="send" if photo_enabled else None)
+                self.assertEqual(paused.status_code, 200, paused.content)
+                with patch("django.utils.timezone.now", return_value=at(15)):
+                    state = self.client.get(self.base + "today/").data["data"]["state"]
+                self.assertEqual(state, "ON_BREAK")
+
+                with patch("django.utils.timezone.now", return_value=at(15, 15)):
+                    resumed_again = self.post_mobile("check-in", photo="send" if photo_enabled else None)
+                self.assertEqual(resumed_again.status_code, 201, resumed_again.content)
+                with patch("django.utils.timezone.now", return_value=at(18, 1)):
+                    final = self.post_mobile("check-out", photo="send" if photo_enabled else None)
+                    state = self.client.get(self.base + "today/").data["data"]["state"]
+
+                self.assertEqual(final.status_code, 200, final.content)
+                self.assertEqual(state, "CHECKED_OUT")
+                sessions = list(Attendance.objects.filter(employee=self.employee).order_by("check_in_at"))
+                self.assertEqual(len(sessions), 3)
+                self.assertEqual(sessions[1].check_in_at - sessions[0].check_out_at, timedelta(minutes=30))
+                self.assertEqual(sessions[2].check_in_at - sessions[1].check_out_at, timedelta(minutes=15))
+
+    def test_failed_location_verification_does_not_start_a_break(self):
+        self.employee.mobile_gps_attendance_enabled = True
+        self.employee.location_attendance_enabled = True
+        self.employee.save(update_fields=("mobile_gps_attendance_enabled", "location_attendance_enabled"))
+        self.assertEqual(self.post_mobile("check-in", photo=None).status_code, 201)
+
+        response = self.client.post(
+            self.base + "check-out/",
+            {**self.location, "latitude": 11.748},
+            format="multipart",
+        )
+
+        self.assertEqual(response.status_code, 403)
+        attendance = Attendance.objects.get(employee=self.employee)
+        self.assertIsNone(attendance.check_out_at)
+        state = self.client.get(self.base + "today/").data["data"]["state"]
+        self.assertEqual(state, "CHECKED_IN")
 
     def test_device_event_is_idempotent(self):
         self.employee.biometric_attendance_enabled = True

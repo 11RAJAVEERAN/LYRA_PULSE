@@ -1,8 +1,10 @@
+
 import os
 from datetime import timedelta
 from pathlib import Path
 
 from dotenv import load_dotenv
+from corsheaders.defaults import default_headers
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
@@ -36,8 +38,8 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    "django.middleware.security.SecurityMiddleware",
     "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -47,52 +49,72 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = "config.urls"
+
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
         "DIRS": [],
         "APP_DIRS": True,
-        "OPTIONS": {"context_processors": [
-            "django.template.context_processors.request",
-            "django.contrib.auth.context_processors.auth",
-            "django.contrib.messages.context_processors.messages",
-        ]},
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
+            ]
+        },
     }
 ]
+
 WSGI_APPLICATION = "config.wsgi.application"
 ASGI_APPLICATION = "config.asgi.application"
 
 if os.getenv("DB_NAME"):
-    DATABASES = {"default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.getenv("DB_NAME"),
-        "USER": os.getenv("DB_USER", ""),
-        "PASSWORD": os.getenv("DB_PASSWORD", ""),
-        "HOST": os.getenv("DB_HOST", "localhost"),
-        "PORT": os.getenv("DB_PORT", "5432"),
-    }}
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.getenv("DB_NAME"),
+            "USER": os.getenv("DB_USER", ""),
+            "PASSWORD": os.getenv("DB_PASSWORD", ""),
+            "HOST": os.getenv("DB_HOST", "localhost"),
+            "PORT": os.getenv("DB_PORT", "5432"),
+        }
+    }
 else:
-    DATABASES = {"default": {"ENGINE": "django.db.backends.sqlite3", "NAME": BASE_DIR / "db.sqlite3"}}
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
 
 AUTH_PASSWORD_VALIDATORS = []
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "Asia/Kolkata"
 USE_I18N = True
 USE_TZ = True
+
 STATIC_URL = "static/"
-# Public media (attendance photos live under MEDIA_ROOT/attendance/...). Served by Django only when DEBUG=True;
-# in production serve MEDIA_ROOT from the web server / object storage.
+
+# Public media (attendance photos live under MEDIA_ROOT/attendance/...).
+# Served by Django only when DEBUG=True; in production serve MEDIA_ROOT
+# from the web server / object storage.
 MEDIA_URL = "/media/"
 MEDIA_ROOT = Path(os.getenv("MEDIA_ROOT", str(BASE_DIR / "media")))
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 AUTH_USER_MODEL = "accounts.User"
 
 REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": ("rest_framework_simplejwt.authentication.JWTAuthentication",),
-    "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ),
+    "DEFAULT_PERMISSION_CLASSES": (
+        "rest_framework.permissions.IsAuthenticated",
+    ),
     "EXCEPTION_HANDLER": "apps.common.exceptions.api_exception_handler",
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
+
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
@@ -100,12 +122,14 @@ SIMPLE_JWT = {
     "BLACKLIST_AFTER_ROTATION": True,
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
+
 SPECTACULAR_SETTINGS = {
     "TITLE": "Lyra Pulse API",
     "DESCRIPTION": "Employee attendance and HR management backend.",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
 }
+
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
@@ -116,26 +140,48 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:53162",
     "http://127.0.0.1:53162",
 ]
-# Lets the admin web app (a different origin) read the CSV filename on attendance export downloads.
+
+# Allow the idempotency-key header used by Flutter attendance requests.
+CORS_ALLOW_HEADERS = (
+    *default_headers,
+    "idempotency-key",
+)
+
+# Lets the admin web app read the CSV filename on attendance export downloads.
 CORS_EXPOSE_HEADERS = ["Content-Disposition"]
+
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = "DENY"
 SESSION_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_SECURE = not DEBUG
 
-# Private (non-public) storage for employee legal documents; served only via the authenticated download API.
-PRIVATE_MEDIA_ROOT = Path(os.getenv("PRIVATE_MEDIA_ROOT", str(BASE_DIR / "private_media")))
+# Private (non-public) storage for employee legal documents;
+# served only via the authenticated download API.
+PRIVATE_MEDIA_ROOT = Path(
+    os.getenv("PRIVATE_MEDIA_ROOT", str(BASE_DIR / "private_media"))
+)
 
 SMS_PROVIDER = os.getenv("SMS_PROVIDER", "mock")
 OTP_EXPIRY_SECONDS = 300
 OTP_RESEND_COOLDOWN_SECONDS = 30
 OTP_MAX_ATTEMPTS = 5
+
 # Devices are Online when a valid heartbeat was received within this interval.
-DEVICE_ONLINE_THRESHOLD_SECONDS = max(1, int(os.getenv("DEVICE_ONLINE_THRESHOLD_SECONDS", "300")))
+DEVICE_ONLINE_THRESHOLD_SECONDS = max(
+    1,
+    int(os.getenv("DEVICE_ONLINE_THRESHOLD_SECONDS", "300")),
+)
 
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
-    "handlers": {"console": {"class": "logging.StreamHandler"}},
-    "loggers": {"django": {"handlers": ["console"], "level": "INFO"}},
+    "handlers": {
+        "console": {"class": "logging.StreamHandler"},
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": "INFO",
+        }
+    },
 }

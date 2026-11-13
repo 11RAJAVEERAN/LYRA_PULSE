@@ -4,7 +4,7 @@ import re
 import shutil
 import tempfile
 import unittest
-from datetime import datetime, timezone as dt_timezone
+from datetime import datetime, time, timezone as dt_timezone
 from decimal import Decimal
 from io import BytesIO
 from unittest.mock import patch
@@ -15,6 +15,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import IntegrityError, connection, transaction
 from django.test.utils import CaptureQueriesContext
 from django.test import SimpleTestCase, TestCase, override_settings
+from django.utils import timezone
 from PIL import Image
 from rest_framework.test import APIClient
 
@@ -22,6 +23,7 @@ from apps.accounts.models import User
 from apps.branches.models import Branch
 from apps.employees.models import AttendancePermissionAudit, Employee
 from apps.organizations.models import Organization
+from apps.shifts.models import Shift, ShiftAssignment, ShiftDaySchedule, ShiftScheduleRevision, Weekday
 
 from . import services
 from .exceptions import AttendanceError
@@ -517,6 +519,64 @@ class TodayTests(AttendanceAPITestCase):
         other.force_authenticate(other_user)
         self.check_in()
         self.assertEqual(other.get(f"{BASE}today/").json()["data"]["state"], "NOT_CHECKED_IN")
+
+    def test_shift_checkout_is_break_then_later_checkout_completes_day(self):
+        today = timezone.localdate()
+        shift = Shift.objects.create(branch=self.branch, name="Test shift")
+        ShiftAssignment.objects.create(employee=self.employee, shift=shift, effective_from=today)
+        revision = ShiftScheduleRevision.objects.create(shift=shift, effective_from=today)
+        ShiftDaySchedule.objects.create(
+            revision=revision, weekday=today.strftime("%A").upper(), is_working=True,
+            start_time=time(8), end_time=time(18),
+        )
+        local = timezone.get_current_timezone()
+
+        with patch("django.utils.timezone.now", return_value=timezone.make_aware(datetime.combine(today, time(8)), local)):
+            self.assertEqual(self.check_in().status_code, 201)
+        with patch("django.utils.timezone.now", return_value=timezone.make_aware(datetime.combine(today, time(12)), local)):
+            self.assertEqual(self.check_out().status_code, 200)
+            self.assertEqual(self.today()["state"], "ON_BREAK")
+        with patch("django.utils.timezone.now", return_value=timezone.make_aware(datetime.combine(today, time(12, 30)), local)):
+            self.assertEqual(self.check_in().status_code, 201)
+        self.assertEqual(Attendance.objects.filter(employee=self.employee, attendance_date=today).count(), 2)
+
+    def test_shift_timing_fallback_day_keeps_early_checkout_resumable(self):
+        today = timezone.localdate()
+        shift = Shift.objects.create(branch=self.branch, name="Fallback schedule shift")
+        ShiftAssignment.objects.create(employee=self.employee, shift=shift, effective_from=today)
+        revision = ShiftScheduleRevision.objects.create(shift=shift, effective_from=today)
+        today_weekday = today.strftime("%A").upper()
+        fallback_weekday = next(day for day in Weekday.values if day != today_weekday)
+        ShiftDaySchedule.objects.create(
+            revision=revision, weekday=today_weekday, is_working=False,
+        )
+        ShiftDaySchedule.objects.create(
+            revision=revision, weekday=fallback_weekday, is_working=True,
+            start_time=time(8), end_time=time(18),
+        )
+        local = timezone.get_current_timezone()
+
+        with patch("django.utils.timezone.now", return_value=timezone.make_aware(datetime.combine(today, time(8)), local)):
+            self.assertEqual(self.check_in().status_code, 201)
+        with patch("django.utils.timezone.now", return_value=timezone.make_aware(datetime.combine(today, time(12)), local)):
+            self.assertEqual(self.check_out().status_code, 200)
+            self.assertEqual(self.today()["state"], "ON_BREAK")
+        with patch("django.utils.timezone.now", return_value=timezone.make_aware(datetime.combine(today, time(12, 30)), local)):
+            self.assertEqual(self.check_in().status_code, 201)
+        with patch("django.utils.timezone.now", return_value=timezone.make_aware(datetime.combine(today, time(18, 1)), local)):
+            self.assertEqual(self.check_out().status_code, 200)
+            self.assertEqual(self.today()["state"], "CHECKED_OUT")
+            self.assertEqual(self.error_code(self.check_in()), "ALREADY_CHECKED_OUT")
+        self.assertEqual(Attendance.objects.filter(employee=self.employee, attendance_date=today).count(), 2)
+
+    def test_checkout_without_shift_is_final_and_does_not_allow_extra_session(self):
+        today = timezone.localdate()
+        local = timezone.get_current_timezone()
+        with patch("django.utils.timezone.now", return_value=timezone.make_aware(datetime.combine(today, time(8)), local)):
+            self.assertEqual(self.check_in().status_code, 201)
+        with patch("django.utils.timezone.now", return_value=timezone.make_aware(datetime.combine(today, time(12)), local)):
+            self.assertEqual(self.check_out().status_code, 200)
+            self.assertEqual(self.error_code(self.check_in()), "ALREADY_CHECKED_OUT")
 
 
 class AttendancePermissionApiTests(AttendanceAPITestCase):

@@ -8,7 +8,6 @@ import '../../data/repositories/attendance_repository.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../features/attendance/controllers/attendance_controller.dart';
 import '../../features/auth/controllers/auth_controller.dart';
-import '../../features/home/controllers/home_controller.dart';
 import '../../features/profile/controllers/profile_controller.dart';
 
 /// App-wide dependencies. SplashController is intentionally NOT registered
@@ -26,7 +25,6 @@ class InitialBinding extends Bindings {
     Get.put<AttendanceRepository>(AttendanceRepository(Get.find()), permanent: true);
     // Permanent: it follows AuthController.employee, so it resets on logout and reloads on login.
     Get.put<AttendanceController>(AttendanceController(), permanent: true);
-    Get.lazyPut<HomeController>(() => HomeController());
     Get.lazyPut<ProfileController>(() => ProfileController());
   }
 }

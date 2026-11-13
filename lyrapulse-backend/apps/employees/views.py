@@ -148,7 +148,20 @@ class EmployeeMeView(RetrieveAPIView):
         "data": EmployeeSerializer(),
     }), 401: OpenApiResponse(description="Authentication required"), 403: OpenApiResponse(description="Employee role required"), 404: OpenApiResponse(description="Active employee profile not found")})
     def retrieve(self, request, *args, **kwargs):
-        return success_response(self.get_serializer(self.get_object()).data)
+        employee = self.get_object()
+        data = dict(self.get_serializer(employee).data)
+        # EmployeeSerializer hides attendance settings from ordinary employee
+        # reads. The authenticated employee's own mobile profile needs these
+        # values to run the required check-in verification flow.
+        for field in (
+            "biometric_attendance_enabled",
+            "mobile_gps_attendance_enabled",
+            "photo_attendance_enabled",
+            "location_attendance_enabled",
+            "auto_punch_out_enabled",
+        ):
+            data[field] = getattr(employee, field)
+        return success_response(data)
 
 
 class ReadOnlyOptionListView(ListAPIView):

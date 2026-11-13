@@ -7,11 +7,13 @@ import '../../../app/theme/app_colors.dart';
 
 class HoldToConfirmButton extends StatefulWidget {
   final bool isCheckOut;
+  final bool isEnabled;
   final VoidCallback onConfirm;
 
   const HoldToConfirmButton({
     super.key,
     required this.isCheckOut,
+    this.isEnabled = true,
     required this.onConfirm,
   });
 
@@ -78,7 +80,7 @@ class _HoldToConfirmButtonState extends State<HoldToConfirmButton>
   }
 
   void _startHold() {
-    if (_isHolding || _isProcessing) return;
+    if (!widget.isEnabled || _isHolding || _isProcessing) return;
 
     setState(() {
       _isHolding = true;
@@ -110,7 +112,9 @@ class _HoldToConfirmButtonState extends State<HoldToConfirmButton>
   void didUpdateWidget(covariant HoldToConfirmButton oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    if (oldWidget.isCheckOut != widget.isCheckOut && _isHolding) {
+    if ((oldWidget.isCheckOut != widget.isCheckOut ||
+            oldWidget.isEnabled != widget.isEnabled) &&
+        _isHolding) {
       _cancelHold();
     }
   }
@@ -164,9 +168,9 @@ class _HoldToConfirmButtonState extends State<HoldToConfirmButton>
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTapDown: (_) => _startHold(),
-      onTapUp: (_) => _cancelHold(),
-      onTapCancel: _cancelHold,
+      onTapDown: widget.isEnabled ? (_) => _startHold() : null,
+      onTapUp: widget.isEnabled ? (_) => _cancelHold() : null,
+      onTapCancel: widget.isEnabled ? _cancelHold : null,
       child: SizedBox(
         width: 100,
         height: 100,

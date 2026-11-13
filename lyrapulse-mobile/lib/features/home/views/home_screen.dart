@@ -548,9 +548,12 @@ class _HomeScreenState extends State<HomeScreen> {
         floatingActionButtonLocation:
             FloatingActionButtonLocation.centerDocked,
 
-        floatingActionButton: HoldToConfirmButton(
-          isCheckOut: _isCheckedIn,
-          onConfirm: _attendanceAction,
+        floatingActionButton: Obx(
+          () => HoldToConfirmButton(
+            isCheckOut: _isCheckedIn,
+            isEnabled: attendanceController.canTriggerAttendanceAction,
+            onConfirm: _attendanceAction,
+          ),
         ),
       ),
     );

@@ -12,9 +12,11 @@ from decimal import Decimal
 from typing import Optional
 
 from django.db import IntegrityError, OperationalError, connection, transaction
+from django.db.models import Q
 from django.utils import timezone
 
 from apps.employees.models import Employee
+from apps.shifts.models import ShiftAssignment
 
 from .exceptions import AttendanceError
 from .models import Attendance, AttendanceEvent, MobileAttendanceRequest
@@ -171,6 +173,44 @@ def _todays_attendance_exists(employee, today):
     return Attendance.objects.filter(employee=employee, attendance_date=today).exists()
 
 
+def _effective_shift_end(employee, on_date):
+    """Return today's assigned shift end as a local aware datetime, if configured."""
+    assignment = (ShiftAssignment.objects
+        .filter(
+            employee=employee,
+            employee__branch_id=employee.branch_id,
+            shift__branch_id=employee.branch_id,
+            effective_from__lte=on_date,
+        )
+        .filter(Q(effective_to__isnull=True) | Q(effective_to__gte=on_date))
+        .select_related("shift")
+        .order_by("-effective_from", "-pk")
+        .first())
+    if assignment is None:
+        return None
+    revision = assignment.shift.schedule_for(on_date)
+    if revision is None:
+        return None
+    day = revision.days.filter(
+        weekday=on_date.strftime("%A").upper(),
+        is_working=True,
+        start_time__isnull=False,
+        end_time__isnull=False,
+    ).first()
+    # Match the employee Shift Timing endpoint: when the current weekday has
+    # no schedule, it displays the first configured working-day schedule.
+    if day is None:
+        day = revision.days.filter(
+            is_working=True,
+            start_time__isnull=False,
+            end_time__isnull=False,
+        ).order_by("weekday").first()
+    if day is None:
+        return None
+    local_end = datetime.combine(on_date, day.end_time)
+    return timezone.make_aware(local_end, timezone.get_current_timezone())
+
+
 def _is_open_attendance_conflict(error):
     cause = error.__cause__
     constraint = getattr(getattr(cause, "diag", None), "constraint_name", None)
@@ -202,6 +242,13 @@ def check_in(
         employee=employee, attendance_date=today, check_out_at__isnull=True
     ).exists():
         raise already_checked_in
+    latest = Attendance.objects.filter(
+        employee=employee, attendance_date=today, check_out_at__isnull=False,
+    ).order_by("-check_out_at", "-pk").first()
+    if latest is not None:
+        shift_end = _effective_shift_end(employee, today)
+        if shift_end is None or latest.check_out_at >= shift_end:
+            raise AttendanceError("ALREADY_CHECKED_OUT", "Today's attendance is already completed.", 409)
 
     lat, lon, _ = validate_coordinates(latitude, longitude) if location_required else (None, None, None)
     attendance = Attendance(
@@ -369,8 +416,13 @@ def today_state(employee):
     attendance = open_session or (sessions[-1] if sessions else None)
     if attendance is None:
         return {"attendance_date": today, "state": Attendance.State.NOT_CHECKED_IN.value, "check_in_at": None, "check_out_at": None, "sessions": []}
+    state = attendance.state.value
+    if attendance.check_out_at is not None:
+        shift_end = _effective_shift_end(employee, today)
+        if shift_end is not None and attendance.check_out_at < shift_end:
+            state = "ON_BREAK"
     return {
-        "attendance_date": attendance.attendance_date, "state": attendance.state.value,
+        "attendance_date": attendance.attendance_date, "state": state,
         "check_in_at": attendance.check_in_at, "check_out_at": attendance.check_out_at,
         "sessions": [{"id": row.pk, "check_in_at": row.check_in_at, "check_out_at": row.check_out_at, "source": row.source} for row in sessions],
     }

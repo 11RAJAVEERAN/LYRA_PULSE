@@ -92,7 +92,7 @@ class CheckOutResultSerializer(serializers.Serializer):
 
 class TodayStateSerializer(serializers.Serializer):
     attendance_date = serializers.DateField()
-    state = serializers.ChoiceField(choices=["NOT_CHECKED_IN", "CHECKED_IN", "CHECKED_OUT"])
+    state = serializers.ChoiceField(choices=["NOT_CHECKED_IN", "CHECKED_IN", "ON_BREAK", "CHECKED_OUT"])
     check_in_at = serializers.DateTimeField(allow_null=True)
     check_out_at = serializers.DateTimeField(allow_null=True)
     sessions = serializers.ListField(child=serializers.DictField(), required=False)

@@ -179,6 +179,31 @@ class EmployeeDetailsFormTests(TestCase):
         self.client.force_authenticate(user=self.payroll_hr)
         self.assertTrue(self.client.get("/api/v1/employees/form-access/").data["data"]["can_change_sensitive"])
 
+    def test_mobile_self_profile_includes_own_attendance_permissions(self):
+        data = self.create_employee()
+        employee = Employee.objects.get(pk=data["id"])
+        employee.mobile_gps_attendance_enabled = True
+        employee.photo_attendance_enabled = True
+        employee.location_attendance_enabled = True
+        employee.biometric_attendance_enabled = True
+        employee.auto_punch_out_enabled = True
+        employee.save(update_fields=(
+            "mobile_gps_attendance_enabled", "photo_attendance_enabled",
+            "location_attendance_enabled", "biometric_attendance_enabled",
+            "auto_punch_out_enabled",
+        ))
+
+        self.client.force_authenticate(user=employee.user)
+        response = self.client.get("/api/v1/mobile/me/")
+
+        self.assertEqual(response.status_code, 200, response.content)
+        profile = response.data["data"]
+        self.assertTrue(profile["mobile_gps_attendance_enabled"])
+        self.assertTrue(profile["photo_attendance_enabled"])
+        self.assertTrue(profile["location_attendance_enabled"])
+        self.assertTrue(profile["biometric_attendance_enabled"])
+        self.assertTrue(profile["auto_punch_out_enabled"])
+
     def test_option_endpoints_return_active_only(self):
         EmployeeType.objects.create(name="Retired", is_active=False)
         self.client.force_authenticate(user=self.hr)

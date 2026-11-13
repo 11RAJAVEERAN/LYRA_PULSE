@@ -4,6 +4,14 @@ import 'package:lyrapulse_mobile/data/models/attendance_model.dart';
 
 void main() {
   group('TodayAttendance.fromJson', () {
+    test('allows Check In during a break but refreshes a completed state first', () {
+      expect(AttendanceState.onBreak.allowsCheckIn, isTrue);
+      expect(AttendanceState.onBreak.mayNeedCheckInRefresh, isFalse);
+      expect(AttendanceState.checkedOut.allowsCheckIn, isFalse);
+      expect(AttendanceState.checkedOut.mayNeedCheckInRefresh, isTrue);
+      expect(AttendanceState.checkedIn.allowsCheckOut, isTrue);
+    });
+
     test('parses a not-checked-in day', () {
       final today = TodayAttendance.fromJson({
         'attendance_date': '2026-10-18',
@@ -30,6 +38,24 @@ void main() {
     test('unknown state falls back to not checked in', () {
       expect(AttendanceState.parse('SOMETHING_ELSE'), AttendanceState.notCheckedIn);
       expect(AttendanceState.parse(null), AttendanceState.notCheckedIn);
+    });
+
+    test('parses an active break state', () {
+      final today = TodayAttendance.fromJson({
+        'attendance_date': '2026-10-18',
+        'state': 'ON_BREAK',
+        'check_in_at': '2026-10-18T03:58:00Z',
+        'check_out_at': '2026-10-18T07:58:00Z',
+        'sessions': [
+          {
+            'id': 1,
+            'check_in_at': '2026-10-18T03:58:00Z',
+            'check_out_at': '2026-10-18T07:58:00Z',
+          }
+        ],
+      });
+      expect(today.state, AttendanceState.onBreak);
+      expect(today.sessions, hasLength(1));
     });
   });
 
