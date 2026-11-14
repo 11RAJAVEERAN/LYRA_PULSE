@@ -34,12 +34,47 @@ class ProfileScreen extends GetView<ProfileController> {
             fontWeight: FontWeight.w700,
           ),
         ),
+        actions: [
+          Obx(() => IconButton(
+                tooltip: 'Refresh profile',
+                onPressed: controller.isRefreshing.value ? null : controller.refreshProfile,
+                icon: controller.isRefreshing.value
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.refresh_rounded, color: AppColors.primary),
+              )),
+        ],
       ),
       body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
         child: Column(
           children: [
             _profileHeader(),
+            Obx(() {
+              final error = controller.refreshError.value;
+              if (error == null) return const SizedBox.shrink();
+              return Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                child: Material(
+                  color: AppColors.errorBackground,
+                  borderRadius: BorderRadius.circular(12),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(error, style: GoogleFonts.inter(fontSize: 12, color: AppColors.error)),
+                        ),
+                        TextButton(onPressed: controller.refreshProfile, child: const Text('Retry')),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }),
             const SizedBox(height: 22),
             _profileTabs(),
             const SizedBox(height: 18),
@@ -249,9 +284,24 @@ class ProfileScreen extends GetView<ProfileController> {
                   value: controller.phoneNumber.value,
                 ),
                 _InfoItem(
+                  icon: Icons.email_outlined,
+                  title: 'Email Address',
+                  value: controller.email.value,
+                ),
+                _InfoItem(
                   icon: Icons.location_on_outlined,
                   title: 'Address',
                   value: controller.address.value,
+                ),
+                _InfoItem(
+                  icon: Icons.cake_outlined,
+                  title: 'Date of Birth',
+                  value: controller.dateOfBirth.value,
+                ),
+                _InfoItem(
+                  icon: Icons.person_pin_outlined,
+                  title: 'Gender',
+                  value: controller.gender.value,
                 ),
               ],
             );
@@ -267,13 +317,23 @@ class ProfileScreen extends GetView<ProfileController> {
               ),
               _InfoItem(
                 icon: Icons.apartment_outlined,
-                title: 'Organization',
-                value: controller.organization.value,
+                title: 'Branch',
+                value: controller.branch.value,
+              ),
+              _InfoItem(
+                icon: Icons.groups_outlined,
+                title: 'Department',
+                value: controller.department.value,
               ),
               _InfoItem(
                 icon: Icons.work_outline,
                 title: 'Designation',
                 value: controller.designation.value,
+              ),
+              _InfoItem(
+                icon: Icons.event_outlined,
+                title: 'Date of Joining',
+                value: controller.joiningDate.value,
               ),
             ],
           );

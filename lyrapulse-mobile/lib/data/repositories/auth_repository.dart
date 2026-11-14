@@ -54,9 +54,27 @@ class AuthRepository {
     final currentUserBody = _asMap(responses[1].data);
     _ensureSuccess(profileBody);
     _ensureSuccess(currentUserBody);
-    final profile = _asMap(profileBody['data']);
-    final currentUser = _asMap(_asMap(currentUserBody['data'])['user']);
-    return EmployeeModel.fromJson(profile, emailFallback: currentUser['email']?.toString() ?? '');
+    final profile = Map<String, dynamic>.from(_asMap(profileBody['data']));
+    final currentUserData = _asMap(currentUserBody['data']);
+    final currentUser = _asMap(currentUserData['user']);
+    final accountEmployee = _asMap(currentUserData['employee']);
+
+    // /mobile/me/ provides the full self profile but serializes related fields
+    // as primary keys. /auth/me/ also returns employee-scoped relation names;
+    // merge those named relations so the profile can display branch,
+    // department, and designation without looking up a profile by ID.
+    for (final field in const ['branch', 'department', 'designation']) {
+      final relation = accountEmployee[field];
+      if (relation != null) profile[field] = relation;
+    }
+    if ((profile['email']?.toString().isEmpty ?? true) && accountEmployee['email'] != null) {
+      profile['email'] = accountEmployee['email'];
+    }
+
+    return EmployeeModel.fromJson(
+      profile,
+      emailFallback: currentUser['email']?.toString() ?? '',
+    );
   }
 
   Future<void> logout() async {

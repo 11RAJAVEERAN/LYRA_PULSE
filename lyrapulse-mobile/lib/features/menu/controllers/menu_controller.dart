@@ -1,23 +1,44 @@
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../app/theme/app_colors.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../notification/views/notification_screen.dart';
+import 'upcoming_shifts_controller.dart';
 import '../views/upcoming_shifts_screen.dart';
-import '../views/holidays_screen.dart';
-import '../views/payslips_screen.dart';
-import '../views/loans_advances_screen.dart';
-import '../views/arrears_screen.dart';
+import '../../profile/bindings/profile_binding.dart';
+import '../../profile/views/profile_screen.dart';
 
 class LyraMenuController extends GetxController {
   final RxString selectedMenu = 'Menu'.obs;
 
+  @override
+  void onInit() {
+    super.onInit();
+    final auth = Get.find<AuthController>();
+    if (auth.employee.value != null) {
+      unawaited(auth.reloadEmployeeProfile().then<void>(
+        (_) {},
+        onError: (Object _) {},
+      ));
+    }
+  }
+
   // Profile
   void openProfile() {
     selectedMenu.value = 'My Profile';
-    Get.toNamed('/profile');
+    final auth = Get.find<AuthController>();
+    unawaited(auth.reloadEmployeeProfile().then<void>(
+      (_) {},
+      onError: (Object _) {},
+    ));
+    Get.to(
+      () => const ProfileScreen(),
+      binding: ProfileBinding(),
+    );
   }
 
   // Notifications
@@ -29,28 +50,33 @@ class LyraMenuController extends GetxController {
   // Schedule
   void openUpcomingShifts() {
     selectedMenu.value = 'Upcoming Shifts';
-    Get.to(() => const UpcomingShiftsScreen());
+    Get.to(
+      () => const UpcomingShiftsScreen(),
+      binding: BindingsBuilder(() {
+        Get.lazyPut<UpcomingShiftsController>(() => UpcomingShiftsController());
+      }),
+    );
   }
 
   void openHolidays() {
     selectedMenu.value = 'Holidays';
-    Get.to(() => const HolidaysScreen());
+    showComingSoon('Holidays');
   }
 
   // Pay & Benefits
   void openPayslips() {
     selectedMenu.value = 'Payslips';
-    Get.to(() => const PayslipsScreen());
+    showComingSoon('Payslips');
   }
 
   void openLoansAdvances() {
     selectedMenu.value = 'Loans & Advances';
-    Get.to(() => const LoansAdvancesScreen());
+    showComingSoon('Loans & Advances');
   }
 
   void openArrears() {
     selectedMenu.value = 'Arrears';
-    Get.to(() => const ArrearsScreen());
+    showComingSoon('Arrears');
   }
 
   // Settings
@@ -74,7 +100,7 @@ class LyraMenuController extends GetxController {
   void showComingSoon(String feature) {
     Get.snackbar(
       feature,
-      '$feature will be available soon.',
+      'This feature is coming soon.',
       snackPosition: SnackPosition.BOTTOM,
       margin: const EdgeInsets.all(16),
       backgroundColor: AppColors.primary,

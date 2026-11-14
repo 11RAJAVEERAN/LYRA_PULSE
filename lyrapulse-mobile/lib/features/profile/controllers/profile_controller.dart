@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -18,8 +20,13 @@ class ProfileController extends GetxController {
   final phoneNumber = 'Not available'.obs;
   final address = 'Not available'.obs;
   final employeeId = 'Not available'.obs;
-  final organization = 'Not available'.obs;
   final designation = 'Not available'.obs;
+  final email = 'Not available'.obs;
+  final department = 'Not available'.obs;
+  final branch = 'Not available'.obs;
+  final joiningDate = 'Not available'.obs;
+  final dateOfBirth = 'Not available'.obs;
+  final gender = 'Not available'.obs;
 
   final nameController = TextEditingController();
   final phoneController = TextEditingController();
@@ -37,6 +44,7 @@ class ProfileController extends GetxController {
       _authController.employee,
       (_) => _syncEmployee(),
     );
+    unawaited(refreshProfile());
   }
 
   void _syncEmployee() {
@@ -56,8 +64,19 @@ class ProfileController extends GetxController {
     designation.value = value?.designation?.isNotEmpty == true
         ? value!.designation!
         : 'Not available';
-    // The current employee profile contract contains no organization field.
-    organization.value = 'Not available';
+    email.value = value?.email.isNotEmpty == true ? value!.email : 'Not available';
+    department.value = value?.department?.isNotEmpty == true
+        ? value!.department!
+        : 'Not available';
+    branch.value = value?.branch?.isNotEmpty == true ? value!.branch! : 'Not available';
+    joiningDate.value = _formatDate(value?.joiningDate);
+    dateOfBirth.value = _formatDate(value?.dateOfBirth);
+    gender.value = value?.gender.isNotEmpty == true ? value!.gender : 'Not available';
+  }
+
+  String _formatDate(DateTime? date) {
+    if (date == null) return 'Not available';
+    return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
   }
 
   void changeTab(int index) => selectedTab.value = index;

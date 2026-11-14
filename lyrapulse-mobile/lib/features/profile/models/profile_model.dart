@@ -21,24 +21,21 @@ class ProfileModel {
   });
 
   factory ProfileModel.fromJson(Map<String, dynamic> json) {
+    String relationName(dynamic value) {
+      if (value is Map) return value['name']?.toString() ?? '';
+      return value?.toString() ?? '';
+    }
+
     return ProfileModel(
       id: '${json['id'] ?? ''}',
-      fullName: '${json['full_name'] ?? json['name'] ?? ''}',
-      phoneNumber: '${json['phone_number'] ?? json['phone'] ?? ''}',
+      fullName: '${json['name'] ?? ''}',
+      phoneNumber: '${json['phone_number'] ?? ''}',
       address: '${json['address'] ?? ''}',
-      employeeId: '${json['employee_id'] ?? ''}',
-      organization: '${json['organization'] ?? ''}',
-      designation: '${json['designation'] ?? ''}',
-      profileImage: json['profile_image']?.toString(),
+      employeeId: '${json['employee_code'] ?? ''}',
+      organization: relationName(json['branch']),
+      designation: relationName(json['designation']),
+      profileImage: json['profile_photo']?.toString(),
     );
-  }
-
-  Map<String, dynamic> toUpdateJson() {
-    return {
-      'full_name': fullName,
-      'phone_number': phoneNumber,
-      'address': address,
-    };
   }
 
   ProfileModel copyWith({

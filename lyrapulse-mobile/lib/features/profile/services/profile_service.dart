@@ -1,6 +1,7 @@
 
 import 'package:dio/dio.dart';
 
+import '../../../core/constants/api_constants.dart';
 import '../models/profile_model.dart';
 
 class ProfileService {
@@ -8,8 +9,7 @@ class ProfileService {
 
   ProfileService({required this.dio});
 
-  // Update this endpoint when the backend API is confirmed.
-  static const String profileEndpoint = '/employee/profile';
+  static const String profileEndpoint = ApiConstants.employeeMe;
 
   Future<ProfileModel> getProfile() async {
     try {
@@ -35,39 +35,6 @@ class ProfileService {
         e.response?.data?['message'] ??
             e.message ??
             'Unable to fetch profile',
-      );
-    }
-  }
-
-  Future<ProfileModel> updateProfile(
-    ProfileModel profile,
-  ) async {
-    try {
-      final response = await dio.put(
-        profileEndpoint,
-        data: profile.toUpdateJson(),
-      );
-
-      final data = response.data;
-
-      if (data is! Map) {
-        throw Exception('Invalid update response');
-      }
-
-      final responseData = data['data'] ?? data;
-
-      if (responseData is! Map) {
-        throw Exception('Updated profile not found');
-      }
-
-      return ProfileModel.fromJson(
-        Map<String, dynamic>.from(responseData),
-      );
-    } on DioException catch (e) {
-      throw Exception(
-        e.response?.data?['message'] ??
-            e.message ??
-            'Unable to update profile',
       );
     }
   }

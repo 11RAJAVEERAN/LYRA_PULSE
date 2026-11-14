@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 
 import '../../../app/theme/app_colors.dart';
+import '../../auth/controllers/auth_controller.dart';
 import '../controllers/menu_controller.dart';
 import '../widgets/menu_item.dart';
 import '../widgets/menu_profile_card.dart';
@@ -17,6 +18,7 @@ class MenuScreen extends StatelessWidget {
     final controller = Get.isRegistered<LyraMenuController>()
         ? Get.find<LyraMenuController>()
         : Get.put(LyraMenuController());
+    final authController = Get.find<AuthController>();
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -38,12 +40,16 @@ class MenuScreen extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(18, 24, 18, 30),
           children: [
             // Profile
-            MenuProfileCard(
-              employeeName: 'Madhavan',
-              employeeId: '118',
-              onTap: () {
-                Get.toNamed('/profile');
-              },
+            Obx(
+              () => MenuProfileCard(
+                employeeName: authController.employee.value?.name.isNotEmpty == true
+                    ? authController.employee.value!.name
+                    : 'Loading profile…',
+                employeeId: authController.employee.value?.employeeCode.isNotEmpty == true
+                    ? authController.employee.value!.employeeCode
+                    : '—',
+                onTap: controller.openProfile,
+              ),
             ),
 
             const SizedBox(height: 28),
@@ -152,26 +158,6 @@ class MenuScreen extends StatelessWidget {
 
             const SizedBox(height: 26),
 
-MenuSection(
-  title: 'Settings',
-  children: [
-    MenuOptionTile(
-      icon: Icons.language_rounded,
-      title: 'App Language',
-      onTap: controller.openAppLanguage,
-    ),
-    MenuOptionTile(
-      icon: Icons.palette_outlined,
-      title: 'App Theme',
-      onTap: controller.openAppTheme,
-    ),
-    MenuOptionTile(
-      icon: Icons.system_update_rounded,
-      title: 'Check for Updates',
-      onTap: controller.checkForUpdates,
-    ),
-  ],
-),
             // // Account
             // MenuSection(
             //   title: 'Account',
