@@ -182,7 +182,7 @@ class HomeActivityCard extends StatelessWidget {
           ),
           Expanded(
             child: Container(
-              height: 1.3,
+              height: 0.5,
               color: AppColors.border,
             ),
           ),
@@ -199,8 +199,8 @@ class HomeActivityCard extends StatelessWidget {
     return Row(
       children: [
         Container(
-          width: 40,
-          height: 40,
+          width: 20,
+          height: 20,
           decoration: BoxDecoration(
             color: isPunchIn
                 ? AppColors.infoSurface
@@ -212,8 +212,8 @@ class HomeActivityCard extends StatelessWidget {
                 ? Icons.login_rounded
                 : Icons.logout_rounded,
             color: isPunchIn
-                ? AppColors.surfaceMuted
-                : AppColors.surfaceMuted,
+                ? AppColors.success
+                : AppColors. warning,
             size: 20,
           ),
         ),
@@ -234,7 +234,7 @@ class HomeActivityCard extends StatelessWidget {
           textAlign: TextAlign.right,
           style: GoogleFonts.inter(
             fontSize: 14,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w500,
             color: AppColors.textPrimary,
           ),
         ),
