@@ -6,10 +6,25 @@ import '../controllers/calendar_controller.dart';
 class AttendanceDayList extends StatelessWidget {
   final CalendarController controller;
 
+  /// Date click pannum pothu andha date-oda home page open panna
+  final void Function(DateTime date)? onDateTap;
+
   const AttendanceDayList({
     super.key,
     required this.controller,
+    this.onDateTap,
   });
+
+  static const _knownStatuses = {
+    'present',
+    'absent',
+    'leave',
+    'halfDay',
+    'late',
+    'punchError',
+    'holiday',
+    'weekOff',
+  };
 
   Color _statusColor(String status) {
     switch (status) {
@@ -32,6 +47,16 @@ class AttendanceDayList extends StatelessWidget {
     }
   }
 
+  /// Past date + no valid attendance record => Absent
+  String _effectiveStatus(DateTime date, String status) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    if (date.isBefore(today) && !_knownStatuses.contains(status)) {
+      return 'absent';
+    }
+    return status;
+  }
+
   @override
   Widget build(BuildContext context) {
     final days = controller.visibleDays;
@@ -51,7 +76,7 @@ class AttendanceDayList extends StatelessWidget {
               size: 42,
               color: AppColors.textSecondary,
             ),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             Text(
               'No attendance records found',
               style: GoogleFonts.inter(
@@ -68,7 +93,8 @@ class AttendanceDayList extends StatelessWidget {
       children: days.map((day) {
         final month = controller.currentMonth.value;
         final date = DateTime(month.year, month.month, day);
-        final status = controller.statusForDay(day);
+        final status = _effectiveStatus(date, controller.statusForDay(day));
+        final isAbsent = status == 'absent';
         final color = _statusColor(status);
         final selected = controller.selectedDate.value.year == date.year &&
             controller.selectedDate.value.month == date.month &&
@@ -80,7 +106,10 @@ class AttendanceDayList extends StatelessWidget {
             color: AppColors.surface,
             borderRadius: BorderRadius.circular(16),
             child: InkWell(
-              onTap: () => controller.selectDate(day),
+              onTap: () {
+                controller.selectDate(day);
+                onDateTap?.call(date);
+              },
               borderRadius: BorderRadius.circular(16),
               child: Container(
                 padding: const EdgeInsets.all(13),
@@ -94,11 +123,14 @@ class AttendanceDayList extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
+                    // Date box (absent na mattum solid red)
                     Container(
                       width: 56,
                       height: 62,
                       decoration: BoxDecoration(
-                        color: color.withValues(alpha: 0.12),
+                        color: isAbsent
+                            ? AppColors.error
+                            : color.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Column(
@@ -109,15 +141,17 @@ class AttendanceDayList extends StatelessWidget {
                             style: GoogleFonts.inter(
                               fontSize: 20,
                               fontWeight: FontWeight.w700,
-                              color: color,
+                              color: isAbsent ? Colors.white : color,
                             ),
                           ),
                           const SizedBox(height: 2),
                           Text(
                             controller.weekdayShort(date),
-                            style:  GoogleFonts.inter(
+                            style: GoogleFonts.inter(
                               fontSize: 11,
-                              color: AppColors.textSecondary,
+                              color: isAbsent
+                                  ? Colors.white.withValues(alpha: 0.85)
+                                  : AppColors.textSecondary,
                             ),
                           ),
                         ],
@@ -130,7 +164,7 @@ class AttendanceDayList extends StatelessWidget {
                         children: [
                           Text(
                             controller.statusLabel(status),
-                            style:  GoogleFonts.inter(
+                            style: GoogleFonts.inter(
                               fontSize: 15,
                               fontWeight: FontWeight.w700,
                               color: AppColors.textPrimary,
@@ -139,7 +173,7 @@ class AttendanceDayList extends StatelessWidget {
                           const SizedBox(height: 5),
                           Text(
                             '${controller.monthTitle} • ${controller.weekdayShort(date)}',
-                            style:  GoogleFonts.inter(
+                            style: GoogleFonts.inter(
                               fontSize: 11,
                               color: AppColors.textSecondary,
                             ),

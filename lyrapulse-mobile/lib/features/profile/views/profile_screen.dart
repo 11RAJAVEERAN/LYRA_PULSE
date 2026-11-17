@@ -1,3 +1,4 @@
+
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -35,55 +36,90 @@ class ProfileScreen extends GetView<ProfileController> {
           ),
         ),
         actions: [
-          Obx(() => IconButton(
-                tooltip: 'Refresh profile',
-                onPressed: controller.isRefreshing.value ? null : controller.refreshProfile,
-                icon: controller.isRefreshing.value
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.refresh_rounded, color: AppColors.primary),
-              )),
+          Obx(
+            () => IconButton(
+              tooltip: 'Refresh profile',
+              onPressed: controller.isRefreshing.value
+                  ? null
+                  : controller.refreshProfile,
+              icon: controller.isRefreshing.value
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(
+                      Icons.refresh_rounded,
+                      color: AppColors.primary,
+                    ),
+            ),
+          ),
         ],
       ),
-      body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        child: Column(
-          children: [
-            _profileHeader(),
-            Obx(() {
-              final error = controller.refreshError.value;
-              if (error == null) return const SizedBox.shrink();
-              return Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                child: Material(
-                  color: AppColors.errorBackground,
-                  borderRadius: BorderRadius.circular(12),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(error, style: GoogleFonts.inter(fontSize: 12, color: AppColors.error)),
+
+      // FIXED HEADER AND TABS
+      // ONLY PROFILE DETAILS WILL SCROLL
+      body: Column(
+        children: [
+          // PROFILE HEADER - FIXED
+          _profileHeader(),
+
+          // ERROR MESSAGE
+          Obx(() {
+            final error = controller.refreshError.value;
+
+            if (error == null) {
+              return const SizedBox.shrink();
+            }
+
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+              child: Material(
+                color: AppColors.errorBackground,
+                borderRadius: BorderRadius.circular(12),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          error,
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            color: AppColors.error,
+                          ),
                         ),
-                        TextButton(onPressed: controller.refreshProfile, child: const Text('Retry')),
-                      ],
-                    ),
+                      ),
+                      TextButton(
+                        onPressed: controller.refreshProfile,
+                        child: const Text('Retry'),
+                      ),
+                    ],
                   ),
                 ),
-              );
-            }),
-            const SizedBox(height: 22),
-            _profileTabs(),
-            const SizedBox(height: 18),
-            _profileDetails(),
-            const SizedBox(height: 20),
-            _editButton(),
-            const SizedBox(height: 35),
-          ],
-        ),
+              ),
+            );
+          }),
+
+          const SizedBox(height: 22),
+
+          // PROFILE TABS - FIXED
+          _profileTabs(),
+
+          const SizedBox(height: 18),
+
+          // ONLY THIS SECTION WILL SCROLL
+          Expanded(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.only(bottom: 20),
+              child: _profileDetails(),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -118,11 +154,12 @@ class ProfileScreen extends GetView<ProfileController> {
                   child: CircleAvatar(
                     radius: 48,
                     backgroundColor: AppColors.secondarySoft,
-                    backgroundImage: controller.selectedImagePath.value.isEmpty
-                        ? null
-                        : FileImage(
-                            File(controller.selectedImagePath.value),
-                          ),
+                    backgroundImage:
+                        controller.selectedImagePath.value.isEmpty
+                            ? null
+                            : FileImage(
+                                File(controller.selectedImagePath.value),
+                              ),
                     child: controller.selectedImagePath.value.isEmpty
                         ? const Icon(
                             Icons.person,
@@ -255,7 +292,9 @@ class ProfileScreen extends GetView<ProfileController> {
             style: GoogleFonts.inter(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: selected ? AppColors.surface : AppColors.textSecondary,
+              color: selected
+                  ? AppColors.surface
+                  : AppColors.textSecondary,
             ),
           ),
         ),
@@ -437,34 +476,34 @@ class ProfileScreen extends GetView<ProfileController> {
   }
 
   // EDIT BUTTON
-  Widget _editButton() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: SizedBox(
-        width: double.infinity,
-        height: 54,
-        child: ElevatedButton.icon(
-          onPressed: controller.openEditProfile,
-          icon: const Icon(Icons.edit_outlined),
-          label: Text(
-            'Edit Profile',
-            style: GoogleFonts.inter(
-              fontWeight: FontWeight.w700,
-              fontSize: 15,
-            ),
-          ),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primaryBlue,
-            foregroundColor: AppColors.surface,
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(15),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+  // Widget _editButton() {
+  //   return Padding(
+  //     padding: const EdgeInsets.symmetric(horizontal: 20),
+  //     child: SizedBox(
+  //       width: double.infinity,
+  //       height: 54,
+  //       child: ElevatedButton.icon(
+  //         onPressed: controller.openEditProfile,
+  //         icon: const Icon(Icons.edit_outlined),
+  //         label: Text(
+  //           'Edit Profile',
+  //           style: GoogleFonts.inter(
+  //             fontWeight: FontWeight.w700,
+  //             fontSize: 15,
+  //           ),
+  //         ),
+  //         style: ElevatedButton.styleFrom(
+  //           backgroundColor: AppColors.primaryBlue,
+  //           foregroundColor: AppColors.surface,
+  //           elevation: 0,
+  //           shape: RoundedRectangleBorder(
+  //             borderRadius: BorderRadius.circular(15),
+  //           ),
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
 }
 
 class _InfoItem {

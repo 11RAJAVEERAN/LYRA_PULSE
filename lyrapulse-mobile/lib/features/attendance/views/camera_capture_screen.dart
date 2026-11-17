@@ -18,25 +18,38 @@ class CameraCaptureScreen extends GetView<CameraCaptureController> {
   Widget build(BuildContext context) {
     final attendance = Get.find<AttendanceController>();
     return Scaffold(
-      backgroundColor: AppColors.primaryDark,
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(AppDimensions.pagePadding, 12, AppDimensions.pagePadding, 24),
+          padding: const EdgeInsets.fromLTRB(
+              AppDimensions.pagePadding, 12, AppDimensions.pagePadding, 24),
           child: Column(children: [
             Obx(() => FlowHeader(
                   action: attendance.action.value,
                   step: attendance.locationRequired ? 2 : 1,
                   totalSteps: attendance.locationRequired ? 3 : 2,
                   subtitle: 'Take your attendance photo',
-                  onDark: true,
+                  onDark: false, // white -> primary color
                 )),
             const SizedBox(height: 18),
             Expanded(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(AppDimensions.cardRadius),
-                child: ColoredBox(
-                  color: AppColors.primary,
-                  child: _Preview(controller: controller),
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(AppDimensions.cardRadius),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withOpacity(.15),
+                      blurRadius: 24,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(AppDimensions.cardRadius),
+                  child: ColoredBox(
+                    color: AppColors.surface,
+                    child: _Preview(controller: controller),
+                  ),
                 ),
               ),
             ),
@@ -49,7 +62,8 @@ class CameraCaptureScreen extends GetView<CameraCaptureController> {
                   onPressed: controller.initCamera,
                 );
               }
-              final enabled = controller.isReady.value && !controller.isCapturing.value;
+              final enabled =
+                  controller.isReady.value && !controller.isCapturing.value;
               return _ShutterButton(
                 busy: controller.isCapturing.value,
                 onTap: enabled ? controller.capture : null,
@@ -78,11 +92,12 @@ class _Preview extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(28),
           child: Column(mainAxisSize: MainAxisSize.min, children: [
-            const Icon(Icons.no_photography_rounded, color: Colors.white, size: 44),
+            const Icon(Icons.no_photography_rounded,
+                color: AppColors.primary, size: 44),
             const SizedBox(height: 14),
             Text(error,
                 textAlign: TextAlign.center,
-                style: AppTextStyles.body.copyWith(color: Colors.white)),
+                style: AppTextStyles.body.copyWith(color: AppColors.primary)),
             const SizedBox(height: 14),
             TextButton(
               onPressed: controller.openSettings,
@@ -94,8 +109,11 @@ class _Preview extends StatelessWidget {
       );
     }
     final camera = controller.camera.value;
-    if (!controller.isReady.value || camera == null || !camera.value.isInitialized) {
-      return const Center(child: CircularProgressIndicator(color: Colors.white));
+    if (!controller.isReady.value ||
+        camera == null ||
+        !camera.value.isInitialized) {
+      return const Center(
+          child: CircularProgressIndicator(color: AppColors.primary));
     }
     final size = camera.value.previewSize;
     return Stack(fit: StackFit.expand, children: [
@@ -119,7 +137,10 @@ class _Preview extends StatelessWidget {
             height: 300,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(150),
-              border: Border.all(color: Colors.white.withValues(alpha: .7), width: 2),
+              border: Border.all(
+                color: AppColors.primary.withOpacity(.7),
+                width: 2.5,
+              ),
             ),
           ),
         ),
@@ -135,26 +156,45 @@ class _ShutterButton extends StatelessWidget {
   final VoidCallback? onTap;
 
   @override
-  Widget build(BuildContext context) => Opacity(
+  Widget build(BuildContext context) => AnimatedOpacity(
+        duration: const Duration(milliseconds: 200),
         opacity: onTap == null && !busy ? .5 : 1,
         child: GestureDetector(
           onTap: onTap,
           child: Container(
-            width: 74,
-            height: 74,
+            width: 78,
+            height: 78,
             padding: const EdgeInsets.all(5),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.white, width: 3),
+              border: Border.all(color: AppColors.primary, width: 3),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary.withOpacity(.35),
+                  blurRadius: 18,
+                  spreadRadius: 1,
+                ),
+              ],
             ),
             child: DecoratedBox(
-              decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [AppColors.primary, AppColors.accent],
+                ),
+              ),
               child: busy
                   ? const Padding(
                       padding: EdgeInsets.all(18),
-                      child: CircularProgressIndicator(strokeWidth: 3, color: AppColors.primary),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 3,
+                        color: Colors.white,
+                      ),
                     )
-                  : null,
+                  : const Icon(Icons.camera_alt_rounded,
+                      color: Colors.white, size: 28),
             ),
           ),
         ),

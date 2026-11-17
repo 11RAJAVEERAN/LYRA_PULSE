@@ -7,11 +7,10 @@ import '../models/leave_model.dart';
 import '../services/leave_service.dart';
 
 class LeaveController extends GetxController {
-final LeaveService _service = Get.find<LeaveService>();
+  final LeaveService _service = Get.find<LeaveService>();
   final RxList<LeaveModel> leaveList = <LeaveModel>[].obs;
 
-  final RxMap<String, double> leaveBalances =
-      <String, double>{}.obs;
+  final RxMap<String, double> leaveBalances = <String, double>{}.obs;
 
   final RxInt selectedTab = 0.obs;
 
@@ -23,8 +22,7 @@ final LeaveService _service = Get.find<LeaveService>();
 
   final Rx<DateTime> calendarMonth = DateTime.now().obs;
 
-  final TextEditingController reasonController =
-      TextEditingController();
+  final TextEditingController reasonController = TextEditingController();
 
   final RxString reason = ''.obs;
 
@@ -37,9 +35,8 @@ final LeaveService _service = Get.find<LeaveService>();
   List<LeaveModel> get pendingLeaves =>
       leaveList.where((e) => e.status == 'Pending').toList();
 
-  List<LeaveModel> get historyLeaves => leaveList
-      .where((e) => e.status != 'Pending')
-      .toList();
+  List<LeaveModel> get historyLeaves =>
+      leaveList.where((e) => e.status != 'Pending').toList();
 
   double get totalAvailableLeaves {
     return leaveBalances.entries
@@ -59,10 +56,7 @@ final LeaveService _service = Get.find<LeaveService>();
       return 0;
     }
 
-
-
-    final days =
-        endDate.value!.difference(startDate.value!).inDays + 1;
+    final days = endDate.value!.difference(startDate.value!).inDays + 1;
 
     if (selectedDuration.value == 'Half Day') {
       return 0.5;
@@ -88,9 +82,9 @@ final LeaveService _service = Get.find<LeaveService>();
       return false;
     }
     if (selectedDuration.value == 'Half Day' &&
-    !DateUtils.isSameDay(startDate.value, endDate.value)) {
-  return false;
-}
+        !DateUtils.isSameDay(startDate.value, endDate.value)) {
+      return false;
+    }
 
     return true;
   }
@@ -189,12 +183,19 @@ final LeaveService _service = Get.find<LeaveService>();
 
         Get.back();
 
+        // UI only: dialog styling
         Get.dialog(
-          AlertDialog(
+          Dialog(
+            backgroundColor: AppColors.surface,
+            surfaceTintColor: Colors.transparent,
+            insetPadding: const EdgeInsets.symmetric(horizontal: 28),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(28),
             ),
-            content: const LeaveSuccessContent(),
+            child: const Padding(
+              padding: EdgeInsets.fromLTRB(24, 30, 24, 22),
+              child: LeaveSuccessContent(),
+            ),
           ),
           barrierDismissible: false,
         );
@@ -242,34 +243,116 @@ class LeaveSuccessContent extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const CircleAvatar(
-          radius: 35,
-          backgroundColor: AppColors.successBackground,
-          child: Icon(
-            Icons.check_circle,
-            color: AppColors.success,
-            size: 48,
+        // Animated double-ring check icon
+        TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0.5, end: 1),
+          duration: const Duration(milliseconds: 600),
+          curve: Curves.elasticOut,
+          builder: (context, scale, child) {
+            return Transform.scale(scale: scale, child: child);
+          },
+          child: Container(
+            width: 104,
+            height: 104,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppColors.successBackground,
+            ),
+            alignment: Alignment.center,
+            child: Container(
+              width: 76,
+              height: 76,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.success,
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.success.withValues(alpha: 0.35),
+                    blurRadius: 16,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.check_rounded,
+                color: Colors.white,
+                size: 44,
+              ),
+            ),
           ),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 22),
+
         Text(
           'Leave Applied!',
           style: GoogleFonts.inter(
-            fontSize: 21,
-            fontWeight: FontWeight.bold,
+            fontSize: 22,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.3,
+            color: AppColors.textPrimary,
           ),
         ),
-        const SizedBox(height: 10),
-        const Text(
-          'Leave has been applied successfully.',
+        const SizedBox(height: 8),
+        Text(
+          'Your leave request has been submitted successfully.',
           textAlign: TextAlign.center,
+          style: GoogleFonts.inter(
+            fontSize: 13,
+            height: 1.45,
+            color: AppColors.textSecondary,
+          ),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 14),
+
+        // Status chip
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: AppColors.warningBackground,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.pending_actions_rounded,
+                size: 15,
+                color: AppColors.warningDark,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                'Pending approval',
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.warningDark,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 26),
+
         SizedBox(
           width: double.infinity,
+          height: 50,
           child: ElevatedButton(
             onPressed: () => Get.back(),
-            child: const Text('Done'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryBlue,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+            child: Text(
+              'Done',
+              style: GoogleFonts.inter(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ),
         ),
       ],

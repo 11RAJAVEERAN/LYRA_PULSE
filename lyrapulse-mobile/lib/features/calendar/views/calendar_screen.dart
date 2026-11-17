@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../app/theme/app_colors.dart';
 import 'package:get/get.dart';
-
+import '../../../app/widgets/fixed_header_page.dart';
 import '../controllers/calendar_controller.dart';
 import '../widgets/attendance_calendar_grid.dart';
 import '../widgets/attendance_day_list.dart';
@@ -18,48 +18,34 @@ class CalendarScreen extends StatelessWidget {
       : Get.put(CalendarController());
 
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.secondarySoft,
-      body: SafeArea(
-        child: Obx(
-          () => Column(
-            children: [
-              _buildHeader(),
-              Expanded(
-                child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      CalendarMonthHeader(controller: controller),
-                      const SizedBox(height: 20),
-                      if (controller.isLoading.value)
-                        const Padding(
-                          padding: EdgeInsets.all(32),
-                          child: Center(child: CircularProgressIndicator()),
-                        )
-                      else if (controller.errorMessage.value != null)
-                        _buildLoadError()
-                      else if (controller.isCalendarView.value)
-                        _buildCalendarContent()
-                      else
-                        _buildListContent(),
-                      const SizedBox(height: 22),
-                      _buildRegularizationInfo(),
-                      const SizedBox(height: 18),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+
+@override
+Widget build(BuildContext context) {
+  return FixedHeaderPage(
+    backgroundColor: AppColors.secondarySoft,
+    header: _buildHeader(),
+    pinned: Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      child: CalendarMonthHeader(controller: controller),
+    ),
+    children: [
+      Obx(() {
+        if (controller.isLoading.value) {
+          return const Padding(
+            padding: EdgeInsets.all(32),
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+        if (controller.errorMessage.value != null) return _buildLoadError();
+        return controller.isCalendarView.value
+            ? _buildCalendarContent()
+            : _buildListContent();
+      }),
+      const SizedBox(height: 22),
+      _buildRegularizationInfo(),
+    ],
+  );
+}
 
   Widget _buildLoadError() {
     return Center(
@@ -88,36 +74,87 @@ class CalendarScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(10, 10, 10, 14),
-      decoration: const BoxDecoration(
-        // color: AppColors.surface,
-        boxShadow: [
-          BoxShadow(
+
+
+
+Widget _buildHeader() {
+  final now = DateTime.now();
+  const months = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+    decoration: BoxDecoration(
+      color: AppColors.surface,
+      border: Border(
+        bottom: BorderSide(
+          color: AppColors.secondarySoft.withOpacity(0.6),
+          width: 1,
+        ),
+      ),
+      boxShadow: [
+        BoxShadow(
+          color: AppColors.secondarySoft.withOpacity(0.5),
+          blurRadius: 8,
+          offset: const Offset(0, 3),
+        ),
+      ],
+    ),
+    child: Row(
+      children: [
+        // Icon badge
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
             color: AppColors.secondarySoft,
-            blurRadius: 5,
-            // offset: Offset(0, 4),
+            borderRadius: BorderRadius.circular(10),
           ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              'Calendar',
-              style: GoogleFonts.inter(
-                fontSize: 24,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
+          child: Icon(
+            Icons.calendar_month_rounded,
+            size: 22,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        const SizedBox(width: 12),
+
+        // Title + subtitle
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Calendar',
+                style: GoogleFonts.inter(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.3,
+                  color: AppColors.textPrimary,
+                ),
               ),
-            ),
+              const SizedBox(height: 2),
+              Text(
+                '${months[now.month - 1]} ${now.year}',
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textPrimary.withOpacity(0.55),
+                ),
+              ),
+            ],
           ),
-          CalendarViewToggle(controller: controller),
-        ],
-      ),
-    );
-  }
+        ),
+
+        CalendarViewToggle(controller: controller),
+      ],
+    ),
+  );
+}
+
+
+
 
   Widget _buildCalendarContent() {
     return Column(
