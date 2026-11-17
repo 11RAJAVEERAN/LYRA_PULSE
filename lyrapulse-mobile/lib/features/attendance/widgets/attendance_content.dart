@@ -1,8 +1,8 @@
-import 'package:flutter/material.dart';
+// import 'package:flutter/material.dart';
 
-class AttendanceContent extends StatelessWidget {
-  const AttendanceContent({super.key});
+// class AttendanceContent extends StatelessWidget {
+//   const AttendanceContent({super.key});
 
-  @override
-  Widget build(BuildContext context) => const SizedBox.shrink();
-}
+//   @override
+//   Widget build(BuildContext context) => const SizedBox.shrink();
+// }
