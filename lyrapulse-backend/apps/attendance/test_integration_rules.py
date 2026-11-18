@@ -1,6 +1,8 @@
 from datetime import timedelta
 from decimal import Decimal
+from unittest import skipUnless
 
+from django.db import connection
 from django.test import TestCase
 from django.utils import timezone
 from rest_framework.test import APIClient
@@ -148,6 +150,61 @@ class IntegrationRulesTests(TestCase):
         self.assertEqual(second.status_code, 200)
         self.assertEqual(Attendance.objects.filter(employee=self.employee).count(), 1)
         self.assertEqual(DeviceAttendanceEvent.objects.filter(device=device).count(), 1)
+
+    @skipUnless(connection.vendor == "postgresql", "Requires PostgreSQL row-lock behavior")
+    def test_postgresql_locked_employee_event_is_saved(self):
+        self.employee.biometric_attendance_enabled = True
+        self.employee.save(update_fields=("biometric_attendance_enabled",))
+        device = Device(device_id="D-PG-1", branch=self.branch, token_hash="")
+        device.set_token("test-device-secret-pg")
+        device.save()
+        EmployeeFingerprint.objects.create(
+            employee=self.employee,
+            device=device,
+            fingerprint_slot=14,
+            finger="right_index",
+        )
+        payload = {
+            "device_id": "D-PG-1",
+            "event_id": "2d70e206-92a2-4ec8-924c-80bbdf2c8b7e",
+            "fingerprint_slot": 14,
+            "occurred_at": (timezone.now() - timedelta(seconds=1)).isoformat(),
+        }
+
+        response = APIClient().post(
+            self.base + "fingerprint/events/",
+            payload,
+            format="json",
+            HTTP_AUTHORIZATION="Device test-device-secret-pg",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(Attendance.objects.filter(employee=self.employee).count(), 1)
+        self.assertEqual(DeviceAttendanceEvent.objects.filter(device=device).count(), 1)
+
+    def test_device_event_for_unmapped_slot_returns_404_without_saving(self):
+        self.employee.biometric_attendance_enabled = True
+        self.employee.save(update_fields=("biometric_attendance_enabled",))
+        device = Device(device_id="D-3", branch=self.branch, token_hash="")
+        device.set_token("test-device-secret-3")
+        device.save()
+        payload = {
+            "device_id": "D-3",
+            "event_id": "1d70e206-92a2-4ec8-924c-80bbdf2c8b7d",
+            "fingerprint_slot": 2,
+            "occurred_at": (timezone.now() - timedelta(seconds=1)).isoformat(),
+        }
+
+        response = APIClient().post(
+            self.base + "fingerprint/events/",
+            payload,
+            format="json",
+            HTTP_AUTHORIZATION="Device test-device-secret-3",
+        )
+
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(Attendance.objects.count(), 0)
+        self.assertEqual(DeviceAttendanceEvent.objects.count(), 0)
 
     def test_device_event_is_rejected_when_biometric_permission_is_off(self):
         device = Device(device_id="D-2", branch=self.branch, token_hash="")

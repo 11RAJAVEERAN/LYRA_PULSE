@@ -125,9 +125,36 @@ class FingerprintEnrollmentFlowTests(unittest.TestCase):
         self.assertNotIn("SUCCESS", [status for status, _ in self.api.statuses])
         self.assertIsNone(self.display.success_slot)
 
-    def test_existing_fingerprint_is_rejected_before_template_storage(self):
+    def test_existing_fingerprint_is_reused_only_after_third_scan_verifies_its_slot(self):
         self.sensor.duplicate = {"fingerprint_id": 18, "score": 700}
+        self.sensor.verification = {"fingerprint_id": 18, "score": 700}
         command = {"action": "ENROLL_FINGERPRINT", "enrollment_id": "enroll-3"}
+
+        slot = self.service.enroll_from_command(
+            command,
+            self.display,
+            self.api,
+            "LYRA-DEVICE-001",
+        )
+
+        self.assertEqual(slot, 18)
+        self.assertFalse(self.sensor.stored)
+        self.assertEqual(self.sensor.slot_probe_buffers, [])
+        self.assertEqual(self.sensor.search_count, 2)
+        self.assertEqual(
+            self.api.statuses,
+            [
+                ("WAITING_FOR_SECOND_SCAN", None),
+                ("PROCESSING", None),
+                ("SUCCESS", 18),
+            ],
+        )
+        self.assertEqual(self.display.success_slot, 18)
+
+    def test_existing_fingerprint_with_different_third_scan_is_not_reported_successful(self):
+        self.sensor.duplicate = {"fingerprint_id": 18, "score": 700}
+        self.sensor.verification = {"fingerprint_id": 19, "score": 700}
+        command = {"action": "ENROLL_FINGERPRINT", "enrollment_id": "enroll-4"}
 
         with self.assertRaises(EnrollmentError) as error:
             self.service.enroll_from_command(
@@ -137,15 +164,10 @@ class FingerprintEnrollmentFlowTests(unittest.TestCase):
                 "LYRA-DEVICE-001",
             )
 
-        self.assertEqual(error.exception.error_code, "DUPLICATE_FINGERPRINT")
+        self.assertEqual(error.exception.error_code, "SLOT_VERIFICATION_FAILED")
         self.assertFalse(self.sensor.stored)
-        self.assertEqual(
-            self.api.statuses,
-            [
-                ("WAITING_FOR_SECOND_SCAN", None),
-                ("PROCESSING", None),
-            ],
-        )
+        self.assertNotIn("SUCCESS", [status for status, _ in self.api.statuses])
+        self.assertIsNone(self.display.success_slot)
 
     def test_sensor_image_error_is_wrapped_in_micro_python_compatible_error(self):
         self.sensor.image_error = R307ImageError("Image acquisition failed: 2")

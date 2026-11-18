@@ -477,19 +477,27 @@ class FingerprintService:
                 page_num=MAX_TEMPLATE_COUNT,
             )
             if duplicate is not None:
-                raise EnrollmentError(
-                    "DUPLICATE_FINGERPRINT",
-                    "Finger already exists in sensor slot %s" % duplicate["fingerprint_id"],
+                slot = duplicate.get("fingerprint_id")
+                if slot is None:
+                    raise EnrollmentError(
+                        "SENSOR_COMMUNICATION_ERROR",
+                        "Sensor duplicate search returned no template slot",
+                    )
+                log(
+                    "ENROLL",
+                    "Existing template found at slot %s; verifying before enrollment mapping"
+                    % slot,
                 )
-            log("ENROLL", "Duplicate search found no existing match")
-            slot = self.sensor.find_free_template_slot(
-                MAX_TEMPLATE_COUNT,
-                start_page=ENROLLMENT_TEMPLATE_ID,
-                buffer_id=2,
-            )
-            log("R307", "StoreTemplate slot %s" % slot)
-            self.sensor.store_model(slot, buffer_id=1)
-            log("ENROLL", "StoreTemplate acknowledged for actual slot %s" % slot)
+            else:
+                log("ENROLL", "Duplicate search found no existing match")
+                slot = self.sensor.find_free_template_slot(
+                    MAX_TEMPLATE_COUNT,
+                    start_page=ENROLLMENT_TEMPLATE_ID,
+                    buffer_id=2,
+                )
+                log("R307", "StoreTemplate slot %s" % slot)
+                self.sensor.store_model(slot, buffer_id=1)
+                log("ENROLL", "StoreTemplate acknowledged for actual slot %s" % slot)
 
             self._wait_for_finger_removed(display, timeout_seconds)
             self._wait_for_finger(display, "Place finger 3/3", timeout_seconds)
@@ -505,7 +513,7 @@ class FingerprintService:
             if verification is None or verification["fingerprint_id"] != slot:
                 raise EnrollmentError(
                     "SLOT_VERIFICATION_FAILED",
-                    "Sensor search did not confirm the newly stored slot",
+                    "Sensor search did not confirm the expected slot",
                 )
 
             self._report(

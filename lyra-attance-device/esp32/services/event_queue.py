@@ -1,4 +1,5 @@
 """Small persistent FIFO for offline attendance events (event IDs stay stable across retries)."""
+import errno
 import json
 import os
 
@@ -12,24 +13,55 @@ class PersistentEventQueue:
         try:
             with open(self.path, "r") as handle:
                 data = json.loads(handle.read())
-            return data if isinstance(data, list) else []
-        except OSError:
-            return []
+        except OSError as exc:
+            error_number = getattr(exc, "errno", None)
+            if error_number is None and getattr(exc, "args", None):
+                error_number = exc.args[0]
+            if error_number == errno.ENOENT:
+                return []
+            raise
+        if not isinstance(data, list):
+            raise ValueError("Attendance queue must contain a JSON list")
+        return data
 
     def _write(self, events):
         temporary = self.path + ".tmp"
-        with open(temporary, "w") as handle:
-            handle.write(json.dumps(events))
-            if hasattr(handle, "flush"):
-                handle.flush()
         try:
-            os.replace(temporary, self.path)
-        except AttributeError:
+            with open(temporary, "w") as handle:
+                handle.write(json.dumps(events))
+                if hasattr(handle, "flush"):
+                    handle.flush()
+            replace = getattr(os, "replace", None)
+            if replace is None:
+                try:
+                    os.rename(temporary, self.path)
+                except OSError as exc:
+                    raise OSError(
+                        "Safe queue replacement unavailable; existing queue was preserved: %s"
+                        % exc
+                    )
+            else:
+                replace(temporary, self.path)
+        except Exception as exc:
             try:
-                os.remove(self.path)
-            except OSError:
-                pass
-            os.rename(temporary, self.path)
+                self._remove_temporary(temporary)
+            except OSError as cleanup_error:
+                raise OSError(
+                    "Queue replacement failed (%s); temporary-file cleanup failed (%s)"
+                    % (exc, cleanup_error)
+                )
+            raise
+
+    @staticmethod
+    def _remove_temporary(path):
+        try:
+            os.remove(path)
+        except OSError as exc:
+            error_number = getattr(exc, "errno", None)
+            if error_number is None and getattr(exc, "args", None):
+                error_number = exc.args[0]
+            if error_number != errno.ENOENT:
+                raise
 
     def append(self, event):
         events = self._read()

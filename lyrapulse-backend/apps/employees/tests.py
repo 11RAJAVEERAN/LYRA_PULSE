@@ -1,19 +1,40 @@
 import shutil
 import tempfile
+import uuid
+from datetime import timedelta
 from io import BytesIO
+from unittest.mock import patch
 
+from django.contrib import admin
 from django.contrib.auth.models import Permission
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import TestCase, override_settings
+from django.test import Client, TestCase, override_settings
+from django.urls import reverse
+from django.utils import timezone
 from PIL import Image
 from rest_framework.test import APIClient
 
-from apps.accounts.models import User
+from apps.attendance.models import (
+    Attendance,
+    AttendanceEvent,
+    DeviceAttendanceEvent,
+    MobileAttendanceRequest,
+)
+from apps.accounts.models import OTPVerification, User
 from apps.branches.models import Branch
 from apps.departments.models import Department
+from apps.devices.models import Device
 from apps.designations.models import Designation
-from apps.employees.models import Employee, EmployeeDocument, EmployeeType, PayrollGroup
+from apps.employees.models import (
+    AttendancePermissionAudit,
+    Employee,
+    EmployeeDocument,
+    EmployeeType,
+    PayrollGroup,
+)
+from apps.fingerprints.models import EmployeeFingerprint, FingerprintEnrollment
 from apps.organizations.models import Organization
+from apps.shifts.models import AssignmentWeekOff, Shift, ShiftAssignment
 
 PRIVATE_ROOT = tempfile.mkdtemp(prefix="lyra_private_")
 
@@ -27,6 +48,256 @@ def image_bytes(fmt="PNG"):
 def grant(user, *codenames):
     for codename in codenames:
         user.user_permissions.add(Permission.objects.get(codename=codename, content_type__app_label="employees"))
+
+
+@override_settings(ROOT_URLCONF="config.urls", PRIVATE_MEDIA_ROOT=PRIVATE_ROOT)
+class EmployeeAdminDeletionTests(TestCase):
+    def setUp(self):
+        self.admin = User.objects.create_superuser(
+            "9000000099",
+            password="test-admin-password",
+        )
+        self.organization = Organization.objects.create(name="Deletion Org", code="DEL-ORG")
+        self.branch = Branch.objects.create(
+            organization=self.organization,
+            name="Deletion Branch",
+            code="DEL-BR",
+        )
+        self.department = Department.objects.create(name="Deletion Department", branch=self.branch)
+        self.designation = Designation.objects.create(
+            name="Deletion Designation",
+            department=self.department,
+        )
+        self.device = Device.objects.create(
+            device_id="DEL-DEVICE",
+            branch=self.branch,
+            token_hash="test-hash",
+        )
+        self.shift = Shift.objects.create(branch=self.branch, name="Deletion Shift")
+        self.admin_client = Client()
+        self.admin_client.force_login(self.admin)
+
+    def create_employee(self, code, phone_number):
+        user = User.objects.create_user(
+            phone_number,
+            role=User.Role.EMPLOYEE,
+            first_name="Test",
+            last_name=code,
+        )
+        employee = Employee.objects.create(
+            employee_code=code,
+            user=user,
+            branch=self.branch,
+            department=self.department,
+            designation=self.designation,
+        )
+        return employee
+
+    def add_employee_records(self, employee, slot):
+        now = timezone.now()
+        attendance = Attendance.objects.create(
+            employee=employee,
+            device=self.device,
+            created_by=employee.user,
+            source=AttendanceEvent.Method.BIOMETRIC,
+            branch=self.branch,
+            attendance_date=timezone.localdate(),
+            check_in_at=now - timedelta(seconds=1),
+            check_in_photo="attendance/checkin/test.jpg",
+        )
+        device_event = DeviceAttendanceEvent.objects.create(
+            device=self.device,
+            event_id=uuid.uuid4(),
+            fingerprint_slot=slot,
+            occurred_at=now - timedelta(seconds=1),
+            attendance=attendance,
+        )
+        action = AttendanceEvent.objects.create(
+            attendance=attendance,
+            action=AttendanceEvent.Action.CHECK_IN,
+            method=AttendanceEvent.Method.BIOMETRIC,
+            actor=employee.user,
+            device=self.device,
+            device_event=device_event,
+            occurred_at=now - timedelta(seconds=1),
+        )
+        mobile_request = MobileAttendanceRequest.objects.create(
+            key="delete-%s" % employee.employee_code,
+            employee=employee,
+            action=AttendanceEvent.Action.CHECK_IN,
+            payload_fingerprint="a" * 64,
+            outcome=MobileAttendanceRequest.Outcome.SUCCEEDED,
+            attendance=attendance,
+        )
+        fingerprint = EmployeeFingerprint.objects.create(
+            employee=employee,
+            device=self.device,
+            fingerprint_slot=slot,
+            finger=FingerprintEnrollment.Finger.RIGHT_INDEX,
+        )
+        enrollment = FingerprintEnrollment.objects.create(
+            employee=employee,
+            device=self.device,
+            finger=FingerprintEnrollment.Finger.RIGHT_INDEX,
+            status=FingerprintEnrollment.Status.SUCCESS,
+            actual_slot=slot,
+            created_by=employee.user,
+            expires_at=now + timedelta(days=1),
+        )
+        audit = AttendancePermissionAudit.objects.create(
+            employee=employee,
+            actor=employee.user,
+            previous_values={},
+            new_values={},
+        )
+        assignment = ShiftAssignment.objects.create(
+            employee=employee,
+            shift=self.shift,
+            effective_from=timezone.localdate(),
+            assigned_by=self.admin,
+        )
+        week_off = AssignmentWeekOff.objects.create(
+            assignment=assignment,
+            weekday="SUNDAY",
+        )
+        document = EmployeeDocument.objects.create(
+            employee=employee,
+            doc_type=EmployeeDocument.DocType.PAN,
+            side=EmployeeDocument.Side.SINGLE,
+            file="employee_documents/test/pan.pdf",
+            original_name="pan.pdf",
+            content_type="application/pdf",
+            size=1,
+        )
+        otp = OTPVerification.objects.create(
+            phone_number=employee.user.phone_number,
+            otp_hash="test-hash",
+            expires_at=now + timedelta(minutes=5),
+        )
+        return {
+            "attendance": attendance,
+            "device_event": device_event,
+            "action": action,
+            "mobile_request": mobile_request,
+            "fingerprint": fingerprint,
+            "enrollment": enrollment,
+            "audit": audit,
+            "assignment": assignment,
+            "week_off": week_off,
+            "document": document,
+            "otp": otp,
+        }
+
+    def employee_delete_url(self, employee):
+        return reverse("admin:employees_employee_delete", args=(employee.pk,))
+
+    def test_admin_delete_removes_employee_user_and_exclusive_records_only(self):
+        employee = self.create_employee("DEL-001", "9000000101")
+        unrelated = self.create_employee("DEL-002", "9000000102")
+        employee_records = self.add_employee_records(employee, 1)
+        unrelated_records = self.add_employee_records(unrelated, 2)
+
+        confirmation = self.admin_client.get(self.employee_delete_url(employee))
+        self.assertEqual(confirmation.status_code, 200)
+        self.assertContains(confirmation, "Employee: DEL-001")
+        self.assertContains(confirmation, "Associated Django User")
+        self.assertContains(confirmation, employee.user.phone_number)
+
+        response = self.admin_client.post(self.employee_delete_url(employee), {"post": "yes"})
+
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(Employee.objects.filter(pk=employee.pk).exists())
+        self.assertFalse(User.objects.filter(pk=employee.user_id).exists())
+        for key, record in employee_records.items():
+            self.assertFalse(type(record).objects.filter(pk=record.pk).exists(), key)
+
+        unrelated.refresh_from_db()
+        self.assertTrue(User.objects.filter(pk=unrelated.user_id).exists())
+        for key, record in unrelated_records.items():
+            self.assertTrue(type(record).objects.filter(pk=record.pk).exists(), key)
+        self.assertTrue(Branch.objects.filter(pk=self.branch.pk).exists())
+        self.assertTrue(Device.objects.filter(pk=self.device.pk).exists())
+        self.assertTrue(Department.objects.filter(pk=self.department.pk).exists())
+        self.assertTrue(Designation.objects.filter(pk=self.designation.pk).exists())
+        self.assertTrue(Shift.objects.filter(pk=self.shift.pk).exists())
+
+    def test_bulk_admin_delete_uses_the_same_employee_and_user_cleanup(self):
+        first = self.create_employee("DEL-008", "9000000108")
+        second = self.create_employee("DEL-009", "9000000109")
+        first_records = self.add_employee_records(first, 8)
+        second_records = self.add_employee_records(second, 9)
+
+        admin.site._registry[Employee].delete_queryset(
+            None,
+            Employee.objects.filter(pk__in=(first.pk, second.pk)),
+        )
+
+        self.assertFalse(Employee.objects.filter(pk__in=(first.pk, second.pk)).exists())
+        self.assertFalse(User.objects.filter(pk__in=(first.user_id, second.user_id)).exists())
+        for record in (*first_records.values(), *second_records.values()):
+            self.assertFalse(type(record).objects.filter(pk=record.pk).exists())
+        self.assertTrue(Branch.objects.filter(pk=self.branch.pk).exists())
+        self.assertTrue(Device.objects.filter(pk=self.device.pk).exists())
+
+    def test_admin_delete_rolls_back_all_rows_when_user_deletion_fails(self):
+        employee = self.create_employee("DEL-003", "9000000103")
+        records = self.add_employee_records(employee, 3)
+
+        with patch.object(User, "delete", side_effect=RuntimeError("simulated delete failure")):
+            with self.assertRaises(RuntimeError):
+                admin.site._registry[Employee].delete_model(None, employee)
+
+        self.assertTrue(Employee.objects.filter(pk=employee.pk).exists())
+        self.assertTrue(User.objects.filter(pk=employee.user_id).exists())
+        for record in records.values():
+            self.assertTrue(type(record).objects.filter(pk=record.pk).exists())
+
+    def test_protected_references_from_another_employee_block_deletion(self):
+        employee = self.create_employee("DEL-004", "9000000104")
+        unrelated = self.create_employee("DEL-005", "9000000105")
+        external_attendance = Attendance.objects.create(
+            employee=unrelated,
+            created_by=employee.user,
+            branch=self.branch,
+            attendance_date=timezone.localdate(),
+            check_in_at=timezone.now() - timedelta(seconds=1),
+        )
+
+        confirmation = self.admin_client.get(self.employee_delete_url(employee))
+        self.assertContains(confirmation, "protected")
+        response = self.admin_client.post(self.employee_delete_url(employee), {"post": "yes"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(Employee.objects.filter(pk=employee.pk).exists())
+        self.assertTrue(User.objects.filter(pk=employee.user_id).exists())
+        self.assertTrue(Attendance.objects.filter(pk=external_attendance.pk).exists())
+
+    def test_employee_linked_user_cannot_be_deleted_from_user_admin(self):
+        employee = self.create_employee("DEL-006", "9000000106")
+        url = reverse("admin:accounts_user_delete", args=(employee.user_id,))
+
+        response = self.admin_client.get(url)
+
+        self.assertEqual(response.status_code, 403)
+        self.assertTrue(Employee.objects.filter(pk=employee.pk).exists())
+        self.assertTrue(User.objects.filter(pk=employee.user_id).exists())
+
+    def test_public_api_and_ordinary_employee_cannot_delete_employee_or_user(self):
+        employee = self.create_employee("DEL-007", "9000000107")
+
+        api_client = APIClient()
+        api_client.force_authenticate(self.admin)
+        response = api_client.delete("/api/v1/employees/%s/" % employee.pk)
+        self.assertIn(response.status_code, (403, 405))
+        self.assertTrue(Employee.objects.filter(pk=employee.pk).exists())
+        self.assertTrue(User.objects.filter(pk=employee.user_id).exists())
+
+        ordinary_client = Client()
+        ordinary_client.force_login(employee.user)
+        response = ordinary_client.get(self.employee_delete_url(employee))
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(Employee.objects.filter(pk=employee.pk).exists())
+        self.assertTrue(User.objects.filter(pk=employee.user_id).exists())
 
 
 @override_settings(ROOT_URLCONF="config.urls", PRIVATE_MEDIA_ROOT=PRIVATE_ROOT)

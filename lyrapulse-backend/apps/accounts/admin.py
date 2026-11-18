@@ -4,8 +4,10 @@ from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.forms import UserChangeForm
 from django.contrib.auth.models import Group
 from django.contrib.auth.password_validation import validate_password
-from django.core.exceptions import ValidationError
+from django.core.exceptions import PermissionDenied, ValidationError
 from rest_framework import serializers as drf_serializers
+
+from apps.employees.models import Employee
 
 from .models import OTPVerification, User
 from .scope import validate_scope
@@ -103,6 +105,44 @@ class CustomUserAdmin(UserAdmin):
         ("Lyra Pulse role & business scope", {"classes": ("wide",), "fields": ("role", "organization", "allowed_branches", "is_active")}),
         ("Django admin access (/admin/)", {"classes": ("wide",), "fields": ("is_staff", "is_superuser")}),
     )
+
+    def has_delete_permission(self, request, obj=None):
+        if obj is not None and Employee.objects.filter(user_id=obj.pk).exists():
+            return False
+        return super().has_delete_permission(request, obj)
+
+    def get_deleted_objects(self, objs, request):
+        users = list(objs)
+        linked_users = list(
+            Employee.objects.filter(user_id__in=[user.pk for user in users])
+            .select_related("user")
+        )
+        if linked_users:
+            deleted_objects = [str(user) for user in users]
+            model_count = {User._meta.verbose_name_plural: len(users)}
+            protected = [
+                "Delete employee-linked user accounts from the Employees admin: %s"
+                % ", ".join(employee.employee_code for employee in linked_users)
+            ]
+            return deleted_objects, model_count, set(), protected
+        return super().get_deleted_objects(users, request)
+
+    def delete_model(self, request, obj):
+        if Employee.objects.filter(user_id=obj.pk).exists():
+            raise PermissionDenied(
+                "Delete this employee and its account from the Employees admin."
+            )
+        super().delete_model(request, obj)
+
+    def delete_queryset(self, request, queryset):
+        linked_employee_exists = Employee.objects.filter(
+            user_id__in=queryset.values_list("pk", flat=True)
+        ).exists()
+        if linked_employee_exists:
+            raise PermissionDenied(
+                "Delete employee-linked user accounts from the Employees admin."
+            )
+        super().delete_queryset(request, queryset)
 
     def save_related(self, request, form, formsets, change):
         super().save_related(request, form, formsets, change)

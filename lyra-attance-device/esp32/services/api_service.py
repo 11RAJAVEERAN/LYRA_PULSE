@@ -147,6 +147,11 @@ class AttendanceAPIClient:
         attempts = self.retry_count if retry_count is None else retry_count
         for attempt in range(attempts + 1):
             response = None
+            log(
+                "DEVICE API",
+                "%s %s attempt %d/%d starting (timeout=%ss)"
+                % (method, endpoint, attempt + 1, attempts + 1, self.timeout),
+            )
             try:
                 if method == "GET":
                     response = requests.get(
@@ -161,8 +166,18 @@ class AttendanceAPIClient:
                         headers=headers or self._device_headers(),
                         timeout=self.timeout,
                     )
+                log(
+                    "DEVICE API",
+                    "%s %s transport returned"
+                    % (method, endpoint),
+                )
                 status_code = getattr(response, "status_code", getattr(response, "status", 500))
                 body = self._response_body(response)
+                log(
+                    "DEVICE API",
+                    "%s %s response parsed (HTTP %s)"
+                    % (method, endpoint, status_code),
+                )
                 if 200 <= status_code < 300 and body.get("success", True):
                     body.setdefault("http_status", status_code)
                     return body
@@ -176,7 +191,11 @@ class AttendanceAPIClient:
                     break
             except Exception as exc:  # pragma: no cover - runtime dependent
                 last_error = {"success": False, "error": str(exc)}
-                log("DEVICE API", "Request failed: %s" % exc)
+                log(
+                    "DEVICE API",
+                    "%s %s attempt %d/%d failed: %s"
+                    % (method, endpoint, attempt + 1, attempts + 1, exc),
+                )
             finally:
                 if response is not None and hasattr(response, "close"):
                     response.close()

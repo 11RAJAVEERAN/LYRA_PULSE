@@ -10,6 +10,7 @@ from django.utils import timezone
 from rest_framework.test import APIClient
 
 from apps.accounts.models import User
+from apps.attendance.models import Attendance, DeviceAttendanceEvent
 from apps.branches.models import Branch
 from apps.devices.models import Device
 from apps.departments.models import Department
@@ -304,25 +305,62 @@ class FingerprintEnrollmentAPITests(TestCase):
 
         result = self.device_client().post(
             self.result_url(enrollment),
-            {"status": "SUCCESS", "fingerprint_slot": 17},
+            {"status": "SUCCESS", "fingerprint_slot": 2},
             format="json",
         )
 
         self.assertEqual(result.status_code, 200)
         enrollment.refresh_from_db()
-        mapping = EmployeeFingerprint.objects.get(device=self.device, fingerprint_slot=17)
+        mapping = EmployeeFingerprint.objects.get(device=self.device, fingerprint_slot=2)
         self.assertEqual(mapping.employee, self.employee)
         self.assertEqual(mapping.finger, "right_index")
         self.assertEqual(enrollment.status, FingerprintEnrollment.Status.SUCCESS)
-        self.assertEqual(enrollment.actual_slot, 17)
+        self.assertEqual(enrollment.actual_slot, 2)
         self.assertIsNotNone(enrollment.completed_at)
 
         retry = self.device_client().post(
             self.result_url(enrollment),
-            {"status": "SUCCESS", "fingerprint_slot": 17},
+            {"status": "SUCCESS", "fingerprint_slot": 2},
             format="json",
         )
         self.assertEqual(retry.status_code, 200)
+
+    def test_successful_enrollment_mapping_accepts_attendance_for_same_device_and_slot(self):
+        response = self.enroll()
+        enrollment = FingerprintEnrollment.objects.get(pk=response.data["data"]["enrollment_id"])
+        self.advance_to_processing(enrollment)
+
+        enrollment_result = self.device_client().post(
+            self.result_url(enrollment),
+            {"status": "SUCCESS", "fingerprint_slot": 7},
+            format="json",
+        )
+        self.assertEqual(enrollment_result.status_code, 200, enrollment_result.data)
+        actual_slot = enrollment_result.data["data"]["fingerprint_slot"]
+        self.assertEqual(actual_slot, 7)
+        self.assertTrue(
+            EmployeeFingerprint.objects.filter(
+                employee=self.employee,
+                device=self.device,
+                fingerprint_slot=actual_slot,
+                is_active=True,
+            ).exists()
+        )
+
+        attendance_result = self.device_client().post(
+            "/api/v1/attendance/fingerprint/events/",
+            {
+                "device_id": self.device.device_id,
+                "event_id": str(uuid.uuid4()),
+                "fingerprint_slot": actual_slot,
+                "occurred_at": (timezone.now() - timedelta(seconds=1)).isoformat(),
+            },
+            format="json",
+        )
+
+        self.assertEqual(attendance_result.status_code, 200, attendance_result.data)
+        self.assertEqual(Attendance.objects.filter(employee=self.employee).count(), 1)
+        self.assertEqual(DeviceAttendanceEvent.objects.filter(device=self.device).count(), 1)
 
     def test_invalid_or_wrong_device_enrollment_result_is_rejected(self):
         enrollment_response = self.enroll()

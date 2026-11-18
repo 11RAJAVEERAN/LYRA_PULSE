@@ -10,11 +10,15 @@ except ImportError:  # pragma: no cover - used only on MicroPython runtime
 from config import WIFI_PASSWORD, WIFI_RETRY_COUNT, WIFI_SSID, WIFI_TIMEOUT_SECONDS
 from utils.logger import log
 
+NTP_SERVERS = ("time.cloudflare.com", "time.google.com", "pool.ntp.org")
+NTP_RETRY_INTERVAL_SECONDS = 60
+
 
 class WiFiService:
     def __init__(self):
         self.wlan = None
         self.time_synced = False
+        self.next_clock_sync_at = 0
         if network is not None:
             self.wlan = network.WLAN(network.STA_IF)
             self.wlan.active(True)
@@ -42,8 +46,12 @@ class WiFiService:
             self.wlan.active(True)
             time.sleep(0.25)
 
-            log("WIFI", "Connecting to SSID")
+            log(
+                "WIFI",
+                "Connection starting (timeout=%ds)" % WIFI_TIMEOUT_SECONDS,
+            )
             self.wlan.connect(WIFI_SSID, WIFI_PASSWORD)
+            log("WIFI", "Association request returned")
         except OSError as exc:
             log("WIFI", "Connection setup failed: %s" % exc)
             return False
@@ -69,14 +77,24 @@ class WiFiService:
         if self.wlan is None:
             return False
         try:
-            return self.wlan.isconnected()
+            connected = self.wlan.isconnected()
         except Exception:
             return False
+        if connected:
+            self._sync_clock()
+        return connected
 
     def ensure_connected(self):
-        for _ in range(WIFI_RETRY_COUNT):
+        for attempt in range(WIFI_RETRY_COUNT):
+            log(
+                "WIFI",
+                "Connection attempt %d/%d"
+                % (attempt + 1, WIFI_RETRY_COUNT),
+            )
             if self.connect():
+                log("WIFI", "Connection attempt %d succeeded" % (attempt + 1))
                 return True
+            log("WIFI", "Connection attempt %d failed" % (attempt + 1))
             time.sleep(1)
         return False
 
@@ -91,10 +109,33 @@ class WiFiService:
     def _sync_clock(self):
         if self.time_synced:
             return
+        now = time.time()
+        if now < self.next_clock_sync_at:
+            return
+        self.next_clock_sync_at = now + NTP_RETRY_INTERVAL_SECONDS
         try:
             import ntptime
-            ntptime.settime()
+        except ImportError as exc:
+            log("CLOCK", "NTP module unavailable (%s)" % exc.__class__.__name__)
+            return
+
+        for host in NTP_SERVERS:
+            ntptime.host = host
+            log("CLOCK", "NTP sync starting via %s" % host)
+            try:
+                ntptime.settime()
+            except Exception as exc:
+                log(
+                    "CLOCK",
+                    "NTP sync failed via %s (%s)"
+                    % (host, exc.__class__.__name__),
+                )
+                continue
             self.time_synced = True
-            log("CLOCK", "Device clock synchronized")
-        except Exception:
-            log("CLOCK", "Time synchronization unavailable; attendance scans require a valid clock")
+            log("CLOCK", "Device clock synchronized via %s" % host)
+            return
+
+        log(
+            "CLOCK",
+            "Time synchronization unavailable; attendance scans require a valid clock",
+        )
