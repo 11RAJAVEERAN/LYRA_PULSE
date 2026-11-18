@@ -17,7 +17,10 @@ class WiFiService:
         self.time_synced = False
         if network is not None:
             self.wlan = network.WLAN(network.STA_IF)
-            self.wlan.active(True)
+            try:
+                self.wlan.active(True)
+            except (OSError, RuntimeError) as exc:
+                log("WIFI", "Station interface activation failed: %s" % exc)
 
     def connect(self):
         if network is None:
@@ -25,6 +28,12 @@ class WiFiService:
             return False
 
         if self.wlan is None:
+            self.wlan = network.WLAN(network.STA_IF)
+
+        try:
+            self.wlan.active(True)
+        except (OSError, RuntimeError) as exc:
+            log("WIFI", "Station interface activation failed during connect: %s" % exc)
             return False
 
         if self.is_connected():
@@ -33,31 +42,23 @@ class WiFiService:
 
         try:
             self.wlan.disconnect()
-        except OSError as exc:
+        except (OSError, RuntimeError) as exc:
             log("WIFI", "Disconnect before reconnect failed: %s" % exc)
 
         try:
-            self.wlan.active(False)
-            time.sleep(0.25)
-            self.wlan.active(True)
-            time.sleep(0.25)
-
             log("WIFI", "Connecting to SSID")
             self.wlan.connect(WIFI_SSID, WIFI_PASSWORD)
-        except OSError as exc:
+        except (OSError, RuntimeError) as exc:
             log("WIFI", "Connection setup failed: %s" % exc)
             return False
 
         deadline = time.time() + WIFI_TIMEOUT_SECONDS
-        attempts = 0
-
         while time.time() < deadline:
             if self.is_connected():
                 log("WIFI", "Connected")
                 self._sync_clock()
                 return True
             time.sleep(0.5)
-            attempts += 1
         log("WIFI", "Connection timeout")
         return False
 

@@ -166,15 +166,27 @@ class DeviceResultRequestTests(unittest.TestCase):
         )
         self.assertEqual(fake_requests.post_arguments["timeout"], 4)
 
+    def test_http_base_url_is_allowed_when_insecure_http_is_explicitly_enabled(self):
+        previous_allow_insecure = api_service.ALLOW_INSECURE_HTTP
+        api_service.ALLOW_INSECURE_HTTP = True
+        try:
+            client = self.make_client(base_url="http://backend")
+            self.assertEqual(client.base_url, "http://backend")
+        finally:
+            api_service.ALLOW_INSECURE_HTTP = previous_allow_insecure
+
     def test_http_base_url_is_rejected_before_credentials_are_sent(self):
         fake_requests = FakeRequests()
         previous_requests = api_service.requests
+        previous_allow_insecure = api_service.ALLOW_INSECURE_HTTP
         api_service.requests = fake_requests
+        api_service.ALLOW_INSECURE_HTTP = False
         try:
-            with self.assertRaisesRegex(ValueError, "requires an HTTPS"):
+            with self.assertRaisesRegex(ValueError, "requires an HTTPS|ALLOW_INSECURE_HTTP"):
                 self.make_client(base_url="http://backend")
         finally:
             api_service.requests = previous_requests
+            api_service.ALLOW_INSECURE_HTTP = previous_allow_insecure
 
         self.assertEqual(fake_requests.post_count, 0)
 

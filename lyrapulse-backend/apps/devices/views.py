@@ -122,12 +122,12 @@ class DeviceTokenRotationView(APIView):
     def post(self, request, device_id):
         DeviceManagementView._require_device_manager(request.user)
         devices = scope_queryset(
-            Device.objects.select_for_update().select_related("branch__organization").filter(
-                branch__is_active=True,
-            ).filter(Q(branch__organization__isnull=True) | Q(branch__organization__is_active=True)),
-            request.user,
-            "branch",
-        )
+    Device.objects.select_for_update(of=("self",)).filter(
+        branch__is_active=True,
+    ).filter(Q(branch__organization__isnull=True) | Q(branch__organization__is_active=True)),
+    request.user,
+    "branch",
+)
         with transaction.atomic():
             device = get_object_or_404(devices, device_id=device_id)
             token = secrets.token_urlsafe(32)

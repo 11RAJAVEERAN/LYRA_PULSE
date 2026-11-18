@@ -1,8 +1,15 @@
 import { useEffect, useState } from 'react'
-import { Alert, Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, Paper, Stack, Switch, Table, TableBody, TableCell, TableHead, TableRow, TextField, Typography } from '@mui/material'
+import { Alert, Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, InputAdornment, MenuItem, Paper, Stack, Switch, Table, TableBody, TableCell, TableHead, TableRow, TextField, Typography } from '@mui/material'
 import apiClient, { BRANCH_CONTEXT_EVENT } from '../../../services/apiClient'
 
 const unwrap = (response) => response.data?.data ?? response.data
+const readOneTimeToken = (data, field) => {
+  const value = data?.[field]
+  if (typeof value !== 'string' || value.trim() === '') {
+    throw new Error(`The backend response did not include ${field}. The token may have rotated; rotate it again and copy the new token.`)
+  }
+  return value
+}
 
 export function DevicesPage() {
   const [devices, setDevices] = useState([])
@@ -15,7 +22,8 @@ export function DevicesPage() {
   const [deviceId, setDeviceId] = useState('')
   const [finger, setFinger] = useState('right_index')
   const [token, setToken] = useState('')
-  const [tokenTitle, setTokenTitle] = useState('Copy device token')
+  const [showToken, setShowToken] = useState(true)
+  const [copied, setCopied] = useState(false)
   const [rotationTarget, setRotationTarget] = useState(null)
   const [rotatingDeviceId, setRotatingDeviceId] = useState('')
   const [notice, setNotice] = useState('')
@@ -55,12 +63,13 @@ export function DevicesPage() {
     try {
       const response = await apiClient.post('/devices/', form)
       const data = unwrap(response)
-      setToken(data.provisioning_token || '')
-      setTokenTitle('Copy device token')
+      setToken(readOneTimeToken(data, 'provisioning_token'))
+      setShowToken(true)
+      setCopied(false)
       setForm({ device_id: '', name: '', branch_id: '' })
       setNotice('Device provisioned. Copy the one-time token into secure device configuration.')
       await reload()
-    } catch (e) { setError(e?.response?.data?.message || 'Device provisioning failed.') }
+    } catch (e) { setError(e?.response?.data?.message || e?.message || 'Device provisioning failed.') }
   }
   const toggle = async (device) => {
     try {
@@ -69,25 +78,34 @@ export function DevicesPage() {
     } catch (e) { setError(e?.response?.data?.message || 'Device update failed.') }
   }
   const rotateToken = async () => {
-    if (!rotationTarget) return
+    if (!rotationTarget || rotatingDeviceId) return
     const device = rotationTarget
     setError(''); setNotice(''); setRotatingDeviceId(device.device_id)
     try {
       const response = await apiClient.post(`/devices/${encodeURIComponent(device.device_id)}/rotate-token/`)
       const data = unwrap(response)
-      setToken(data.rotated_token || '')
-      setTokenTitle('Copy rotated device token')
+      const rotatedToken = readOneTimeToken(data, 'rotated_token')
+      setToken(rotatedToken)
+      setShowToken(true)
+      setCopied(false)
       setRotationTarget(null)
       setNotice('Device token rotated. The previous token is no longer valid.')
-      await reload()
-    } catch (e) { setError(e?.response?.data?.message || 'Device token rotation failed.') }
+      void reload()
+    } catch (e) {
+      setRotationTarget(null)
+      setError(e?.response?.data?.message || e?.message || 'Device token rotation failed.')
+    }
     finally { setRotatingDeviceId('') }
   }
-  const closeToken = () => setToken('')
+  const closeToken = () => {
+    setToken('')
+    setShowToken(true)
+    setCopied(false)
+  }
   const copyToken = async () => {
     try {
       await navigator.clipboard.writeText(token)
-      closeToken()
+      setCopied(true)
     } catch {
       setError('Unable to copy the token. Select and copy it manually before closing this dialog.')
     }
@@ -132,7 +150,7 @@ export function DevicesPage() {
         <Button type="submit" variant="contained">Start enrollment</Button>
       </Stack>
     </Paper>
-    <Dialog open={Boolean(rotationTarget)} onClose={() => rotatingDeviceId ? null : setRotationTarget(null)}><DialogTitle>Rotate device token?</DialogTitle><DialogContent><Typography>Rotating the token immediately invalidates the device's current credential. Update the device's secure configuration before it reconnects.</Typography></DialogContent><DialogActions><Button disabled={Boolean(rotatingDeviceId)} onClick={() => setRotationTarget(null)}>Cancel</Button><Button variant="contained" disabled={Boolean(rotatingDeviceId)} onClick={rotateToken}>{rotatingDeviceId ? <CircularProgress size={18} /> : 'Rotate token'}</Button></DialogActions></Dialog>
-    <Dialog open={Boolean(token)} onClose={closeToken} fullWidth maxWidth="sm"><DialogTitle>{tokenTitle}</DialogTitle><DialogContent><Alert severity="warning" sx={{ mb: 2 }}>This credential is shown once. Store it securely and configure device firmware for HTTPS.</Alert><TextField fullWidth multiline value={token} inputProps={{ readOnly: true }} /></DialogContent><DialogActions><Button onClick={copyToken}>Copy and close</Button><Button onClick={closeToken}>Done</Button></DialogActions></Dialog>
+    <Dialog open={Boolean(rotationTarget)} onClose={() => rotatingDeviceId ? null : setRotationTarget(null)} fullWidth maxWidth="sm"><DialogTitle>Rotate device token?</DialogTitle><DialogContent><Typography>Rotating the token immediately invalidates the device&apos;s current credential. Update the ESP32 configuration with the new token before it reconnects.</Typography></DialogContent><DialogActions><Button disabled={Boolean(rotatingDeviceId)} onClick={() => setRotationTarget(null)}>Cancel</Button><Button variant="contained" disabled={Boolean(rotatingDeviceId)} onClick={rotateToken}>{rotatingDeviceId ? <CircularProgress size={18} /> : 'Rotate token'}</Button></DialogActions></Dialog>
+    <Dialog open={Boolean(token)} onClose={closeToken} fullWidth maxWidth="sm"><DialogTitle>Device Authorization Token</DialogTitle><DialogContent><Typography sx={{ mb: 2 }}>Your new device authorization token has been generated successfully.</Typography><TextField fullWidth multiline minRows={3} maxRows={8} value={showToken ? token : '•'.repeat(token.length)} inputProps={{ readOnly: true, 'aria-label': 'Device authorization token', style: { overflowWrap: 'anywhere', wordBreak: 'break-all' } }} InputProps={{ endAdornment: <InputAdornment position="end"><Button onClick={() => setShowToken(value => !value)}>{showToken ? 'Hide' : 'Show'}</Button></InputAdornment> }} /><Alert severity="warning" sx={{ mt: 2 }}>Important: This token will only be displayed once. Copy and save it securely. You cannot retrieve it again after closing this window.</Alert>{copied ? <Alert severity="success" sx={{ mt: 2 }}>Token copied successfully</Alert> : null}</DialogContent><DialogActions><Button variant="contained" onClick={copyToken}>Copy Token</Button><Button onClick={closeToken}>Close</Button></DialogActions></Dialog>
   </Box>
 }

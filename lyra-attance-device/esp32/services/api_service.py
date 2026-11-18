@@ -48,6 +48,7 @@ except ImportError:  # pragma: no cover - CPython fallback for local testing
     requests = _CPythonRequests()
 
 from config import (
+    ALLOW_INSECURE_HTTP,
     API_BASE_URL,
     API_DEVICE_HEARTBEAT,
     API_DEVICE_ENROLLMENT_PENDING,
@@ -82,8 +83,10 @@ def _utc_timestamp():
 class AttendanceAPIClient:
     def __init__(self, base_url=API_BASE_URL, timeout=API_TIMEOUT, retry_count=API_RETRY_COUNT, event_queue=None):
         self.base_url = base_url.rstrip("/")
-        if not self.base_url.startswith("https://"):
-            raise ValueError("Device API requires an HTTPS base URL")
+        is_https = self.base_url.startswith("https://")
+        is_http = self.base_url.startswith("http://")
+        if not is_https and not (is_http and ALLOW_INSECURE_HTTP):
+            raise ValueError("Device API requires an HTTPS base URL or explicit ALLOW_INSECURE_HTTP")
         self.timeout = timeout
         self.retry_count = retry_count
         self.event_queue = event_queue or PersistentEventQueue()
