@@ -5,6 +5,7 @@ WIFI_PASSWORD = ""
 DEVICE_ID = ""
 DEVICE_TOKEN = ""
 TEST_MODE = False
+ATTENDANCE_SYNC_ENABLED = False
 
 # Use the verified Django LAN address only; never use localhost or 127.0.0.1.
 API_BASE_URL = ""

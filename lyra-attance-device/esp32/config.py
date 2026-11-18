@@ -34,6 +34,11 @@ except ImportError:
     LOCAL_WIFI_PASSWORD = ""
     LOCAL_WIFI_SSID = ""
 
+try:
+    from config_local import ATTENDANCE_SYNC_ENABLED as LOCAL_ATTENDANCE_SYNC_ENABLED
+except ImportError:
+    LOCAL_ATTENDANCE_SYNC_ENABLED = False
+
 # ------------------------------------------------------------
 # Wi-Fi
 # ------------------------------------------------------------
@@ -60,6 +65,7 @@ API_FINGERPRINT_ENDPOINT = "/api/v1/attendance/fingerprint/events/"
 API_DEVICE_HEARTBEAT = "/api/v1/devices/{device_id}/heartbeat/"
 API_DEVICE_ENROLLMENT_PENDING = "/api/v1/devices/{device_id}/enrollment/pending/"
 API_DEVICE_ENROLLMENT_RESULT = "/api/v1/devices/{device_id}/enrollment/{enrollment_id}/result/"
+ATTENDANCE_SYNC_ENABLED = LOCAL_ATTENDANCE_SYNC_ENABLED
 API_TIMEOUT = int(_getenv("LYRA_API_TIMEOUT", "10"))
 API_RETRY_COUNT = int(_getenv("LYRA_API_RETRY_COUNT", "2"))
 HEARTBEAT_INTERVAL_SECONDS = int(_getenv("LYRA_HEARTBEAT_INTERVAL_SECONDS", "60"))

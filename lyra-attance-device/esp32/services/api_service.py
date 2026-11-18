@@ -55,6 +55,7 @@ from config import (
     API_FINGERPRINT_ENDPOINT,
     API_RETRY_COUNT,
     API_TIMEOUT,
+    ATTENDANCE_SYNC_ENABLED,
     DEVICE_TOKEN,
 )
 from utils.logger import log
@@ -101,6 +102,12 @@ class AttendanceAPIClient:
     def send_attendance(self, device_id, fingerprint_slot):
         event = {"event_id": _uuid4(), "fingerprint_slot": int(fingerprint_slot), "occurred_at": _utc_timestamp()}
         self.event_queue.append(event)
+        if not ATTENDANCE_SYNC_ENABLED:
+            return {
+                "success": False,
+                "queued": True,
+                "message": "Attendance saved on device; synchronization is paused.",
+            }
         result = self.event_queue.flush(self, device_id).get(event["event_id"])
         if result is None:
             return {"success": False, "queued": True, "message": "Attendance saved on device and waiting for synchronization."}
@@ -112,6 +119,8 @@ class AttendanceAPIClient:
         return self._device_request("POST", API_FINGERPRINT_ENDPOINT, payload, retry_count=0, headers=self._device_headers())
 
     def sync_pending(self, device_id):
+        if not ATTENDANCE_SYNC_ENABLED:
+            return {}
         return self.event_queue.flush(self, device_id)
 
     def send_heartbeat(self, device_id):
