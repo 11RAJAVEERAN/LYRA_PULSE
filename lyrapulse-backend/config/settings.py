@@ -9,7 +9,14 @@ load_dotenv(BASE_DIR / ".env")
 
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-only-change-this-secret-key-before-production-lyra-pulse")
 DEBUG = os.getenv("DEBUG", "True").lower() == "true"
-ALLOWED_HOSTS = [host.strip() for host in os.getenv("ALLOWED_HOSTS", "localhost,192.168.1.2").split(",") if host.strip()]
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in os.getenv(
+        "ALLOWED_HOSTS",
+        "localhost,192.168.1.2,192.168.1.8",
+    ).split(",")
+    if host.strip()
+]
 
 INSTALLED_APPS = [
     "django.contrib.admin",

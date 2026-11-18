@@ -2,7 +2,12 @@
 
 from machine import I2C, Pin
 
-from config import OLED_I2C_ADDRESS, OLED_SCL_PIN, OLED_SDA_PIN
+from config import (
+    OLED_I2C_ADDRESS,
+    OLED_I2C_FREQUENCY,
+    OLED_SCL_PIN,
+    OLED_SDA_PIN,
+)
 from lib.ssd1306 import (
     FONT_CHAR_SPACING,
     FONT_HEIGHT,
@@ -18,7 +23,12 @@ class OledDisplay:
     def __init__(self, width=128, height=64):
         self.width = width
         self.height = height
-        self.i2c = I2C(0, sda=Pin(OLED_SDA_PIN), scl=Pin(OLED_SCL_PIN), freq=100000)
+        self.i2c = I2C(
+            0,
+            sda=Pin(OLED_SDA_PIN),
+            scl=Pin(OLED_SCL_PIN),
+            freq=OLED_I2C_FREQUENCY,
+        )
         addresses = self.i2c.scan()
         log("OLED", "I2C scan: %s" % addresses)
         if OLED_I2C_ADDRESS not in addresses:

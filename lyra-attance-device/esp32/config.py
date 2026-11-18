@@ -1,36 +1,68 @@
 """Central configuration for the Lyra Pulse ESP32 fingerprint attendance device."""
 
-import os
+try:
+    import os
+except ImportError:
+    os = None
+
+
+def _getenv(name, default=""):
+    if os is not None:
+        try:
+            value = os.getenv(name)
+            if value is not None:
+                return value
+        except (AttributeError, OSError):
+            pass
+    return default
+
+
+try:
+    from config_local import (
+        API_BASE_URL as LOCAL_API_BASE_URL,
+        DEVICE_ID as LOCAL_DEVICE_ID,
+        DEVICE_TOKEN as LOCAL_DEVICE_TOKEN,
+        TEST_MODE as LOCAL_TEST_MODE,
+        WIFI_PASSWORD as LOCAL_WIFI_PASSWORD,
+        WIFI_SSID as LOCAL_WIFI_SSID,
+    )
+except ImportError:
+    LOCAL_API_BASE_URL = ""
+    LOCAL_DEVICE_ID = ""
+    LOCAL_DEVICE_TOKEN = ""
+    LOCAL_TEST_MODE = False
+    LOCAL_WIFI_PASSWORD = ""
+    LOCAL_WIFI_SSID = ""
 
 # ------------------------------------------------------------
 # Wi-Fi
 # ------------------------------------------------------------
 # Use a 2.4 GHz Wi-Fi network; ESP32 does not support 5 GHz.
 # Set these in the environment before flashing or running the device.
-WIFI_SSID = os.getenv("LYRA_WIFI_SSID", "YOUR_WIFI_SSID")
-WIFI_PASSWORD = os.getenv("LYRA_WIFI_PASSWORD", "YOUR_WIFI_PASSWORD")
-WIFI_TIMEOUT_SECONDS = int(os.getenv("LYRA_WIFI_TIMEOUT_SECONDS", "20"))
-WIFI_RETRY_COUNT = int(os.getenv("LYRA_WIFI_RETRY_COUNT", "3"))
+WIFI_SSID = LOCAL_WIFI_SSID or _getenv("LYRA_WIFI_SSID", "")
+WIFI_PASSWORD = LOCAL_WIFI_PASSWORD or _getenv("LYRA_WIFI_PASSWORD", "")
+WIFI_TIMEOUT_SECONDS = int(_getenv("LYRA_WIFI_TIMEOUT_SECONDS", "20"))
+WIFI_RETRY_COUNT = int(_getenv("LYRA_WIFI_RETRY_COUNT", "3"))
 
 # ------------------------------------------------------------
 # Device identity
 # ------------------------------------------------------------
-DEVICE_ID = os.getenv("LYRA_DEVICE_ID", "")
-DEVICE_TOKEN = os.getenv("LYRA_DEVICE_TOKEN", "")
-TEST_MODE = os.getenv("LYRA_TEST_MODE", "false").lower() == "true"
+DEVICE_ID = LOCAL_DEVICE_ID or _getenv("LYRA_DEVICE_ID", "")
+DEVICE_TOKEN = LOCAL_DEVICE_TOKEN or _getenv("LYRA_DEVICE_TOKEN", "")
+TEST_MODE = LOCAL_TEST_MODE or _getenv("LYRA_TEST_MODE", "false").lower() == "true"
 
 # ------------------------------------------------------------
 # API
 # ------------------------------------------------------------
 # Update to the actual Django backend URL before deployment.
-API_BASE_URL = os.getenv("LYRA_API_BASE_URL", "https://localhost:8000")
+API_BASE_URL = LOCAL_API_BASE_URL or _getenv("LYRA_API_BASE_URL", "")
 API_FINGERPRINT_ENDPOINT = "/api/v1/attendance/fingerprint/events/"
 API_DEVICE_HEARTBEAT = "/api/v1/devices/{device_id}/heartbeat/"
 API_DEVICE_ENROLLMENT_PENDING = "/api/v1/devices/{device_id}/enrollment/pending/"
 API_DEVICE_ENROLLMENT_RESULT = "/api/v1/devices/{device_id}/enrollment/{enrollment_id}/result/"
-API_TIMEOUT = int(os.getenv("LYRA_API_TIMEOUT", "10"))
-API_RETRY_COUNT = int(os.getenv("LYRA_API_RETRY_COUNT", "2"))
-HEARTBEAT_INTERVAL_SECONDS = int(os.getenv("LYRA_HEARTBEAT_INTERVAL_SECONDS", "60"))
+API_TIMEOUT = int(_getenv("LYRA_API_TIMEOUT", "10"))
+API_RETRY_COUNT = int(_getenv("LYRA_API_RETRY_COUNT", "2"))
+HEARTBEAT_INTERVAL_SECONDS = int(_getenv("LYRA_HEARTBEAT_INTERVAL_SECONDS", "60"))
 
 # ------------------------------------------------------------
 # UART fingerprint sensor
@@ -43,8 +75,8 @@ R307_ADDRESS = 0xFFFFFFFF
 R307_UART_READ_TIMEOUT_MS = 10
 R307_DEBUG = True
 R307_TOUCH_PIN = 18
-R307_TOUCH_ACTIVE_LEVEL = None
-R307_TOUCH_DEBOUNCE_SAMPLES = 5
+R307_TOUCH_ACTIVE_LEVEL = 0
+R307_TOUCH_DEBOUNCE_SAMPLES = 10
 R307_TOUCH_SAMPLE_INTERVAL_SECONDS = 0.01
 R307_DETECTION_MODE = "hybrid"
 R307_UART_FALLBACK_ENABLED = True
@@ -65,14 +97,15 @@ ENROLLMENT_TEMPLATE_ID = 1
 OLED_SDA_PIN = 21
 OLED_SCL_PIN = 22
 OLED_I2C_ADDRESS = 0x3C
+OLED_I2C_FREQUENCY = 400000
 
 # ------------------------------------------------------------
 # GPIO outputs
 # ------------------------------------------------------------
 BUZZER_PIN = 4
-GREEN_LED_PIN = 25
-BLUE_LED_PIN = 26
-RED_LED_PIN = 27
+GREEN_LED_PIN = 32
+BLUE_LED_PIN = 33
+RED_LED_PIN = 25
 
 # ------------------------------------------------------------
 # Behavior and safety
@@ -83,7 +116,7 @@ MAX_TEMPLATE_COUNT = 1000
 ENROLLMENT_STEP_TIMEOUT_SECONDS = 30
 
 # Linux / ESP32 serial configuration for MicroPython development
-SERIAL_PORT = os.getenv("LYRA_SERIAL_PORT", "/dev/ttyUSB0")
+SERIAL_PORT = _getenv("LYRA_SERIAL_PORT", "/dev/ttyUSB0")
 
 # ------------------------------------------------------------
 # Optional: ensure no sensitive data is ever printed in logs
@@ -95,3 +128,21 @@ def safe_config_summary():
         "api_base_url": API_BASE_URL,
         "test_mode": TEST_MODE,
     }
+
+
+def validate_deployment_config():
+    missing = []
+    placeholders = ("", "YOUR_WIFI_SSID", "YOUR_WIFI_PASSWORD")
+    if WIFI_SSID in placeholders:
+        missing.append("WIFI_SSID")
+    if WIFI_PASSWORD in placeholders:
+        missing.append("WIFI_PASSWORD")
+    if not DEVICE_ID:
+        missing.append("DEVICE_ID")
+    if not DEVICE_TOKEN:
+        missing.append("DEVICE_TOKEN")
+    if not API_BASE_URL:
+        missing.append("API_BASE_URL")
+    if API_BASE_URL.startswith("http://localhost") or API_BASE_URL.startswith("http://127.0.0.1"):
+        missing.append("API_BASE_URL (localhost is invalid)")
+    return missing

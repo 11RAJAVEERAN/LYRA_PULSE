@@ -6,6 +6,7 @@ from config import (
     FINGERPRINT_COOLDOWN,
     FINGER_REMOVAL_SETTLE_SECONDS,
     HEARTBEAT_INTERVAL_SECONDS,
+    validate_deployment_config,
 )
 from drivers.oled import OledDisplay
 from drivers.r307 import R307, R307CommunicationError, R307PacketError
@@ -230,6 +231,15 @@ def run_attendance_scan(
 
 def main():
     log("BOOT", "Lyra Pulse device starting")
+
+    missing_config = validate_deployment_config()
+    if missing_config:
+        log(
+            "CONFIG",
+            "Deployment blocked; missing or invalid configuration: %s"
+            % ", ".join(missing_config),
+        )
+        return
 
     device_id = get_device_id()
     oled = OledDisplay()

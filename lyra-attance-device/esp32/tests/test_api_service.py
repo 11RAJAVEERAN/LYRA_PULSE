@@ -166,13 +166,13 @@ class DeviceResultRequestTests(unittest.TestCase):
         )
         self.assertEqual(fake_requests.post_arguments["timeout"], 4)
 
-    def test_http_base_url_is_rejected_before_credentials_are_sent(self):
+    def test_http_localhost_base_url_is_rejected_before_credentials_are_sent(self):
         fake_requests = FakeRequests()
         previous_requests = api_service.requests
         api_service.requests = fake_requests
         try:
-            with self.assertRaisesRegex(ValueError, "requires an HTTPS"):
-                self.make_client(base_url="http://backend")
+            with self.assertRaisesRegex(ValueError, "must not use localhost"):
+                self.make_client(base_url="http://localhost:8000")
         finally:
             api_service.requests = previous_requests
 

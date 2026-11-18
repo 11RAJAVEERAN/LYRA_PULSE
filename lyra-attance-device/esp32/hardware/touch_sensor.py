@@ -14,7 +14,12 @@ class TouchSensor:
     def __init__(self, pin=None, active_level=R307_TOUCH_ACTIVE_LEVEL):
         if active_level not in (None, 0, 1):
             raise ValueError("Touch active level must be None, 0, or 1")
-        self.pin = pin if pin is not None else Pin(R307_TOUCH_PIN, Pin.IN)
+        pull_up = getattr(Pin, "PULL_UP", 0)
+        self.pin = (
+            pin
+            if pin is not None
+            else Pin(R307_TOUCH_PIN, Pin.IN, pull_up)
+        )
         self.active_level = active_level
         self.stable_level = self.pin.value()
         self.candidate_level = self.stable_level

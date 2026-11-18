@@ -114,8 +114,13 @@ class AdminOTPSendView(APIView):
         except ValueError as exc:
             return Response({"detail": str(exc)}, status=status.HTTP_429_TOO_MANY_REQUESTS)
         response_data = {"accepted": True}
-        if settings.DEBUG and settings.SMS_PROVIDER == "mock":
-            response_data["dev_otp"] = otp_record._dev_otp
+        if (
+            settings.DEBUG
+            and settings.SMS_PROVIDER == "mock"
+            and user.is_platform_superadmin
+            and hasattr(otp_record, "_dev_otp")
+        ):
+            response_data["otp"] = otp_record._dev_otp
         return success_response(response_data, "If the account exists, an OTP was sent")
 
 
@@ -141,7 +146,7 @@ class SendOTPView(APIView):
     permission_classes = [AllowAny]
 
     @extend_schema(request=PhoneSerializer, responses={
-        200: OpenApiResponse(description="OTP accepted. dev_otp is included only when DEBUG=True and SMS_PROVIDER=mock."),
+        200: OpenApiResponse(description="OTP accepted. OTP values are not returned by the employee authentication API."),
         400: _error_schema("SendOtpValidationError"),
     })
     def post(self, request):
@@ -166,8 +171,6 @@ class SendOTPView(APIView):
             otp_record = create_otp(phone_number)
         except ValueError:
             return success_response(response_data, generic_message)
-        if settings.DEBUG and settings.SMS_PROVIDER == "mock":
-            response_data["dev_otp"] = otp_record._dev_otp
         return success_response(response_data, generic_message, status.HTTP_200_OK)
 
 

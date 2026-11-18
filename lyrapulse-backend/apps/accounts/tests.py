@@ -40,11 +40,22 @@ class OTPAuthenticationTests(TestCase):
 
     @override_settings(DEBUG=True, SMS_PROVIDER="mock")
     def test_send_and_verify_otp_returns_jwt(self):
-        response = self.client.post("/api/v1/auth/send-otp/", {"phone_number": "9876543210"})
+        created_records = []
+        original_create_otp = create_otp
+
+        def capture_otp(*args, **kwargs):
+            record = original_create_otp(*args, **kwargs)
+            created_records.append(record)
+            return record
+
+        with patch("apps.accounts.views.create_otp", side_effect=capture_otp):
+            response = self.client.post("/api/v1/auth/send-otp/", {"phone_number": "9876543210"})
         self.assertEqual(response.status_code, 200)
         record = OTPVerification.objects.get(phone_number="9876543210")
         from django.contrib.auth.hashers import check_password
-        otp = response.data["data"]["dev_otp"]
+        otp = created_records[0]._dev_otp
+        self.assertNotIn("otp", response.data["data"])
+        self.assertNotIn("dev_otp", response.data["data"])
         self.assertRegex(otp, r"^\d{6}$")
         self.assertTrue(check_password(otp, record.otp_hash))
         response = self.client.post("/api/v1/auth/verify-otp/", {"phone_number": "9876543210", "otp": otp})
@@ -52,12 +63,53 @@ class OTPAuthenticationTests(TestCase):
         self.assertIn("access", response.data["data"])
 
     @override_settings(DEBUG=True, SMS_PROVIDER="mock")
-    def test_send_otp_returns_dev_otp_only_for_debug_mock(self):
+    def test_employee_send_otp_does_not_return_otp_in_development(self):
         response = self.client.post("/api/v1/auth/send-otp/", {"phone_number": "9876543210"})
         self.assertEqual(response.status_code, 200)
-        self.assertRegex(response.data["data"]["dev_otp"], r"^\d{6}$")
         self.assertNotIn("otp", response.data)
+        self.assertNotIn("otp", response.data["data"])
+        self.assertNotIn("dev_otp", response.data["data"])
         self.assertNotIn("otp_hash", response.data)
+
+    @override_settings(DEBUG=True, SMS_PROVIDER="mock", OTP_RESEND_COOLDOWN_SECONDS=0)
+    def test_superadmin_send_otp_returns_otp_in_development(self):
+        superadmin = User.objects.create_user(
+            "9000000099",
+            role=User.Role.SUPERADMIN,
+            is_superuser=True,
+        )
+
+        response = self.client.post(
+            "/api/v1/auth/admin/send-otp/",
+            {"identifier": superadmin.phone_number},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertRegex(response.data["data"]["otp"], r"^\d{6}$")
+        self.assertNotIn("dev_otp", response.data["data"])
+        record = OTPVerification.objects.get(
+            phone_number=superadmin.phone_number,
+            purpose=OTPVerification.Purpose.ADMIN_LOGIN,
+        )
+        from django.contrib.auth.hashers import check_password
+        self.assertTrue(check_password(response.data["data"]["otp"], record.otp_hash))
+
+    @override_settings(DEBUG=False, SMS_PROVIDER="mock")
+    def test_superadmin_send_otp_hides_otp_in_production(self):
+        superadmin = User.objects.create_user(
+            "9000000098",
+            role=User.Role.SUPERADMIN,
+            is_superuser=True,
+        )
+
+        response = self.client.post(
+            "/api/v1/auth/admin/send-otp/",
+            {"identifier": superadmin.phone_number},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn("otp", response.data["data"])
+        self.assertNotIn("dev_otp", response.data["data"])
 
     @override_settings(DEBUG=False, SMS_PROVIDER="mock")
     def test_send_otp_hides_dev_otp_when_debug_is_false(self):
@@ -143,20 +195,32 @@ class OTPAuthenticationTests(TestCase):
         admin.allowed_branches.add(branch)
         from apps.accounts.services.role_permissions import ensure_role_group
         admin.groups.add(ensure_role_group(User.Role.ADMIN))
+        created_records = []
+        original_create_otp = create_otp
+
+        def capture_otp(*args, **kwargs):
+            record = original_create_otp(*args, **kwargs)
+            created_records.append(record)
+            return record
+
         with self.settings(DEBUG=True, SMS_PROVIDER="mock", OTP_RESEND_COOLDOWN_SECONDS=0):
-            for identifier in (admin.email, admin.phone_number):
-                response = self.client.post("/api/v1/auth/admin/send-otp/", {"identifier": identifier})
-                self.assertEqual(response.status_code, 200)
-                otp = response.data["data"]["dev_otp"]
-                response = self.client.post("/api/v1/auth/admin/verify-otp/", {"identifier": identifier, "otp": otp})
-                self.assertEqual(response.status_code, 200)
-                self.assertIn("access", response.data["data"])
+            with patch("apps.accounts.views.create_otp", side_effect=capture_otp):
+                for identifier in (admin.email, admin.phone_number):
+                    response = self.client.post("/api/v1/auth/admin/send-otp/", {"identifier": identifier})
+                    self.assertEqual(response.status_code, 200)
+                    self.assertNotIn("otp", response.data["data"])
+                    self.assertNotIn("dev_otp", response.data["data"])
+                    otp = created_records[-1]._dev_otp
+                    response = self.client.post("/api/v1/auth/admin/verify-otp/", {"identifier": identifier, "otp": otp})
+                    self.assertEqual(response.status_code, 200)
+                    self.assertIn("access", response.data["data"])
 
     @override_settings(DEBUG=False, SMS_PROVIDER="mock")
     def test_admin_send_otp_hides_dev_otp_when_debug_is_false(self):
         admin = User.objects.create_user("9123456789", email="admin@example.test", role=User.Role.ADMIN)
         response = self.client.post("/api/v1/auth/admin/send-otp/", {"identifier": admin.email})
         self.assertEqual(response.status_code, 200)
+        self.assertNotIn("otp", response.data["data"])
         self.assertNotIn("dev_otp", response.data["data"])
 
     def test_employee_cannot_get_admin_token(self):
@@ -434,9 +498,22 @@ class OrganizationScopeTests(TestCase):
             self.chennai.save()
 
     def test_login_payload_includes_scope(self):
+        created_records = []
+        original_create_otp = create_otp
+
+        def capture_otp(*args, **kwargs):
+            record = original_create_otp(*args, **kwargs)
+            created_records.append(record)
+            return record
+
         with self.settings(DEBUG=True, SMS_PROVIDER="mock"):
-            send = self.client.post("/api/v1/auth/admin/send-otp/", {"identifier": "9999999999"})
-            verify = self.client.post("/api/v1/auth/admin/verify-otp/", {"identifier": "9999999999", "otp": send.data["data"]["dev_otp"]})
+            with patch("apps.accounts.views.create_otp", side_effect=capture_otp):
+                send = self.client.post("/api/v1/auth/admin/send-otp/", {"identifier": "9999999999"})
+            self.assertNotIn("otp", send.data["data"])
+            verify = self.client.post("/api/v1/auth/admin/verify-otp/", {
+                "identifier": "9999999999",
+                "otp": created_records[0]._dev_otp,
+            })
         user = verify.data["data"]["user"]
         self.assertEqual(user["role"], "ADMIN")
         self.assertEqual(user["organization"], {"id": self.devi.pk, "name": "Devi Hotel"})

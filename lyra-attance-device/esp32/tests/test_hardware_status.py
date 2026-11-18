@@ -95,7 +95,7 @@ class DeviceHardwareStatusTests(unittest.TestCase):
             display = OledDisplay()
 
         self.assertEqual(created["i2c"].bus_id, 0)
-        self.assertEqual(created["i2c"].freq, 100000)
+        self.assertEqual(created["i2c"].freq, 400000)
         self.assertEqual(created["i2c"].sda.pin, 21)
         self.assertEqual(created["i2c"].scl.pin, 22)
         self.assertEqual(display.oled.addr, 0x3C)

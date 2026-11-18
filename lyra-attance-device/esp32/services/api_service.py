@@ -82,8 +82,15 @@ def _utc_timestamp():
 class AttendanceAPIClient:
     def __init__(self, base_url=API_BASE_URL, timeout=API_TIMEOUT, retry_count=API_RETRY_COUNT, event_queue=None):
         self.base_url = base_url.rstrip("/")
-        if not self.base_url.startswith("https://"):
-            raise ValueError("Device API requires an HTTPS base URL")
+        if not (
+            self.base_url.startswith("http://")
+            or self.base_url.startswith("https://")
+        ):
+            raise ValueError("Device API requires an HTTP or HTTPS base URL")
+        authority = self.base_url.split("://", 1)[1].split("/", 1)[0].lower()
+        host = authority.split("@")[-1].split(":")[0]
+        if host in ("localhost", "127.0.0.1", "::1"):
+            raise ValueError("Device API must not use localhost")
         self.timeout = timeout
         self.retry_count = retry_count
         self.event_queue = event_queue or PersistentEventQueue()
