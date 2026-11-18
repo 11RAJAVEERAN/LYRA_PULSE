@@ -114,7 +114,7 @@ def run_attendance_scan(
         if fingerprint_slot is None:
             log("SCAN", "state=MATCH_FAILURE")
             led.match_failed()
-            buzzer.beep_twice()
+            buzzer.attendance_mismatch_beep()
             show_feedback(oled, "show_not_found")
             time.sleep(0.5)
             return
@@ -124,6 +124,7 @@ def run_attendance_scan(
             if response.get("queued"):
                 log("QUEUE", "Scan stored locally for later synchronization")
                 led.match_success()
+                buzzer.success_beep()
                 show_feedback(oled, "show_queued")
                 time.sleep(0.75)
                 return
@@ -175,7 +176,7 @@ def run_attendance_scan(
         )
         log("SCAN", "state=MATCH_SUCCESS")
         led.match_success()
-        buzzer.beep_once()
+        buzzer.success_beep()
         show_feedback(
             oled,
             "show_attendance_success",

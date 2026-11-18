@@ -205,19 +205,37 @@ class DevicePollingTests(unittest.TestCase):
         self.assertEqual(events.count(("capture",)), 1)
         self.assertEqual(events.count(("search",)), 1)
         self.assertEqual(events.count(("remove",)), 1)
-        self.assertEqual(events.count(("buzzer", "beep_once")), 1)
-        self.assertNotIn(("buzzer", "beep_twice"), events)
+        self.assertEqual(events.count(("buzzer", "success_beep")), 1)
+        self.assertNotIn(("buzzer", "beep_once"), events)
         self.assertIn(("show_attendance_success", "Test Employee", "CHECKED_IN"), events)
         self.assertIn(("led", "match_success"), events)
         self.assertLess(
             events.index(("api", "LYRA-DEVICE-001", 137)),
-            events.index(("buzzer", "beep_once")),
+            events.index(("buzzer", "success_beep")),
         )
         self.assertEqual(events[-3:], [
             ("buzzer", "off"),
             ("led", "ready_status"),
             ("show_ready",),
         ])
+
+    def test_queued_fingerprint_match_gives_green_led_and_two_beeps_without_api_success(self):
+        events = []
+        api = FakeAttendanceAPI({
+            "success": False,
+            "queued": True,
+            "message": "Attendance saved on device; synchronization is paused.",
+        })
+        fingerprint = FakeAttendanceFingerprintService(137, events)
+
+        self.run_scan(api, fingerprint, events)
+
+        self.assertEqual(api.events, [("api", "LYRA-DEVICE-001", 137)])
+        self.assertIn(("led", "match_success"), events)
+        self.assertIn(("show_queued",), events)
+        self.assertEqual(events.count(("buzzer", "success_beep")), 1)
+        self.assertNotIn(("buzzer", "beep_once"), events)
+        self.assertNotIn(("buzzer", "attendance_mismatch_beep"), events)
 
     def test_unknown_fingerprint_does_not_call_attendance_api(self):
         events = []
@@ -229,8 +247,8 @@ class DevicePollingTests(unittest.TestCase):
         self.assertEqual(api.events, [])
         self.assertIn(("remove",), events)
         self.assertIn(("show_not_found",), events)
-        self.assertEqual(events.count(("buzzer", "beep_twice")), 1)
-        self.assertNotIn(("buzzer", "beep_once"), events)
+        self.assertEqual(events.count(("buzzer", "attendance_mismatch_beep")), 1)
+        self.assertNotIn(("buzzer", "success_beep"), events)
         self.assertIn(("led", "match_failed"), events)
 
     def test_scan_skips_conversion_and_search_without_confirmed_image(self):
@@ -324,7 +342,7 @@ class DevicePollingTests(unittest.TestCase):
 
         self.run_scan_with_oled(api, fingerprint, events, FailingAttendanceOled(events))
 
-        self.assertEqual(events.count(("buzzer", "beep_once")), 1)
+        self.assertEqual(events.count(("buzzer", "success_beep")), 1)
         self.assertIn(("led", "match_success"), events)
         self.assertNotIn(("led", "api_error"), events)
         self.assertIn("OLED ERROR", [tag for tag, _message in self.logs])
@@ -342,7 +360,7 @@ class DevicePollingTests(unittest.TestCase):
         self.run_scan_with_oled(api, fingerprint, events, FailingNoMatchOled(events))
 
         self.assertEqual(api.events, [])
-        self.assertEqual(events.count(("buzzer", "beep_twice")), 1)
+        self.assertEqual(events.count(("buzzer", "attendance_mismatch_beep")), 1)
         self.assertIn(("led", "match_failed"), events)
         self.assertIn("OLED ERROR", [tag for tag, _message in self.logs])
 
@@ -383,7 +401,7 @@ class DevicePollingTests(unittest.TestCase):
         self.assertIn(("show_sensor_error",), events)
         self.assertTrue(sensor_faulted)
         self.assertIn(("remove",), events)
-        self.assertNotIn(("buzzer", "beep_twice"), events)
+        self.assertNotIn(("buzzer", "attendance_mismatch_beep"), events)
 
     def test_search_sensor_error_never_uses_mismatch_feedback(self):
         events = []
@@ -399,8 +417,8 @@ class DevicePollingTests(unittest.TestCase):
         self.assertEqual(api.events, [])
         self.assertNotIn(("show_not_found",), events)
         self.assertIn(("show_sensor_error",), events)
-        self.assertNotIn(("buzzer", "beep_twice"), events)
-        self.assertNotIn(("buzzer", "beep_once"), events)
+        self.assertNotIn(("buzzer", "attendance_mismatch_beep"), events)
+        self.assertNotIn(("buzzer", "success_beep"), events)
         self.assertIn(("led", "sensor_error"), events)
 
     def test_enrollment_sensor_timeout_does_not_use_error_beep_or_red_match_status(self):
@@ -474,7 +492,7 @@ class DevicePollingTests(unittest.TestCase):
         self.assertIn(("api", "LYRA-DEVICE-001", 25), api.events)
         self.assertIn(("show_api_error",), events)
         self.assertNotIn(("led", "match_success"), events)
-        self.assertNotIn(("buzzer", "beep_once"), events)
+        self.assertNotIn(("buzzer", "success_beep"), events)
         self.assertIn(("remove",), events)
 
     def test_ready_status_is_restored_after_a_completed_scan(self):

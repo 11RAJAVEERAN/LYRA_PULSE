@@ -83,6 +83,36 @@ class DeviceHardwareStatusTests(unittest.TestCase):
             [(0.18,), (0.15,), (0.18,)],
         )
 
+    def test_attendance_mismatch_is_three_short_buzzer_pulses(self):
+        buzzer = Buzzer()
+        pin = fakes.FakePin.instances[BUZZER_PIN]
+
+        with patch("hardware.buzzer.time.sleep") as sleep:
+            pin.history = []
+            buzzer.attendance_mismatch_beep()
+
+        self.assertEqual(pin.history, [1, 0, 1, 0, 1, 0])
+        self.assertEqual(
+            [call.args for call in sleep.call_args_list],
+            [(0.15,)] * 6,
+        )
+        self.assertEqual(pin.state, 0)
+
+    def test_attendance_success_is_exactly_two_short_buzzer_pulses(self):
+        buzzer = Buzzer()
+        pin = fakes.FakePin.instances[BUZZER_PIN]
+
+        with patch("hardware.buzzer.time.sleep") as sleep:
+            pin.history = []
+            buzzer.success_beep()
+
+        self.assertEqual(pin.history, [1, 0, 1, 0])
+        self.assertEqual(
+            [call.args for call in sleep.call_args_list],
+            [(0.12,), (0.05,), (0.12,)],
+        )
+        self.assertEqual(pin.state, 0)
+
     def test_oled_initializes_on_configured_bus_at_compatible_speed_and_address(self):
         created = {}
 
