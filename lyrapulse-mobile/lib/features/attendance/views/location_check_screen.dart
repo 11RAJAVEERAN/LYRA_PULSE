@@ -19,30 +19,45 @@ class LocationCheckScreen extends GetView<AttendanceController> {
     return Scaffold(
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(AppDimensions.pagePadding, 12, AppDimensions.pagePadding, 20),
+          padding: const EdgeInsets.fromLTRB(
+              AppDimensions.pagePadding, 12, AppDimensions.pagePadding, 20),
           child: Obx(() {
             final action = controller.action.value;
             final status = controller.locationStatus.value;
+            final notConfirmed =
+                status == LocationStatus.outside || status == LocationStatus.failed;
+
             return Column(children: [
-              FlowHeader(action: action, step: 1, totalSteps: controller.locationRequired && controller.photoRequired ? 3 : 2, subtitle: 'Verify your location'),
-              const SizedBox(height: 22),
-              Expanded(child: SingleChildScrollView(child: _StatusCard(controller: controller))),
-              const SizedBox(height: 12),
-              if (status == LocationStatus.failed) ..._recoveryActions(),
-              AppButton(
-                label: controller.photoRequired ? 'Continue to photo' : 'Continue',
-                icon: controller.photoRequired ? Icons.photo_camera_rounded : Icons.arrow_forward_rounded,
-                useGradient: true,
-                onPressed: status == LocationStatus.verified ? controller.continueToCamera : null,
+              FlowHeader(
+                action: action,
+                step: 1,
+                totalSteps:
+                    controller.locationRequired && controller.photoRequired ? 3 : 2,
+                subtitle: 'Verify your location',
               ),
-              if (status == LocationStatus.outside || status == LocationStatus.verified) ...[
-                const SizedBox(height: 8),
-                TextButton.icon(
-                  onPressed: controller.verifyLocation,
-                  icon: const Icon(Icons.refresh_rounded, size: 18),
-                  label: const Text('Check location again'),
+              const SizedBox(height: 22),
+              Expanded(
+                child: SingleChildScrollView(
+                  child: _StatusCard(controller: controller),
                 ),
-              ],
+              ),
+              const SizedBox(height: 12),
+
+              // Location confirm aagala na mattum: settings (if needed) + check again.
+              if (notConfirmed) ..._recoveryActions(status),
+
+              AppButton(
+                label: controller.photoRequired
+                    ? 'Continue to photo'
+                    : 'Continue',
+                icon: controller.photoRequired
+                    ? Icons.photo_camera_rounded
+                    : Icons.arrow_forward_rounded,
+                useGradient: true,
+                onPressed: status == LocationStatus.verified
+                    ? controller.continueToCamera
+                    : null,
+              ),
             ]);
           }),
         ),
@@ -50,14 +65,18 @@ class LocationCheckScreen extends GetView<AttendanceController> {
     );
   }
 
-  List<Widget> _recoveryActions() {
+  List<Widget> _recoveryActions(LocationStatus status) {
     final type = controller.locationFailure.value;
-    final needsSettings =
-        type == LocationFailureType.serviceDisabled || type == LocationFailureType.deniedForever;
+    final needsSettings = status == LocationStatus.failed &&
+        (type == LocationFailureType.serviceDisabled ||
+            type == LocationFailureType.deniedForever);
+
     return [
       if (needsSettings) ...[
         AppButton(
-          label: type == LocationFailureType.serviceDisabled ? 'Open location settings' : 'Open app settings',
+          label: type == LocationFailureType.serviceDisabled
+              ? 'Open location settings'
+              : 'Open app settings',
           icon: Icons.settings_rounded,
           onPressed: controller.openLocationSettings,
         ),
@@ -66,12 +85,13 @@ class LocationCheckScreen extends GetView<AttendanceController> {
       OutlinedButton.icon(
         onPressed: controller.verifyLocation,
         icon: const Icon(Icons.refresh_rounded, size: 18),
-        label: const Text('Try again'),
+        label: const Text('Check location again'),
         style: OutlinedButton.styleFrom(
           minimumSize: const Size.fromHeight(AppDimensions.buttonHeight),
           side: const BorderSide(color: AppColors.border),
           foregroundColor: AppColors.textPrimary,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.inputRadius)),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppDimensions.inputRadius)),
         ),
       ),
       const SizedBox(height: 10),
@@ -133,7 +153,8 @@ class _StatusCard extends StatelessWidget {
           width: 76,
           height: 76,
           decoration: BoxDecoration(color: background, shape: BoxShape.circle),
-          child: status == LocationStatus.checking || status == LocationStatus.idle
+          child: status == LocationStatus.checking ||
+                  status == LocationStatus.idle
               ? Padding(
                   padding: const EdgeInsets.all(24),
                   child: CircularProgressIndicator(strokeWidth: 3, color: color),
@@ -149,25 +170,88 @@ class _StatusCard extends StatelessWidget {
           const Divider(color: AppColors.border, height: 1),
           const SizedBox(height: 8),
           if (verification.branchName.isNotEmpty)
-            FlowInfoRow(icon: Icons.apartment_rounded, label: 'Branch', value: verification.branchName),
-          FlowInfoRow(
+            _ColorInfoRow(
+              icon: Icons.apartment_rounded,
+              label: 'Branch',
+              value: verification.branchName,
+              color: AppColors.primaryBlue,
+            ),
+          _ColorInfoRow(
             icon: Icons.straighten_rounded,
             label: 'Distance from branch',
             value: Formatters.distance(verification.distanceMeters),
+            color: AppColors.secondary,
           ),
-          FlowInfoRow(
+          _ColorInfoRow(
             icon: Icons.radar_rounded,
             label: 'Allowed radius',
-            value: Formatters.distance(verification.allowedRadiusMeters.toDouble()),
+            value: Formatters.distance(
+                verification.allowedRadiusMeters.toDouble()),
+            color: AppColors.accent,
           ),
         ],
         if (position != null)
-          FlowInfoRow(
+          _ColorInfoRow(
             icon: Icons.gps_fixed_rounded,
             label: 'GPS accuracy',
             value: '±${position.accuracy.round()} m',
+            color: AppColors.success,
           ),
       ]),
     );
   }
+}
+
+/// Info row with a colorful rounded icon chip.
+class _ColorInfoRow extends StatelessWidget {
+  const _ColorInfoRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color color;
+@override
+Widget build(BuildContext context) {
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 18),
+    child: Row(
+      children: [
+        Container(
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.14),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(icon, size: 20, color: color),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            label,
+            style: AppTextStyles.bodySmall,
+          ),
+        ),
+        const SizedBox(width: 18),
+        Flexible(
+          child: Text(
+            value,
+            textAlign: TextAlign.right,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: AppTextStyles.bodySmall.copyWith(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+} 
 }

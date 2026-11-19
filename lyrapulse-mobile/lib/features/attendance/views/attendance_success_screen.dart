@@ -165,8 +165,8 @@ class _AttendanceSuccessScreenState extends State<AttendanceSuccessScreen>
                             return Transform.scale(
                               scale: pop,
                               child: Container(
-                                width: 118,
-                                height: 118,
+                                width: 100,
+                                height: 100,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   gradient: LinearGradient(
@@ -205,47 +205,21 @@ class _AttendanceSuccessScreenState extends State<AttendanceSuccessScreen>
                             style: AppTextStyles.headline,
                             textAlign: TextAlign.center),
                         const SizedBox(height: 6),
-                        Text(
-                          isCheckIn
-                              ? 'Your attendance has been recorded. Have a productive day!'
-                              : 'Your day is complete. See you tomorrow!',
-                          style: AppTextStyles.bodySmall,
-                          textAlign: TextAlign.center,
-                        ),
+                        // Text(
+                        //   isCheckIn
+                        //       ? 'Your attendance has been recorded. Have a productive day!'
+                        //       : 'Your day is complete. See you tomorrow!',
+                        //   style: AppTextStyles.bodySmall,
+                        //   textAlign: TextAlign.center,
+                        // ),
                       ]),
-                    ),
-                    const SizedBox(height: 14),
-
-                    // ── Date chip ─────────────────────────────────────────
-                    _reveal(
-                      0.38,
-                      0.66,
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: AppColors.successBackground,
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                        child: Row(mainAxisSize: MainAxisSize.min, children: [
-                          const Icon(Icons.calendar_today_rounded,
-                              size: 15, color: AppColors.success),
-                          const SizedBox(width: 8),
-                          Text(
-                            Formatters.dayLabel(checkIn ?? DateTime.now()),
-                            style: AppTextStyles.bodySmall.copyWith(
-                                color: AppColors.success,
-                                fontWeight: FontWeight.w600),
-                          ),
-                        ]),
-                      ),
                     ),
                     const SizedBox(height: 24),
 
                     // ── Check-in / Check-out tiles ────────────────────────
                     _reveal(
-                      0.46,
-                      0.74,
+                      0.40,
+                      0.70,
                       Row(children: [
                         Expanded(
                           child: _TimeTile(
@@ -268,100 +242,48 @@ class _AttendanceSuccessScreenState extends State<AttendanceSuccessScreen>
                         ),
                       ]),
                     ),
-
-                    // ── Total hours highlight (only after check-out) ──────
-                    if (worked != null) ...[
-                      const SizedBox(height: 14),
-                      _reveal(
-                        0.54,
-                        0.82,
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(
-                              vertical: 18, horizontal: 20),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                AppColors.success,
-                                AppColors.success.withOpacity(0.75),
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            borderRadius: BorderRadius.circular(18),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.success.withOpacity(0.28),
-                                blurRadius: 18,
-                                offset: const Offset(0, 8),
-                              ),
-                            ],
-                          ),
-                          child: Row(children: [
-                            Container(
-                              padding: const EdgeInsets.all(10),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(Icons.timer_outlined,
-                                  color: Colors.white, size: 24),
-                            ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text('Total hours',
-                                      style: AppTextStyles.bodySmall
-                                          .copyWith(color: Colors.white70)),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    Formatters.durationShort(worked),
-                                    style: AppTextStyles.headline.copyWith(
-                                        color: Colors.white, fontSize: 24),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const Icon(Icons.emoji_events_rounded,
-                                color: Colors.white70, size: 28),
-                          ]),
-                        ),
-                      ),
-                    ],
                     const SizedBox(height: 14),
 
-                    // ── Details card ──────────────────────────────────────
+                    // ── Details card (colorful rows) ──────────────────────
                     _reveal(
-                      0.62,
+                      0.55,
                       0.90,
                       FlowCard(
                         child: Column(children: [
-                          FlowInfoRow(
-                              icon: Icons.calendar_today_rounded,
-                              label: 'Date',
-                              value: Formatters.dayLabel(
-                                  checkIn ?? DateTime.now())),
-                          FlowInfoRow(
-                              icon: Icons.login_rounded,
-                              label: 'Check in',
-                              value: Formatters.time12(checkIn)),
+                          _ColorInfoRow(
+                            icon: Icons.calendar_today_rounded,
+                            label: 'Date',
+                            value: Formatters.dayLabel(
+                                checkIn ?? DateTime.now()),
+                            color: AppColors.primaryBlue,
+                          ),
+                          _ColorInfoRow(
+                            icon: Icons.login_rounded,
+                            label: 'Check in',
+                            value: Formatters.time12(checkIn),
+                            color: AppColors.success,
+                          ),
                           if (!isCheckIn)
-                            FlowInfoRow(
-                                icon: Icons.logout_rounded,
-                                label: 'Check out',
-                                value: Formatters.time12(checkOut)),
+                            _ColorInfoRow(
+                              icon: Icons.logout_rounded,
+                              label: 'Check out',
+                              value: Formatters.time12(checkOut),
+                              color: AppColors.warning,
+                            ),
                           if (worked != null)
-                            FlowInfoRow(
-                                icon: Icons.timer_outlined,
-                                label: 'Total hours',
-                                value: Formatters.durationShort(worked)),
+                            _ColorInfoRow(
+                              icon: Icons.timer_outlined,
+                              label: 'Total hours',
+                              value: Formatters.durationShort(worked),
+                              color: AppColors.secondary,
+                            ),
                           if (distance != null)
-                            FlowInfoRow(
-                                icon: Icons.verified_rounded,
-                                label: 'Distance from branch',
-                                value: Formatters.distance(distance)),
+                            _ColorInfoRow(
+                              icon: Icons.verified_rounded,
+                              label: 'Distance from branch',
+                              value: Formatters.distance(distance),
+                              color: AppColors.accent,
+                            ),
                         ]),
                       ),
                     ),
@@ -369,26 +291,26 @@ class _AttendanceSuccessScreenState extends State<AttendanceSuccessScreen>
                     // ── Location verified ─────────────────────────────────
                     if (distance != null) ...[
                       const SizedBox(height: 14),
-                      _reveal(
-                        0.70,
-                        0.98,
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.location_on_rounded,
-                                size: 16, color: AppColors.success),
-                            const SizedBox(width: 6),
-                            Flexible(
-                              child: Text(
-                                'Location verified • ${Formatters.distance(distance)} from branch',
-                                style: AppTextStyles.bodySmall.copyWith(
-                                    color: AppColors.success,
-                                    fontWeight: FontWeight.w600),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                      // _reveal(
+                      //   0.70,
+                      //   0.98,
+                        // Row(
+                        //   mainAxisAlignment: MainAxisAlignment.center,
+                        //   children: [
+                            // const Icon(Icons.location_on_rounded,
+                            //     size: 16, color: AppColors.success),
+                            // const SizedBox(width: 6),
+                            // Flexible(
+                            //   child: Text(
+                            //     'Location verified • ${Formatters.distance(distance)} from branch',
+                            //     style: AppTextStyles.bodySmall.copyWith(
+                            //         color: AppColors.success,
+                            //         fontWeight: FontWeight.w600),
+                            //   ),
+                            // ),
+                        //   ],
+                        // ),
+                      // ),
                     ],
                     const SizedBox(height: 12),
                   ]),
@@ -425,6 +347,67 @@ class _AttendanceSuccessScreenState extends State<AttendanceSuccessScreen>
         ),
       ]),
     );
+  }
+}
+
+/// Info row with a colorful rounded icon chip.
+class _ColorInfoRow extends StatelessWidget {
+  const _ColorInfoRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+     
+     
+     
+      child: Row(
+  children: [
+    Container(
+      width: 38,
+      height: 38,
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.14),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Icon(icon, size: 20, color: color),
+    ),
+    const SizedBox(width: 14),
+    Expanded(
+      child: Text(
+        label,
+        style: AppTextStyles.bodySmall,
+      ),
+    ),
+    const SizedBox(width: 12),
+    Text(
+      value,
+      textAlign: TextAlign.right,
+      style: AppTextStyles.bodySmall.copyWith(
+        color: AppColors.textPrimary,
+        fontWeight: FontWeight.w700,
+      ),
+    ),
+  ],
+),
+    );
+
+
+
+
+
+
+
   }
 }
 
