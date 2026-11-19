@@ -44,7 +44,8 @@ class UpcomingShiftsScreen extends GetView<UpcomingShiftsController> {
           return _MessageState(
             icon: Icons.event_busy_outlined,
             title: 'No active shift assignment',
-            message: 'Your assigned shift details will appear here when available.',
+            message:
+                'Your assigned shift details will appear here when available.',
             actionLabel: 'Refresh',
             onAction: controller.loadAssignment,
           );
@@ -141,12 +142,16 @@ class UpcomingShiftsScreen extends GetView<UpcomingShiftsController> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.info_outline_rounded, size: 20, color: AppColors.primaryBlue),
+                    const Icon(Icons.info_outline_rounded,
+                        size: 20, color: AppColors.primaryBlue),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         'This page shows your active assignment. Upcoming shift dates and daily hours are not available yet.',
-                        style: GoogleFonts.inter(fontSize: 12, color: AppColors.textSecondary, height: 1.45),
+                        style: GoogleFonts.inter(
+                            fontSize: 12,
+                            color: AppColors.textSecondary,
+                            height: 1.45),
                       ),
                     ),
                   ],
@@ -154,7 +159,8 @@ class UpcomingShiftsScreen extends GetView<UpcomingShiftsController> {
               ),
               if (error != null) ...[
                 const SizedBox(height: 14),
-                _InlineError(message: error, onRetry: controller.loadAssignment),
+                _InlineError(
+                    message: error, onRetry: controller.loadAssignment),
               ],
               if (controller.isLoading.value) ...[
                 const SizedBox(height: 14),
@@ -169,7 +175,8 @@ class UpcomingShiftsScreen extends GetView<UpcomingShiftsController> {
 }
 
 class _ShiftDetail extends StatelessWidget {
-  const _ShiftDetail({required this.icon, required this.label, required this.value});
+  const _ShiftDetail(
+      {required this.icon, required this.label, required this.value});
 
   final IconData icon;
   final String label;
@@ -186,9 +193,15 @@ class _ShiftDetail extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label, style: GoogleFonts.inter(fontSize: 12, color: AppColors.textSecondary)),
+              Text(label,
+                  style: GoogleFonts.inter(
+                      fontSize: 12, color: AppColors.textSecondary)),
               const SizedBox(height: 4),
-              Text(value, style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+              Text(value,
+                  style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary)),
             ],
           ),
         ),
@@ -222,11 +235,24 @@ class _MessageState extends StatelessWidget {
           children: [
             Icon(icon, size: 54, color: AppColors.textSecondary),
             const SizedBox(height: 16),
-            Text(title, textAlign: TextAlign.center, style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+            Text(title,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary)),
             const SizedBox(height: 8),
-            Text(message, textAlign: TextAlign.center, style: GoogleFonts.inter(fontSize: 14, color: AppColors.textSecondary, height: 1.45)),
+            Text(message,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                    fontSize: 14,
+                    color: AppColors.textSecondary,
+                    height: 1.45)),
             const SizedBox(height: 18),
-            OutlinedButton(onPressed: onAction, child: Text(actionLabel)),
+            OutlinedButton(
+              onPressed: onAction,
+              child: Text(actionLabel, style: GoogleFonts.inter()),
+            ),
           ],
         ),
       ),
@@ -250,8 +276,14 @@ class _InlineError extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Expanded(child: Text(message, style: GoogleFonts.inter(fontSize: 13, color: AppColors.error))),
-          TextButton(onPressed: onRetry, child: const Text('Retry')),
+          Expanded(
+              child: Text(message,
+                  style:
+                      GoogleFonts.inter(fontSize: 13, color: AppColors.error))),
+          TextButton(
+            onPressed: onRetry,
+            child: Text('Retry', style: GoogleFonts.inter()),
+          ),
         ],
       ),
     );

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 
 import '../../../app/theme/app_colors.dart';
@@ -24,15 +25,17 @@ class LocationCheckScreen extends GetView<AttendanceController> {
           child: Obx(() {
             final action = controller.action.value;
             final status = controller.locationStatus.value;
-            final notConfirmed =
-                status == LocationStatus.outside || status == LocationStatus.failed;
+            final notConfirmed = status == LocationStatus.outside ||
+                status == LocationStatus.failed;
 
             return Column(children: [
               FlowHeader(
                 action: action,
                 step: 1,
                 totalSteps:
-                    controller.locationRequired && controller.photoRequired ? 3 : 2,
+                    controller.locationRequired && controller.photoRequired
+                        ? 3
+                        : 2,
                 subtitle: 'Verify your location',
               ),
               const SizedBox(height: 22),
@@ -47,9 +50,8 @@ class LocationCheckScreen extends GetView<AttendanceController> {
               if (notConfirmed) ..._recoveryActions(status),
 
               AppButton(
-                label: controller.photoRequired
-                    ? 'Continue to photo'
-                    : 'Continue',
+                label:
+                    controller.photoRequired ? 'Continue to photo' : 'Continue',
                 icon: controller.photoRequired
                     ? Icons.photo_camera_rounded
                     : Icons.arrow_forward_rounded,
@@ -85,7 +87,10 @@ class LocationCheckScreen extends GetView<AttendanceController> {
       OutlinedButton.icon(
         onPressed: controller.verifyLocation,
         icon: const Icon(Icons.refresh_rounded, size: 18),
-        label: const Text('Check location again'),
+        label: Text(
+          'Check location again',
+          style: GoogleFonts.inter(),
+        ),
         style: OutlinedButton.styleFrom(
           minimumSize: const Size.fromHeight(AppDimensions.buttonHeight),
           side: const BorderSide(color: AppColors.border),
@@ -157,7 +162,8 @@ class _StatusCard extends StatelessWidget {
                   status == LocationStatus.idle
               ? Padding(
                   padding: const EdgeInsets.all(24),
-                  child: CircularProgressIndicator(strokeWidth: 3, color: color),
+                  child:
+                      CircularProgressIndicator(strokeWidth: 3, color: color),
                 )
               : Icon(icon, size: 36, color: color),
         ),
@@ -215,43 +221,43 @@ class _ColorInfoRow extends StatelessWidget {
   final String label;
   final String value;
   final Color color;
-@override
-Widget build(BuildContext context) {
-  return Padding(
-    padding: const EdgeInsets.symmetric(vertical: 18),
-    child: Row(
-      children: [
-        Container(
-          width: 38,
-          height: 38,
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.14),
-            borderRadius: BorderRadius.circular(12),
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Row(
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, size: 20, color: color),
           ),
-          child: Icon(icon, size: 20, color: color),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Text(
-            label,
-            style: AppTextStyles.bodySmall,
-          ),
-        ),
-        const SizedBox(width: 18),
-        Flexible(
-          child: Text(
-            value,
-            textAlign: TextAlign.right,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: AppTextStyles.bodySmall.copyWith(
-              color: AppColors.textPrimary,
-              fontWeight: FontWeight.w700,
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              label,
+              style: AppTextStyles.bodySmall,
             ),
           ),
-        ),
-      ],
-    ),
-  );
-} 
+          const SizedBox(width: 18),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: AppTextStyles.bodySmall.copyWith(
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

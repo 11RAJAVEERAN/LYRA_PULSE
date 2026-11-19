@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
@@ -58,8 +57,7 @@ class _LocationVerificationScreenState
 
     try {
       // 1. Location service ON-a irukka check pannum.
-      final serviceEnabled =
-          await Geolocator.isLocationServiceEnabled();
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
 
       if (!serviceEnabled) {
         if (mounted) {
@@ -73,8 +71,7 @@ class _LocationVerificationScreenState
       }
 
       // 2. Location permission check pannum.
-      LocationPermission permission =
-          await Geolocator.checkPermission();
+      LocationPermission permission = await Geolocator.checkPermission();
 
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
@@ -83,8 +80,7 @@ class _LocationVerificationScreenState
       if (permission == LocationPermission.denied) {
         if (mounted) {
           setState(() {
-            locationText =
-                'Location permission is required for attendance.';
+            locationText = 'Location permission is required for attendance.';
           });
         }
         return;
@@ -93,8 +89,7 @@ class _LocationVerificationScreenState
       if (permission == LocationPermission.deniedForever) {
         if (mounted) {
           setState(() {
-            locationText =
-                'Location permission is permanently denied.';
+            locationText = 'Location permission is permanently denied.';
           });
 
           await _showPermissionSettingsDialog();
@@ -138,11 +133,12 @@ class _LocationVerificationScreenState
             place.subLocality,
             place.locality,
             place.administrativeArea,
-          ].whereType<String>()
-           .map((value) => value.trim())
-           .where((value) => value.isNotEmpty)
-           .toSet()
-           .toList();
+          ]
+              .whereType<String>()
+              .map((value) => value.trim())
+              .where((value) => value.isNotEmpty)
+              .toSet()
+              .toList();
 
           if (parts.isNotEmpty) {
             address = parts.join(', ');
@@ -165,8 +161,7 @@ class _LocationVerificationScreenState
       if (!mounted) return;
 
       setState(() {
-        locationText =
-            'Unable to get your location. Please try again.';
+        locationText = 'Unable to get your location. Please try again.';
         locationVerified = false;
       });
 
@@ -195,9 +190,13 @@ class _LocationVerificationScreenState
       barrierDismissible: false,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Location is turned off'),
-          content: const Text(
+          title: Text(
+            'Location is turned off',
+            style: GoogleFonts.inter(),
+          ),
+          content: Text(
             'Please turn on your device location to continue attendance.',
+            style: GoogleFonts.inter(),
           ),
           actions: [
             TextButton(
@@ -205,7 +204,7 @@ class _LocationVerificationScreenState
                 Navigator.of(dialogContext).pop();
                 Get.back();
               },
-              child: const Text('Cancel'),
+              child: Text('Cancel', style: GoogleFonts.inter()),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -216,7 +215,7 @@ class _LocationVerificationScreenState
                 Navigator.of(dialogContext).pop();
                 await Geolocator.openLocationSettings();
               },
-              child: const Text('Turn On Location'),
+              child: Text('Turn On Location', style: GoogleFonts.inter()),
             ),
           ],
         );
@@ -232,9 +231,13 @@ class _LocationVerificationScreenState
       barrierDismissible: false,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Location Permission Required'),
-          content: const Text(
+          title: Text(
+            'Location Permission Required',
+            style: GoogleFonts.inter(),
+          ),
+          content: Text(
             'Please allow location permission in app settings to mark attendance.',
+            style: GoogleFonts.inter(),
           ),
           actions: [
             TextButton(
@@ -242,7 +245,7 @@ class _LocationVerificationScreenState
                 Navigator.of(dialogContext).pop();
                 Get.back();
               },
-              child: const Text('Cancel'),
+              child: Text('Cancel', style: GoogleFonts.inter()),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -253,7 +256,7 @@ class _LocationVerificationScreenState
                 Navigator.of(dialogContext).pop();
                 await Geolocator.openAppSettings();
               },
-              child: const Text('Open Settings'),
+              child: Text('Open Settings', style: GoogleFonts.inter()),
             ),
           ],
         );
@@ -313,7 +316,6 @@ class _LocationVerificationScreenState
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 18),
-
               Center(
                 child: Container(
                   height: 112,
@@ -329,28 +331,21 @@ class _LocationVerificationScreenState
                             ? Icons.location_on_rounded
                             : Icons.location_off_rounded,
                     size: 56,
-                    color: isOutsideOffice
-                        ? AppColors.error
-                        : primary,
+                    color: isOutsideOffice ? AppColors.error : primary,
                   ),
                 ),
               ),
-
               const SizedBox(height: 24),
-
               Text(
                 'Verify Your Location',
                 textAlign: TextAlign.center,
                 style: GoogleFonts.inter(
                   fontSize: 23,
                   fontWeight: FontWeight.w800,
-                   color: AppColors.textPrimary,
-                 
+                  color: AppColors.textPrimary,
                 ),
               ),
-
               const SizedBox(height: 10),
-
               Text(
                 widget.isCheckOut
                     ? 'Verify your location before checking out.'
@@ -362,9 +357,7 @@ class _LocationVerificationScreenState
                   color: AppColors.textSecondary,
                 ),
               ),
-
               const SizedBox(height: 28),
-
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
@@ -397,17 +390,13 @@ class _LocationVerificationScreenState
                         ),
                       ],
                     ),
-
                     const SizedBox(height: 18),
-
                     _infoRow(
                       Icons.radar_rounded,
                       'Allowed radius',
                       '100 metres',
                     ),
-
                     const SizedBox(height: 14),
-
                     _infoRow(
                       Icons.my_location_rounded,
                       'Your distance',
@@ -417,17 +406,13 @@ class _LocationVerificationScreenState
                               ? '${distanceInMeters!.round()} metres'
                               : 'Not available',
                     ),
-
                     const SizedBox(height: 14),
-
                     _infoRow(
                       Icons.location_on_outlined,
                       'Current address',
                       locationText,
                     ),
-
                     const SizedBox(height: 18),
-
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(14),
@@ -464,9 +449,7 @@ class _LocationVerificationScreenState
                                       ? AppColors.error
                                       : AppColors.warning,
                             ),
-
                           const SizedBox(width: 12),
-
                           Expanded(
                             child: Text(
                               isLoading
@@ -490,21 +473,16 @@ class _LocationVerificationScreenState
                   ],
                 ),
               ),
-
               const SizedBox(height: 24),
-
               SizedBox(
                 height: 54,
                 child: ElevatedButton(
-                  onPressed: locationVerified &&
-                          !isLoading &&
-                          !isOpeningCamera
+                  onPressed: locationVerified && !isLoading && !isOpeningCamera
                       ? _continueToCamera
                       : null,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: primary,
-                    disabledBackgroundColor:
-                        AppColors.borderStrong,
+                    disabledBackgroundColor: AppColors.borderStrong,
                     foregroundColor: AppColors.surface,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
@@ -538,9 +516,7 @@ class _LocationVerificationScreenState
                         ),
                 ),
               ),
-
               const SizedBox(height: 12),
-
               OutlinedButton.icon(
                 onPressed: isLoading ? null : _verifyLocation,
                 style: OutlinedButton.styleFrom(
@@ -554,11 +530,12 @@ class _LocationVerificationScreenState
                   ),
                 ),
                 icon: const Icon(Icons.refresh_rounded),
-                label: const Text('Refresh Location'),
+                label: Text(
+                  'Refresh Location',
+                  style: GoogleFonts.inter(),
+                ),
               ),
-
               const SizedBox(height: 14),
-
               Text(
                 'Attendance can continue only when your detected location is within 100 metres of the configured office coordinates.',
                 textAlign: TextAlign.center,
@@ -586,9 +563,7 @@ class _LocationVerificationScreenState
         Icon(
           icon,
           size: 20,
-
-           color: AppColors.textPrimary,
-          
+          color: AppColors.textPrimary,
         ),
         const SizedBox(width: 10),
         Expanded(
@@ -606,10 +581,9 @@ class _LocationVerificationScreenState
               Text(
                 value,
                 style: GoogleFonts.inter(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                   color: AppColors.secondary
-                ),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.secondary),
               ),
             ],
           ),

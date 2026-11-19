@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_text_styles.dart';
@@ -77,7 +78,7 @@ class _OtpInputState extends State<OtpInput> {
                   ],
                   showCursor: false,
                   cursorColor: Colors.transparent,
-                  style: const TextStyle(
+                  style: GoogleFonts.inter(
                     color: Colors.transparent,
                   ),
                   decoration: const InputDecoration(
@@ -87,8 +88,8 @@ class _OtpInputState extends State<OtpInput> {
                     counterText: '',
                     contentPadding: EdgeInsets.zero,
                   ),
-                  onTap: () => widget.controller.selection =
-                      TextSelection.collapsed(
+                  onTap: () =>
+                      widget.controller.selection = TextSelection.collapsed(
                     offset: widget.controller.text.length,
                   ),
                   onChanged: widget.onChanged,
@@ -137,9 +138,7 @@ class _OtpBox extends StatelessWidget {
         style: AppTextStyles.title.copyWith(
           fontSize: 24,
           fontWeight: FontWeight.w600,
-          color: hasError
-              ? AppColors.error
-              : AppColors.textPrimary,
+          color: hasError ? AppColors.error : AppColors.textPrimary,
         ),
       ),
     );

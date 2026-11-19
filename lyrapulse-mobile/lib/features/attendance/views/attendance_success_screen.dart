@@ -403,12 +403,7 @@ class _ColorInfoRow extends StatelessWidget {
     );
 
 
-
-
-
-
-
-  }
+}
 }
 
 /// Check-in / check-out time tile.

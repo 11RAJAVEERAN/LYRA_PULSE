@@ -27,7 +27,6 @@ class _FaceVerificationScreenState extends State<FaceVerificationScreen> {
   bool _isCapturing = false;
   String? _cameraError;
 
-
   @override
   void initState() {
     super.initState();
@@ -333,7 +332,7 @@ class _FaceVerificationScreenState extends State<FaceVerificationScreen> {
                               _isCameraReady
                                   ? 'Camera ready'
                                   : 'Starting camera',
-                              style:  GoogleFonts.inter(
+                              style: GoogleFonts.inter(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
                                 color: AppColors.primary,
@@ -405,7 +404,7 @@ class _FaceVerificationScreenState extends State<FaceVerificationScreen> {
                 Text(
                   _cameraError!,
                   textAlign: TextAlign.center,
-                  style:  GoogleFonts.inter(
+                  style: GoogleFonts.inter(
                     color: AppColors.error,
                     fontSize: 12,
                   ),
@@ -418,7 +417,10 @@ class _FaceVerificationScreenState extends State<FaceVerificationScreen> {
                     });
                     await _initializeCamera();
                   },
-                  child: const Text('Try camera again'),
+                  child: Text(
+                    'Try camera again',
+                    style: GoogleFonts.inter(),
+                  ),
                 ),
               ],
 
