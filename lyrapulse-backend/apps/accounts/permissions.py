@@ -48,6 +48,13 @@ class CanViewEmployees(HasModelPermission):
 class CanAddEmployees(HasModelPermission):
     permission_code = "employees.add_employee"
 
+    def has_permission(self, request, view):
+        # Managers are read-only for employee records, even if an individual
+        # permission was accidentally assigned to their account or group.
+        if request.user.role == User.Role.MANAGER:
+            return False
+        return super().has_permission(request, view)
+
 
 class CanChangeEmployees(HasModelPermission):
     permission_code = "employees.change_employee"

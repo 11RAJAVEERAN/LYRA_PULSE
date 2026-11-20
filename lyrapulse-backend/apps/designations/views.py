@@ -1,5 +1,5 @@
 from django.db import IntegrityError
-from django.db.models import Count, IntegerField, OuterRef, Subquery, Value
+from django.db.models import Count, IntegerField, OuterRef, Q, Subquery, Value
 from django.db.models.deletion import ProtectedError
 from django.db.models.functions import Coalesce
 from django.shortcuts import get_object_or_404
@@ -107,7 +107,16 @@ class DesignationListCreateView(APIView):
 
     def post(self, request):
         department = get_object_or_404(
-            scope_queryset(Department.objects.filter(is_active=True), request.user, "branch"),
+            scope_queryset(
+                Department.objects.filter(
+                    is_active=True,
+                    branch__is_active=True,
+                ).filter(
+                    Q(branch__organization__isnull=True) | Q(branch__organization__is_active=True)
+                ),
+                request.user,
+                "branch",
+            ),
             pk=_request_id(request, "department"),
         )
         try:

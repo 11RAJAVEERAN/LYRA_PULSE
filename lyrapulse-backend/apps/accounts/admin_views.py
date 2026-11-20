@@ -10,7 +10,7 @@ from apps.branches.models import Branch
 from apps.common.responses import success_response
 from .permissions import IsSuperAdmin
 from .scope import validate_scope
-from .services.role_permissions import ensure_role_group
+from .services.role_permissions import ROLE_PERMISSION_CODES, ensure_role_group
 
 User = get_user_model()
 MANAGED_ROLES = {User.Role.ADMIN, User.Role.HR, User.Role.MANAGER}
@@ -71,6 +71,13 @@ class AdminUserSerializer(serializers.ModelSerializer):
         else:
             branches = list(self.instance.allowed_branches.all()) if self.instance else []
         actor = self.context["request"].user
+        target_role = attrs.get("role", self.instance.role if self.instance else None)
+        requested_permissions = set(attrs.get("permissions", []))
+        allowed_permissions = ROLE_PERMISSION_CODES.get(target_role, set())
+        if requested_permissions - allowed_permissions:
+            raise serializers.ValidationError({
+                "permissions": "One or more permissions are not allowed for this role."
+            })
         if actor.role == User.Role.SUPERADMIN and not actor.has_global_scope:
             if organization is not None and organization.pk != actor.organization_id:
                 raise serializers.ValidationError({"organization": "You can manage users only in your organization."})

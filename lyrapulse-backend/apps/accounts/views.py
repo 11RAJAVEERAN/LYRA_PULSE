@@ -88,14 +88,22 @@ def _admin_user_for_identifier(identifier):
     if "@" in value:
         matches = User.objects.filter(email__iexact=value, is_active=True, role__in=ADMIN_ROLES)
         user = matches.first() if matches.count() == 1 else None
-        return user if user and user.has_active_company_access else None
+        return user if user and _admin_has_active_company_access(user) else None
     from .serializers import normalize_phone_number
     try:
         phone = normalize_phone_number(value)
     except serializers.ValidationError:
         return None
     user = User.objects.filter(phone_number=phone, is_active=True, role__in=ADMIN_ROLES).first()
-    return user if user and user.has_active_company_access else None
+    return user if user and _admin_has_active_company_access(user) else None
+
+
+def _admin_has_active_company_access(user):
+    # Older unscoped business admins remain supported; only users linked to a
+    # company need that company's active status checked here.
+    if user.role in User.BUSINESS_ROLES and user.organization_id is None:
+        return True
+    return user.has_active_company_access
 
 
 class AdminOTPSendView(APIView):
