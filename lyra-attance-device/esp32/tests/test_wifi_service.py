@@ -1,6 +1,9 @@
+import sys
+import types
 import unittest
 from unittest.mock import patch
 
+from services import wifi_service
 from services.wifi_service import WiFiService
 
 
@@ -49,6 +52,56 @@ class WiFiServiceTests(unittest.TestCase):
         self.assertTrue(result)
         self.assertEqual(fake_wlan.active_calls, [True])
         self.assertEqual(fake_wlan.connect_calls, [("test-network", "secret")])
+
+
+class FakeNtpTime(types.ModuleType):
+    def __init__(self, failing_hosts):
+        super().__init__("ntptime")
+        self.host = ""
+        self.attempted_hosts = []
+        self.failing_hosts = failing_hosts
+
+    def settime(self):
+        self.attempted_hosts.append(self.host)
+        if self.host in self.failing_hosts:
+            raise OSError(116)
+
+
+class NtpFallbackTests(unittest.TestCase):
+    def test_falls_back_to_a_working_ntp_server(self):
+        ntptime = FakeNtpTime({"time.cloudflare.com"})
+        with (
+            patch.object(wifi_service, "network", FakeNetworkModule()),
+            patch.dict(sys.modules, {"ntptime": ntptime}),
+            patch.object(wifi_service.time, "time", return_value=1000),
+            patch.object(wifi_service, "log"),
+        ):
+            service = WiFiService()
+            service._sync_clock()
+
+        self.assertTrue(service.time_synced)
+        self.assertEqual(ntptime.attempted_hosts, ["time.cloudflare.com", "time.google.com"])
+
+    def test_retries_after_backoff_without_repeating_immediately(self):
+        ntptime = FakeNtpTime(set(wifi_service.NTP_SERVERS))
+        clock = [1000]
+        with (
+            patch.object(wifi_service, "network", FakeNetworkModule()),
+            patch.dict(sys.modules, {"ntptime": ntptime}),
+            patch.object(wifi_service.time, "time", side_effect=lambda: clock[0]),
+            patch.object(wifi_service, "log"),
+        ):
+            service = WiFiService()
+            service._sync_clock()
+            first_attempts = len(ntptime.attempted_hosts)
+            service._sync_clock()
+            self.assertEqual(len(ntptime.attempted_hosts), first_attempts)
+            ntptime.failing_hosts.clear()
+            clock[0] += wifi_service.NTP_RETRY_INTERVAL_SECONDS + 1
+            service._sync_clock()
+
+        self.assertTrue(service.time_synced)
+        self.assertEqual(len(ntptime.attempted_hosts), first_attempts + 1)
 
 
 if __name__ == "__main__":

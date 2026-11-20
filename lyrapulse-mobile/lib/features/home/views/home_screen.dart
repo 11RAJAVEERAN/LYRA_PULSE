@@ -27,6 +27,7 @@ import '../widgets/home_date_calendar.dart';
 import '../widgets/home_working_card.dart';
 import '../widgets/home_activity_card.dart';
 import '../widgets/home_bottom_navigation.dart';
+import '../widgets/workplace_card.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -509,6 +510,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                     attendanceController,
                                 shiftTiming: homeController.currentShiftTiming,
                               ),
+
+                              const SizedBox(height: 17),
+
+                              const WorkplaceCard(),
 
                               const SizedBox(height: 17),
 

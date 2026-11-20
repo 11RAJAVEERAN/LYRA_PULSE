@@ -133,12 +133,19 @@ class LocationServiceTests(SimpleTestCase):
 
 class AttendanceAPITestCase(TestCase):
     def setUp(self):
-        media = tempfile.mkdtemp(prefix="lyra_test_media_")
-        self.media_root = media
-        override = override_settings(MEDIA_ROOT=media, ROOT_URLCONF="config.urls")
+        public_media = tempfile.mkdtemp(prefix="lyra_test_public_media_")
+        private_media = tempfile.mkdtemp(prefix="lyra_test_private_media_")
+        self.public_media_root = public_media
+        self.media_root = private_media
+        override = override_settings(
+            MEDIA_ROOT=public_media,
+            PRIVATE_MEDIA_ROOT=private_media,
+            ROOT_URLCONF="config.urls",
+        )
         override.enable()
         self.addCleanup(override.disable)
-        self.addCleanup(shutil.rmtree, media, ignore_errors=True)
+        self.addCleanup(shutil.rmtree, public_media, ignore_errors=True)
+        self.addCleanup(shutil.rmtree, private_media, ignore_errors=True)
 
         self.org = Organization.objects.create(name="Devi", code="DEVI")
         self.branch = Branch.objects.create(
@@ -592,8 +599,12 @@ class AttendancePermissionApiTests(AttendanceAPITestCase):
         self.employee.refresh_from_db()
 
     def admin_client(self, *, branch=None, role=User.Role.ADMIN):
+        user_number = User.objects.count()
+        phone_number = f"9{user_number:014d}"
+        email = f"attendance-admin-{user_number}-{role.lower()}@example.test"
         admin = User.objects.create_user(
-            f"admin-{Employee.objects.count()}-{role.lower()}@example.test",
+            phone_number,
+            email=email,
             role=role,
             organization=self.org if role != User.Role.SUPERADMIN else None,
         )
@@ -722,11 +733,18 @@ class IndependentLocationPermissionTests(AttendanceAPITestCase):
 
 
 class MediaIsolationTests(AttendanceAPITestCase):
-    def test_36_uploads_go_to_the_temporary_media_root(self):
+    def test_36_uploads_go_to_temporary_private_media_root(self):
         from django.conf import settings
-        self.assertEqual(str(settings.MEDIA_ROOT), self.media_root)
-        self.assertIn("lyra_test_media_", self.media_root)
+        self.assertEqual(str(settings.PRIVATE_MEDIA_ROOT), self.media_root)
+        self.assertEqual(str(settings.MEDIA_ROOT), self.public_media_root)
+        self.assertIn("lyra_test_private_media_", self.media_root)
         self.check_in()
         files = self.media_files()
         self.assertEqual(len(files), 1)
         self.assertTrue(files[0].startswith(self.media_root))
+        public_files = [
+            os.path.join(root, filename)
+            for root, _, filenames in os.walk(self.public_media_root)
+            for filename in filenames
+        ]
+        self.assertEqual(public_files, [])

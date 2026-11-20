@@ -93,6 +93,9 @@ R307_DEBUG = True
 R307_TOUCH_PIN = 18
 R307_TOUCH_ACTIVE_LEVEL = None
 R307_TOUCH_DEBOUNCE_SAMPLES = 5
+# Enable only when the connected sensor output needs the ESP32's internal pull-up.
+# The default preserves Project A's existing floating/external-bias configuration.
+R307_TOUCH_PULL_UP_ENABLED = False
 R307_TOUCH_SAMPLE_INTERVAL_SECONDS = 0.01
 
 R307_DETECTION_MODE = "hybrid"
@@ -120,6 +123,7 @@ ENROLLMENT_TEMPLATE_ID = 1
 OLED_SDA_PIN = 21
 OLED_SCL_PIN = 22
 OLED_I2C_ADDRESS = 0x3C
+OLED_I2C_FREQUENCY = 100000
 
 
 # ------------------------------------------------------------

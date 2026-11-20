@@ -42,7 +42,7 @@ class FingerprintAttendanceEventView(APIView):
                 mapping = EmployeeFingerprint.objects.filter(device=device, fingerprint_slot=values["fingerprint_slot"], is_active=True).select_related("employee__user", "employee__branch").first()
                 if mapping is None:
                     raise NotFound("No active fingerprint mapping exists for this device and slot.")
-                employee = Employee.objects.select_for_update().select_related("user", "branch").get(pk=mapping.employee_id)
+                employee = Employee.objects.select_for_update(of=("self",)).select_related("user", "branch").get(pk=mapping.employee_id)
                 if not employee.is_active or not employee.user.is_active:
                     raise PermissionDenied("The employee is inactive.")
                 if not employee.biometric_attendance_enabled:

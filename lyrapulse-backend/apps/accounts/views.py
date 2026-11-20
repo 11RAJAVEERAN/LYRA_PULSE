@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from rest_framework import serializers, status
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -86,13 +87,15 @@ def _admin_user_for_identifier(identifier):
     value = identifier.strip()
     if "@" in value:
         matches = User.objects.filter(email__iexact=value, is_active=True, role__in=ADMIN_ROLES)
-        return matches.first() if matches.count() == 1 else None
+        user = matches.first() if matches.count() == 1 else None
+        return user if user and user.has_active_company_access else None
     from .serializers import normalize_phone_number
     try:
         phone = normalize_phone_number(value)
     except serializers.ValidationError:
         return None
-    return User.objects.filter(phone_number=phone, is_active=True, role__in=ADMIN_ROLES).first()
+    user = User.objects.filter(phone_number=phone, is_active=True, role__in=ADMIN_ROLES).first()
+    return user if user and user.has_active_company_access else None
 
 
 class AdminOTPSendView(APIView):
@@ -146,8 +149,8 @@ class SendOTPView(APIView):
         serializer = PhoneSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         phone_number = serializer.validated_data["phone_number"]
-        user = User.objects.filter(phone_number=phone_number, role=User.Role.EMPLOYEE, is_active=True).select_related("employee").first()
-        if not user or not hasattr(user, "employee") or not user.employee.is_active:
+        user = User.objects.filter(phone_number=phone_number, role=User.Role.EMPLOYEE, is_active=True).select_related("employee", "employee__branch__organization").first()
+        if not user or not hasattr(user, "employee") or not user.employee.is_active or not user.has_active_company_access:
             return success_response({"phone_number": phone_number}, "If the account exists, an OTP was sent")
         try:
             otp_record = create_otp(phone_number)
@@ -189,8 +192,8 @@ class VerifyOTPView(APIView):
         serializer = VerifyOTPSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         phone_number = serializer.validated_data["phone_number"]
-        user = User.objects.filter(phone_number=phone_number, role=User.Role.EMPLOYEE, is_active=True).select_related("employee", "employee__branch", "employee__department", "employee__designation").first()
-        if not user or not hasattr(user, "employee") or not user.employee.is_active:
+        user = User.objects.filter(phone_number=phone_number, role=User.Role.EMPLOYEE, is_active=True).select_related("employee", "employee__branch", "employee__branch__organization", "employee__department", "employee__designation").first()
+        if not user or not hasattr(user, "employee") or not user.employee.is_active or not user.has_active_company_access:
             return Response({"detail": "Employee account is inactive or unavailable."}, status=status.HTTP_403_FORBIDDEN)
         try:
             verify_otp(phone_number, serializer.validated_data["otp"])
@@ -209,6 +212,8 @@ class MeView(APIView):
         "employee": serializers.JSONField(allow_null=True),
     }), 401: OpenApiResponse(description="Authentication credentials are missing or invalid.")})
     def get(self, request):
+        if not request.user.has_active_company_access:
+            raise PermissionDenied("You do not have access to this company.")
         employee = employee_payload(request.user) if request.user.role == User.Role.EMPLOYEE and hasattr(request.user, "employee") else None
         return success_response({"user": user_payload(request.user), "employee": employee})
 

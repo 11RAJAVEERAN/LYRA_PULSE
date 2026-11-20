@@ -10,10 +10,12 @@ import time
 class Pin:
     OUT = 1
     IN = 0
+    PULL_UP = 2
 
-    def __init__(self, pin_id, mode=-1):
+    def __init__(self, pin_id, mode=-1, pull=None):
         self.pin_id = pin_id
         self.mode = mode
+        self.pull = pull
 
     def __call__(self, *args, **kwargs):
         return self

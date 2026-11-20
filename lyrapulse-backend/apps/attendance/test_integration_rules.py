@@ -96,9 +96,24 @@ class IntegrationRulesTests(TestCase):
     def test_multiple_sessions_per_day_and_method_audit(self):
         self.employee.mobile_gps_attendance_enabled = True
         self.employee.save(update_fields=("mobile_gps_attendance_enabled",))
-        for _ in range(2):
-            self.assertEqual(self.post_mobile("check-in").status_code, 201)
-            self.assertEqual(self.post_mobile("check-out").status_code, 200)
+        today = timezone.localdate()
+        shift = Shift.objects.create(branch=self.branch, name="Multiple session test shift")
+        ShiftAssignment.objects.create(employee=self.employee, shift=shift, effective_from=today)
+        revision = ShiftScheduleRevision.objects.create(shift=shift, effective_from=today)
+        ShiftDaySchedule.objects.create(
+            revision=revision,
+            weekday=today.strftime("%A").upper(),
+            is_working=True,
+            start_time=time(8),
+            end_time=time(18),
+        )
+        # Fix both punches inside the assigned shift so this test checks session
+        # behavior without depending on the wall clock or weakening shift rules.
+        punch_time = timezone.make_aware(datetime.combine(today, time(10)))
+        with patch("django.utils.timezone.now", return_value=punch_time):
+            for _ in range(2):
+                self.assertEqual(self.post_mobile("check-in").status_code, 201)
+                self.assertEqual(self.post_mobile("check-out").status_code, 200)
         rows = Attendance.objects.filter(employee=self.employee).order_by("check_in_at")
         self.assertEqual(rows.count(), 2)
         self.assertEqual(AttendanceEvent.objects.filter(attendance__in=rows).count(), 4)

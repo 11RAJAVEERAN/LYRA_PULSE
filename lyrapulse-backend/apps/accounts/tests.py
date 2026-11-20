@@ -13,6 +13,7 @@ from apps.branches.models import Branch
 from apps.departments.models import Department
 from apps.designations.models import Designation
 from apps.employees.models import Employee
+from apps.organizations.models import Organization
 
 
 @override_settings(ROOT_URLCONF="config.urls")
@@ -156,6 +157,78 @@ class OTPAuthenticationTests(TestCase):
             os.environ.pop("LYRA_SUPERADMIN_PHONE", None)
             with self.assertRaises(CommandError):
                 call_command("ensure_superadmin", stdout=None)
+
+
+@override_settings(ROOT_URLCONF="config.urls", DEBUG=True, SMS_PROVIDER="mock", OTP_RESEND_COOLDOWN_SECONDS=0)
+class InactiveCompanyAuthenticationTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.organization = Organization.objects.create(name="Auth Company", code="AUTH")
+        self.branch = Branch.objects.create(organization=self.organization, name="Auth Branch", code="AUTH-1")
+        self.employee_user = User.objects.create_user("9000000101", role=User.Role.EMPLOYEE)
+        self.employee = Employee.objects.create(employee_code="AUTH-EMP", user=self.employee_user, branch=self.branch)
+        self.admin_user = User.objects.create_user(
+            "9000000102", email="auth-admin@example.test", role=User.Role.ADMIN, organization=self.organization,
+        )
+
+    def _set_company_active(self, active):
+        self.organization.is_active = active
+        self.organization.save(update_fields=("is_active",))
+
+    def test_employee_otp_issuance_and_verification_follow_company_status(self):
+        issued = self.client.post("/api/v1/auth/send-otp/", {"phone_number": self.employee_user.phone_number})
+        self.assertEqual(issued.status_code, 200)
+        otp = issued.data["data"]["dev_otp"]
+        self.assertTrue(OTPVerification.objects.filter(phone_number=self.employee_user.phone_number).exists())
+        verified = self.client.post("/api/v1/auth/verify-otp/", {
+            "phone_number": self.employee_user.phone_number, "otp": otp,
+        })
+        self.assertEqual(verified.status_code, 200)
+
+        record = create_otp(self.employee_user.phone_number)
+        self._set_company_active(False)
+        issued_inactive = self.client.post("/api/v1/auth/send-otp/", {"phone_number": self.employee_user.phone_number})
+        self.assertEqual(issued_inactive.status_code, 200)
+        self.assertEqual(issued_inactive.data["data"], {"phone_number": self.employee_user.phone_number})
+        self.assertEqual(OTPVerification.objects.filter(phone_number=self.employee_user.phone_number, is_verified=False).count(), 1)
+        rejected = self.client.post("/api/v1/auth/verify-otp/", {
+            "phone_number": self.employee_user.phone_number, "otp": record._dev_otp,
+        })
+        self.assertEqual(rejected.status_code, 403)
+
+    def test_admin_otp_issuance_and_verification_follow_company_status(self):
+        issued = self.client.post("/api/v1/auth/admin/send-otp/", {"identifier": self.admin_user.email})
+        self.assertEqual(issued.status_code, 200)
+        otp = issued.data["data"]["dev_otp"]
+        self.assertTrue(OTPVerification.objects.filter(
+            phone_number=self.admin_user.phone_number, purpose=OTPVerification.Purpose.ADMIN_LOGIN,
+        ).exists())
+        verified = self.client.post("/api/v1/auth/admin/verify-otp/", {
+            "identifier": self.admin_user.email, "otp": otp,
+        })
+        self.assertEqual(verified.status_code, 200)
+
+        record = create_otp(self.admin_user.phone_number, purpose=OTPVerification.Purpose.ADMIN_LOGIN)
+        self._set_company_active(False)
+        issued_inactive = self.client.post("/api/v1/auth/admin/send-otp/", {"identifier": self.admin_user.email})
+        self.assertEqual(issued_inactive.status_code, 200)
+        self.assertEqual(issued_inactive.data["data"], {"accepted": True})
+        self.assertEqual(OTPVerification.objects.filter(
+            phone_number=self.admin_user.phone_number, purpose=OTPVerification.Purpose.ADMIN_LOGIN,
+            is_verified=False,
+        ).count(), 1)
+        rejected = self.client.post("/api/v1/auth/admin/verify-otp/", {
+            "identifier": self.admin_user.email, "otp": record._dev_otp,
+        })
+        self.assertEqual(rejected.status_code, 400)
+        self.assertEqual(rejected.data["detail"], "Invalid or expired OTP")
+
+    def test_auth_me_allows_active_company_and_denies_inactive_company(self):
+        self.client.force_authenticate(self.employee_user)
+        self.assertEqual(self.client.get("/api/v1/auth/me/").status_code, 200)
+        self._set_company_active(False)
+        response = self.client.get("/api/v1/auth/me/")
+        self.assertEqual(response.status_code, 403)
 
 
 @override_settings(ROOT_URLCONF="config.urls")

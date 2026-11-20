@@ -59,6 +59,41 @@ void main() {
     });
   });
 
+  group('AttendanceHistoryPage.fromJson', () {
+    test('parses completed and open employee sessions', () {
+      final page = AttendanceHistoryPage.fromJson({
+        'count': 2,
+        'page': 1,
+        'page_size': 1,
+        'has_next': true,
+        'results': [
+          {
+            'id': 42,
+            'attendance_date': '2026-10-18',
+            'check_in_at': '2026-10-18T03:58:00Z',
+            'check_out_at': null,
+            'working_seconds': null,
+            'status': 'CHECKED_IN',
+            'source': 'MOBILE_GPS',
+            'branch': {'id': 3, 'name': 'Head Office'},
+            'check_in_location_verified': true,
+            'check_out_location_verified': null,
+            'check_in_photo_available': true,
+            'check_out_photo_available': false,
+          },
+        ],
+      });
+
+      expect(page.count, 2);
+      expect(page.hasNext, isTrue);
+      expect(page.results.single.id, 42);
+      expect(page.results.single.checkOutAt, isNull);
+      expect(page.results.single.source, 'MOBILE_GPS');
+      expect(page.results.single.branchName, 'Head Office');
+      expect(page.results.single.checkInPhotoAvailable, isTrue);
+    });
+  });
+
   group('LocationVerification.fromJson', () {
     test('parses an outside-radius result', () {
       final result = LocationVerification.fromJson({

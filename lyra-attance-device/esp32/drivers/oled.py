@@ -2,7 +2,7 @@
 
 from machine import I2C, Pin
 
-from config import OLED_I2C_ADDRESS, OLED_SCL_PIN, OLED_SDA_PIN
+from config import OLED_I2C_ADDRESS, OLED_I2C_FREQUENCY, OLED_SCL_PIN, OLED_SDA_PIN
 from lib.ssd1306 import (
     FONT_CHAR_SPACING,
     FONT_HEIGHT,
@@ -18,7 +18,14 @@ class OledDisplay:
     def __init__(self, width=128, height=64):
         self.width = width
         self.height = height
-        self.i2c = I2C(0, sda=Pin(OLED_SDA_PIN), scl=Pin(OLED_SCL_PIN), freq=100000)
+        log("OLED", "I2C initialization starting")
+        self.i2c = I2C(
+            0,
+            sda=Pin(OLED_SDA_PIN),
+            scl=Pin(OLED_SCL_PIN),
+            freq=OLED_I2C_FREQUENCY,
+        )
+        log("OLED", "I2C initialization completed; scan starting")
         addresses = self.i2c.scan()
         log("OLED", "I2C scan: %s" % addresses)
         if OLED_I2C_ADDRESS not in addresses:
@@ -26,6 +33,7 @@ class OledDisplay:
                 "SSD1306 not found at 0x%02X (I2C scan: %s)"
                 % (OLED_I2C_ADDRESS, addresses)
             )
+        log("OLED", "SSD1306 initialization starting")
         self.oled = SSD1306_I2C(
             width,
             height,
@@ -33,6 +41,7 @@ class OledDisplay:
             addr=OLED_I2C_ADDRESS,
             rotate_180=False,
         )
+        log("OLED", "SSD1306 initialization completed")
         self.clear()
 
     def draw_centered_text(self, text, y):
@@ -51,10 +60,13 @@ class OledDisplay:
         self.oled.text(text, x, y)
 
     def clear(self):
+        log("OLED", "Clear update starting")
         self.oled.fill(0)
         self.oled.show()
+        log("OLED", "Clear update completed")
 
     def _show_lines(self, lines, title=None):
+        log("OLED", "Display update starting")
         self.oled.fill(0)
         display_lines = []
         if title:
@@ -72,6 +84,7 @@ class OledDisplay:
         for index, text in enumerate(display_lines):
             self.draw_centered_text(text, first_y + index * line_height)
         self.oled.show()
+        log("OLED", "Display update completed")
 
     def show_startup(self):
         self._show_lines(["LYRA TECH", "Fingerprint", "Initializing..."])
