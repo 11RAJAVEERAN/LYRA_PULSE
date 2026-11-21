@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Alert, Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, InputAdornment, MenuItem, Paper, Stack, Switch, Table, TableBody, TableCell, TableHead, TableRow, TextField, Typography } from '@mui/material'
 import apiClient, { BRANCH_CONTEXT_EVENT } from '../../../services/apiClient'
 
@@ -22,12 +22,17 @@ export function DevicesPage() {
   const [deviceId, setDeviceId] = useState('')
   const [finger, setFinger] = useState('right_index')
   const [token, setToken] = useState('')
+  const [tokenInfo, setTokenInfo] = useState(null)
   const [showToken, setShowToken] = useState(true)
   const [copied, setCopied] = useState(false)
   const [rotationTarget, setRotationTarget] = useState(null)
   const [rotatingDeviceId, setRotatingDeviceId] = useState('')
+  const [rotationError, setRotationError] = useState('')
+  const [provisioning, setProvisioning] = useState(false)
   const [notice, setNotice] = useState('')
   const [enrollment, setEnrollment] = useState(null)
+  const provisionLock = useRef(false)
+  const rotationLock = useRef(false)
 
   const reload = async () => {
     setLoading(true); setError('')
@@ -59,17 +64,22 @@ export function DevicesPage() {
   }, [enrollment?.enrollment_id, enrollment?.employee_id, enrollment?.status])
 
   const provision = async (event) => {
-    event.preventDefault(); setError(''); setNotice('')
+    event.preventDefault()
+    if (provisionLock.current) return
+    provisionLock.current = true
+    setProvisioning(true); setError(''); setNotice('')
     try {
       const response = await apiClient.post('/devices/', form)
       const data = unwrap(response)
       setToken(readOneTimeToken(data, 'provisioning_token'))
+      setTokenInfo({ kind: 'provision', device_id: data.device_id || form.device_id, name: data.name || form.name })
       setShowToken(true)
       setCopied(false)
       setForm({ device_id: '', name: '', branch_id: '' })
       setNotice('Device provisioned. Copy the one-time token into secure device configuration.')
       await reload()
     } catch (e) { setError(e?.response?.data?.message || e?.message || 'Device provisioning failed.') }
+    finally { provisionLock.current = false; setProvisioning(false) }
   }
   const toggle = async (device) => {
     try {
@@ -78,31 +88,36 @@ export function DevicesPage() {
     } catch (e) { setError(e?.response?.data?.message || 'Device update failed.') }
   }
   const rotateToken = async () => {
-    if (!rotationTarget || rotatingDeviceId) return
+    if (!rotationTarget || rotationLock.current) return
     const device = rotationTarget
-    setError(''); setNotice(''); setRotatingDeviceId(device.device_id)
+    rotationLock.current = true
+    setError(''); setRotationError(''); setNotice(''); setRotatingDeviceId(device.device_id)
     try {
       const response = await apiClient.post(`/devices/${encodeURIComponent(device.device_id)}/rotate-token/`)
       const data = unwrap(response)
       const rotatedToken = readOneTimeToken(data, 'rotated_token')
       setToken(rotatedToken)
+      setTokenInfo({ kind: 'rotation', device_id: data.device_id || device.device_id, name: data.name || device.name })
       setShowToken(true)
       setCopied(false)
       setRotationTarget(null)
       setNotice('Device token rotated. The previous token is no longer valid.')
       void reload()
     } catch (e) {
-      setRotationTarget(null)
-      setError(e?.response?.data?.message || e?.message || 'Device token rotation failed.')
+      const message = e?.response?.data?.message || e?.message || 'Device token rotation failed.'
+      setRotationError(message)
+      setError(message)
     }
-    finally { setRotatingDeviceId('') }
+    finally { rotationLock.current = false; setRotatingDeviceId('') }
   }
   const closeToken = () => {
     setToken('')
+    setTokenInfo(null)
     setShowToken(true)
     setCopied(false)
   }
   const copyToken = async () => {
+    if (!token) return
     try {
       await navigator.clipboard.writeText(token)
       setCopied(true)
@@ -127,12 +142,12 @@ export function DevicesPage() {
     <Paper component="form" onSubmit={provision} sx={{ p: 2 }}>
       <Typography variant="h6" sx={{ mb: 1 }}>Provision device</Typography>
       <Stack direction={{ xs: 'column', md: 'row' }} gap={1.5}>
-        <TextField label="Device ID" required value={form.device_id} onChange={e => setForm({ ...form, device_id: e.target.value })} />
-        <TextField label="Name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
-        <TextField select label="Branch" required value={form.branch_id} onChange={e => setForm({ ...form, branch_id: e.target.value })} sx={{ minWidth: 180 }}>
+        <TextField label="Device ID" required disabled={provisioning} value={form.device_id} onChange={e => setForm({ ...form, device_id: e.target.value })} />
+        <TextField label="Name" disabled={provisioning} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
+        <TextField select label="Branch" required disabled={provisioning} value={form.branch_id} onChange={e => setForm({ ...form, branch_id: e.target.value })} sx={{ minWidth: 180 }}>
           {branches.map(b => <MenuItem key={b.id} value={b.id}>{b.name}</MenuItem>)}
         </TextField>
-        <Button type="submit" variant="contained">Provision</Button>
+        <Button type="submit" variant="contained" disabled={provisioning}>{provisioning ? <CircularProgress size={18} color="inherit" /> : 'Provision'}</Button>
       </Stack>
     </Paper>
     <Paper sx={{ p: 2 }}>
@@ -150,7 +165,48 @@ export function DevicesPage() {
         <Button type="submit" variant="contained">Start enrollment</Button>
       </Stack>
     </Paper>
-    <Dialog open={Boolean(rotationTarget)} onClose={() => rotatingDeviceId ? null : setRotationTarget(null)} fullWidth maxWidth="sm"><DialogTitle>Rotate device token?</DialogTitle><DialogContent><Typography>Rotating the token immediately invalidates the device&apos;s current credential. Update the ESP32 configuration with the new token before it reconnects.</Typography></DialogContent><DialogActions><Button disabled={Boolean(rotatingDeviceId)} onClick={() => setRotationTarget(null)}>Cancel</Button><Button variant="contained" disabled={Boolean(rotatingDeviceId)} onClick={rotateToken}>{rotatingDeviceId ? <CircularProgress size={18} /> : 'Rotate token'}</Button></DialogActions></Dialog>
-    <Dialog open={Boolean(token)} onClose={closeToken} fullWidth maxWidth="sm"><DialogTitle>Device Authorization Token</DialogTitle><DialogContent><Typography sx={{ mb: 2 }}>Your new device authorization token has been generated successfully.</Typography><TextField fullWidth multiline minRows={3} maxRows={8} value={showToken ? token : '•'.repeat(token.length)} inputProps={{ readOnly: true, 'aria-label': 'Device authorization token', style: { overflowWrap: 'anywhere', wordBreak: 'break-all' } }} InputProps={{ endAdornment: <InputAdornment position="end"><Button onClick={() => setShowToken(value => !value)}>{showToken ? 'Hide' : 'Show'}</Button></InputAdornment> }} /><Alert severity="warning" sx={{ mt: 2 }}>Important: This token will only be displayed once. Copy and save it securely. You cannot retrieve it again after closing this window.</Alert>{copied ? <Alert severity="success" sx={{ mt: 2 }}>Token copied successfully</Alert> : null}</DialogContent><DialogActions><Button variant="contained" onClick={copyToken}>Copy Token</Button><Button onClick={closeToken}>Close</Button></DialogActions></Dialog>
+    <Dialog open={Boolean(rotationTarget)} onClose={() => rotatingDeviceId ? null : setRotationTarget(null)} fullWidth maxWidth="sm">
+      <DialogTitle>Rotate Device Token?</DialogTitle>
+      <DialogContent>
+        {rotationError ? <Alert severity="error" sx={{ mb: 2 }}>{rotationError}</Alert> : null}
+        <Typography>Rotating this device token will immediately invalidate the current credential.</Typography>
+        <Typography sx={{ mt: 1 }}>Update the ESP32 device&apos;s local <code>config_local.py</code> with the new token. Until that is done, the device cannot authenticate with the backend.</Typography>
+      </DialogContent>
+      <DialogActions>
+        <Button disabled={Boolean(rotatingDeviceId)} onClick={() => { setRotationError(''); setRotationTarget(null) }}>Cancel</Button>
+        <Button variant="contained" disabled={Boolean(rotatingDeviceId)} onClick={rotateToken}>{rotatingDeviceId ? <CircularProgress size={18} /> : 'Confirm Rotation'}</Button>
+      </DialogActions>
+    </Dialog>
+    <Dialog open={Boolean(token)} onClose={() => {}} fullWidth maxWidth="sm" scroll="paper">
+      <DialogTitle>{tokenInfo?.kind === 'rotation' ? 'New Device Token Generated' : 'Device Token Generated'}</DialogTitle>
+      <DialogContent>
+        <Typography sx={{ mb: 2 }}>
+          {tokenInfo?.kind === 'rotation'
+            ? 'Your new device authentication token has been generated successfully.'
+            : 'Your device authentication token has been generated successfully. Copy and securely store it before closing this window. The original token cannot be retrieved again after this dialog is closed.'}
+        </Typography>
+        <Stack spacing={1.5} sx={{ mb: 2 }}>
+          <TextField label="Device Name" fullWidth value={tokenInfo?.name || '—'} inputProps={{ readOnly: true }} />
+          <TextField label="Device ID" fullWidth value={tokenInfo?.device_id || ''} inputProps={{ readOnly: true }} />
+          <TextField
+            label={tokenInfo?.kind === 'rotation' ? 'New Token' : 'Generated Token'}
+            fullWidth multiline minRows={3} maxRows={8}
+            value={showToken ? token : '•'.repeat(token.length)}
+            inputProps={{ readOnly: true, 'aria-label': 'Device authentication token', style: { overflowWrap: 'anywhere', wordBreak: 'break-all', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace' } }}
+            InputProps={{ endAdornment: <InputAdornment position="end"><Button onClick={() => setShowToken(value => !value)}>{showToken ? 'Hide' : 'Show'}</Button></InputAdornment> }}
+          />
+        </Stack>
+        <Alert severity="warning">
+          {tokenInfo?.kind === 'rotation'
+            ? 'The previous token is no longer valid. Update the ESP32 config_local.py with this new token.'
+            : 'Copy this token and add it to the ESP32 config_local.py. The original token is shown only once.'}
+        </Alert>
+        {copied ? <Alert severity="success" sx={{ mt: 2 }}>Token copied successfully.</Alert> : null}
+      </DialogContent>
+      <DialogActions>
+        <Button variant="contained" onClick={copyToken}>Copy Token</Button>
+        <Button onClick={closeToken}>Close</Button>
+      </DialogActions>
+    </Dialog>
   </Box>
 }
