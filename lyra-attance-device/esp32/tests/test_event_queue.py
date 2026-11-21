@@ -52,6 +52,12 @@ class PersistentEventQueueTests(unittest.TestCase):
         self.assertEqual([item[1]["event_id"] for item in api.events], ["event-1", "event-2"])
         self.assertEqual(self.read_queue(self.path), [])
 
+    def test_pending_count_reports_persisted_events(self):
+        self.assertEqual(self.queue.pending_count(), 0)
+        self.queue.append({"event_id": "event-count-1", "fingerprint_slot": 4, "occurred_at": "2026-10-21T10:00:00+00:00"})
+        self.queue.append({"event_id": "event-count-2", "fingerprint_slot": 4, "occurred_at": "2026-10-21T10:01:00+00:00"})
+        self.assertEqual(PersistentEventQueue(self.path).pending_count(), 2)
+
     def test_failed_sync_keeps_queue_for_retry(self):
         event = {"event_id": "event-3", "fingerprint_slot": 9, "occurred_at": "2026-10-21T10:02:00+00:00"}
         self.queue.append(event)

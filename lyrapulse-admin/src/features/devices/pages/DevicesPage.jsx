@@ -17,7 +17,7 @@ export function DevicesPage() {
   const [employees, setEmployees] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [form, setForm] = useState({ device_id: '', name: '', branch_id: '' })
+  const [form, setForm] = useState({ device_id: '', name: '', branch_id: '', replace_device_id: '' })
   const [employeeId, setEmployeeId] = useState('')
   const [deviceId, setDeviceId] = useState('')
   const [finger, setFinger] = useState('right_index')
@@ -31,11 +31,15 @@ export function DevicesPage() {
   const [provisioning, setProvisioning] = useState(false)
   const [notice, setNotice] = useState('')
   const [enrollment, setEnrollment] = useState(null)
+  const [diagnosticDevice, setDiagnosticDevice] = useState(null)
+  const [diagnostics, setDiagnostics] = useState([])
+  const [diagnosticsLoading, setDiagnosticsLoading] = useState(false)
   const provisionLock = useRef(false)
   const rotationLock = useRef(false)
 
-  const reload = async () => {
-    setLoading(true); setError('')
+  const reload = async (silent = false) => {
+    if (!silent) setLoading(true)
+    setError('')
     try {
       const [deviceRes, branchRes, employeeRes] = await Promise.all([
         apiClient.get('/devices/'), apiClient.get('/branches/'), apiClient.get('/employees/'),
@@ -44,9 +48,13 @@ export function DevicesPage() {
       setBranches(unwrap(branchRes) || [])
       setEmployees(unwrap(employeeRes) || [])
     } catch (e) { setError(e?.response?.data?.message || 'Unable to load devices. Check your role and branch access.') }
-    finally { setLoading(false) }
+    finally { if (!silent) setLoading(false) }
   }
-  useEffect(() => { reload() }, [])
+  useEffect(() => {
+    void reload()
+    const timer = setInterval(() => { void reload(true) }, 15000)
+    return () => clearInterval(timer)
+  }, [])
   useEffect(() => {
     window.addEventListener(BRANCH_CONTEXT_EVENT, reload)
     return () => window.removeEventListener(BRANCH_CONTEXT_EVENT, reload)
@@ -69,13 +77,19 @@ export function DevicesPage() {
     provisionLock.current = true
     setProvisioning(true); setError(''); setNotice('')
     try {
-      const response = await apiClient.post('/devices/', form)
+      const selectedBranchDevice = devices.find(d => String(d.branch_id) === String(form.branch_id) && d.is_active)
+      if (selectedBranchDevice && form.replace_device_id !== selectedBranchDevice.device_id) {
+        throw new Error('Select the current active device to confirm replacement.')
+      }
+      const payload = { ...form }
+      if (!payload.replace_device_id) delete payload.replace_device_id
+      const response = await apiClient.post('/devices/', payload)
       const data = unwrap(response)
       setToken(readOneTimeToken(data, 'provisioning_token'))
       setTokenInfo({ kind: 'provision', device_id: data.device_id || form.device_id, name: data.name || form.name })
       setShowToken(true)
       setCopied(false)
-      setForm({ device_id: '', name: '', branch_id: '' })
+      setForm({ device_id: '', name: '', branch_id: '', replace_device_id: '' })
       setNotice('Device provisioned. Copy the one-time token into secure device configuration.')
       await reload()
     } catch (e) { setError(e?.response?.data?.message || e?.message || 'Device provisioning failed.') }
@@ -134,6 +148,14 @@ export function DevicesPage() {
       setNotice(`Enrollment ${data.enrollment_id} started. Ask the employee to complete the two scans at the selected device.`)
     } catch (e) { setError(e?.response?.data?.message || 'Fingerprint enrollment could not be started. Confirm employee biometric permission and branch access.') }
   }
+  const viewDiagnostics = async (device) => {
+    setDiagnosticDevice(device); setDiagnostics([]); setDiagnosticsLoading(true)
+    try {
+      const response = await apiClient.get(`/devices/${encodeURIComponent(device.device_id)}/diagnostics/?limit=50`)
+      setDiagnostics(unwrap(response) || [])
+    } catch (e) { setError(e?.response?.data?.message || 'Unable to load device diagnostics.') }
+    finally { setDiagnosticsLoading(false) }
+  }
 
   return <Box sx={{ p: { xs: 2, md: 3 }, display: 'grid', gap: 2 }}>
     <Box><Typography variant="h4">Fingerprint Devices</Typography><Typography color="text.secondary">Provision devices, manage branch association, and start fingerprint enrollment.</Typography></Box>
@@ -144,18 +166,31 @@ export function DevicesPage() {
       <Stack direction={{ xs: 'column', md: 'row' }} gap={1.5}>
         <TextField label="Device ID" required disabled={provisioning} value={form.device_id} onChange={e => setForm({ ...form, device_id: e.target.value })} />
         <TextField label="Name" disabled={provisioning} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
-        <TextField select label="Branch" required disabled={provisioning} value={form.branch_id} onChange={e => setForm({ ...form, branch_id: e.target.value })} sx={{ minWidth: 180 }}>
+        <TextField select label="Branch" required disabled={provisioning} value={form.branch_id} onChange={e => setForm({ ...form, branch_id: e.target.value, replace_device_id: '' })} sx={{ minWidth: 180 }}>
           {branches.map(b => <MenuItem key={b.id} value={b.id}>{b.name}</MenuItem>)}
         </TextField>
+        {devices.some(d => String(d.branch_id) === String(form.branch_id) && d.is_active) ? <TextField select label="Replace active device" required disabled={provisioning} value={form.replace_device_id} onChange={e => setForm({ ...form, replace_device_id: e.target.value })} sx={{ minWidth: 220 }}>
+          <MenuItem value="">Select current device</MenuItem>
+          {devices.filter(d => String(d.branch_id) === String(form.branch_id) && d.is_active).map(d => <MenuItem key={d.device_id} value={d.device_id}>{d.name || d.device_id}</MenuItem>)}
+        </TextField> : null}
         <Button type="submit" variant="contained" disabled={provisioning}>{provisioning ? <CircularProgress size={18} color="inherit" /> : 'Provision'}</Button>
       </Stack>
     </Paper>
     <Paper sx={{ p: 2 }}>
       <Typography variant="h6" sx={{ mb: 1 }}>Registered devices</Typography>
-      {loading ? <CircularProgress size={24} /> : <Table size="small" sx={{ '& .MuiTableBody-root .MuiTableRow-root': { height: 64, '& > .MuiTableCell-root': { py: 1.25, px: 1.5, fontSize: '0.875rem', verticalAlign: 'middle', whiteSpace: 'nowrap' } } }}><TableHead><TableRow><TableCell>Device</TableCell><TableCell>Branch</TableCell><TableCell>Active</TableCell><TableCell>Status</TableCell><TableCell>Last seen</TableCell><TableCell>Actions</TableCell></TableRow></TableHead><TableBody>
-        {devices.map(d => <TableRow key={d.device_id}><TableCell>{d.name || d.device_id}<Typography variant="caption" display="block">{d.device_id}</Typography></TableCell><TableCell>{d.branch_name}</TableCell><TableCell>{d.is_active ? 'Yes' : 'No'}</TableCell><TableCell>{d.status || 'Offline'}</TableCell><TableCell>{d.last_seen ? new Date(d.last_seen).toLocaleString() : 'Never'}</TableCell><TableCell><Stack direction="row" alignItems="center"><Switch checked={d.is_active} onChange={() => toggle(d)} inputProps={{ 'aria-label': `Activate ${d.device_id}` }} /><Button size="small" disabled={Boolean(rotatingDeviceId)} onClick={() => setRotationTarget(d)}>{rotatingDeviceId === d.device_id ? <CircularProgress size={18} /> : 'Rotate token'}</Button></Stack></TableCell></TableRow>)}
+      {loading ? <CircularProgress size={24} /> : <Table size="small" sx={{ '& .MuiTableBody-root .MuiTableRow-root': { height: 64, '& > .MuiTableCell-root': { py: 1.25, px: 1.5, fontSize: '0.875rem', verticalAlign: 'middle', whiteSpace: 'nowrap' } } }}><TableHead><TableRow><TableCell>Device</TableCell><TableCell>Branch</TableCell><TableCell>Active</TableCell><TableCell>Connection</TableCell><TableCell>Health</TableCell><TableCell>Queue / Heap</TableCell><TableCell>Last seen</TableCell><TableCell>Actions</TableCell></TableRow></TableHead><TableBody>
+        {devices.map(d => <TableRow key={d.device_id}><TableCell>{d.name || d.device_id}<Typography variant="caption" display="block">{d.device_id}</Typography></TableCell><TableCell>{d.branch_name}</TableCell><TableCell>{d.is_active ? 'Yes' : 'No'}</TableCell><TableCell>{d.status || 'Offline'}</TableCell><TableCell>{d.health_status || 'UNKNOWN'}{d.health_details?.sensor_ready === false ? ' · Sensor unavailable' : d.health_details?.sensor_ready === true ? ' · Sensor ready' : ''}</TableCell><TableCell>{d.health_details?.pending_events ?? '—'} pending · {d.health_details?.free_heap != null ? `${Math.round(d.health_details.free_heap / 1024)} KB` : '—'}</TableCell><TableCell>{d.last_seen ? new Date(d.last_seen).toLocaleString() : 'Never'}</TableCell><TableCell><Stack direction="row" alignItems="center"><Switch checked={d.is_active} onChange={() => toggle(d)} inputProps={{ 'aria-label': `Activate ${d.device_id}` }} /><Button size="small" onClick={() => viewDiagnostics(d)}>Logs</Button><Button size="small" disabled={Boolean(rotatingDeviceId)} onClick={() => setRotationTarget(d)}>{rotatingDeviceId === d.device_id ? <CircularProgress size={18} /> : 'Rotate token'}</Button></Stack></TableCell></TableRow>)}
       </TableBody></Table>}
     </Paper>
+    <Dialog open={Boolean(diagnosticDevice)} onClose={() => setDiagnosticDevice(null)} fullWidth maxWidth="md">
+      <DialogTitle>Device diagnostics · {diagnosticDevice?.name || diagnosticDevice?.device_id}</DialogTitle>
+      <DialogContent dividers>
+        {diagnosticsLoading ? <CircularProgress size={24} /> : diagnostics.length ? <Stack spacing={1}>{diagnostics.map(item => <Alert key={item.id} severity={item.severity === 'ERROR' ? 'error' : item.severity === 'WARNING' ? 'warning' : 'info'}>
+          <strong>{item.code}</strong> · {item.subsystem} · {new Date(item.created_at).toLocaleString()}<br />{item.message || 'No additional detail'}{item.resolved_at ? ` · Resolved ${new Date(item.resolved_at).toLocaleString()}` : ' · Unresolved'}
+        </Alert>)}</Stack> : <Typography color="text.secondary">No device diagnostics have been reported.</Typography>}
+      </DialogContent>
+      <DialogActions><Button onClick={() => viewDiagnostics(diagnosticDevice)} disabled={!diagnosticDevice || diagnosticsLoading}>Refresh</Button><Button onClick={() => setDiagnosticDevice(null)}>Close</Button></DialogActions>
+    </Dialog>
     <Paper component="form" onSubmit={enroll} sx={{ p: 2 }}>
       <Typography variant="h6" sx={{ mb: 1 }}>Enroll fingerprint</Typography>
       <Stack direction={{ xs: 'column', md: 'row' }} gap={1.5}>

@@ -1,6 +1,7 @@
 """Main state-machine entry point for the Lyra Pulse attendance device."""
 
 import time
+import gc
 
 from config import (
     FINGERPRINT_COOLDOWN,
@@ -274,7 +275,14 @@ def main():
         if now < next_heartbeat_at:
             return
         log("HEARTBEAT", "Request starting (timeout=%ss)" % api_client.timeout)
-        response = api_client.send_heartbeat(device_id)
+        pending_count = api_client.event_queue.pending_count()
+        free_heap = gc.mem_free() if hasattr(gc, "mem_free") else 0
+        response = api_client.send_heartbeat(device_id, {
+            "sensor_ready": sensor_ready,
+            "pending_events": pending_count,
+            "free_heap": free_heap,
+            "health_status": "HEALTHY" if sensor_ready else "DEGRADED",
+        })
         log("HEARTBEAT", "Request returned (success=%s)" % response.get("success"))
         if not response.get("success"):
             log(
@@ -282,6 +290,14 @@ def main():
                 "Heartbeat failed (HTTP %s)"
                 % response.get("status_code", "network error"),
             )
+            try:
+                api_client.report_diagnostic(
+                    device_id, "HEARTBEAT_FAILED", "backend",
+                    "Device heartbeat could not be confirmed.",
+                    details={"status_code": response.get("status_code", 0)},
+                )
+            except Exception:
+                pass
         next_heartbeat_at = now + HEARTBEAT_INTERVAL_SECONDS
 
     try:
@@ -440,9 +456,25 @@ def main():
             time.sleep(0.25)
             led.sensor_error()
             oled.show_sensor_error()
+            if wifi.is_connected():
+                try:
+                    api_client.report_diagnostic(
+                        device_id, "SENSOR_COMMUNICATION_ERROR", "fingerprint_sensor",
+                        "Fingerprint sensor communication failed; firmware will retry.",
+                    )
+                except Exception:
+                    pass
 
         except Exception as exc:  # pragma: no cover
             log("ERROR", "Main loop exception: %s" % exc)
+            if wifi.is_connected():
+                try:
+                    api_client.report_diagnostic(
+                        device_id, "DEVICE_LOOP_ERROR", "firmware",
+                        "Device main loop encountered an error.",
+                    )
+                except Exception:
+                    pass
             oled.show_api_error()
             led.api_error()
             buzzer.off()

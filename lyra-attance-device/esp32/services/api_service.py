@@ -3,6 +3,7 @@
 import json
 import os
 import time
+import gc
 
 try:
     import urequests as requests
@@ -90,6 +91,8 @@ class AttendanceAPIClient:
         self.timeout = timeout
         self.retry_count = retry_count
         self.event_queue = event_queue or PersistentEventQueue()
+        self.next_queue_sync_at = 0
+        self.queue_retry_delay = 2
 
     def _endpoint(self):
         return self.base_url + API_FINGERPRINT_ENDPOINT
@@ -97,7 +100,7 @@ class AttendanceAPIClient:
     def send_attendance(self, device_id, fingerprint_slot):
         event = {"event_id": _uuid4(), "fingerprint_slot": int(fingerprint_slot), "occurred_at": _utc_timestamp()}
         self.event_queue.append(event)
-        result = self.event_queue.flush(self, device_id).get(event["event_id"])
+        result = self.sync_pending(device_id).get(event["event_id"])
         if result is None:
             return {"success": False, "queued": True, "message": "Attendance saved on device and waiting for synchronization."}
         return result
@@ -108,11 +111,31 @@ class AttendanceAPIClient:
         return self._device_request("POST", API_FINGERPRINT_ENDPOINT, payload, retry_count=0, headers=self._device_headers())
 
     def sync_pending(self, device_id):
-        return self.event_queue.flush(self, device_id)
+        if time.time() < self.next_queue_sync_at:
+            return {}
+        outcomes = self.event_queue.flush(self, device_id)
+        if self.event_queue.pending_count():
+            try:
+                jitter = os.urandom(1)[0] / 255.0
+            except Exception:
+                jitter = (int(time.time() * 1000) % 250) / 1000.0
+            self.next_queue_sync_at = time.time() + self.queue_retry_delay + jitter
+            self.queue_retry_delay = min(self.queue_retry_delay * 2, 300)
+        else:
+            self.next_queue_sync_at = 0
+            self.queue_retry_delay = 2
+        return outcomes
 
-    def send_heartbeat(self, device_id):
+    def send_heartbeat(self, device_id, health=None):
         endpoint = API_DEVICE_HEARTBEAT.format(device_id=device_id)
-        return self._device_request("POST", endpoint, {}, retry_count=0)
+        return self._device_request("POST", endpoint, health or {}, retry_count=0)
+
+    def report_diagnostic(self, device_id, code, subsystem, message="", severity="ERROR", details=None):
+        endpoint = "/api/v1/devices/%s/diagnostics/" % device_id
+        return self._device_request("POST", endpoint, {
+            "code": code, "subsystem": subsystem, "message": str(message)[:240],
+            "severity": severity, "details": details or {},
+        }, retry_count=0)
 
     def _device_headers(self):
         headers = {"Content-Type": "application/json"}
@@ -135,6 +158,8 @@ class AttendanceAPIClient:
         for attempt in range(attempts + 1):
             response = None
             try:
+                # Collect before allocating request/response buffers on the constrained MCU.
+                gc.collect()
                 if method == "GET":
                     response = requests.get(
                         url,
@@ -168,7 +193,12 @@ class AttendanceAPIClient:
                 if response is not None and hasattr(response, "close"):
                     response.close()
             if attempt < attempts:
-                time.sleep(1)
+                delay = min(2 ** attempt, 16)
+                try:
+                    delay += os.urandom(1)[0] / 255.0
+                except Exception:
+                    delay += (int(time.time() * 1000) % 250) / 1000.0
+                time.sleep(delay)
         return last_error or {"success": False, "message": "Unknown device API failure"}
 
     def poll_enrollment(self, device_id):

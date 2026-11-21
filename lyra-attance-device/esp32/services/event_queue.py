@@ -112,6 +112,9 @@ class PersistentEventQueue:
         events.append(event)
         self._write(events)
 
+    def pending_count(self):
+        return len(self._read())
+
     def flush(self, api_client, device_id):
         outcomes = {}
         events = self._read()

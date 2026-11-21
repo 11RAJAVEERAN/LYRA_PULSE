@@ -13,7 +13,9 @@ class FakeWLAN:
         self.connect_calls = []
         self.connected = False
 
-    def active(self, state):
+    def active(self, state=None):
+        if state is None:
+            return True
         self.active_calls.append(bool(state))
         return True
 
@@ -27,9 +29,24 @@ class FakeWLAN:
     def isconnected(self):
         return self.connected
 
+    def status(self):
+        return 1010 if self.connected else 1000
+
+    def ifconfig(self):
+        return ("192.168.1.10", "255.255.255.0", "192.168.1.1", "192.168.1.1")
+
 
 class FakeNetworkModule:
     STA_IF = 1
+    STAT_IDLE = 1000
+    STAT_CONNECTING = 1001
+    STAT_WRONG_PASSWORD = 202
+    STAT_NO_AP_FOUND = 201
+    STAT_CONNECT_FAIL = 203
+    STAT_ASSOC_FAIL = 203
+    STAT_BEACON_TIMEOUT = 200
+    STAT_HANDSHAKE_TIMEOUT = 204
+    STAT_GOT_IP = 1010
 
     def WLAN(self, iface):
         return FakeWLAN()
@@ -50,7 +67,7 @@ class WiFiServiceTests(unittest.TestCase):
             result = service.connect()
 
         self.assertTrue(result)
-        self.assertEqual(fake_wlan.active_calls, [True])
+        self.assertEqual(fake_wlan.active_calls, [])
         self.assertEqual(fake_wlan.connect_calls, [("test-network", "secret")])
 
 
@@ -70,13 +87,18 @@ class FakeNtpTime(types.ModuleType):
 class NtpFallbackTests(unittest.TestCase):
     def test_falls_back_to_a_working_ntp_server(self):
         ntptime = FakeNtpTime({"time.cloudflare.com"})
+        valid_gmtime = (2026, 11, 21, 12, 0, 0, 0, 325, 0)
         with (
             patch.object(wifi_service, "network", FakeNetworkModule()),
             patch.dict(sys.modules, {"ntptime": ntptime}),
             patch.object(wifi_service.time, "time", return_value=1000),
+            patch.object(wifi_service.time, "gmtime", return_value=valid_gmtime),
             patch.object(wifi_service, "log"),
         ):
             service = WiFiService()
+            wlan = FakeWLAN()
+            wlan.connected = True
+            service.wlan = wlan
             service._sync_clock()
 
         self.assertTrue(service.time_synced)
@@ -85,13 +107,18 @@ class NtpFallbackTests(unittest.TestCase):
     def test_retries_after_backoff_without_repeating_immediately(self):
         ntptime = FakeNtpTime(set(wifi_service.NTP_SERVERS))
         clock = [1000]
+        valid_gmtime = (2026, 11, 21, 12, 0, 0, 0, 325, 0)
         with (
             patch.object(wifi_service, "network", FakeNetworkModule()),
             patch.dict(sys.modules, {"ntptime": ntptime}),
             patch.object(wifi_service.time, "time", side_effect=lambda: clock[0]),
+            patch.object(wifi_service.time, "gmtime", return_value=valid_gmtime),
             patch.object(wifi_service, "log"),
         ):
             service = WiFiService()
+            wlan = FakeWLAN()
+            wlan.connected = True
+            service.wlan = wlan
             service._sync_clock()
             first_attempts = len(ntptime.attempted_hosts)
             service._sync_clock()

@@ -1,5 +1,5 @@
-
 import os
+import socket
 from datetime import timedelta
 from pathlib import Path
 
@@ -12,6 +12,24 @@ load_dotenv(BASE_DIR / ".env")
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-only-change-this-secret-key-before-production-lyra-pulse")
 DEBUG = os.getenv("DEBUG", "True").lower() == "true"
 ALLOWED_HOSTS = [host.strip() for host in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if host.strip()]
+
+try:
+    for address_info in socket.getaddrinfo(socket.gethostname(), None, socket.AF_INET):
+        address = address_info[4][0]
+        if address not in ALLOWED_HOSTS:
+            ALLOWED_HOSTS.append(address)
+except OSError:
+    pass
+
+try:
+    probe = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    probe.connect(("8.8.8.8", 80))
+    address = probe.getsockname()[0]
+    probe.close()
+    if address not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(address)
+except OSError:
+    pass
 
 INSTALLED_APPS = [
     "django.contrib.admin",

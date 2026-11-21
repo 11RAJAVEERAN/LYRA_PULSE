@@ -208,3 +208,49 @@ class DeviceManagementSecurityTests(TestCase):
         self.assertEqual(response.status_code, 200, response.data)
         self.assertEqual(response.data["data"][0]["status"], "Offline")
         self.assertEqual(response.data["data"][0]["branch"], self.branch.name)
+
+    def test_replacement_deactivates_old_device_and_preserves_its_record(self):
+        self.client.force_authenticate(self.admin)
+        response = self.client.post("/api/v1/devices/", {
+            "device_id": "DEVICE-TEST-003", "name": "Replacement",
+            "branch_id": self.branch.pk, "replace_device_id": self.device.device_id,
+        }, format="json")
+        self.assertEqual(response.status_code, 201, response.data)
+        self.device.refresh_from_db()
+        self.assertFalse(self.device.is_active)
+        self.assertTrue(Device.objects.filter(pk=self.device.pk).exists())
+        replacement = Device.objects.get(device_id="DEVICE-TEST-003")
+        self.assertTrue(replacement.is_active)
+        self.assertEqual(replacement.branch_id, self.branch.pk)
+
+    def test_heartbeat_stores_whitelisted_health_report(self):
+        response = self.heartbeat("test-only-original-device-token")
+        self.assertEqual(response.status_code, 200, response.data)
+        self.device.refresh_from_db()
+        self.assertEqual(self.device.health_status, "UNKNOWN")
+
+        self.client.force_authenticate(user=None)
+        self.client.credentials(HTTP_AUTHORIZATION="Device test-only-original-device-token")
+        response = self.client.post(
+            f"/api/v1/devices/{self.device.device_id}/heartbeat/",
+            {"sensor_ready": True, "pending_events": 2, "free_heap": 81920, "health_status": "DEGRADED"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200, response.data)
+        self.device.refresh_from_db()
+        self.assertEqual(self.device.health_status, "DEGRADED")
+        self.assertEqual(self.device.health_details["pending_events"], 2)
+
+    def test_device_can_submit_admin_scoped_diagnostic_history(self):
+        self.client.force_authenticate(user=None)
+        self.client.credentials(HTTP_AUTHORIZATION="Device test-only-original-device-token")
+        created = self.client.post(
+            f"/api/v1/devices/{self.device.device_id}/diagnostics/",
+            {"code": "HTTP_TIMEOUT", "subsystem": "backend", "message": "Request timed out"},
+            format="json",
+        )
+        self.assertEqual(created.status_code, 201, created.data)
+        self.client.force_authenticate(self.admin)
+        listed = self.client.get(f"/api/v1/devices/{self.device.device_id}/diagnostics/")
+        self.assertEqual(listed.status_code, 200, listed.data)
+        self.assertEqual(listed.data["data"][0]["code"], "HTTP_TIMEOUT")

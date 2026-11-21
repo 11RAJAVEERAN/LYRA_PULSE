@@ -1,11 +1,12 @@
 from django.urls import path
 
 from apps.fingerprints.views import DeviceEnrollmentPendingView, DeviceEnrollmentResultView
-from .views import DeviceHeartbeatView, DeviceManagementView, DeviceTokenRotationView
+from .views import DeviceDiagnosticView, DeviceHeartbeatView, DeviceManagementView, DeviceTokenRotationView
 
 urlpatterns = [
     path("", DeviceManagementView.as_view(), name="device-management"),
     path("<str:device_id>/heartbeat/", DeviceHeartbeatView.as_view(), name="device-heartbeat"),
+    path("<str:device_id>/diagnostics/", DeviceDiagnosticView.as_view(), name="device-diagnostics"),
     path("<str:device_id>/rotate-token/", DeviceTokenRotationView.as_view(), name="device-token-rotation"),
     path(
         "<str:device_id>/enrollment/pending/",
