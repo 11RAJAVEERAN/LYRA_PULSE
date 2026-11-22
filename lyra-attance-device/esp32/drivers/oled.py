@@ -2,7 +2,12 @@
 
 from machine import I2C, Pin
 
-from config import OLED_I2C_ADDRESS, OLED_I2C_FREQUENCY, OLED_SCL_PIN, OLED_SDA_PIN
+from config import (
+    OLED_I2C_ADDRESS,
+    OLED_I2C_FREQUENCY,
+    OLED_SCL_PIN,
+    OLED_SDA_PIN,
+)
 from lib.ssd1306 import (
     FONT_CHAR_SPACING,
     FONT_HEIGHT,

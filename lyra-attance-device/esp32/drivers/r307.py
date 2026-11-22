@@ -153,9 +153,6 @@ class R307:
             self._log("UART initialization failed: %s" % exc)
 
     def _initialize_uart(self):
-        if self.uart is not None:
-            return self.uart
-
         try:
             uart = UART(self.uart_id, self.baudrate)
             uart.init(
@@ -169,21 +166,13 @@ class R307:
                 timeout_char=R307_UART_READ_TIMEOUT_MS,
             )
         except OSError as exc:
-            # On ESP32, `EPERM` / `ESP_FAIL` usually means the UART peripheral is
-            # already allocated elsewhere or the board's UART pins are not usable.
-            # Reset the local object state so a later retry can re-check hardware.
             self.uart = None
-            raise R307CommunicationError(
-                "UART init failed for UART%d on GPIO%d/GPIO%d: %s"
-                % (self.uart_id, self.tx_pin, self.rx_pin, exc)
-            )
-
+            raise R307CommunicationError("UART init failed: %s" % exc)
         self.uart = uart
         self._log(
             "UART initialized: id=%d baud=%d TX=GPIO%d RX=GPIO%d"
             % (self.uart_id, self.baudrate, self.tx_pin, self.rx_pin)
         )
-        return self.uart
 
     def begin(self):
         self.verify_password(self.password)

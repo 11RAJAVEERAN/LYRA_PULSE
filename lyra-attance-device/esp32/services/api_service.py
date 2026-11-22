@@ -3,7 +3,6 @@
 import json
 import os
 import time
-import gc
 
 try:
     import urequests as requests
@@ -49,7 +48,6 @@ except ImportError:  # pragma: no cover - CPython fallback for local testing
     requests = _CPythonRequests()
 
 from config import (
-    ALLOW_INSECURE_HTTP,
     API_BASE_URL,
     API_DEVICE_HEARTBEAT,
     API_DEVICE_ENROLLMENT_PENDING,
@@ -57,6 +55,7 @@ from config import (
     API_FINGERPRINT_ENDPOINT,
     API_RETRY_COUNT,
     API_TIMEOUT,
+    ATTENDANCE_SYNC_ENABLED,
     DEVICE_TOKEN,
 )
 from utils.logger import log
@@ -84,15 +83,18 @@ def _utc_timestamp():
 class AttendanceAPIClient:
     def __init__(self, base_url=API_BASE_URL, timeout=API_TIMEOUT, retry_count=API_RETRY_COUNT, event_queue=None):
         self.base_url = base_url.rstrip("/")
-        is_https = self.base_url.startswith("https://")
-        is_http = self.base_url.startswith("http://")
-        if not is_https and not (is_http and ALLOW_INSECURE_HTTP):
-            raise ValueError("Device API requires an HTTPS base URL or explicit ALLOW_INSECURE_HTTP")
+        if not (
+            self.base_url.startswith("http://")
+            or self.base_url.startswith("https://")
+        ):
+            raise ValueError("Device API requires an HTTP or HTTPS base URL")
+        authority = self.base_url.split("://", 1)[1].split("/", 1)[0].lower()
+        host = authority.split("@")[-1].split(":")[0]
+        if host in ("localhost", "127.0.0.1", "::1"):
+            raise ValueError("Device API must not use localhost")
         self.timeout = timeout
         self.retry_count = retry_count
         self.event_queue = event_queue or PersistentEventQueue()
-        self.next_queue_sync_at = 0
-        self.queue_retry_delay = 2
 
     def _endpoint(self):
         return self.base_url + API_FINGERPRINT_ENDPOINT
@@ -100,7 +102,13 @@ class AttendanceAPIClient:
     def send_attendance(self, device_id, fingerprint_slot):
         event = {"event_id": _uuid4(), "fingerprint_slot": int(fingerprint_slot), "occurred_at": _utc_timestamp()}
         self.event_queue.append(event)
-        result = self.sync_pending(device_id).get(event["event_id"])
+        if not ATTENDANCE_SYNC_ENABLED:
+            return {
+                "success": False,
+                "queued": True,
+                "message": "Attendance saved on device; synchronization is paused.",
+            }
+        result = self.event_queue.flush(self, device_id).get(event["event_id"])
         if result is None:
             return {"success": False, "queued": True, "message": "Attendance saved on device and waiting for synchronization."}
         return result
@@ -111,31 +119,13 @@ class AttendanceAPIClient:
         return self._device_request("POST", API_FINGERPRINT_ENDPOINT, payload, retry_count=0, headers=self._device_headers())
 
     def sync_pending(self, device_id):
-        if time.time() < self.next_queue_sync_at:
+        if not ATTENDANCE_SYNC_ENABLED:
             return {}
-        outcomes = self.event_queue.flush(self, device_id)
-        if self.event_queue.pending_count():
-            try:
-                jitter = os.urandom(1)[0] / 255.0
-            except Exception:
-                jitter = (int(time.time() * 1000) % 250) / 1000.0
-            self.next_queue_sync_at = time.time() + self.queue_retry_delay + jitter
-            self.queue_retry_delay = min(self.queue_retry_delay * 2, 300)
-        else:
-            self.next_queue_sync_at = 0
-            self.queue_retry_delay = 2
-        return outcomes
+        return self.event_queue.flush(self, device_id)
 
-    def send_heartbeat(self, device_id, health=None):
+    def send_heartbeat(self, device_id):
         endpoint = API_DEVICE_HEARTBEAT.format(device_id=device_id)
-        return self._device_request("POST", endpoint, health or {}, retry_count=0)
-
-    def report_diagnostic(self, device_id, code, subsystem, message="", severity="ERROR", details=None):
-        endpoint = "/api/v1/devices/%s/diagnostics/" % device_id
-        return self._device_request("POST", endpoint, {
-            "code": code, "subsystem": subsystem, "message": str(message)[:240],
-            "severity": severity, "details": details or {},
-        }, retry_count=0)
+        return self._device_request("POST", endpoint, {}, retry_count=0)
 
     def _device_headers(self):
         headers = {"Content-Type": "application/json"}
@@ -157,9 +147,12 @@ class AttendanceAPIClient:
         attempts = self.retry_count if retry_count is None else retry_count
         for attempt in range(attempts + 1):
             response = None
+            log(
+                "DEVICE API",
+                "%s %s attempt %d/%d starting (timeout=%ss)"
+                % (method, endpoint, attempt + 1, attempts + 1, self.timeout),
+            )
             try:
-                # Collect before allocating request/response buffers on the constrained MCU.
-                gc.collect()
                 if method == "GET":
                     response = requests.get(
                         url,
@@ -173,8 +166,18 @@ class AttendanceAPIClient:
                         headers=headers or self._device_headers(),
                         timeout=self.timeout,
                     )
+                log(
+                    "DEVICE API",
+                    "%s %s transport returned"
+                    % (method, endpoint),
+                )
                 status_code = getattr(response, "status_code", getattr(response, "status", 500))
                 body = self._response_body(response)
+                log(
+                    "DEVICE API",
+                    "%s %s response parsed (HTTP %s)"
+                    % (method, endpoint, status_code),
+                )
                 if 200 <= status_code < 300 and body.get("success", True):
                     body.setdefault("http_status", status_code)
                     return body
@@ -188,17 +191,16 @@ class AttendanceAPIClient:
                     break
             except Exception as exc:  # pragma: no cover - runtime dependent
                 last_error = {"success": False, "error": str(exc)}
-                log("DEVICE API", "Request failed: %s" % exc)
+                log(
+                    "DEVICE API",
+                    "%s %s attempt %d/%d failed: %s"
+                    % (method, endpoint, attempt + 1, attempts + 1, exc),
+                )
             finally:
                 if response is not None and hasattr(response, "close"):
                     response.close()
             if attempt < attempts:
-                delay = min(2 ** attempt, 16)
-                try:
-                    delay += os.urandom(1)[0] / 255.0
-                except Exception:
-                    delay += (int(time.time() * 1000) % 250) / 1000.0
-                time.sleep(delay)
+                time.sleep(1)
         return last_error or {"success": False, "message": "Unknown device API failure"}
 
     def poll_enrollment(self, device_id):

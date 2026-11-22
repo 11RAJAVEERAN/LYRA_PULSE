@@ -1,19 +1,12 @@
 """Main state-machine entry point for the Lyra Pulse attendance device."""
 
 import time
-import gc
 
-from config import (
-    FINGERPRINT_COOLDOWN,
-    FINGER_REMOVAL_SETTLE_SECONDS,
-    HEARTBEAT_INTERVAL_SECONDS,
-    validate_runtime_config,
-)
+from config import FINGERPRINT_COOLDOWN, FINGER_REMOVAL_SETTLE_SECONDS
 from drivers.oled import OledDisplay
 from drivers.r307 import R307, R307CommunicationError, R307PacketError
 from hardware.buzzer import Buzzer
 from hardware.status_led import StatusLed
-from hardware.touch_sensor import TouchSensor
 from services.api_service import AttendanceAPIClient
 from services.fingerprint_service import EnrollmentError, FingerprintService
 from services.wifi_service import WiFiService
@@ -24,7 +17,6 @@ from utils.logger import log
 def poll_enrollment_command(api_client, device_id):
     log("DEVICE", "Polling enrollment...")
     response = api_client.poll_enrollment(device_id)
-    log("DEVICE", "Enrollment poll request returned")
     if not response.get("success"):
         log("DEVICE", "Enrollment poll failed (HTTP %s)" % response.get("status_code", "network error"))
         return None
@@ -61,17 +53,12 @@ def run_enrollment(command, device_id, api_client, fingerprint_service, oled, bu
         )
         if not response.get("success"):
             log("ENROLL", "Could not record enrollment failure with the server")
-        if sensor_faulted:
-            oled.show_sensor_error()
-            led.sensor_error()
-            buzzer.off()
-        else:
-            oled.show_enrollment_failed()
-            buzzer.error_beep()
-            led.red_on()
-            time.sleep(1.5)
-            led.red_off()
-            led.green_on()
+        oled.show_enrollment_failed()
+        buzzer.error_beep()
+        led.red_on()
+        time.sleep(1.5)
+        led.red_off()
+        led.green_on()
     return sensor_faulted
 
 
@@ -116,20 +103,13 @@ def run_attendance_scan(
         if fingerprint_slot is None:
             log("SCAN", "state=MATCH_FAILURE")
             led.match_failed()
-            buzzer.attendance_mismatch_beep()
+            buzzer.beep_twice()
             show_feedback(oled, "show_not_found")
             time.sleep(0.5)
             return
 
         response = api_client.send_attendance(device_id, fingerprint_slot)
         if not response.get("success"):
-            if response.get("queued"):
-                log("QUEUE", "Scan stored locally for later synchronization")
-                led.match_success()
-                buzzer.success_beep()
-                show_feedback(oled, "show_queued")
-                time.sleep(0.75)
-                return
             details = response.get("error")
             if details is None:
                 api_response = response.get("response")
@@ -178,7 +158,7 @@ def run_attendance_scan(
         )
         log("SCAN", "state=MATCH_SUCCESS")
         led.match_success()
-        buzzer.success_beep()
+        buzzer.beep_once()
         show_feedback(
             oled,
             "show_attendance_success",
@@ -193,9 +173,6 @@ def run_attendance_scan(
             "Temporary %s; scan will retry after recovery: %s"
             % (exc.__class__.__name__, exc),
         )
-        show_feedback(oled, "show_sensor_error")
-        led.sensor_error()
-        buzzer.off()
         time.sleep(0.25)
     except Exception as exc:
         log("API ERROR", str(exc))
@@ -205,13 +182,8 @@ def run_attendance_scan(
     finally:
         if finger_detected:
             try:
-                if fingerprint_service.wait_for_finger_removed():
-                    time.sleep(FINGER_REMOVAL_SETTLE_SECONDS)
-                else:
-                    sensor_faulted = True
-                    show_feedback(oled, "show_sensor_error")
-                    led.sensor_error()
-                    buzzer.off()
+                fingerprint_service.wait_for_finger_removed()
+                time.sleep(FINGER_REMOVAL_SETTLE_SECONDS)
             except R307PacketError as exc:
                 sensor_faulted = True
                 log(
@@ -219,87 +191,31 @@ def run_attendance_scan(
                     "Removal polling failed (%s); will retry"
                     % exc.__class__.__name__,
                 )
-                show_feedback(oled, "show_sensor_error")
-                led.sensor_error()
-                buzzer.off()
         buzzer.off()
-        if sensor_faulted:
-            led.sensor_error()
-            show_feedback(oled, "show_sensor_error")
-        else:
-            led.ready_status()
-            oled.show_ready()
+        led.ready_status()
+        oled.show_ready()
     return sensor_faulted
 
 
 def main():
     log("BOOT", "Lyra Pulse device starting")
 
-    try:
-        device_id = get_device_id()
-        validate_runtime_config(device_id)
-    except Exception as exc:
-        log("CONFIG ERROR", str(exc))
-        return
-    log("STARTUP", "OLED initialization starting")
+    device_id = get_device_id()
     oled = OledDisplay()
-    log("STARTUP", "OLED initialization completed")
     buzzer = Buzzer()
     led = StatusLed()
-    touch_sensor = TouchSensor()
     wifi = WiFiService()
-    log("STARTUP", "R307 driver initialization starting")
     r307 = R307()
-    log("STARTUP", "R307 driver initialization completed")
-    log("STARTUP", "API client initialization starting")
     api_client = AttendanceAPIClient()
-    log("STARTUP", "API client initialization completed")
-    fingerprint_service = FingerprintService(r307, touch_sensor)
+    fingerprint_service = FingerprintService(r307)
 
-    log("STARTUP", "Startup OLED update starting")
     oled.show_startup()
-    log("STARTUP", "Startup OLED update completed")
     buzzer.off()
     led.ready_status()
 
     sensor_ready = False
     sensor_retry_delay_seconds = 2
     sensor_retry_max_seconds = 30
-    next_heartbeat_at = 0
-
-    def send_heartbeat_if_due():
-        nonlocal next_heartbeat_at
-        if not wifi.is_connected():
-            return
-        now = time.time()
-        if now < next_heartbeat_at:
-            return
-        log("HEARTBEAT", "Request starting (timeout=%ss)" % api_client.timeout)
-        pending_count = api_client.event_queue.pending_count()
-        free_heap = gc.mem_free() if hasattr(gc, "mem_free") else 0
-        response = api_client.send_heartbeat(device_id, {
-            "sensor_ready": sensor_ready,
-            "pending_events": pending_count,
-            "free_heap": free_heap,
-            "health_status": "HEALTHY" if sensor_ready else "DEGRADED",
-        })
-        log("HEARTBEAT", "Request returned (success=%s)" % response.get("success"))
-        if not response.get("success"):
-            log(
-                "HEARTBEAT",
-                "Heartbeat failed (HTTP %s)"
-                % response.get("status_code", "network error"),
-            )
-            try:
-                api_client.report_diagnostic(
-                    device_id, "HEARTBEAT_FAILED", "backend",
-                    "Device heartbeat could not be confirmed.",
-                    details={"status_code": response.get("status_code", 0)},
-                )
-            except Exception:
-                pass
-        next_heartbeat_at = now + HEARTBEAT_INTERVAL_SECONDS
-
     try:
         r307.begin()
         sensor_ready = True
@@ -308,20 +224,14 @@ def main():
         oled.show_ready()
     except R307PacketError as exc:  # pragma: no cover - hardware may not be attached during test
         log("SENSOR", "Temporary initialization failure (%s)" % exc.__class__.__name__)
-        led.sensor_error()
-        oled.show_sensor_error()
+        oled.show_ready()
 
-    log("STARTUP", "Initial Wi-Fi connection starting")
-    initial_wifi_connected = wifi.ensure_connected()
-    log("STARTUP", "Initial Wi-Fi connection returned (connected=%s)" % initial_wifi_connected)
-    if not initial_wifi_connected:
+    if not wifi.ensure_connected():
         oled.show_api_error()
         led.ready_status()
         log("WIFI ERROR", "Connection failed; device will retry")
 
-    startup_diagnostics_pending = True
     while True:
-        trace_startup = startup_diagnostics_pending
         try:
             if not wifi.is_connected():
                 oled.show_wifi_connecting()
@@ -333,12 +243,7 @@ def main():
                     oled.show_api_error()
                     led.ready_status()
                     time.sleep(1)
-
-            if trace_startup:
-                log("STARTUP", "Startup heartbeat stage starting")
-            send_heartbeat_if_due()
-            if trace_startup:
-                log("STARTUP", "Startup heartbeat stage completed")
+                    continue
 
             if not sensor_ready:
                 log(
@@ -348,14 +253,10 @@ def main():
                 )
                 time.sleep(sensor_retry_delay_seconds)
                 try:
-                    if trace_startup:
-                        log("STARTUP", "R307 VerifyPassword retry starting")
                     r307.begin()
                     sensor_ready = True
                     sensor_retry_delay_seconds = 2
                     log("R307", "Sensor initialized")
-                    if trace_startup:
-                        log("STARTUP", "R307 VerifyPassword retry completed")
                 except R307PacketError as exc:
                     log(
                         "SENSOR",
@@ -365,8 +266,8 @@ def main():
                             min(sensor_retry_delay_seconds * 2, sensor_retry_max_seconds),
                         ),
                     )
-                    led.sensor_error()
-                    oled.show_sensor_error()
+                    led.ready_status()
+                    oled.show_ready()
                     sensor_retry_delay_seconds = min(
                         sensor_retry_delay_seconds * 2,
                         sensor_retry_max_seconds,
@@ -374,27 +275,10 @@ def main():
                     continue
 
             led.ready_status()
-            if trace_startup:
-                log("STARTUP", "Ready OLED update starting")
             oled.show_ready()
-            if trace_startup:
-                log("STARTUP", "Ready OLED update completed")
 
-            if wifi.is_connected():
-                if trace_startup:
-                    log("STARTUP", "Pending attendance sync starting")
-                pending = api_client.sync_pending(device_id)
-                if trace_startup:
-                    log("STARTUP", "Pending attendance sync returned (%d event(s))" % len(pending))
-                if pending:
-                    log("QUEUE", "Synchronized %d offline attendance event(s)" % len(pending))
-
-            log("DEVICE", "UART idle; polling enrollment API when online")
-            if trace_startup:
-                log("STARTUP", "Initial enrollment poll stage starting")
-            enrollment_command = poll_enrollment_command(api_client, device_id) if wifi.is_connected() else None
-            if trace_startup:
-                log("STARTUP", "Initial enrollment poll stage completed")
+            log("DEVICE", "UART idle; polling enrollment API")
+            enrollment_command = poll_enrollment_command(api_client, device_id)
             if isinstance(enrollment_command, dict):
                 sensor_faulted = run_enrollment(
                     enrollment_command,
@@ -405,8 +289,6 @@ def main():
                     buzzer,
                     led,
                 )
-                if not sensor_faulted:
-                    fingerprint_service.wait_for_finger_removed()
                 if sensor_faulted:
                     sensor_ready = False
                 time.sleep(FINGERPRINT_COOLDOWN)
@@ -415,9 +297,6 @@ def main():
             enrollment_sensor_faulted = [False]
 
             def poll_enrollment_while_waiting():
-                if not wifi.is_connected():
-                    return None
-                send_heartbeat_if_due()
                 command = poll_enrollment_command(api_client, device_id)
                 if isinstance(command, dict):
                     enrollment_sensor_faulted[0] = run_enrollment(
@@ -432,9 +311,6 @@ def main():
                     fingerprint_service.wait_for_finger_removed()
                 return None
 
-            if trace_startup:
-                log("STARTUP", "Entering fingerprint scan; waiting for touch is expected")
-                startup_diagnostics_pending = False
             sensor_faulted = run_attendance_scan(
                 device_id,
                 api_client,
@@ -444,37 +320,18 @@ def main():
                 led,
                 on_wait=poll_enrollment_while_waiting,
             )
-            if trace_startup:
-                log("STARTUP", "Fingerprint scan returned")
             if sensor_faulted or enrollment_sensor_faulted[0]:
                 sensor_ready = False
 
         except R307PacketError as exc:
             log("SENSOR", "Temporary %s; main loop will recover" % exc.__class__.__name__)
             buzzer.off()
-            sensor_ready = False
             time.sleep(0.25)
-            led.sensor_error()
-            oled.show_sensor_error()
-            if wifi.is_connected():
-                try:
-                    api_client.report_diagnostic(
-                        device_id, "SENSOR_COMMUNICATION_ERROR", "fingerprint_sensor",
-                        "Fingerprint sensor communication failed; firmware will retry.",
-                    )
-                except Exception:
-                    pass
+            led.ready_status()
+            oled.show_ready()
 
         except Exception as exc:  # pragma: no cover
             log("ERROR", "Main loop exception: %s" % exc)
-            if wifi.is_connected():
-                try:
-                    api_client.report_diagnostic(
-                        device_id, "DEVICE_LOOP_ERROR", "firmware",
-                        "Device main loop encountered an error.",
-                    )
-                except Exception:
-                    pass
             oled.show_api_error()
             led.api_error()
             buzzer.off()

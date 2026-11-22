@@ -1,13 +1,12 @@
 """Main state-machine entry point for the Lyra Pulse attendance device."""
 
 import time
-import gc
 
 from config import (
     FINGERPRINT_COOLDOWN,
     FINGER_REMOVAL_SETTLE_SECONDS,
     HEARTBEAT_INTERVAL_SECONDS,
-    validate_runtime_config,
+    validate_deployment_config,
 )
 from drivers.oled import OledDisplay
 from drivers.r307 import R307, R307CommunicationError, R307PacketError
@@ -235,12 +234,16 @@ def run_attendance_scan(
 def main():
     log("BOOT", "Lyra Pulse device starting")
 
-    try:
-        device_id = get_device_id()
-        validate_runtime_config(device_id)
-    except Exception as exc:
-        log("CONFIG ERROR", str(exc))
+    missing_config = validate_deployment_config()
+    if missing_config:
+        log(
+            "CONFIG",
+            "Deployment blocked; missing or invalid configuration: %s"
+            % ", ".join(missing_config),
+        )
         return
+
+    device_id = get_device_id()
     log("STARTUP", "OLED initialization starting")
     oled = OledDisplay()
     log("STARTUP", "OLED initialization completed")
@@ -274,33 +277,25 @@ def main():
         now = time.time()
         if now < next_heartbeat_at:
             return
-        log("HEARTBEAT", "Request starting (timeout=%ss)" % api_client.timeout)
-        pending_count = api_client.event_queue.pending_count()
-        free_heap = gc.mem_free() if hasattr(gc, "mem_free") else 0
-        response = api_client.send_heartbeat(device_id, {
-            "sensor_ready": sensor_ready,
-            "pending_events": pending_count,
-            "free_heap": free_heap,
-            "health_status": "HEALTHY" if sensor_ready else "DEGRADED",
-        })
-        log("HEARTBEAT", "Request returned (success=%s)" % response.get("success"))
+        log(
+            "HEARTBEAT",
+            "Request starting (timeout=%ss)" % api_client.timeout,
+        )
+        response = api_client.send_heartbeat(device_id)
+        log(
+            "HEARTBEAT",
+            "Request returned (success=%s)" % response.get("success"),
+        )
         if not response.get("success"):
             log(
                 "HEARTBEAT",
                 "Heartbeat failed (HTTP %s)"
                 % response.get("status_code", "network error"),
             )
-            try:
-                api_client.report_diagnostic(
-                    device_id, "HEARTBEAT_FAILED", "backend",
-                    "Device heartbeat could not be confirmed.",
-                    details={"status_code": response.get("status_code", 0)},
-                )
-            except Exception:
-                pass
         next_heartbeat_at = now + HEARTBEAT_INTERVAL_SECONDS
 
     try:
+        log("STARTUP", "Initial R307 VerifyPassword starting")
         r307.begin()
         sensor_ready = True
         log("R307", "Sensor initialized")
@@ -313,7 +308,11 @@ def main():
 
     log("STARTUP", "Initial Wi-Fi connection starting")
     initial_wifi_connected = wifi.ensure_connected()
-    log("STARTUP", "Initial Wi-Fi connection returned (connected=%s)" % initial_wifi_connected)
+    log(
+        "STARTUP",
+        "Initial Wi-Fi connection returned (connected=%s)"
+        % initial_wifi_connected,
+    )
     if not initial_wifi_connected:
         oled.show_api_error()
         led.ready_status()
@@ -385,7 +384,11 @@ def main():
                     log("STARTUP", "Pending attendance sync starting")
                 pending = api_client.sync_pending(device_id)
                 if trace_startup:
-                    log("STARTUP", "Pending attendance sync returned (%d event(s))" % len(pending))
+                    log(
+                        "STARTUP",
+                        "Pending attendance sync returned (%d event(s))"
+                        % len(pending),
+                    )
                 if pending:
                     log("QUEUE", "Synchronized %d offline attendance event(s)" % len(pending))
 
@@ -433,7 +436,10 @@ def main():
                 return None
 
             if trace_startup:
-                log("STARTUP", "Entering fingerprint scan; waiting for touch is expected")
+                log(
+                    "STARTUP",
+                    "Entering fingerprint scan; waiting for touch is expected",
+                )
                 startup_diagnostics_pending = False
             sensor_faulted = run_attendance_scan(
                 device_id,
@@ -456,25 +462,9 @@ def main():
             time.sleep(0.25)
             led.sensor_error()
             oled.show_sensor_error()
-            if wifi.is_connected():
-                try:
-                    api_client.report_diagnostic(
-                        device_id, "SENSOR_COMMUNICATION_ERROR", "fingerprint_sensor",
-                        "Fingerprint sensor communication failed; firmware will retry.",
-                    )
-                except Exception:
-                    pass
 
         except Exception as exc:  # pragma: no cover
             log("ERROR", "Main loop exception: %s" % exc)
-            if wifi.is_connected():
-                try:
-                    api_client.report_diagnostic(
-                        device_id, "DEVICE_LOOP_ERROR", "firmware",
-                        "Device main loop encountered an error.",
-                    )
-                except Exception:
-                    pass
             oled.show_api_error()
             led.api_error()
             buzzer.off()

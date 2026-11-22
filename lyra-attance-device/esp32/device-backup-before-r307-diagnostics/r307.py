@@ -28,16 +28,7 @@ except ImportError:  # pragma: no cover - CPython local compatibility
 
 from machine import UART, Pin
 
-from config import (
-    R307_DEBUG,
-    R307_ADDRESS,
-    R307_PASSWORD,
-    R307_UART_READ_TIMEOUT_MS,
-    UART_BAUDRATE,
-    UART_ID,
-    UART_RX_PIN,
-    UART_TX_PIN,
-)
+from config import R307_PASSWORD, UART_BAUDRATE, UART_ID, UART_RX_PIN, UART_TX_PIN
 
 
 class R307PacketError(Exception):
@@ -46,11 +37,6 @@ class R307PacketError(Exception):
 
 class R307TimeoutError(R307PacketError):
     """Raised when the sensor does not respond within the configured timeout."""
-
-    def __init__(self, message, received_bytes=0, partial_data=b""):
-        self.received_bytes = received_bytes
-        self.partial_data = partial_data
-        super().__init__(message)
 
 
 class R307CommunicationError(R307PacketError):
@@ -86,7 +72,7 @@ class R307:
     """
 
     HEADER = b"\xEF\x01"
-    ADDRESS = struct.pack(">I", R307_ADDRESS & 0xFFFFFFFF)
+    ADDRESS = b"\xFF\xFF\xFF\xFF"
     PID_COMMAND = 0x01
     PID_DATA = 0x02
     PID_ACK = 0x07
@@ -126,16 +112,8 @@ class R307:
     INDEX_PAGE_SIZE = 256
     INDEX_TABLE_BYTE_COUNT = INDEX_PAGE_SIZE // 8
     INDEX_TABLE_RESPONSE_SIZE = INDEX_TABLE_BYTE_COUNT + 1
-    MAX_PACKET_LENGTH = 4096
 
-    def __init__(
-        self,
-        uart_id=UART_ID,
-        baudrate=UART_BAUDRATE,
-        tx_pin=UART_TX_PIN,
-        rx_pin=UART_RX_PIN,
-        debug=R307_DEBUG,
-    ):
+    def __init__(self, uart_id=UART_ID, baudrate=UART_BAUDRATE, tx_pin=UART_TX_PIN, rx_pin=UART_RX_PIN, debug=False):
         self.debug = debug
         self._command_active = False
         self._active_command_id = None
@@ -153,9 +131,6 @@ class R307:
             self._log("UART initialization failed: %s" % exc)
 
     def _initialize_uart(self):
-        if self.uart is not None:
-            return self.uart
-
         try:
             uart = UART(self.uart_id, self.baudrate)
             uart.init(
@@ -165,82 +140,19 @@ class R307:
                 stop=1,
                 tx=Pin(self.tx_pin, Pin.OUT),
                 rx=Pin(self.rx_pin, Pin.IN),
-                timeout=R307_UART_READ_TIMEOUT_MS,
-                timeout_char=R307_UART_READ_TIMEOUT_MS,
             )
         except OSError as exc:
-            # On ESP32, `EPERM` / `ESP_FAIL` usually means the UART peripheral is
-            # already allocated elsewhere or the board's UART pins are not usable.
-            # Reset the local object state so a later retry can re-check hardware.
             self.uart = None
-            raise R307CommunicationError(
-                "UART init failed for UART%d on GPIO%d/GPIO%d: %s"
-                % (self.uart_id, self.tx_pin, self.rx_pin, exc)
-            )
-
+            raise R307CommunicationError("UART init failed: %s" % exc)
         self.uart = uart
         self._log(
             "UART initialized: id=%d baud=%d TX=GPIO%d RX=GPIO%d"
             % (self.uart_id, self.baudrate, self.tx_pin, self.rx_pin)
         )
-        return self.uart
 
     def begin(self):
         self.verify_password(self.password)
         return True
-
-    def uart_loopback_test(self, payload=b"LYRA-UART-LOOPBACK", timeout_ms=500):
-        if self._command_active:
-            raise R307CommunicationError(
-                "UART loopback rejected while command 0x%02X is active"
-                % self._active_command_id
-            )
-        if self.uart is None:
-            self._initialize_uart()
-        if timeout_ms <= 0:
-            raise ValueError("Loopback timeout must be positive")
-
-        self._command_active = True
-        self._active_command_id = 0xFE
-        try:
-            pending = self.uart.any() if hasattr(self.uart, "any") else 0
-            if pending:
-                raise R307CommunicationError(
-                    "UART loopback refused: %d stale RX bytes before test" % pending
-                )
-            try:
-                written = self.uart.write(payload)
-            except OSError as exc:
-                raise R307CommunicationError("UART loopback write failed: %s" % exc)
-            if written != len(payload):
-                raise R307CommunicationError(
-                    "UART loopback wrote %s of %s bytes" % (written, len(payload))
-                )
-
-            received = bytearray()
-            deadline = time.ticks_add(time.ticks_ms(), timeout_ms)
-            while (
-                len(received) < len(payload)
-                and time.ticks_diff(deadline, time.ticks_ms()) > 0
-            ):
-                try:
-                    chunk = self.uart.read(len(payload) - len(received))
-                except OSError as exc:
-                    raise R307CommunicationError("UART loopback read failed: %s" % exc)
-                if chunk:
-                    received.extend(chunk)
-                else:
-                    time.sleep_ms(5)
-
-            if bytes(received) != payload:
-                raise R307CommunicationError(
-                    "UART loopback mismatch/timeout: sent=%s received=%s"
-                    % (self._hex(payload), self._hex(received))
-                )
-            return True
-        finally:
-            self._active_command_id = None
-            self._command_active = False
 
     def _hex(self, data):
         return "".join("%02X" % value for value in data)
@@ -254,27 +166,6 @@ class R307:
         for value in frame:
             total += value
         return total & 0xFFFF
-
-    def _log_uart_pending(self, stage, command_id):
-        uart_any = getattr(self.uart, "any", None)
-        if uart_any is None:
-            if self.debug:
-                self._log(
-                    "UART any() unavailable at %s for command 0x%02X"
-                    % (stage, command_id)
-                )
-            return
-        try:
-            pending = uart_any()
-        except OSError as exc:
-            raise R307CommunicationError(
-                "UART any() failed at %s: %s" % (stage, exc)
-            )
-        if self.debug:
-            self._log(
-                "UART any() %s command=0x%02X pending=%d"
-                % (stage, command_id, pending)
-            )
 
     def _read_exact(self, size, timeout_ms=None, captured=None):
         timeout_ms = timeout_ms or self.timeout_ms
@@ -310,9 +201,7 @@ class R307:
                         elapsed,
                         self._hex(data),
                         self._hex(packet_bytes),
-                    ),
-                    received_bytes=len(packet_bytes),
-                    partial_data=bytes(packet_bytes),
+                    )
                 )
             time.sleep_ms(5)
         return bytes(data)
@@ -320,57 +209,28 @@ class R307:
     def _read_packet(self):
         """Read and validate a full packet from the sensor."""
         received = bytearray()
-        started = time.ticks_ms()
         try:
-            header_deadline = time.ticks_add(started, self.timeout_ms)
-            header_window = bytearray()
-            packet_start = None
-            while time.ticks_diff(header_deadline, time.ticks_ms()) > 0:
-                remaining = time.ticks_diff(header_deadline, time.ticks_ms())
-                value = self._read_exact(
-                    1,
-                    timeout_ms=max(1, remaining),
-                    captured=received,
-                )
-                header_window.extend(value)
-                if len(header_window) > len(self.HEADER):
-                    del header_window[0]
-                if header_window == self.HEADER:
-                    packet_start = len(received) - len(self.HEADER)
-                    break
-            if packet_start is None:
-                raise R307InvalidPacketError(
-                    "R307 header not found in %d received bytes: %s"
-                    % (len(received), self._hex(received))
-                )
+            header = self._read_exact(2, captured=received)
+            if header != self.HEADER:
+                raise R307InvalidPacketError("Invalid R307 header: %s" % header)
 
             address = self._read_exact(4, captured=received)
+            if len(address) != 4 or address != self.ADDRESS:
+                raise R307InvalidPacketError("Invalid R307 address: %s" % address)
+
             packet_id = self._read_exact(1, captured=received)
             length_bytes = self._read_exact(2, captured=received)
             length = struct.unpack(">H", length_bytes)[0]
             if length < 2:
                 raise R307InvalidPacketError("Invalid R307 packet length: %s" % length)
-            if length > self.MAX_PACKET_LENGTH:
-                raise R307InvalidPacketError(
-                    "R307 packet length %s exceeds maximum %s"
-                    % (length, self.MAX_PACKET_LENGTH)
-                )
 
             payload = self._read_exact(length - 2, captured=received)
             received_checksum = self._read_exact(2, captured=received)
             calc_checksum = struct.pack(">H", self._checksum(packet_id + length_bytes + payload))
             if received_checksum != calc_checksum:
-                raise R307InvalidPacketError(
-                    "Checksum mismatch: received=%s expected=%s"
-                    % (self._hex(received_checksum), self._hex(calc_checksum))
-                )
-            if address != self.ADDRESS:
-                raise R307InvalidPacketError(
-                    "Invalid R307 address: %s" % self._hex(address)
-                )
+                raise R307InvalidPacketError("Checksum mismatch in R307 packet")
 
             packet = {
-                "address": address,
                 "packet_id": packet_id[0],
                 "length": length,
                 "payload": payload,
@@ -379,13 +239,8 @@ class R307:
         except R307TimeoutError:
             if self.debug:
                 self._log(
-                    "RX incomplete: expected packet field not complete; "
-                    "received=%d bytes after %dms: %s"
-                    % (
-                        len(received),
-                        time.ticks_diff(time.ticks_ms(), started),
-                        self._hex(received),
-                    )
+                    "RX timeout after %d packet bytes: %s"
+                    % (len(received), self._hex(received))
                 )
             raise
         except R307PacketError:
@@ -397,15 +252,7 @@ class R307:
             raise
 
         if self.debug:
-            self._log(
-                "RX packet actual=%d bytes declared=%d bytes (%dms): %s"
-                % (
-                    len(received),
-                    length + 9,
-                    time.ticks_diff(time.ticks_ms(), started),
-                    self._hex(received[packet_start:]),
-                )
-            )
+            self._log("RX packet (%d bytes): %s" % (len(received), self._hex(received)))
         return packet
 
     def _consume_late_response(self):
@@ -477,34 +324,22 @@ class R307:
 
         self._command_active = True
         self._active_command_id = command_id
-        command_started = time.ticks_ms()
         try:
             if self.uart is None:
                 self._initialize_uart()
             self._consume_late_response()
             if self.debug:
                 self._log("Command 0x%02X started" % command_id)
-            self._log_uart_pending("before TX", command_id)
             self._send_packet(command_id, payload)
-            self._log_uart_pending("after TX", command_id)
             if not expect_response:
                 return True
-            if self.debug:
-                self._log(
-                    "Waiting up to %dms for command 0x%02X response"
-                    % (self.timeout_ms, command_id)
-                )
             packet = self._read_packet()
             if packet["packet_id"] != self.PID_ACK:
-                self._log(
-                    "Unexpected response packet ID=0x%02X for command 0x%02X"
-                    % (packet["packet_id"], command_id)
-                )
                 raise R307InvalidPacketError(
                     "Unexpected R307 packet ID: %s" % packet["packet_id"]
                 )
-            confirmation = packet["payload"][0] if packet["payload"] else None
             if self.debug:
+                confirmation = packet["payload"][0] if packet["payload"] else None
                 self._log(
                     "ACK packet_id=0x%02X confirmation=%s checksum=valid"
                     % (
@@ -512,28 +347,9 @@ class R307:
                         "missing" if confirmation is None else "0x%02X" % confirmation,
                     )
                 )
-            self._log_uart_pending("after RX", command_id)
             return packet
-        except R307TimeoutError as exc:
+        except R307TimeoutError:
             self._previous_command_timed_out = True
-            self._log(
-                "Command 0x%02X timed out after %dms: %s"
-                % (
-                    command_id,
-                    time.ticks_diff(time.ticks_ms(), command_started),
-                    exc,
-                )
-            )
-            raise
-        except R307InvalidPacketError as exc:
-            self._log(
-                "Command 0x%02X invalid response after %dms: %s"
-                % (
-                    command_id,
-                    time.ticks_diff(time.ticks_ms(), command_started),
-                    exc,
-                )
-            )
             raise
         finally:
             if self.debug:
@@ -544,16 +360,9 @@ class R307:
     def verify_password(self, password):
         payload = struct.pack(">I", password & 0xFFFFFFFF)
         response = self._execute_command(self.CMD_VERIFY_PASSWORD, payload)
-        if not response["payload"]:
-            raise R307InvalidPacketError(
-                "VerifyPassword response did not include a confirmation code"
-            )
         status = response["payload"][0]
         if status != self.STATUS_OK:
-            raise R307CommunicationError(
-                "R307 password verification rejected: confirmation=0x%02X"
-                % status
-            )
+            raise R307CommunicationError("R307 password verification failed")
         return True
 
     def get_image(self):
@@ -589,9 +398,6 @@ class R307:
             raise R307TemplateError("Search response too short")
         status = response["payload"][0]
         if status == self.STATUS_MATCH_NOT_FOUND:
-            self._log(
-                "Search confirmation=0x%02X: fingerprint not found" % status
-            )
             return None
         if len(response["payload"]) < 5:
             raise R307TemplateError("Search response too short")

@@ -10,7 +10,6 @@ class PersistentEventQueue:
         self.max_events = max_events
 
     def _read(self):
-        backup = self.path + ".bak"
         try:
             with open(self.path, "r") as handle:
                 data = json.loads(handle.read())
@@ -18,18 +17,9 @@ class PersistentEventQueue:
             error_number = getattr(exc, "errno", None)
             if error_number is None and getattr(exc, "args", None):
                 error_number = exc.args[0]
-            if error_number != errno.ENOENT:
-                raise
-            try:
-                with open(backup, "r") as handle:
-                    data = json.loads(handle.read())
-            except OSError as backup_error:
-                backup_number = getattr(backup_error, "errno", None)
-                if backup_number is None and getattr(backup_error, "args", None):
-                    backup_number = backup_error.args[0]
-                if backup_number == errno.ENOENT:
-                    return []
-                raise
+            if error_number == errno.ENOENT:
+                return []
+            raise
         if not isinstance(data, list):
             raise ValueError("Attendance queue must contain a JSON list")
         return data
@@ -43,32 +33,13 @@ class PersistentEventQueue:
                     handle.flush()
             replace = getattr(os, "replace", None)
             if replace is None:
-                backup = self.path + ".bak"
-                if self._file_exists(self.path):
-                    try:
-                        self._remove_temporary(backup)
-                        os.rename(self.path, backup)
-                    except OSError as exc:
-                        raise OSError(
-                            "Safe queue replacement unavailable; existing queue was preserved: %s"
-                            % exc
-                        )
                 try:
                     os.rename(temporary, self.path)
                 except OSError as exc:
-                    if self._file_exists(backup):
-                        try:
-                            os.rename(backup, self.path)
-                        except OSError as restore_error:
-                            raise OSError(
-                                "Queue replacement failed (%s); original queue remains at %s: %s"
-                                % (exc, backup, restore_error)
-                            )
                     raise OSError(
                         "Safe queue replacement unavailable; existing queue was preserved: %s"
                         % exc
                     )
-                self._remove_temporary(backup)
             else:
                 replace(temporary, self.path)
         except Exception as exc:
@@ -92,28 +63,12 @@ class PersistentEventQueue:
             if error_number != errno.ENOENT:
                 raise
 
-    @staticmethod
-    def _file_exists(path):
-        try:
-            with open(path, "r"):
-                return True
-        except OSError as exc:
-            error_number = getattr(exc, "errno", None)
-            if error_number is None and getattr(exc, "args", None):
-                error_number = exc.args[0]
-            if error_number == errno.ENOENT:
-                return False
-            raise
-
     def append(self, event):
         events = self._read()
         if len(events) >= self.max_events:
             raise OSError("Offline attendance queue is full; sync is required")
         events.append(event)
         self._write(events)
-
-    def pending_count(self):
-        return len(self._read())
 
     def flush(self, api_client, device_id):
         outcomes = {}

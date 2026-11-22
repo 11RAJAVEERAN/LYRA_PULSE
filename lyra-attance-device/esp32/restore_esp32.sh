@@ -52,6 +52,12 @@ upload_file() {
 
 upload_file boot.py boot.py
 upload_file config.py config.py
+if [ -f "$SCRIPT_DIR/config_local.py" ]; then
+    upload_file config_local.py config_local.py
+else
+    echo "No config_local.py found; refusing deployment with missing local configuration." >&2
+    exit 1
+fi
 upload_file main.py main.py
 upload_file enroll.py enroll.py
 upload_file hardware_test.py hardware_test.py
@@ -68,6 +74,7 @@ upload_file lib/font5x8.py lib/font5x8.py
 upload_file lib/ssd1306.py lib/ssd1306.py
 upload_file services/__init__.py services/__init__.py
 upload_file services/api_service.py services/api_service.py
+upload_file services/event_queue.py services/event_queue.py
 upload_file services/fingerprint_service.py services/fingerprint_service.py
 upload_file services/wifi_service.py services/wifi_service.py
 upload_file utils/__init__.py utils/__init__.py

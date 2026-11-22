@@ -1,7 +1,6 @@
 """HTTP client for posting attendance events to the configured Django backend."""
 
 import json
-import os
 import time
 
 try:
@@ -48,9 +47,7 @@ except ImportError:  # pragma: no cover - CPython fallback for local testing
     requests = _CPythonRequests()
 
 from config import (
-    ALLOW_INSECURE_HTTP,
     API_BASE_URL,
-    API_DEVICE_HEARTBEAT,
     API_DEVICE_ENROLLMENT_PENDING,
     API_DEVICE_ENROLLMENT_RESULT,
     API_FINGERPRINT_ENDPOINT,
@@ -59,60 +56,29 @@ from config import (
     DEVICE_TOKEN,
 )
 from utils.logger import log
-from services.event_queue import PersistentEventQueue
-
-
-def _uuid4():
-    try:
-        raw = bytearray(os.urandom(16))
-    except Exception:
-        raw = bytearray([int(time.time() * 1000) & 255 for _ in range(16)])
-    raw[6] = (raw[6] & 0x0F) | 0x40
-    raw[8] = (raw[8] & 0x3F) | 0x80
-    value = "%032x" % int.from_bytes(raw, "big")
-    return "%s-%s-%s-%s-%s" % (value[:8], value[8:12], value[12:16], value[16:20], value[20:])
-
-
-def _utc_timestamp():
-    value = time.gmtime()
-    if value[0] < 2020:
-        raise ValueError("Device clock is not synchronized")
-    return "%04d-%02d-%02dT%02d:%02d:%02d+00:00" % tuple(value[:6])
 
 
 class AttendanceAPIClient:
-    def __init__(self, base_url=API_BASE_URL, timeout=API_TIMEOUT, retry_count=API_RETRY_COUNT, event_queue=None):
+    def __init__(self, base_url=API_BASE_URL, timeout=API_TIMEOUT, retry_count=API_RETRY_COUNT):
         self.base_url = base_url.rstrip("/")
-        is_https = self.base_url.startswith("https://")
-        is_http = self.base_url.startswith("http://")
-        if not is_https and not (is_http and ALLOW_INSECURE_HTTP):
-            raise ValueError("Device API requires an HTTPS base URL or explicit ALLOW_INSECURE_HTTP")
         self.timeout = timeout
         self.retry_count = retry_count
-        self.event_queue = event_queue or PersistentEventQueue()
 
     def _endpoint(self):
         return self.base_url + API_FINGERPRINT_ENDPOINT
 
     def send_attendance(self, device_id, fingerprint_slot):
-        event = {"event_id": _uuid4(), "fingerprint_slot": int(fingerprint_slot), "occurred_at": _utc_timestamp()}
-        self.event_queue.append(event)
-        result = self.event_queue.flush(self, device_id).get(event["event_id"])
-        if result is None:
-            return {"success": False, "queued": True, "message": "Attendance saved on device and waiting for synchronization."}
-        return result
-
-    def post_queued_event(self, device_id, event):
-        payload = dict(event)
-        payload["device_id"] = device_id
-        return self._device_request("POST", API_FINGERPRINT_ENDPOINT, payload, retry_count=0, headers=self._device_headers())
-
-    def sync_pending(self, device_id):
-        return self.event_queue.flush(self, device_id)
-
-    def send_heartbeat(self, device_id):
-        endpoint = API_DEVICE_HEARTBEAT.format(device_id=device_id)
-        return self._device_request("POST", endpoint, {}, retry_count=0)
+        payload = {
+            "device_id": device_id,
+            "fingerprint_slot": fingerprint_slot,
+        }
+        return self._device_request(
+            "POST",
+            API_FINGERPRINT_ENDPOINT,
+            payload,
+            retry_count=0,
+            headers=self._device_headers(),
+        )
 
     def _device_headers(self):
         headers = {"Content-Type": "application/json"}

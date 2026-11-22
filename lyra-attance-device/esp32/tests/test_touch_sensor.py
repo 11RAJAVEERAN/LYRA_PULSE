@@ -9,16 +9,16 @@ from hardware.touch_sensor import TouchSensor
 class TouchSensorTests(unittest.TestCase):
     def test_detects_debounced_edges_in_either_direction_without_polarity(self):
         pin = fakes.FakePin(R307_TOUCH_PIN, fakes.FakePin.IN)
-        touch = TouchSensor(pin)
+        touch = TouchSensor(pin, active_level=None)
 
         pin.value(1)
-        for _ in range(4):
+        for _ in range(9):
             self.assertFalse(touch.poll_touch_edge())
         self.assertTrue(touch.poll_touch_edge())
         self.assertFalse(touch.poll_touch_edge())
 
         pin.value(0)
-        for _ in range(4):
+        for _ in range(9):
             self.assertFalse(touch.poll_touch_edge())
         self.assertTrue(touch.poll_touch_edge())
         self.assertFalse(touch.poll_touch_edge())
@@ -38,12 +38,12 @@ class TouchSensorTests(unittest.TestCase):
         touch = TouchSensor(pin, active_level=1)
 
         pin.value(1)
-        for _ in range(5):
+        for _ in range(10):
             result = touch.poll_touch_edge()
         self.assertTrue(result)
 
         pin.value(0)
-        for _ in range(5):
+        for _ in range(10):
             result = touch.poll_touch_edge()
         self.assertFalse(result)
 
@@ -53,12 +53,12 @@ class TouchSensorTests(unittest.TestCase):
         touch = TouchSensor(pin, active_level=0)
 
         pin.value(0)
-        for _ in range(5):
+        for _ in range(10):
             result = touch.poll_touch_edge()
         self.assertTrue(result)
 
         pin.value(1)
-        for _ in range(5):
+        for _ in range(10):
             result = touch.poll_touch_edge()
         self.assertFalse(result)
 

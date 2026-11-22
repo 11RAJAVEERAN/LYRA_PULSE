@@ -2,6 +2,7 @@ import json
 import os
 import unittest
 import uuid
+from unittest.mock import patch
 
 import fakes
 
@@ -40,7 +41,31 @@ class FakeRequests:
         return FakeResponse()
 
 
+class EnrollmentResponse:
+    status = 200
+
+    def json(self):
+        return {
+            "success": True,
+            "message": "Enrollment available",
+            "data": {
+                "action": "ENROLL_FINGERPRINT",
+                "enrollment_id": "enrollment-1",
+                "employee_id": 3,
+                "finger": "right_index",
+            },
+        }
+
+    def close(self):
+        return None
+
+
 class DeviceResultRequestTests(unittest.TestCase):
+    @staticmethod
+    def read_queue(path):
+        with open(path) as handle:
+            return json.load(handle)
+
     def make_client(self, **kwargs):
         path = os.path.join(os.path.dirname(__file__), ".api_queue_%s.json" % os.getpid())
         self.addCleanup(lambda: os.remove(path) if os.path.exists(path) else None)
@@ -91,7 +116,8 @@ class DeviceResultRequestTests(unittest.TestCase):
                 timeout=4,
                 retry_count=0,
             )
-            result = client.send_attendance("LYRA-DEVICE-001", 137)
+            with patch.object(api_service, "ATTENDANCE_SYNC_ENABLED", True):
+                result = client.send_attendance("LYRA-DEVICE-001", 137)
         finally:
             api_service.requests = previous_requests
             api_service.DEVICE_TOKEN = previous_token
@@ -130,13 +156,106 @@ class DeviceResultRequestTests(unittest.TestCase):
                 timeout=4,
                 retry_count=3,
             )
-            result = client.send_attendance("LYRA-DEVICE-001", 137)
+            with patch.object(api_service, "ATTENDANCE_SYNC_ENABLED", True):
+                result = client.send_attendance("LYRA-DEVICE-001", 137)
         finally:
             api_service.requests = previous_requests
 
         self.assertFalse(result["success"])
         self.assertEqual(fake_requests.post_count, 1)
         self.assertTrue(result["queued"])
+
+    def test_disabled_attendance_sync_keeps_queue_and_never_posts(self):
+        path = os.path.join(os.path.dirname(__file__), ".paused_queue_%s.json" % os.getpid())
+        self.addCleanup(lambda: os.remove(path) if os.path.exists(path) else None)
+        queue = PersistentEventQueue(path)
+        existing_events = [
+            {"event_id": "old-1", "fingerprint_slot": 1, "occurred_at": "2026-11-18T09:00:00+00:00"},
+            {"event_id": "old-2", "fingerprint_slot": 2, "occurred_at": "2026-11-18T09:01:00+00:00"},
+        ]
+        for event in existing_events:
+            queue.append(event)
+        original_records = self.read_queue(path)
+        fake_requests = FakeRequests()
+        client = AttendanceAPIClient(base_url="https://backend", event_queue=queue)
+
+        with (
+            patch.object(api_service, "ATTENDANCE_SYNC_ENABLED", False),
+            patch.object(api_service, "requests", fake_requests),
+            patch.object(queue, "flush", wraps=queue.flush) as flush,
+        ):
+            result = client.send_attendance("LYRA-DEVICE-001", 4)
+            records_after_append = self.read_queue(path)
+            pending = client.sync_pending("LYRA-DEVICE-001")
+
+        stored_records = self.read_queue(path)
+        self.assertTrue(result["queued"])
+        self.assertEqual(pending, {})
+        self.assertEqual(fake_requests.post_count, 0)
+        flush.assert_not_called()
+        self.assertEqual(stored_records, records_after_append)
+        self.assertEqual(stored_records[:2], original_records)
+        self.assertEqual(len(stored_records), len(original_records) + 1)
+        self.assertEqual(stored_records[-1]["fingerprint_slot"], 4)
+
+    def test_enrollment_poll_still_works_while_attendance_sync_is_disabled(self):
+        class PollRequests:
+            def __init__(self):
+                self.get_count = 0
+                self.post_count = 0
+
+            def get(self, *_args, **_kwargs):
+                self.get_count += 1
+                return EnrollmentResponse()
+
+            def post(self, *_args, **_kwargs):
+                self.post_count += 1
+                return FakeResponse()
+
+        fake_requests = PollRequests()
+        client = self.make_client(base_url="https://backend")
+
+        with (
+            patch.object(api_service, "ATTENDANCE_SYNC_ENABLED", False),
+            patch.object(api_service, "requests", fake_requests),
+        ):
+            response = client.poll_enrollment("LYRA-DEVICE-001")
+
+        self.assertTrue(response["success"])
+        self.assertEqual(response["data"]["action"], "ENROLL_FINGERPRINT")
+        self.assertEqual(fake_requests.get_count, 1)
+        self.assertEqual(fake_requests.post_count, 0)
+
+    def test_enabling_sync_flushes_pending_events_in_fifo_order(self):
+        class OrderedRequests:
+            def __init__(self):
+                self.event_ids = []
+
+            def post(self, _url, data=None, **_kwargs):
+                self.event_ids.append(json.loads(data.decode("utf-8"))["event_id"])
+                return FakeResponse()
+
+        path = os.path.join(os.path.dirname(__file__), ".resume_queue_%s.json" % os.getpid())
+        self.addCleanup(lambda: os.remove(path) if os.path.exists(path) else None)
+        queue = PersistentEventQueue(path)
+        events = [
+            {"event_id": "queued-1", "fingerprint_slot": 1, "occurred_at": "2026-11-18T09:00:00+00:00"},
+            {"event_id": "queued-2", "fingerprint_slot": 2, "occurred_at": "2026-11-18T09:01:00+00:00"},
+        ]
+        for event in events:
+            queue.append(event)
+        fake_requests = OrderedRequests()
+        client = AttendanceAPIClient(base_url="https://backend", event_queue=queue)
+
+        with (
+            patch.object(api_service, "ATTENDANCE_SYNC_ENABLED", True),
+            patch.object(api_service, "requests", fake_requests),
+        ):
+            outcomes = client.sync_pending("LYRA-DEVICE-001")
+
+        self.assertEqual(fake_requests.event_ids, ["queued-1", "queued-2"])
+        self.assertEqual(list(outcomes), ["queued-1", "queued-2"])
+        self.assertEqual(self.read_queue(path), [])
 
     def test_heartbeat_uses_device_auth_and_configured_timeout(self):
         fake_requests = FakeRequests()
@@ -166,27 +285,15 @@ class DeviceResultRequestTests(unittest.TestCase):
         )
         self.assertEqual(fake_requests.post_arguments["timeout"], 4)
 
-    def test_http_base_url_is_allowed_when_insecure_http_is_explicitly_enabled(self):
-        previous_allow_insecure = api_service.ALLOW_INSECURE_HTTP
-        api_service.ALLOW_INSECURE_HTTP = True
-        try:
-            client = self.make_client(base_url="http://backend")
-            self.assertEqual(client.base_url, "http://backend")
-        finally:
-            api_service.ALLOW_INSECURE_HTTP = previous_allow_insecure
-
-    def test_http_base_url_is_rejected_before_credentials_are_sent(self):
+    def test_http_localhost_base_url_is_rejected_before_credentials_are_sent(self):
         fake_requests = FakeRequests()
         previous_requests = api_service.requests
-        previous_allow_insecure = api_service.ALLOW_INSECURE_HTTP
         api_service.requests = fake_requests
-        api_service.ALLOW_INSECURE_HTTP = False
         try:
-            with self.assertRaisesRegex(ValueError, "requires an HTTPS|ALLOW_INSECURE_HTTP"):
-                self.make_client(base_url="http://backend")
+            with self.assertRaisesRegex(ValueError, "must not use localhost"):
+                self.make_client(base_url="http://localhost:8000")
         finally:
             api_service.requests = previous_requests
-            api_service.ALLOW_INSECURE_HTTP = previous_allow_insecure
 
         self.assertEqual(fake_requests.post_count, 0)
 

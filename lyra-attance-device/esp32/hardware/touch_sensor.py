@@ -6,7 +6,6 @@ from config import (
     R307_TOUCH_ACTIVE_LEVEL,
     R307_TOUCH_DEBOUNCE_SAMPLES,
     R307_TOUCH_PIN,
-    R307_TOUCH_PULL_UP_ENABLED,
 )
 from utils.logger import log
 
@@ -15,15 +14,12 @@ class TouchSensor:
     def __init__(self, pin=None, active_level=R307_TOUCH_ACTIVE_LEVEL):
         if active_level not in (None, 0, 1):
             raise ValueError("Touch active level must be None, 0, or 1")
-        if pin is not None:
-            self.pin = pin
-        elif R307_TOUCH_PULL_UP_ENABLED:
-            pull_up = getattr(Pin, "PULL_UP", None)
-            if pull_up is None:
-                raise RuntimeError("This MicroPython build does not expose Pin.PULL_UP")
-            self.pin = Pin(R307_TOUCH_PIN, Pin.IN, pull_up)
-        else:
-            self.pin = Pin(R307_TOUCH_PIN, Pin.IN)
+        pull_up = getattr(Pin, "PULL_UP", 0)
+        self.pin = (
+            pin
+            if pin is not None
+            else Pin(R307_TOUCH_PIN, Pin.IN, pull_up)
+        )
         self.active_level = active_level
         self.stable_level = self.pin.value()
         self.candidate_level = self.stable_level

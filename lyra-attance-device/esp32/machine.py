@@ -12,7 +12,7 @@ class Pin:
     IN = 0
     PULL_UP = 2
 
-    def __init__(self, pin_id, mode=-1, pull=None):
+    def __init__(self, pin_id, mode=-1, pull=-1):
         self.pin_id = pin_id
         self.mode = mode
         self.pull = pull
