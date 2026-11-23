@@ -42,7 +42,9 @@ class _SocketReader:
             index = bytes(self.buffer).find(marker)
             if index >= 0:
                 value = bytes(self.buffer[:index])
-                del self.buffer[:index + len(marker)]
+                # MicroPython v1.29 does not support deleting bytearray slices.
+                # Rebind to the unconsumed suffix instead of mutating by del.
+                self.buffer = bytearray(self.buffer[index + len(marker):])
                 return value
             if len(self.buffer) > limit:
                 raise OSError("HTTP response header or line exceeds limit")
@@ -56,7 +58,7 @@ class _SocketReader:
             if not self._receive():
                 raise OSError("Connection closed during HTTP response body")
         value = bytes(self.buffer[:count])
-        del self.buffer[:count]
+        self.buffer = bytearray(self.buffer[count:])
         return value
 
     def read_to_eof(self, initial_size=0):

@@ -8,7 +8,7 @@ from services.fingerprint_service import EnrollmentError, FingerprintService
 
 class FakeSensor:
     def __init__(self, duplicate=None, verification=None):
-        self.images = [True, False, True, False, True]
+        self.images = [True, False, True, False]
         self.image_error = None
         self.duplicate = duplicate
         self.verification = verification or {"fingerprint_id": 1, "score": 512}
@@ -83,7 +83,7 @@ class FingerprintEnrollmentFlowTests(unittest.TestCase):
         self.display = FakeDisplay()
         self.api = FakeAPI()
 
-    def test_reports_success_only_after_third_scan_confirms_stored_slot(self):
+    def test_reports_success_after_two_captures_and_stored_slot_verification(self):
         command = {"action": "ENROLL_FINGERPRINT", "enrollment_id": "enroll-1"}
 
         slot = self.service.enroll_from_command(
@@ -94,7 +94,7 @@ class FingerprintEnrollmentFlowTests(unittest.TestCase):
         )
 
         self.assertEqual(slot, 1)
-        self.assertEqual(self.sensor.converted_buffers, [1, 2, 1])
+        self.assertEqual(self.sensor.converted_buffers, [1, 2])
         self.assertTrue(self.sensor.model_created)
         self.assertEqual(self.sensor.stored, [(1, 1)])
         self.assertEqual(self.sensor.slot_probe_buffers, [2])
@@ -109,7 +109,7 @@ class FingerprintEnrollmentFlowTests(unittest.TestCase):
         self.assertEqual(self.display.success_slot, 1)
         self.assertTrue(self.service._awaiting_removal)
 
-    def test_different_fingerprint_on_third_scan_never_reports_success(self):
+    def test_stored_slot_mismatch_never_reports_success(self):
         self.sensor.verification = {"fingerprint_id": 23, "score": 900}
         command = {"action": "ENROLL_FINGERPRINT", "enrollment_id": "enroll-2"}
 
@@ -125,7 +125,7 @@ class FingerprintEnrollmentFlowTests(unittest.TestCase):
         self.assertNotIn("SUCCESS", [status for status, _ in self.api.statuses])
         self.assertIsNone(self.display.success_slot)
 
-    def test_existing_fingerprint_is_reused_only_after_third_scan_verifies_its_slot(self):
+    def test_existing_fingerprint_is_reused_only_after_stored_slot_verification(self):
         self.sensor.duplicate = {"fingerprint_id": 18, "score": 700}
         self.sensor.verification = {"fingerprint_id": 18, "score": 700}
         command = {"action": "ENROLL_FINGERPRINT", "enrollment_id": "enroll-3"}
@@ -151,7 +151,7 @@ class FingerprintEnrollmentFlowTests(unittest.TestCase):
         )
         self.assertEqual(self.display.success_slot, 18)
 
-    def test_existing_fingerprint_with_different_third_scan_is_not_reported_successful(self):
+    def test_existing_fingerprint_with_slot_mismatch_is_not_reported_successful(self):
         self.sensor.duplicate = {"fingerprint_id": 18, "score": 700}
         self.sensor.verification = {"fingerprint_id": 19, "score": 700}
         command = {"action": "ENROLL_FINGERPRINT", "enrollment_id": "enroll-4"}

@@ -19,6 +19,8 @@ class FingerprintEnrollment(models.Model):
     ACTIVE_STATUSES = ACTIVE_ENROLLMENT_STATUSES
 
     class Finger(models.TextChoices):
+        FIRST_FINGER = "first_finger", "First finger"
+        SECOND_FINGER = "second_finger", "Second finger"
         LEFT_THUMB = "left_thumb", "Left thumb"
         LEFT_INDEX = "left_index", "Left index"
         LEFT_MIDDLE = "left_middle", "Left middle"

@@ -34,6 +34,18 @@ class FakeSocket:
         self.closed = True
 
 
+class ReadFailureSocket(FakeSocket):
+    def recv(self, count):
+        raise OSError("simulated read failure")
+
+
+class NoSliceDeleteBytearray(bytearray):
+    """Approximate the MicroPython bytearray limitation seen on the device."""
+
+    def __delitem__(self, key):
+        raise TypeError("'bytearray' object doesn't support item deletion")
+
+
 class HTTPTransportTests(unittest.TestCase):
     def run_with_socket(self, response, method, url, data=None, headers=None):
         fake = FakeSocket(response)
@@ -96,6 +108,60 @@ class HTTPTransportTests(unittest.TestCase):
         request = bytes(fake.sent)
         self.assertTrue(request.startswith(b"GET /api/v1/devices/ESP32/enrollment/pending/ HTTP/1.1\r\n"))
         self.assertEqual(result.json(), {"success": True})
+        self.assertTrue(fake.closed)
+
+    def test_get_reads_fragmented_content_length_without_bytearray_deletion(self):
+        response_body = (
+            b'{"success":true,"data":{"employee_id":123,"status":"WAITING_FOR_FINGER",'
+            b'"details":"' + (b"x" * 1024) + b'"}}'
+        )
+        response = (
+            b"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n"
+            + b"Content-Length: " + str(len(response_body)).encode("ascii")
+            + b"\r\nConnection: close\r\n\r\n" + response_body
+        )
+        fake = FakeSocket(response)
+        with (
+            patch.object(http_transport, "bytearray", NoSliceDeleteBytearray, create=True),
+            patch.object(
+                http_transport.socket,
+                "getaddrinfo",
+                return_value=[(2, 1, 6, "", ("192.168.1.105", 8000))],
+            ),
+            patch.object(http_transport.socket, "socket", return_value=fake),
+        ):
+            result = http_transport.request(
+                "GET",
+                "http://192.168.1.105:8000/api/v1/devices/ESP32/enrollment/pending/",
+                timeout=3,
+            )
+
+        self.assertEqual(result.json(), {
+            "success": True,
+            "data": {
+                "employee_id": 123,
+                "status": "WAITING_FOR_FINGER",
+                "details": "x" * 1024,
+            },
+        })
+        self.assertTrue(fake.closed)
+
+    def test_socket_is_closed_when_response_read_fails(self):
+        fake = ReadFailureSocket(b"")
+        with (
+            patch.object(
+                http_transport.socket,
+                "getaddrinfo",
+                return_value=[(2, 1, 6, "", ("192.168.1.105", 8000))],
+            ),
+            patch.object(http_transport.socket, "socket", return_value=fake),
+        ):
+            with self.assertRaisesRegex(OSError, "HTTP response read failed"):
+                http_transport.request(
+                    "GET",
+                    "http://192.168.1.105:8000/api/v1/devices/ESP32/enrollment/pending/",
+                    timeout=3,
+                )
         self.assertTrue(fake.closed)
 
 

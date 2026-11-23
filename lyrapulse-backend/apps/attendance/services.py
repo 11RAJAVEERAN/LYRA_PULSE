@@ -225,7 +225,7 @@ def _is_open_attendance_conflict(error):
 @transaction.atomic
 def check_in(
     *, employee, branch, latitude=None, longitude=None, accuracy=None, location_timestamp=None, photo=None,
-    location_required=True,
+    location_required=True, method=AttendanceEvent.Method.MOBILE_GPS, device=None, device_event=None,
 ):
     employee = Employee.objects.select_for_update().get(pk=employee.pk)
     verification = None
@@ -253,6 +253,7 @@ def check_in(
     lat, lon, _ = validate_coordinates(latitude, longitude) if location_required else (None, None, None)
     attendance = Attendance(
         employee=employee, branch=branch, attendance_date=today, check_in_at=now,
+        source=method, device=device,
         check_in_latitude=_decimal7(lat) if lat is not None else None,
         check_in_longitude=_decimal7(lon) if lon is not None else None,
         check_in_accuracy=verification.accuracy_meters if verification else None,
@@ -262,7 +263,8 @@ def check_in(
     try:
         with transaction.atomic():
             attendance.save(force_insert=True)  # writes the photo, then INSERTs
-            AttendanceEvent.objects.create(attendance=attendance, action=AttendanceEvent.Action.CHECK_IN, method=AttendanceEvent.Method.MOBILE_GPS, occurred_at=now)
+            AttendanceEvent.objects.create(attendance=attendance, action=AttendanceEvent.Action.CHECK_IN,
+                method=method, device=device, device_event=device_event, occurred_at=now)
     except IntegrityError as error:
         _discard_file(attendance.check_in_photo)
         # Row locks serialize on databases that support them; this partial unique index is
@@ -280,7 +282,7 @@ def check_in(
 @transaction.atomic
 def check_out(
     *, employee, branch, latitude=None, longitude=None, accuracy=None, location_timestamp=None, photo=None,
-    location_required=True,
+    location_required=True, method=AttendanceEvent.Method.MOBILE_GPS, device=None, device_event=None,
 ):
     employee = Employee.objects.select_for_update().get(pk=employee.pk)
     verification = None
@@ -314,7 +316,8 @@ def check_out(
             attendance.check_out_location_verified = True if verification else None
             attendance.check_out_photo = photo or ""
             attendance.save(update_fields=CHECK_OUT_FIELDS)
-            AttendanceEvent.objects.create(attendance=attendance, action=AttendanceEvent.Action.CHECK_OUT, method=AttendanceEvent.Method.MOBILE_GPS, occurred_at=now)
+            AttendanceEvent.objects.create(attendance=attendance, action=AttendanceEvent.Action.CHECK_OUT,
+                method=method, device=device, device_event=device_event, occurred_at=now)
     except AttendanceError:
         raise
     except Exception:

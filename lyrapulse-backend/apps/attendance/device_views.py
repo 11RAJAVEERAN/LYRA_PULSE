@@ -1,7 +1,7 @@
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 from rest_framework import status
-from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
+from rest_framework.exceptions import APIException, NotFound, PermissionDenied, ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -11,6 +11,8 @@ from apps.devices.permissions import IsAuthenticatedDevice
 from apps.employees.models import Employee
 from apps.fingerprints.models import EmployeeFingerprint
 from apps.common.responses import success_response
+from . import services
+from .exceptions import AttendanceError
 
 from .device_serializers import DeviceAttendanceEventSerializer
 from .models import Attendance, AttendanceEvent, DeviceAttendanceEvent
@@ -53,24 +55,36 @@ class FingerprintAttendanceEventView(APIView):
                 happened = values["occurred_at"]
                 if happened > timezone.now():
                     raise ValidationError({"occurred_at": "Device timestamp is ahead of the backend clock; synchronize the device clock."})
-                open_session = Attendance.objects.select_for_update().filter(employee=employee, check_out_at__isnull=True).order_by("-check_in_at").first()
-                latest = Attendance.objects.filter(employee=employee).order_by("-check_out_at", "-check_in_at").first()
-                if open_session:
-                    if happened <= open_session.check_in_at:
-                        raise ValidationError({"occurred_at": "Event is older than the open session; check the device queue order."})
-                    open_session.check_out_at = happened
-                    open_session.save(update_fields=("check_out_at", "updated_at"))
-                    attendance, action, result = open_session, AttendanceEvent.Action.CHECK_OUT, "CHECKED_OUT"
-                else:
-                    if latest and latest.check_out_at and happened <= latest.check_out_at:
+                today_open = Attendance.objects.select_for_update().filter(
+                    employee=employee,
+                    attendance_date=timezone.localdate(),
+                    check_out_at__isnull=True,
+                ).order_by("-check_in_at").first()
+                if today_open and happened <= today_open.check_in_at:
+                    raise ValidationError({"occurred_at": "Event is older than the open session; check the device queue order."})
+                if not today_open:
+                    latest_today = Attendance.objects.filter(
+                        employee=employee, attendance_date=timezone.localdate(),
+                    ).order_by("-check_out_at", "-check_in_at").first()
+                    if latest_today and latest_today.check_out_at and happened <= latest_today.check_out_at:
                         raise ValidationError({"occurred_at": "Event is older than the latest attendance action."})
-                    from django.utils import timezone as tz
-                    attendance = Attendance.objects.create(employee=employee, branch=device.branch,
-                        attendance_date=tz.localdate(happened), check_in_at=happened,
-                        source=AttendanceEvent.Method.BIOMETRIC, device=device)
-                    action, result = AttendanceEvent.Action.CHECK_IN, "CHECKED_IN"
-                AttendanceEvent.objects.create(attendance=attendance, action=action,
-                    method=AttendanceEvent.Method.BIOMETRIC, device=device, device_event=ledger, occurred_at=happened)
+                try:
+                    if today_open:
+                        attendance = services.check_out(
+                            employee=employee, branch=device.branch, location_required=False,
+                            method=AttendanceEvent.Method.BIOMETRIC, device=device, device_event=ledger,
+                        )
+                        action, result = AttendanceEvent.Action.CHECK_OUT, "CHECKED_OUT"
+                    else:
+                        attendance = services.check_in(
+                            employee=employee, branch=device.branch, location_required=False,
+                            method=AttendanceEvent.Method.BIOMETRIC, device=device, device_event=ledger,
+                        )
+                        action, result = AttendanceEvent.Action.CHECK_IN, "CHECKED_IN"
+                except AttendanceError as exc:
+                    api_error = APIException({"code": exc.code, "detail": exc.message, **exc.extra})
+                    api_error.status_code = exc.status_code
+                    raise api_error from exc
                 ledger.attendance, ledger.outcome = attendance, result
                 data = {"success": True, "message": "Fingerprint attendance recorded.", "data": {
                     "attendance_id": attendance.pk, "employee": {"id": employee.pk, "name": employee.user.full_name},

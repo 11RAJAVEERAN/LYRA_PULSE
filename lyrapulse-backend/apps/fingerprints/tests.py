@@ -52,6 +52,7 @@ class FingerprintEnrollmentAPITests(TestCase):
             branch=self.branch,
             token_hash=make_password(self.device_token),
         )
+        self.device.last_seen = timezone.now()
         self.device.save()
         self.other_device_token = "second-test-device-token"
         self.other_device = Device(
@@ -59,6 +60,7 @@ class FingerprintEnrollmentAPITests(TestCase):
             branch=self.other_branch,
             token_hash=make_password(self.other_device_token),
         )
+        self.other_device.last_seen = timezone.now()
         self.other_device.save()
 
     def enroll(self, **payload):

@@ -448,8 +448,9 @@ class FingerprintService:
             raise EnrollmentError("UNKNOWN", "Invalid enrollment command")
 
         timeout_seconds = ENROLLMENT_STEP_TIMEOUT_SECONDS
+        finger_number = "2" if command.get("finger") == "second_finger" else "1"
         try:
-            self._wait_for_finger(display, "Place finger 1/3", timeout_seconds)
+            self._wait_for_finger(display, "Place finger %s" % finger_number, timeout_seconds)
             log("R307", "Image2Tz buffer 1")
             self.sensor.image_to_template(buffer_id=1)
             log("ENROLL", "Image2Tz succeeded: buffer 1")
@@ -462,7 +463,7 @@ class FingerprintService:
                 "WAITING_FOR_SECOND_SCAN",
             )
 
-            self._wait_for_finger(display, "Same finger 2/3", timeout_seconds)
+            self._wait_for_finger(display, "Same finger %s again" % finger_number, timeout_seconds)
             log("R307", "Image2Tz buffer 2")
             self.sensor.image_to_template(buffer_id=2)
             log("ENROLL", "Image2Tz succeeded: buffer 2")
@@ -493,20 +494,18 @@ class FingerprintService:
                 slot = self.sensor.find_free_template_slot(
                     MAX_TEMPLATE_COUNT,
                     start_page=ENROLLMENT_TEMPLATE_ID,
-                    buffer_id=2,
+                buffer_id=2,
                 )
                 log("R307", "StoreTemplate slot %s" % slot)
                 self.sensor.store_model(slot, buffer_id=1)
                 log("ENROLL", "StoreTemplate acknowledged for actual slot %s" % slot)
 
-            self._wait_for_finger_removed(display, timeout_seconds)
-            self._wait_for_finger(display, "Place finger 3/3", timeout_seconds)
-            log("R307", "Image2Tz verification buffer 1")
-            self.sensor.image_to_template(buffer_id=1)
-            log("ENROLL", "Image2Tz succeeded: verification buffer 1")
-            log("R307", "Verification search")
+            # Buffer 2 still contains the second successful capture of this same
+            # finger. Search it after storage to verify the actual stored slot;
+            # no extra fingerprint capture is needed.
+            log("R307", "Stored-slot verification search")
             verification = self.sensor.search(
-                buffer_id=1,
+                buffer_id=2,
                 start_page=0,
                 page_num=MAX_TEMPLATE_COUNT,
             )
@@ -524,7 +523,7 @@ class FingerprintService:
                 fingerprint_slot=slot,
             )
             display.show_enrollment_success(slot)
-            log("ENROLL", "Third scan verified actual slot %s" % slot)
+            log("ENROLL", "Two captures verified actual slot %s" % slot)
             return slot
         except EnrollmentError:
             raise
