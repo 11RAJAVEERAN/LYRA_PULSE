@@ -60,6 +60,7 @@ from config import (
 )
 from utils.logger import log
 from services.event_queue import PersistentEventQueue
+from services.http_transport import request as http_request
 
 
 def _uuid4():
@@ -153,19 +154,17 @@ class AttendanceAPIClient:
                 % (method, endpoint, attempt + 1, attempts + 1, self.timeout),
             )
             try:
-                if method == "GET":
-                    response = requests.get(
-                        url,
-                        headers=headers or self._device_headers(),
-                        timeout=self.timeout,
-                    )
-                else:
-                    response = requests.post(
-                        url,
-                        data=json.dumps(payload).encode("utf-8"),
-                        headers=headers or self._device_headers(),
-                        timeout=self.timeout,
-                    )
+                request_body = None
+                if method != "GET":
+                    request_body = json.dumps(payload).encode("utf-8")
+                response = http_request(
+                    method,
+                    url,
+                    data=request_body,
+                    headers=headers or self._device_headers(),
+                    timeout=self.timeout,
+                    requests_impl=requests,
+                )
                 log(
                     "DEVICE API",
                     "%s %s transport returned"
