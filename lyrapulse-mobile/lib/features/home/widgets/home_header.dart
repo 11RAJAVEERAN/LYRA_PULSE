@@ -29,7 +29,7 @@ class HomeHeader extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const SizedBox(width: 15),
+          const SizedBox(width: 5),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -47,7 +47,7 @@ class HomeHeader extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
-                    fontSize: 17,
+                    fontSize: 18,
                     fontWeight: FontWeight.w800,
                     color: AppColors.textPrimary,
                   ),
@@ -62,8 +62,8 @@ class HomeHeader extends StatelessWidget {
               customBorder: const CircleBorder(),
               onTap: onNotificationTap,
               child: const SizedBox(
-                width: 46,
-                height: 46,
+                width: 26,
+                height: 26,
                 child: Icon(
                   Icons.notifications,
                   color: AppColors.primary,

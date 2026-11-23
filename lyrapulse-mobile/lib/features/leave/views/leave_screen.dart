@@ -21,10 +21,10 @@ class LeaveScreen extends GetView<LeaveController> {
         elevation: 0,
         foregroundColor: AppColors.textPrimary,
         title: Text(
-          'Leave Management',
+          'Leave ',
           style: GoogleFonts.inter(
-            fontSize: 19,
-            fontWeight: FontWeight.bold,
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
           ),
         ),
       ),
@@ -106,25 +106,25 @@ class LeaveScreen extends GetView<LeaveController> {
       child: Obx(
         () => Row(
           children: [
-            Expanded(
-              child: _summary(
-                'Pending',
-                controller.pendingLeaves.length.toString(),
-                AppColors.warningBackground,
-                AppColors.warningDark,
-                Icons.pending_actions,
-              ),
-            ),
-            const SizedBox( width: 12),
-            Expanded(
-              child: _summary(
-                'History',
-                controller.historyLeaves.length.toString(),
-                AppColors.infoBackground,
-                AppColors.primaryBlue,
-                Icons.history,
-              ),
-            ),
+            // Expanded(
+            //   child: _summary(
+            //     'Pending',
+            //     controller.pendingLeaves.length.toString(),
+            //     AppColors.warningBackground,
+            //     AppColors.warningDark,
+            //     Icons.pending_actions,
+            //   ),
+            // ),
+            // const SizedBox( width: 12),
+            // Expanded(
+            //   child: _summary(
+            //     'History',
+            //     controller.historyLeaves.length.toString(),
+            //     AppColors.infoBackground,
+            //     AppColors.primaryBlue,
+            //     Icons.history,
+            //   ),
+            // ),
           ],
         ),
       ),
