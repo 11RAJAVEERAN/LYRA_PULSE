@@ -144,7 +144,6 @@ class _SplashScreenState extends State<SplashScreen>
 
     return Scaffold(
       backgroundColor: const Color(0xFF020A22),
-
       body: Stack(
         fit: StackFit.expand,
         children: [
@@ -284,7 +283,6 @@ class _SplashScreenState extends State<SplashScreen>
                     child: child,
                   );
                 },
-
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -294,10 +292,8 @@ class _SplashScreenState extends State<SplashScreen>
 
                     FadeTransition(
                       opacity: _logoOpacity,
-
                       child: AnimatedBuilder(
                         animation: _pulseController,
-
                         builder: (context, child) {
                           final double pulse =
                               1.0 + (_pulseController.value * 0.025);
@@ -307,14 +303,11 @@ class _SplashScreenState extends State<SplashScreen>
                             child: child,
                           );
                         },
-
                         child: SizedBox(
                           width: logoSize + 60,
                           height: logoSize + 60,
-
                           child: Stack(
                             alignment: Alignment.center,
-
                             children: [
                               // ----------------------------------------
                               // LOGO GLOW
@@ -322,19 +315,15 @@ class _SplashScreenState extends State<SplashScreen>
 
                               AnimatedBuilder(
                                 animation: _pulseController,
-
                                 builder: (context, child) {
                                   final double opacity =
-                                      0.16 +
-                                      (_pulseController.value * 0.10);
+                                      0.16 + (_pulseController.value * 0.10);
 
                                   return Container(
                                     width: logoSize * 1.05,
                                     height: logoSize * 1.05,
-
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
-
                                       boxShadow: [
                                         BoxShadow(
                                           color: const Color(0xFF008CFF)
@@ -354,14 +343,12 @@ class _SplashScreenState extends State<SplashScreen>
 
                               AnimatedBuilder(
                                 animation: _waveController,
-
                                 builder: (context, child) {
                                   return CustomPaint(
                                     size: Size(
                                       logoSize + 25,
                                       logoSize + 25,
                                     ),
-
                                     painter: _LogoArcPainter(
                                       progress: _waveController.value,
                                     ),
@@ -376,7 +363,6 @@ class _SplashScreenState extends State<SplashScreen>
                               SizedBox(
                                 width: logoSize,
                                 height: logoSize,
-
                                 child: const CustomPaint(
                                   painter: _LyraLogoPainter(),
                                 ),
@@ -395,18 +381,15 @@ class _SplashScreenState extends State<SplashScreen>
 
                     FadeTransition(
                       opacity: _textOpacity,
-
                       child: Text(
                         'Lyra Pulse',
                         textAlign: TextAlign.center,
-
-                        style: GoogleFonts.poppins(
+                        style: GoogleFonts.inter(
                           color: const Color(0xFFF7FAFF),
                           fontSize: titleSize,
                           fontWeight: FontWeight.w700,
                           letterSpacing: -0.6,
                           height: 1.05,
-
                           shadows: [
                             Shadow(
                               color: const Color(0xFF2D79FF)
@@ -426,12 +409,10 @@ class _SplashScreenState extends State<SplashScreen>
 
                     FadeTransition(
                       opacity: _textOpacity,
-
                       child: Text(
                         'WORK BETTER TOGETHER',
                         textAlign: TextAlign.center,
-
-                        style: GoogleFonts.poppins(
+                        style: GoogleFonts.inter(
                           color: const Color(0xFFB9D3F7),
                           fontSize: taglineSize,
                           fontWeight: FontWeight.w400,
@@ -448,31 +429,23 @@ class _SplashScreenState extends State<SplashScreen>
 
                     FadeTransition(
                       opacity: _textOpacity,
-
                       child: AnimatedBuilder(
                         animation: _loaderController,
-
                         builder: (context, child) {
                           return SizedBox(
                             height: 28,
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment:
-                                  CrossAxisAlignment.center,
-
+                              crossAxisAlignment: CrossAxisAlignment.center,
                               children: List.generate(
                                 5,
                                 (index) {
-                                  final double wave =
-                                      math.sin(
-                                    (_loaderController.value *
-                                            math.pi *
-                                            2) +
+                                  final double wave = math.sin(
+                                    (_loaderController.value * math.pi * 2) +
                                         (index * 0.8),
                                   );
 
-                                  final double barHeight =
-                                      9 + ((wave + 1) * 7);
+                                  final double barHeight = 9 + ((wave + 1) * 7);
 
                                   final double opacity =
                                       0.30 + ((wave + 1) * 0.25);
@@ -480,33 +453,23 @@ class _SplashScreenState extends State<SplashScreen>
                                   return Container(
                                     width: 5,
                                     height: barHeight,
-
-                                    margin:
-                                        const EdgeInsets.symmetric(
+                                    margin: const EdgeInsets.symmetric(
                                       horizontal: 3,
                                     ),
-
                                     decoration: BoxDecoration(
-                                      borderRadius:
-                                          BorderRadius.circular(8),
-
-                                      gradient:
-                                          const LinearGradient(
-                                        begin:
-                                            Alignment.topCenter,
-                                        end:
-                                            Alignment.bottomCenter,
+                                      borderRadius: BorderRadius.circular(8),
+                                      gradient: const LinearGradient(
+                                        begin: Alignment.topCenter,
+                                        end: Alignment.bottomCenter,
                                         colors: [
                                           Color(0xFF69B7FF),
                                           Color(0xFF087DFF),
                                         ],
                                       ),
-
                                       boxShadow: [
                                         BoxShadow(
-                                          color:
-                                              const Color(0xFF159CFF)
-                                                  .withValues(
+                                          color: const Color(0xFF159CFF)
+                                              .withValues(
                                             alpha: opacity * 0.55,
                                           ),
                                           blurRadius: 10,
@@ -544,10 +507,8 @@ class _SplashScreenState extends State<SplashScreen>
       child: Container(
         width: size,
         height: size,
-
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-
           gradient: RadialGradient(
             colors: [
               color.withValues(alpha: opacity),
@@ -913,26 +874,22 @@ class _ParticlePainter extends CustomPainter {
     ];
 
     for (final particle in particles) {
-      final double movement =
-          math.sin(
-                (progress * math.pi * 2 * particle.speed) +
-                    particle.x * 4,
-              ) *
-              5;
+      final double movement = math.sin(
+            (progress * math.pi * 2 * particle.speed) + particle.x * 4,
+          ) *
+          5;
 
       final Offset position = Offset(
         size.width * particle.x,
         size.height * particle.y + movement,
       );
 
-      final double opacity =
-          0.20 +
+      final double opacity = 0.20 +
           ((math.sin(
-                    progress * math.pi * 2 +
-                        particle.y * 5,
-                  ) +
-                  1) /
-              2) *
+                        progress * math.pi * 2 + particle.y * 5,
+                      ) +
+                      1) /
+                  2) *
               0.45;
 
       final Paint paint = Paint()
@@ -1112,27 +1069,19 @@ class _PremiumWavePainter extends CustomPainter {
     for (int i = 0; i < 7; i++) {
       final Path path = Path();
 
-      final double baseY =
-          height * 0.54 + i * 12;
+      final double baseY = height * 0.54 + i * 12;
 
       path.moveTo(
         0,
         baseY,
       );
 
-      for (
-        double x = 0;
-        x <= width;
-        x += 5
-      ) {
+      for (double x = 0; x <= width; x += 5) {
         final double n = x / width;
 
-        final double y =
-            baseY +
+        final double y = baseY +
             math.sin(
-                  n * math.pi * 2 +
-                      progress * math.pi * 2 +
-                      i * 0.25,
+                  n * math.pi * 2 + progress * math.pi * 2 + i * 0.25,
                 ) *
                 9;
 
@@ -1178,19 +1127,12 @@ class _PremiumWavePainter extends CustomPainter {
       baseY,
     );
 
-    for (
-      double x = 0;
-      x <= width;
-      x += 4
-    ) {
+    for (double x = 0; x <= width; x += 4) {
       final double n = x / width;
 
-      final double y =
-          baseY +
+      final double y = baseY +
           math.sin(
-                n * math.pi * 2 * frequency +
-                    progress * math.pi * 2 +
-                    phase,
+                n * math.pi * 2 * frequency + progress * math.pi * 2 + phase,
               ) *
               amplitude;
 
@@ -1253,19 +1195,12 @@ class _PremiumWavePainter extends CustomPainter {
       baseY,
     );
 
-    for (
-      double x = 0;
-      x <= width;
-      x += 4
-    ) {
+    for (double x = 0; x <= width; x += 4) {
       final double n = x / width;
 
-      final double y =
-          baseY +
+      final double y = baseY +
           math.sin(
-                n * math.pi * 2 * frequency +
-                    progress * math.pi * 2 +
-                    phase,
+                n * math.pi * 2 * frequency + progress * math.pi * 2 + phase,
               ) *
               amplitude;
 

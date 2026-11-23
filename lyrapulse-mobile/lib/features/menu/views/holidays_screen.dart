@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../app/theme/app_colors.dart';
@@ -11,7 +10,7 @@ class HolidaysScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Holidays'),
+        title: Text('Holidays', style: GoogleFonts.inter()),
         backgroundColor: AppColors.surface,
         surfaceTintColor: AppColors.surface,
       ),

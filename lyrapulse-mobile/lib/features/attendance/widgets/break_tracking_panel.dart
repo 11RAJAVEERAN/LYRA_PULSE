@@ -39,8 +39,9 @@ class _BreakTrackingPanelState extends State<BreakTrackingPanel> {
         message == null ? 'Break Check Out' : 'Break Error',
         message ?? '$selectedBreakType break timer started.',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor:
-            message == null ? AppColors.successBackground : AppColors.errorBackground,
+        backgroundColor: message == null
+            ? AppColors.successBackground
+            : AppColors.errorBackground,
         colorText: AppColors.primaryDark,
         duration: const Duration(seconds: 3),
       );
@@ -75,8 +76,9 @@ class _BreakTrackingPanelState extends State<BreakTrackingPanel> {
         message == null ? 'Break Check In' : 'Break Error',
         message ?? 'Break ended. Return time and location saved.',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor:
-            message == null ? AppColors.successBackground : AppColors.errorBackground,
+        backgroundColor: message == null
+            ? AppColors.successBackground
+            : AppColors.errorBackground,
         colorText: AppColors.primaryDark,
         duration: const Duration(seconds: 4),
       );
@@ -191,7 +193,7 @@ class _BreakTrackingPanelState extends State<BreakTrackingPanel> {
                       if (activeBreak != null) ...[
                         Text(
                           '${activeBreak.type} Break in Progress',
-                          style:  GoogleFonts.inter(
+                          style: GoogleFonts.inter(
                             color: AppColors.warning,
                             fontWeight: FontWeight.bold,
                             fontSize: 15,
@@ -201,6 +203,7 @@ class _BreakTrackingPanelState extends State<BreakTrackingPanel> {
                         Text(
                           'Break Check Out: '
                           '${controller.formatTime(activeBreak.startTime)}',
+                          style: GoogleFonts.inter(),
                         ),
                         const SizedBox(height: 8),
                         Container(
@@ -225,7 +228,7 @@ class _BreakTrackingPanelState extends State<BreakTrackingPanel> {
                                 controller.formatElapsedDuration(
                                   activeDuration,
                                 ),
-                                style:  GoogleFonts.inter(
+                                style: GoogleFonts.inter(
                                   fontSize: 28,
                                   fontWeight: FontWeight.bold,
                                   fontFeatures: [
@@ -247,7 +250,7 @@ class _BreakTrackingPanelState extends State<BreakTrackingPanel> {
                           items: breakTypes.map((type) {
                             return DropdownMenuItem<String>(
                               value: type,
-                              child: Text(type),
+                              child: Text(type, style: GoogleFonts.inter()),
                             );
                           }).toList(),
                           onChanged: isProcessing
@@ -270,7 +273,10 @@ class _BreakTrackingPanelState extends State<BreakTrackingPanel> {
                                   ? null
                                   : _handleBreakCheckIn,
                               icon: const Icon(Icons.login_rounded),
-                              label: const Text('Break Check In'),
+                              label: Text(
+                                'Break Check In',
+                                style: GoogleFonts.inter(),
+                              ),
                             ),
                           ),
                           const SizedBox(width: 10),
@@ -288,7 +294,10 @@ class _BreakTrackingPanelState extends State<BreakTrackingPanel> {
                                       ),
                                     )
                                   : const Icon(Icons.logout_rounded),
-                              label: const Text('Break Check Out'),
+                              label: Text(
+                                'Break Check Out',
+                                style: GoogleFonts.inter(),
+                              ),
                             ),
                           ),
                         ],
@@ -309,7 +318,8 @@ class _BreakTrackingPanelState extends State<BreakTrackingPanel> {
                           padding: EdgeInsets.symmetric(vertical: 8),
                           child: Text(
                             'No breaks recorded today.',
-                            style: GoogleFonts.inter(color: AppColors.textSecondary),
+                            style: GoogleFonts.inter(
+                                color: AppColors.textSecondary),
                           ),
                         )
                       else
@@ -335,7 +345,7 @@ class _BreakTrackingPanelState extends State<BreakTrackingPanel> {
                                     Expanded(
                                       child: Text(
                                         session.type,
-                                        style:  GoogleFonts.inter(
+                                        style: GoogleFonts.inter(
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
@@ -356,14 +366,17 @@ class _BreakTrackingPanelState extends State<BreakTrackingPanel> {
                                 Text(
                                   'Break Check Out: '
                                   '${controller.formatTime(session.startTime)}',
+                                  style: GoogleFonts.inter(),
                                 ),
                                 Text(
                                   'Break Check In: '
                                   '${controller.formatTime(session.endTime)}',
+                                  style: GoogleFonts.inter(),
                                 ),
                                 Text(
                                   'Duration: '
                                   '${controller.formatDuration(session.durationAt(DateTime.now()))}',
+                                  style: GoogleFonts.inter(),
                                 ),
                                 if (!isActive) ...[
                                   const SizedBox(height: 8),
@@ -376,12 +389,16 @@ class _BreakTrackingPanelState extends State<BreakTrackingPanel> {
                                   const SizedBox(height: 3),
                                   if (session.endAddress != null &&
                                       session.endAddress!.isNotEmpty)
-                                    Text(session.endAddress!)
+                                    Text(
+                                      session.endAddress!,
+                                      style: GoogleFonts.inter(),
+                                    )
                                   else if (session.endLatitude != null &&
                                       session.endLongitude != null)
                                     Text(
                                       'Lat: ${session.endLatitude!.toStringAsFixed(6)}\n'
                                       'Lng: ${session.endLongitude!.toStringAsFixed(6)}',
+                                      style: GoogleFonts.inter(),
                                     )
                                   else
                                     Text(
@@ -402,7 +419,7 @@ class _BreakTrackingPanelState extends State<BreakTrackingPanel> {
                     Text(
                       'Total break time: '
                       '${controller.formattedBreakDuration}',
-                      style:  GoogleFonts.inter(
+                      style: GoogleFonts.inter(
                         fontWeight: FontWeight.w600,
                       ),
                     ),

@@ -22,10 +22,8 @@ class LeaveCalendarSheet extends GetView<LeaveController> {
         ),
         child: Obx(() {
           final month = controller.calendarMonth.value;
-          final firstWeekday =
-              DateTime(month.year, month.month, 1).weekday % 7;
-          final daysInMonth =
-              DateUtils.getDaysInMonth(month.year, month.month);
+          final firstWeekday = DateTime(month.year, month.month, 1).weekday % 7;
+          final daysInMonth = DateUtils.getDaysInMonth(month.year, month.month);
 
           return Column(
             children: [
@@ -55,7 +53,7 @@ class LeaveCalendarSheet extends GetView<LeaveController> {
                   ),
                   Text(
                     '${_monthName(month.month)} ${month.year}',
-                    style:  GoogleFonts.inter(
+                    style: GoogleFonts.inter(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
@@ -74,7 +72,7 @@ class LeaveCalendarSheet extends GetView<LeaveController> {
                         child: Center(
                           child: Text(
                             day,
-                            style:  GoogleFonts.inter(
+                            style: GoogleFonts.inter(
                               color: AppColors.textSecondary,
                               fontWeight: FontWeight.w600,
                               fontSize: 12,
@@ -90,8 +88,7 @@ class LeaveCalendarSheet extends GetView<LeaveController> {
                 child: GridView.builder(
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: firstWeekday + daysInMonth,
-                  gridDelegate:
-                      const SliverGridDelegateWithFixedCrossAxisCount(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 7,
                     mainAxisSpacing: 8,
                     crossAxisSpacing: 5,
@@ -116,11 +113,10 @@ class LeaveCalendarSheet extends GetView<LeaveController> {
                     final start = controller.startDate.value;
                     final end = controller.endDate.value;
 
-                    final isStart = start != null &&
-                        DateUtils.isSameDay(date, start);
+                    final isStart =
+                        start != null && DateUtils.isSameDay(date, start);
 
-                    final isEnd = end != null &&
-                        DateUtils.isSameDay(date, end);
+                    final isEnd = end != null && DateUtils.isSameDay(date, end);
 
                     final isBetween = start != null &&
                         end != null &&
@@ -130,9 +126,7 @@ class LeaveCalendarSheet extends GetView<LeaveController> {
                     final selected = isStart || isEnd;
 
                     return GestureDetector(
-                      onTap: isPast
-                          ? null
-                          : () => controller.selectDate(date),
+                      onTap: isPast ? null : () => controller.selectDate(date),
                       child: Container(
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
@@ -151,9 +145,8 @@ class LeaveCalendarSheet extends GetView<LeaveController> {
                                 : isPast
                                     ? AppColors.borderStrong
                                     : AppColors.primaryDark,
-                            fontWeight: selected
-                                ? FontWeight.bold
-                                : FontWeight.normal,
+                            fontWeight:
+                                selected ? FontWeight.bold : FontWeight.normal,
                           ),
                         ),
                       ),
@@ -171,7 +164,7 @@ class LeaveCalendarSheet extends GetView<LeaveController> {
                 child: Text(
                   'Start: ${_formatDate(controller.startDate.value)}'
                   '   |   End: ${_formatDate(controller.endDate.value)}',
-                  style:  GoogleFonts.inter(fontSize: 12),
+                  style: GoogleFonts.inter(fontSize: 12),
                 ),
               ),
               const SizedBox(height: 15),
@@ -180,7 +173,7 @@ class LeaveCalendarSheet extends GetView<LeaveController> {
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () => Get.back(),
-                      child: const Text('Cancel'),
+                      child: Text('Cancel', style: GoogleFonts.inter()),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -190,7 +183,10 @@ class LeaveCalendarSheet extends GetView<LeaveController> {
                               controller.endDate.value != null
                           ? () => Get.back()
                           : null,
-                      child: const Text('Select Dates'),
+                      child: Text(
+                        'Select Dates',
+                        style: GoogleFonts.inter(),
+                      ),
                     ),
                   ),
                 ],
@@ -204,9 +200,18 @@ class LeaveCalendarSheet extends GetView<LeaveController> {
 
   String _monthName(int month) {
     const months = [
-      'January', 'February', 'March', 'April',
-      'May', 'June', 'July', 'August',
-      'September', 'October', 'November', 'December',
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
     ];
     return months[month - 1];
   }

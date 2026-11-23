@@ -1,4 +1,3 @@
-
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -95,7 +94,7 @@ class ProfileScreen extends GetView<ProfileController> {
                       ),
                       TextButton(
                         onPressed: controller.refreshProfile,
-                        child: const Text('Retry'),
+                        child: Text('Retry', style: GoogleFonts.inter()),
                       ),
                     ],
                   ),
@@ -154,12 +153,11 @@ class ProfileScreen extends GetView<ProfileController> {
                   child: CircleAvatar(
                     radius: 48,
                     backgroundColor: AppColors.secondarySoft,
-                    backgroundImage:
-                        controller.selectedImagePath.value.isEmpty
-                            ? null
-                            : FileImage(
-                                File(controller.selectedImagePath.value),
-                              ),
+                    backgroundImage: controller.selectedImagePath.value.isEmpty
+                        ? null
+                        : FileImage(
+                            File(controller.selectedImagePath.value),
+                          ),
                     child: controller.selectedImagePath.value.isEmpty
                         ? const Icon(
                             Icons.person,
@@ -292,9 +290,7 @@ class ProfileScreen extends GetView<ProfileController> {
             style: GoogleFonts.inter(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: selected
-                  ? AppColors.surface
-                  : AppColors.textSecondary,
+              color: selected ? AppColors.surface : AppColors.textSecondary,
             ),
           ),
         ),

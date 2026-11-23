@@ -59,7 +59,7 @@ class WithdrawBottomSheet extends GetView<LeaveController> {
               ),
               child: Text(
                 '${leave.leaveType} • ${leave.startDate.day}/${leave.startDate.month}/${leave.startDate.year}',
-                style:  GoogleFonts.inter(
+                style: GoogleFonts.inter(
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -70,7 +70,7 @@ class WithdrawBottomSheet extends GetView<LeaveController> {
                 Expanded(
                   child: OutlinedButton(
                     onPressed: () => Get.back(),
-                    child: const Text('Cancel'),
+                    child: Text('Cancel', style: GoogleFonts.inter()),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -83,7 +83,10 @@ class WithdrawBottomSheet extends GetView<LeaveController> {
                     onPressed: () {
                       controller.withdrawLeave(leave.id);
                     },
-                    child: const Text('Yes, Withdraw'),
+                    child: Text(
+                      'Yes, Withdraw',
+                      style: GoogleFonts.inter(),
+                    ),
                   ),
                 ),
               ],

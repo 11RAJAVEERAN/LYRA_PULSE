@@ -288,9 +288,12 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
                         ),
                       );
                     }),
-                    const PopupMenuItem<String>(
+                     PopupMenuItem<String>(
                       value: _customMonth,
-                      child: Text('Choose another month…'),
+                      child: Text(
+                        'Choose another month…',
+                        style: GoogleFonts.inter(),
+                      ),
                     ),
                   ];
                 },
@@ -494,7 +497,10 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
                         onPressed: controller.isLoadingHistory.value
                             ? null
                             : () => controller.loadHistory(append: true),
-                        child: const Text('Load more'),
+                        child: Text(
+                          'Load more',
+                          style: GoogleFonts.inter(),
+                        ),
                       ),
                   ],
                 );
@@ -792,7 +798,10 @@ class _HistoryError extends StatelessWidget {
                 ),
               ),
             ),
-            TextButton(onPressed: onRetry, child: const Text('Retry')),
+            TextButton(
+              onPressed: onRetry,
+              child: Text('Retry', style: GoogleFonts.inter()),
+            ),
           ],
         ),
       );

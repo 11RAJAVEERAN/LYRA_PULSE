@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
@@ -461,7 +462,7 @@ class _OtpScreenState extends State<OtpScreen> with WidgetsBindingObserver {
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                    child: const Text('Resend'),
+                    child: Text('Resend', style: GoogleFonts.inter()),
                   ),
               ],
             ),

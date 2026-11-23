@@ -15,7 +15,6 @@ class RegularizationScreen extends StatefulWidget {
 }
 
 class _RegularizationScreenState extends State<RegularizationScreen> {
-
   final _formKey = GlobalKey<FormState>();
   final _reasonController = TextEditingController();
 
@@ -103,7 +102,7 @@ class _RegularizationScreenState extends State<RegularizationScreen> {
 
   void _showMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
+      SnackBar(content: Text(message, style: GoogleFonts.inter())),
     );
   }
 
@@ -257,22 +256,34 @@ class _RegularizationScreenState extends State<RegularizationScreen> {
                       borderRadius: BorderRadius.circular(14),
                     ),
                   ),
-                  items: const [
+                  items: [
                     DropdownMenuItem(
                       value: 'Missed Check In',
-                      child: Text('Missed Check In'),
+                      child: Text(
+                        'Missed Check In',
+                        style: GoogleFonts.inter(),
+                      ),
                     ),
                     DropdownMenuItem(
                       value: 'Missed Check Out',
-                      child: Text('Missed Check Out'),
+                      child: Text(
+                        'Missed Check Out',
+                        style: GoogleFonts.inter(),
+                      ),
                     ),
                     DropdownMenuItem(
                       value: 'Incorrect Attendance Time',
-                      child: Text('Incorrect Attendance Time'),
+                      child: Text(
+                        'Incorrect Attendance Time',
+                        style: GoogleFonts.inter(),
+                      ),
                     ),
                     DropdownMenuItem(
                       value: 'Wrong Attendance Status',
-                      child: Text('Wrong Attendance Status'),
+                      child: Text(
+                        'Wrong Attendance Status',
+                        style: GoogleFonts.inter(),
+                      ),
                     ),
                   ],
                   onChanged: (value) {

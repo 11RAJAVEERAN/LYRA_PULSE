@@ -75,7 +75,7 @@ class LeaveCard extends StatelessWidget {
                   children: [
                     Text(
                       '${leave.leaveType} Leave',
-                      style:  GoogleFonts.inter(
+                      style: GoogleFonts.inter(
                         fontWeight: FontWeight.bold,
                         fontSize: 15,
                       ),
@@ -83,7 +83,7 @@ class LeaveCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       '${leave.totalDays} Day(s) • ${leave.duration}',
-                      style:  GoogleFonts.inter(
+                      style: GoogleFonts.inter(
                         color: AppColors.textSecondary,
                         fontSize: 12,
                       ),
@@ -116,7 +116,7 @@ class LeaveCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                child: const Text('Withdraw'),
+                child: Text('Withdraw', style: GoogleFonts.inter()),
               ),
             ),
         ],
@@ -133,7 +133,7 @@ class LeaveCard extends StatelessWidget {
         Expanded(
           child: Text(
             value,
-            style:  GoogleFonts.inter(
+            style: GoogleFonts.inter(
               fontSize: 12,
               color: AppColors.textSecondary,
             ),

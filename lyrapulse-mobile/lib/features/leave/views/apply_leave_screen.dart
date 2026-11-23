@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
@@ -31,10 +30,8 @@ class ApplyLeaveScreen extends GetView<LeaveController> {
           children: [
             const LeaveBalanceCard(),
             const SizedBox(height: 25),
-
             _heading('Leave Type'),
             const SizedBox(height: 10),
-
             Obx(
               () => DropdownButtonFormField<String>(
                 initialValue: controller.selectedLeaveType.value.isEmpty
@@ -47,17 +44,18 @@ class ApplyLeaveScreen extends GetView<LeaveController> {
                 items: controller.leaveTypes.map((type) {
                   return DropdownMenuItem(
                     value: type,
-                    child: Text('$type Leave'),
+                    child: Text(
+                      '$type Leave',
+                      style: GoogleFonts.inter(),
+                    ),
                   );
                 }).toList(),
                 onChanged: controller.selectLeaveType,
               ),
             ),
-
             const SizedBox(height: 22),
             _heading('Select Date'),
             const SizedBox(height: 10),
-
             Obx(() {
               final start = controller.startDate.value;
               final end = controller.endDate.value;
@@ -115,11 +113,9 @@ class ApplyLeaveScreen extends GetView<LeaveController> {
                 ),
               );
             }),
-
             const SizedBox(height: 22),
             _heading('Applying Leave For'),
             const SizedBox(height: 10),
-
             Container(
               padding: const EdgeInsets.all(15),
               decoration: BoxDecoration(
@@ -161,11 +157,9 @@ class ApplyLeaveScreen extends GetView<LeaveController> {
                 ],
               ),
             ),
-
             const SizedBox(height: 22),
             _heading('Mention Reason'),
             const SizedBox(height: 10),
-
             TextField(
               controller: controller.reasonController,
               maxLines: 4,
@@ -179,15 +173,11 @@ class ApplyLeaveScreen extends GetView<LeaveController> {
                 alignLabelWithHint: true,
               ),
             ),
-
             const SizedBox(height: 12),
-
             Obx(() {
-              final exceeds =
-                  controller.selectedLeaveType.value.isNotEmpty &&
+              final exceeds = controller.selectedLeaveType.value.isNotEmpty &&
                   controller.selectedLeaveType.value != 'LWP' &&
-                  controller.calculatedDays >
-                      controller.selectedLeaveBalance;
+                  controller.calculatedDays > controller.selectedLeaveBalance;
 
               return exceeds
                   ? Text(
@@ -199,18 +189,16 @@ class ApplyLeaveScreen extends GetView<LeaveController> {
                     )
                   : const SizedBox.shrink();
             }),
-
             const SizedBox(height: 30),
-
             Obx(
               () => SizedBox(
                 width: double.infinity,
                 height: 54,
                 child: ElevatedButton(
-                  onPressed: controller.isFormValid &&
-                          !controller.isLoading.value
-                      ? controller.submitLeave
-                      : null,
+                  onPressed:
+                      controller.isFormValid && !controller.isLoading.value
+                          ? controller.submitLeave
+                          : null,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryBlue,
                     foregroundColor: AppColors.surface,
@@ -233,7 +221,6 @@ class ApplyLeaveScreen extends GetView<LeaveController> {
                 ),
               ),
             ),
-
             const SizedBox(height: 25),
           ],
         ),
@@ -255,14 +242,11 @@ class ApplyLeaveScreen extends GetView<LeaveController> {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 14),
             decoration: BoxDecoration(
-              color: selected
-                  ? AppColors.infoBackground
-                  : AppColors.surface,
+              color: selected ? AppColors.infoBackground : AppColors.surface,
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: selected
-                    ? AppColors.primaryBlue
-                    : AppColors.borderStrong,
+                color:
+                    selected ? AppColors.primaryBlue : AppColors.borderStrong,
                 width: selected ? 1.5 : 1,
               ),
             ),

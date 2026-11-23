@@ -6,7 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../app/theme/app_colors.dart';
 import 'package:get/get.dart';
 
-import 'attendance_confirmation_screen.dart';
+// import 'attendance_confirmation_screen.dart';
 
 class FaceVerificationScreen extends StatefulWidget {
   final bool isCheckOut;
@@ -26,7 +26,6 @@ class _FaceVerificationScreenState extends State<FaceVerificationScreen> {
   bool _isCameraReady = false;
   bool _isCapturing = false;
   String? _cameraError;
-
 
   @override
   void initState() {
@@ -131,14 +130,14 @@ class _FaceVerificationScreenState extends State<FaceVerificationScreen> {
 
       // Pass the exact captured image path to the next screen.
       // Do not open the camera again on the confirmation screen.
-      await Get.to(
-        () => AttendanceConfirmationScreen(
-          isCheckOut: widget.isCheckOut,
-          photoPath: photo.path,
-        ),
-        transition: Transition.rightToLeft,
-        duration: const Duration(milliseconds: 300),
-      );
+      // await Get.to(
+      //   () => AttendanceConfirmationScreen(
+      //     isCheckOut: widget.isCheckOut,
+      //     photoPath: photo.path,
+      //   ),
+      //   transition: Transition.rightToLeft,
+      //   duration: const Duration(milliseconds: 300),
+      // );
 
       if (!mounted) return;
 
@@ -333,7 +332,7 @@ class _FaceVerificationScreenState extends State<FaceVerificationScreen> {
                               _isCameraReady
                                   ? 'Camera ready'
                                   : 'Starting camera',
-                              style:  GoogleFonts.inter(
+                              style: GoogleFonts.inter(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
                                 color: AppColors.primary,
@@ -405,7 +404,7 @@ class _FaceVerificationScreenState extends State<FaceVerificationScreen> {
                 Text(
                   _cameraError!,
                   textAlign: TextAlign.center,
-                  style:  GoogleFonts.inter(
+                  style: GoogleFonts.inter(
                     color: AppColors.error,
                     fontSize: 12,
                   ),
@@ -418,7 +417,10 @@ class _FaceVerificationScreenState extends State<FaceVerificationScreen> {
                     });
                     await _initializeCamera();
                   },
-                  child: const Text('Try camera again'),
+                  child: Text(
+                    'Try camera again',
+                    style: GoogleFonts.inter(),
+                  ),
                 ),
               ],
 

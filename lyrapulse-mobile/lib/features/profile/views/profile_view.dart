@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 
 import '../../../app/theme/app_colors.dart';
@@ -95,7 +96,10 @@ class _ProfileUnavailable extends StatelessWidget {
             ),
             TextButton(
               onPressed: loading ? null : onRetry,
-              child: Text(loading ? 'Refreshing…' : 'Try again'),
+              child: Text(
+                loading ? 'Refreshing…' : 'Try again',
+                style: GoogleFonts.inter(),
+              ),
             ),
           ],
         ),
@@ -131,7 +135,7 @@ class _ProfileError extends StatelessWidget {
                 ),
                 TextButton(
                   onPressed: onRetry,
-                  child: const Text('Retry'),
+                  child: Text('Retry', style: GoogleFonts.inter()),
                 ),
               ],
             ),

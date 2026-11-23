@@ -507,7 +507,7 @@ class _PermissionStartScreenState extends State<PermissionStartScreen> {
           items: permissionTypes.map((type) {
             return DropdownMenuItem<String>(
               value: type,
-              child: Text(type),
+              child: Text(type, style: GoogleFonts.inter()),
             );
           }).toList(),
           onChanged: (value) {

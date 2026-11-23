@@ -17,35 +17,33 @@ class CalendarScreen extends StatelessWidget {
       ? Get.find<CalendarController>()
       : Get.put(CalendarController());
 
-
-
-@override
-Widget build(BuildContext context) {
-  return FixedHeaderPage(
-    backgroundColor: AppColors.secondarySoft,
-    header: _buildHeader(),
-    pinned: Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-      child: CalendarMonthHeader(controller: controller),
-    ),
-    children: [
-      Obx(() {
-        if (controller.isLoading.value) {
-          return const Padding(
-            padding: EdgeInsets.all(32),
-            child: Center(child: CircularProgressIndicator()),
-          );
-        }
-        if (controller.errorMessage.value != null) return _buildLoadError();
-        return controller.isCalendarView.value
-            ? _buildCalendarContent()
-            : _buildListContent();
-      }),
-      const SizedBox(height: 22),
-      _buildRegularizationInfo(),
-    ],
-  );
-}
+  @override
+  Widget build(BuildContext context) {
+    return FixedHeaderPage(
+      backgroundColor: AppColors.secondarySoft,
+      header: _buildHeader(),
+      pinned: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+        child: CalendarMonthHeader(controller: controller),
+      ),
+      children: [
+        Obx(() {
+          if (controller.isLoading.value) {
+            return const Padding(
+              padding: EdgeInsets.all(32),
+              child: Center(child: CircularProgressIndicator()),
+            );
+          }
+          if (controller.errorMessage.value != null) return _buildLoadError();
+          return controller.isCalendarView.value
+              ? _buildCalendarContent()
+              : _buildListContent();
+        }),
+        const SizedBox(height: 22),
+        _buildRegularizationInfo(),
+      ],
+    );
+  }
 
   Widget _buildLoadError() {
     return Center(
@@ -66,7 +64,7 @@ Widget build(BuildContext context) {
             TextButton.icon(
               onPressed: controller.loadMonth,
               icon: const Icon(Icons.refresh_rounded),
-              label: const Text('Try again'),
+              label: Text('Try again', style: GoogleFonts.inter()),
             ),
           ],
         ),
@@ -74,87 +72,91 @@ Widget build(BuildContext context) {
     );
   }
 
+  Widget _buildHeader() {
+    final now = DateTime.now();
+    const months = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December'
+    ];
 
-
-
-Widget _buildHeader() {
-  final now = DateTime.now();
-  const months = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
-  ];
-
-  return Container(
-    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-    decoration: BoxDecoration(
-      color: AppColors.surface,
-      border: Border(
-        bottom: BorderSide(
-          color: AppColors.secondarySoft.withOpacity(0.6),
-          width: 1,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        border: Border(
+          bottom: BorderSide(
+            color: AppColors.secondarySoft.withOpacity(0.6),
+            width: 1,
+          ),
         ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.secondarySoft.withOpacity(0.5),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
-      boxShadow: [
-        BoxShadow(
-          color: AppColors.secondarySoft.withOpacity(0.5),
-          blurRadius: 8,
-          offset: const Offset(0, 3),
-        ),
-      ],
-    ),
-    child: Row(
-      children: [
-        // Icon badge
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: AppColors.secondarySoft,
-            borderRadius: BorderRadius.circular(10),
+      child: Row(
+        children: [
+          // Icon badge
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.secondarySoft,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              Icons.calendar_month_rounded,
+              size: 22,
+              color: AppColors.textPrimary,
+            ),
           ),
-          child: Icon(
-            Icons.calendar_month_rounded,
-            size: 22,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        const SizedBox(width: 12),
+          const SizedBox(width: 12),
 
-        // Title + subtitle
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Calendar',
-                style: GoogleFonts.inter(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: -0.3,
-                  color: AppColors.textPrimary,
+          // Title + subtitle
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Calendar',
+                  style: GoogleFonts.inter(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.3,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                '${months[now.month - 1]} ${now.year}',
-                style: GoogleFonts.inter(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.textPrimary.withOpacity(0.55),
+                const SizedBox(height: 2),
+                Text(
+                  '${months[now.month - 1]} ${now.year}',
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.textPrimary.withOpacity(0.55),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
 
-        CalendarViewToggle(controller: controller),
-      ],
-    ),
-  );
-}
-
-
-
+          CalendarViewToggle(controller: controller),
+        ],
+      ),
+    );
+  }
 
   Widget _buildCalendarContent() {
     return Column(
@@ -224,7 +226,7 @@ Widget _buildHeader() {
               itemBuilder: (context) => filters.map((filter) {
                 return PopupMenuItem<String>(
                   value: filter,
-                  child: Text(filter),
+                  child: Text(filter, style: GoogleFonts.inter()),
                 );
               }).toList(),
               child: Container(
@@ -274,7 +276,7 @@ Widget _buildHeader() {
         Expanded(
           child: Text(
             title,
-            style:  GoogleFonts.inter(
+            style: GoogleFonts.inter(
               fontSize: 18,
               fontWeight: FontWeight.w700,
               color: AppColors.textPrimary,
@@ -318,7 +320,7 @@ Widget _buildHeader() {
               children: [
                 Text(
                   '${date.day} ${controller.monthTitle}',
-                  style:  GoogleFonts.inter(
+                  style: GoogleFonts.inter(
                     fontWeight: FontWeight.w700,
                     fontSize: 14,
                     color: AppColors.textPrimary,
@@ -327,7 +329,7 @@ Widget _buildHeader() {
                 const SizedBox(height: 5),
                 Text(
                   controller.statusLabel(status),
-                  style:  GoogleFonts.inter(
+                  style: GoogleFonts.inter(
                     fontSize: 12,
                     color: AppColors.textSecondary,
                   ),
