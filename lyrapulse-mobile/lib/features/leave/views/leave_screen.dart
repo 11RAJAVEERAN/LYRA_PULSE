@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../app/theme/app_colors.dart';
 import 'package:get/get.dart';
 
+import '../../../app/theme/app_colors.dart';
 import '../../../app/routes/app_routes.dart';
 import '../controllers/leave_controller.dart';
 import '../widgets/leave_card.dart';
@@ -19,9 +19,10 @@ class LeaveScreen extends GetView<LeaveController> {
       appBar: AppBar(
         backgroundColor: AppColors.surface,
         elevation: 0,
+        scrolledUnderElevation: 0,
         foregroundColor: AppColors.textPrimary,
         title: Text(
-          'Leave ',
+          'Leave',
           style: GoogleFonts.inter(
             fontSize: 20,
             fontWeight: FontWeight.w700,
@@ -30,7 +31,6 @@ class LeaveScreen extends GetView<LeaveController> {
       ),
       body: Column(
         children: [
-          _buildHeader(),
           _buildTabs(),
           Expanded(
             child: Obx(() {
@@ -42,9 +42,7 @@ class LeaveScreen extends GetView<LeaveController> {
 
               if (leaves.isEmpty) {
                 return LeaveEmptyState(
-                  title: isPending
-                      ? 'No Pending Leaves'
-                      : 'No Leave History',
+                  title: isPending ? 'No Pending Leaves' : 'No Leave History',
                   subtitle: isPending
                       ? 'You currently have no pending leave applications.'
                       : 'Your approved, rejected and withdrawn leaves will appear here.',
@@ -56,7 +54,7 @@ class LeaveScreen extends GetView<LeaveController> {
                   controller.loadLeaves();
                 },
                 child: ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(18, 20, 18, 100),
+                  padding: const EdgeInsets.fromLTRB(16, 6, 16, 100),
                   itemCount: leaves.length,
                   itemBuilder: (context, index) {
                     final leave = leaves[index];
@@ -98,91 +96,23 @@ class LeaveScreen extends GetView<LeaveController> {
     );
   }
 
-  Widget _buildHeader() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
-      color: AppColors.surface,
-      child: Obx(
-        () => Row(
-          children: [
-            // Expanded(
-            //   child: _summary(
-            //     'Pending',
-            //     controller.pendingLeaves.length.toString(),
-            //     AppColors.warningBackground,
-            //     AppColors.warningDark,
-            //     Icons.pending_actions,
-            //   ),
-            // ),
-            // const SizedBox( width: 12),
-            // Expanded(
-            //   child: _summary(
-            //     'History',
-            //     controller.historyLeaves.length.toString(),
-            //     AppColors.infoBackground,
-            //     AppColors.primaryBlue,
-            //     Icons.history,
-            //   ),
-            // ),
-          ],
+  Widget _buildTabs() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+      child: Container(
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.border),
         ),
-      ),
-    );
-  }
-
-  Widget _summary(
-    String title,
-    String count,
-    Color background,
-    Color foreground,
-    IconData icon,
-  ) {
-    return Container(
-      padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: foreground, size: 24),
-          const SizedBox(width: 10),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        child: Obx(
+          () => Row(
             children: [
-              Text(
-                count,
-                style: GoogleFonts.inter(
-                  fontSize: 21,
-                  fontWeight: FontWeight.bold,
-                  color: foreground,
-                ),
-              ),
-              Text(
-                title,
-                style: GoogleFonts.inter(
-                  fontSize: 11,
-                  color: foreground,
-                ),
-              ),
+              _tab('Pending', 0),
+              _tab('History', 1),
             ],
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTabs() {
-    return Container(
-      color: AppColors.surface,
-      padding: const EdgeInsets.symmetric(horizontal: 18),
-      child: Obx(
-        () => Row(
-          children: [
-            _tab('Pending', 0),
-            _tab('History', 1),
-          ],
         ),
       ),
     );
@@ -193,29 +123,22 @@ class LeaveScreen extends GetView<LeaveController> {
 
     return Expanded(
       child: InkWell(
+        borderRadius: BorderRadius.circular(11),
         onTap: () => controller.changeTab(index),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 15),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
-            border: Border(
-              bottom: BorderSide(
-                color: selected
-                    ? AppColors.primaryBlue
-                    : AppColors.surface,
-                width: 2.5,
-              ),
-            ),
+            color: selected ? AppColors.primaryBlue : Colors.transparent,
+            borderRadius: BorderRadius.circular(11),
           ),
           child: Center(
             child: Text(
               title,
               style: GoogleFonts.inter(
                 fontSize: 14,
-                fontWeight:
-                    selected ? FontWeight.bold : FontWeight.w500,
-                color: selected
-                    ? AppColors.primaryBlue
-                    : AppColors.textSecondary,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                color: selected ? AppColors.surface : AppColors.textSecondary,
               ),
             ),
           ),
