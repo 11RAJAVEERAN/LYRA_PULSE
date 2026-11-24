@@ -44,6 +44,9 @@ class FakeRequests:
 class EnrollmentResponse:
     status = 200
 
+    def __init__(self):
+        self.closed = False
+
     def json(self):
         return {
             "success": True,
@@ -57,7 +60,7 @@ class EnrollmentResponse:
         }
 
     def close(self):
-        return None
+        self.closed = True
 
 
 class DeviceResultRequestTests(unittest.TestCase):
@@ -284,6 +287,26 @@ class DeviceResultRequestTests(unittest.TestCase):
             "Device test-device-token",
         )
         self.assertEqual(fake_requests.post_arguments["timeout"], 4)
+
+    def test_enrollment_poll_retries_after_response_read_failure(self):
+        response = EnrollmentResponse()
+        path = os.path.join(os.path.dirname(__file__), ".api_queue_retry_%s.json" % os.getpid())
+        self.addCleanup(lambda: os.remove(path) if os.path.exists(path) else None)
+        client = AttendanceAPIClient(
+            event_queue=PersistentEventQueue(path),
+            base_url="http://192.168.1.105:8000",
+            timeout=10,
+            retry_count=1,
+        )
+        with (
+            patch.object(api_service, "http_request", side_effect=[OSError("response read failed"), response]) as request,
+            patch.object(api_service.time, "sleep"),
+        ):
+            result = client.poll_enrollment("LYRA-DEVICE-001")
+
+        self.assertTrue(result["success"])
+        self.assertEqual(request.call_count, 2)
+        self.assertTrue(response.closed)
 
     def test_http_localhost_base_url_is_rejected_before_credentials_are_sent(self):
         fake_requests = FakeRequests()

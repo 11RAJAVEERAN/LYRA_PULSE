@@ -3,6 +3,19 @@ import { Alert, Box, Button, CircularProgress, Dialog, DialogActions, DialogCont
 import apiClient, { BRANCH_CONTEXT_EVENT } from '../../../services/apiClient'
 
 const unwrap = (response) => response.data?.data ?? response.data
+const enrollmentErrorMessage = (error, fallback) => {
+  const data = error?.response?.data
+  if (typeof data?.message === 'string' && data.message.trim()) return data.message
+  if (typeof data?.detail === 'string' && data.detail.trim()) return data.detail
+  const errors = data?.errors
+  if (typeof errors === 'string') return errors
+  if (Array.isArray(errors)) return errors.map(String).join(' ')
+  if (errors && typeof errors === 'object') {
+    const messages = Object.values(errors).flatMap(value => Array.isArray(value) ? value : [value]).filter(value => typeof value === 'string')
+    if (messages.length) return messages.join(' ')
+  }
+  return error?.message || fallback
+}
 const readOneTimeToken = (data, field) => {
   const value = data?.[field]
   if (typeof value !== 'string' || value.trim() === '') {
@@ -20,7 +33,9 @@ export function DevicesPage() {
   const [form, setForm] = useState({ device_id: '', name: '', branch_id: '', replace_device_id: '' })
   const [employeeId, setEmployeeId] = useState('')
   const [deviceId, setDeviceId] = useState('')
-  const [finger, setFinger] = useState('right_index')
+  const [enrollmentStep, setEnrollmentStep] = useState(0)
+  const [firstFingerSlot, setFirstFingerSlot] = useState(null)
+  const [secondStartFailed, setSecondStartFailed] = useState(false)
   const [token, setToken] = useState('')
   const [tokenInfo, setTokenInfo] = useState(null)
   const [showToken, setShowToken] = useState(true)
@@ -36,6 +51,7 @@ export function DevicesPage() {
   const [diagnosticsLoading, setDiagnosticsLoading] = useState(false)
   const provisionLock = useRef(false)
   const rotationLock = useRef(false)
+  const secondFingerStarted = useRef(false)
 
   const reload = async (silent = false) => {
     if (!silent) setLoading(true)
@@ -50,6 +66,24 @@ export function DevicesPage() {
     } catch (e) { setError(e?.response?.data?.message || 'Unable to load devices. Check your role and branch access.') }
     finally { if (!silent) setLoading(false) }
   }
+  useEffect(() => {
+    if (enrollment?.status === 'SUCCESS' && enrollment.finger === 'first_finger' && !secondFingerStarted.current) {
+      secondFingerStarted.current = true
+      setSecondStartFailed(false)
+      setFirstFingerSlot(enrollment.fingerprint_slot)
+      apiClient.post(`/fingerprints/employees/${enrollment.employee_id}/enrollments/`, {
+        device_id: enrollment.device_id,
+        finger: 'second_finger',
+      }).then(response => {
+        setEnrollment(unwrap(response))
+        setEnrollmentStep(2)
+      }).catch(e => {
+        setSecondStartFailed(true)
+        setError(enrollmentErrorMessage(e, 'First finger is saved, but the second enrollment could not be started. Retry it from this dialog.'))
+      })
+    }
+  }, [enrollment?.status, enrollment?.finger, enrollment?.employee_id, enrollment?.device_id])
+
   useEffect(() => {
     void reload()
     const timer = setInterval(() => { void reload(true) }, 15000)
@@ -139,14 +173,31 @@ export function DevicesPage() {
       setError('Unable to copy the token. Select and copy it manually before closing this dialog.')
     }
   }
+  const currentFingerIndex = enrollment?.finger === 'second_finger' ? 2 : 1
+  const currentFingerScans = enrollment?.status === 'WAITING_FOR_SECOND_SCAN' ? 1
+    : ['PROCESSING', 'SUCCESS'].includes(enrollment?.status) ? 2 : 0
+  const completedScans = (currentFingerIndex === 2 ? 2 : 0) + currentFingerScans
   const enroll = async (event) => {
     event.preventDefault(); setError(''); setNotice('')
     try {
-      const response = await apiClient.post(`/fingerprints/employees/${employeeId}/enrollments/`, { device_id: deviceId, finger })
+      const employee = employees.find(item => String(item.id) === String(employeeId))
+      if (!employee) throw new Error('Select a valid employee before starting fingerprint enrollment.')
+      // EmployeeSerializer returns the FK as `branch`; the devices endpoint
+      // returns the matching value as `branch_id`.
+      const employeeBranchId = employee.branch_id ?? (typeof employee.branch === 'object' ? employee.branch?.id : employee.branch)
+      if (employeeBranchId == null) throw new Error('The selected employee has no branch assigned.')
+      const available = devices.filter(item => item.is_active && item.status === 'Online' && String(item.branch_id) === String(employeeBranchId))
+      if (available.length !== 1) throw new Error(available.length ? 'More than one online device is assigned to this employee branch.' : 'No online fingerprint device is available at the employee branch.')
+      secondFingerStarted.current = false
+      setFirstFingerSlot(null)
+      setSecondStartFailed(false)
+      setEnrollmentStep(1)
+      setDeviceId(available[0].device_id)
+      const response = await apiClient.post(`/fingerprints/employees/${employee.id}/enrollments/`, { device_id: available[0].device_id, finger: 'first_finger' })
       const data = unwrap(response)
       setEnrollment(data)
-      setNotice(`Enrollment ${data.enrollment_id} started. Ask the employee to complete the two scans at the selected device.`)
-    } catch (e) { setError(e?.response?.data?.message || 'Fingerprint enrollment could not be started. Confirm employee biometric permission and branch access.') }
+      setNotice('Enrollment started. Complete two captures for each of two different fingers at the device.')
+    } catch (e) { setError(enrollmentErrorMessage(e, 'Fingerprint enrollment could not be started.')) }
   }
   const viewDiagnostics = async (device) => {
     setDiagnosticDevice(device); setDiagnostics([]); setDiagnosticsLoading(true)
@@ -195,11 +246,58 @@ export function DevicesPage() {
       <Typography variant="h6" sx={{ mb: 1 }}>Enroll fingerprint</Typography>
       <Stack direction={{ xs: 'column', md: 'row' }} gap={1.5}>
         <TextField select label="Employee" required value={employeeId} onChange={e => setEmployeeId(e.target.value)} sx={{ minWidth: 220 }}>{employees.map(e => <MenuItem key={e.id} value={e.id}>{e.name || e.employee_code} · {e.employee_code}</MenuItem>)}</TextField>
-        <TextField select label="Device" required value={deviceId} onChange={e => setDeviceId(e.target.value)} sx={{ minWidth: 180 }}>{devices.filter(d => d.is_active).map(d => <MenuItem key={d.device_id} value={d.device_id}>{d.name || d.device_id}</MenuItem>)}</TextField>
-        <TextField select label="Finger" value={finger} onChange={e => setFinger(e.target.value)}>{['left_thumb','left_index','left_middle','left_ring','left_little','right_thumb','right_index','right_middle','right_ring','right_little'].map(v => <MenuItem key={v} value={v}>{v.replace('_',' ')}</MenuItem>)}</TextField>
-        <Button type="submit" variant="contained">Start enrollment</Button>
+        <Button type="submit" variant="contained" disabled={!employeeId || Boolean(enrollment && !['SUCCESS','FAILED','EXPIRED','CANCELLED'].includes(enrollment.status))}>Start enrollment</Button>
       </Stack>
     </Paper>
+    <Dialog open={Boolean(enrollment)} onClose={() => {}} fullWidth maxWidth="sm">
+      <DialogTitle>Fingerprint Registration (Secure)</DialogTitle>
+      <DialogContent dividers>
+        <Stack spacing={2} alignItems="center" sx={{ py: 2 }}>
+          <Typography variant="h6">{enrollment?.status === 'SUCCESS' && enrollment?.finger === 'second_finger' ? 'Fingerprint Registration Successful' : enrollment?.finger === 'second_finger' || enrollmentStep === 2 ? 'Scan your second fingerprint' : 'Scan your first fingerprint'}</Typography>
+          <Box sx={{ width: 110, height: 110, borderRadius: '50%', bgcolor: 'primary.50', display: 'grid', placeItems: 'center', border: '1px solid', borderColor: 'primary.light' }} aria-hidden="true">
+            <svg width="72" height="72" viewBox="0 0 72 72" fill="none">
+              <path d="M36 8a28 28 0 1 0 28 28" stroke="currentColor" strokeWidth="2" opacity=".28" />
+              <path d="M36 15a21 21 0 1 0 21 21" stroke="currentColor" strokeWidth="2" opacity=".45" />
+              <path d="M36 22a14 14 0 1 0 14 14" stroke="currentColor" strokeWidth="2" opacity=".65" />
+              <path d="M36 29a7 7 0 1 0 7 7M36 36c0 10-3 18-9 24M43 36c0 8-1 14-4 20M29 36c0 5-1 9-3 12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+            </svg>
+          </Box>
+          <Typography color="text.secondary" textAlign="center">
+            {enrollment?.status === 'WAITING_FOR_SECOND_SCAN'
+              ? 'Remove your finger, then place the SAME finger again.'
+              : enrollment?.status === 'PROCESSING'
+                ? 'Checking and storing this finger. Keep the sensor clear.'
+                : 'Place your finger on the sensor and lift it after successfully scanned. Use the same finger twice, then another finger.'}
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 1 }} aria-label={`Capture progress ${completedScans} of 4`}>{[1,2,3,4].map(n => <Box key={n} sx={{ width: 14, height: 14, borderRadius: '50%', bgcolor: n <= completedScans ? 'primary.main' : 'grey.300', animation: n === completedScans + 1 && enrollment?.status !== 'SUCCESS' ? 'pulse 1.2s ease-in-out infinite' : 'none', '@keyframes pulse': { '50%': { opacity: 0.35 } } }} />)}</Box>
+          <Alert severity={enrollment?.status === 'SUCCESS' && enrollment?.finger === 'second_finger' ? 'success' : ['FAILED','EXPIRED','CANCELLED'].includes(enrollment?.status) ? 'error' : 'info'} sx={{ width: '100%' }}>
+            {enrollment?.status === 'SUCCESS' && enrollment?.finger === 'second_finger'
+              ? `Employee: ${employees.find(item => String(item.id) === String(enrollment.employee_id))?.name || 'Employee'} · ID ${enrollment.employee_id}. First finger registered · slot ${firstFingerSlot ?? '—'}. Second finger registered · slot ${enrollment.fingerprint_slot}. Enrollment status: COMPLETED.`
+              : `First finger: ${firstFingerSlot != null ? `Registered · slot ${firstFingerSlot}` : enrollment?.finger === 'first_finger' ? enrollment?.status : 'Registered'}. Second finger: ${enrollment?.finger === 'second_finger' ? enrollment?.status : 'Waiting'}.`}
+          </Alert>
+        </Stack>
+      </DialogContent>
+      <DialogActions>
+        {secondStartFailed ? <Button onClick={async () => {
+          try {
+            const response = await apiClient.post(`/fingerprints/employees/${enrollment.employee_id}/enrollments/`, { device_id: enrollment.device_id, finger: 'second_finger' })
+            setSecondStartFailed(false)
+            setEnrollmentStep(2)
+            setEnrollment(unwrap(response))
+          } catch (e) { setError(enrollmentErrorMessage(e, 'Second finger enrollment could not be started.')) }
+        }}>Retry second finger</Button> : null}
+        {!['SUCCESS','FAILED','EXPIRED','CANCELLED'].includes(enrollment?.status) ? <Button onClick={async () => { try { await apiClient.delete(`/fingerprints/employees/${enrollment.employee_id}/enrollments/${enrollment.enrollment_id}/`); setEnrollment(null); setEnrollmentStep(0) } catch (e) { setError(e?.response?.data?.message || 'Cancellation failed.') } }}>Cancel</Button> : null}
+        {['FAILED','EXPIRED','CANCELLED'].includes(enrollment?.status) ? <Button onClick={async () => {
+          try {
+            const nextFinger = enrollment.finger || 'first_finger'
+            const response = await apiClient.post(`/fingerprints/employees/${enrollment.employee_id}/enrollments/`, { device_id: enrollment.device_id, finger: nextFinger })
+            secondFingerStarted.current = nextFinger === 'second_finger'
+            setEnrollment(unwrap(response))
+          } catch (e) { setError(enrollmentErrorMessage(e, 'Enrollment retry failed.')) }
+        }}>Retry</Button> : null}
+        {enrollment?.status === 'SUCCESS' && enrollment?.finger === 'second_finger' ? <Button variant="contained" onClick={() => { setEnrollment(null); setEnrollmentStep(0) }}>Done</Button> : null}
+      </DialogActions>
+    </Dialog>
     <Dialog open={Boolean(rotationTarget)} onClose={() => rotatingDeviceId ? null : setRotationTarget(null)} fullWidth maxWidth="sm">
       <DialogTitle>Rotate Device Token?</DialogTitle>
       <DialogContent>

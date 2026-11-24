@@ -30,6 +30,11 @@ class FingerprintEnrollmentStartSerializer(serializers.Serializer):
             raise serializers.ValidationError("The device branch is inactive.")
         if employee.branch_id != device.branch_id:
             raise serializers.ValidationError("The device and employee must belong to the same branch.")
+        online_window = timedelta(
+            seconds=getattr(settings, "DEVICE_ONLINE_THRESHOLD_SECONDS", 120)
+        )
+        if device.last_seen is None or device.last_seen < timezone.now() - online_window:
+            raise serializers.ValidationError("The fingerprint device is offline. Reconnect it before enrolling.")
         return device
 
     def validate(self, attrs):
@@ -45,6 +50,14 @@ class FingerprintEnrollmentStartSerializer(serializers.Serializer):
         ).exists():
             raise serializers.ValidationError({
                 "finger": "This employee already has an active mapping for that finger on this device."
+            })
+        if EmployeeFingerprint.objects.filter(
+            employee=employee,
+            device=device,
+            is_active=True,
+        ).count() >= 2:
+            raise serializers.ValidationError({
+                "finger": "This employee already has two active fingerprints on this device."
             })
 
         now = timezone.now()
