@@ -69,6 +69,8 @@ class EmployeeManagementSerializer(serializers.ModelSerializer):
     emergency_contact_number = serializers.CharField(source="emergency_contact", max_length=20, required=False, allow_blank=True)
     employee_type = serializers.PrimaryKeyRelatedField(queryset=EmployeeType.objects.all(), required=False, allow_null=True)
     payroll_group = serializers.PrimaryKeyRelatedField(queryset=PayrollGroup.objects.all(), required=False, allow_null=True)
+    active_fingerprint_count = serializers.IntegerField(read_only=True, default=0)
+    fingerprint_enrollment_status = serializers.SerializerMethodField()
     # Write-only; reads return only the masked value so the full account number is never sent back.
     bank_account_number = serializers.CharField(write_only=True, required=False, allow_blank=True, max_length=34)
 
@@ -85,8 +87,15 @@ class EmployeeManagementSerializer(serializers.ModelSerializer):
                   # Salary + bank (sensitive)
                   "salary_type", "monthly_salary", "payroll_group",
                   "bank_name", "bank_branch_name", "bank_account_number", "bank_ifsc_code",
-                  "biometric_attendance_enabled", "mobile_gps_attendance_enabled", "photo_attendance_enabled")
-        read_only_fields = ("id",)
+                  "biometric_attendance_enabled", "mobile_gps_attendance_enabled", "photo_attendance_enabled",
+                  "active_fingerprint_count", "fingerprint_enrollment_status")
+        read_only_fields = ("id", "active_fingerprint_count", "fingerprint_enrollment_status")
+
+    def get_fingerprint_enrollment_status(self, obj):
+        return (
+            getattr(obj, "pending_fingerprint_enrollment_status", None)
+            or getattr(obj, "latest_fingerprint_enrollment_status", None)
+        )
 
     def get_organization(self, obj):
         return obj.branch.organization_id if obj.branch_id else None

@@ -1,4 +1,5 @@
-import { Box, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material'
+import { Box, Button, Chip, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material'
+import FingerprintIcon from '@mui/icons-material/Fingerprint'
 import { StatusChip } from '../../../components/common/StatusChip'
 import { fullName, formatDate, selectOptions } from '../employeeColumns'
 import { ColumnHeader, headCellSx } from './ColumnHeader'
@@ -10,12 +11,52 @@ function Secondary({ children }) {
   return <Typography variant="caption" color="text.secondary" sx={{ display: 'block', lineHeight: 1.3, fontVariantNumeric: 'tabular-nums' }}>{children}</Typography>
 }
 
+function FingerprintStatus({ row }) {
+  const count = Math.max(0, Number(row.active_fingerprint_count) || 0)
+  const status = row.fingerprint_enrollment_status
+  const pending = ['PENDING', 'WAITING_FOR_FINGER', 'WAITING_FOR_SECOND_SCAN', 'PROCESSING'].includes(status)
+  let label = 'Not Enrolled'
+  let color = 'default'
+
+  if (count >= 2) {
+    label = 'Fingerprint Enrolled · 2/2'
+    color = 'success'
+  } else if (pending) {
+    label = `Enrollment Pending · ${count}/2`
+    color = 'info'
+  } else if (status === 'FAILED') {
+    label = `Enrollment Failed · ${count}/2`
+    color = 'error'
+  } else if (status === 'EXPIRED') {
+    label = `Enrollment Expired · ${count}/2`
+    color = 'warning'
+  } else if (status === 'CANCELLED') {
+    label = count ? `Cancelled · ${count}/2` : 'Enrollment Cancelled'
+    color = 'default'
+  } else if (count === 1) {
+    label = '1/2 Fingers'
+    color = 'warning'
+  }
+
+  return <Chip
+    size="small"
+    variant="outlined"
+    color={color}
+    icon={<FingerprintIcon />}
+    label={label}
+    sx={{ height: 20, fontSize: '0.67rem', '& .MuiChip-icon': { fontSize: 14 }, '& .MuiChip-label': { px: 0.75 } }}
+  />
+}
+
 // How each column renders a row. Keys match column ids in employeeColumns.js.
 const cells = {
   employee: (row) => (
     <Box sx={{ minWidth: 0 }}>
       <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary', lineHeight: 1.35 }} noWrap>{fullName(row) || dash}</Typography>
-      {row.employee_code ? <Secondary>{row.employee_code}</Secondary> : null}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, minWidth: 0, mt: 0.25 }}>
+        {row.employee_code ? <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.3, fontVariantNumeric: 'tabular-nums' }}>{row.employee_code}</Typography> : null}
+        <FingerprintStatus row={row} />
+      </Box>
     </Box>
   ),
   employee_code: (row) => textOrDash(row.employee_code),

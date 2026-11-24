@@ -73,6 +73,51 @@ class FingerprintEnrollmentAPITests(TestCase):
             format="json",
         )
 
+    def test_employee_list_fingerprint_count_uses_only_active_mappings(self):
+        FingerprintEnrollment.objects.create(
+            employee=self.employee,
+            device=self.device,
+            finger="first_finger",
+            status=FingerprintEnrollment.Status.CANCELLED,
+            created_by=self.admin,
+            expires_at=timezone.now() + timedelta(minutes=5),
+        )
+        EmployeeFingerprint.objects.create(
+            employee=self.employee,
+            device=self.device,
+            fingerprint_slot=90,
+            finger="first_finger",
+            is_active=False,
+        )
+        self.client.force_authenticate(self.admin)
+
+        response = self.client.get("/api/v1/employees/")
+
+        self.assertEqual(response.status_code, 200)
+        row = next(item for item in response.data["data"] if item["id"] == self.employee.id)
+        self.assertEqual(row["active_fingerprint_count"], 0)
+        self.assertEqual(row["fingerprint_enrollment_status"], FingerprintEnrollment.Status.CANCELLED)
+
+        EmployeeFingerprint.objects.create(
+            employee=self.employee,
+            device=self.device,
+            fingerprint_slot=91,
+            finger="first_finger",
+        )
+        response = self.client.get("/api/v1/employees/")
+        row = next(item for item in response.data["data"] if item["id"] == self.employee.id)
+        self.assertEqual(row["active_fingerprint_count"], 1)
+
+        EmployeeFingerprint.objects.create(
+            employee=self.employee,
+            device=self.device,
+            fingerprint_slot=92,
+            finger="second_finger",
+        )
+        response = self.client.get("/api/v1/employees/")
+        row = next(item for item in response.data["data"] if item["id"] == self.employee.id)
+        self.assertEqual(row["active_fingerprint_count"], 2)
+
     def device_client(self, device=None, token=None):
         device = device or self.device
         token = token or self.device_token

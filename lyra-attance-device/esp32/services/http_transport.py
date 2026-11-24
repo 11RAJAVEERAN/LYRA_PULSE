@@ -3,6 +3,99 @@
 import json
 import socket
 
+try:
+    import gc
+except ImportError:  # pragma: no cover - CPython fallback for local testing
+    gc = None
+
+try:
+    import utime
+except ImportError:  # pragma: no cover - CPython fallback for local testing
+    import time as utime
+
+try:
+    import network
+except ImportError:  # pragma: no cover - CPython fallback for local testing
+    network = None
+
+try:
+    from utils.logger import log
+except ImportError:  # pragma: no cover - CPython fallback for local testing
+    def log(_tag, message):
+        print(message)
+
+
+def _free_heap():
+    try:
+        if gc is not None and hasattr(gc, "mem_free"):
+            return gc.mem_free()
+    except Exception:
+        pass
+    return None
+
+
+def _now_ms():
+    try:
+        if hasattr(utime, "ticks_ms"):
+            return utime.ticks_ms()
+        return int(utime.time() * 1000)
+    except Exception:
+        return 0
+
+
+def _elapsed_ms(start):
+    try:
+        if hasattr(utime, "ticks_diff"):
+            return utime.ticks_diff(_now_ms(), start)
+        return _now_ms() - start
+    except Exception:
+        return -1
+
+
+def _errno_text(exc):
+    errno_number = getattr(exc, "errno", None)
+    if errno_number is None:
+        args = getattr(exc, "args", None)
+        if args:
+            errno_number = args[0]
+    return errno_number if errno_number is not None else "unknown"
+
+
+def _wifi_diagnostic():
+    try:
+        if network is None:
+            return "connected=unavailable rssi=unavailable"
+        wlan = network.WLAN(network.STA_IF)
+        connected = bool(wlan.isconnected())
+        rssi = "unavailable"
+        if connected and hasattr(wlan, "status"):
+            try:
+                link_status = wlan.status("rssi")
+                if isinstance(link_status, (int, float)):
+                    rssi = str(link_status)
+            except Exception:
+                pass
+        return "connected=%s rssi=%s" % ("yes" if connected else "no", rssi)
+    except Exception:
+        return "connected=unavailable rssi=unavailable"
+
+
+def _diagnostic(message):
+    try:
+        log("HTTP DIAGNOSTIC", message)
+    except Exception:
+        pass
+
+
+def _log_heap(stage):
+    free_heap = _free_heap()
+    if free_heap is not None:
+        _diagnostic("heap free=%d stage=%s %s" % (
+            free_heap,
+            stage,
+            _wifi_diagnostic(),
+        ))
+
 
 MAX_HEADER_BYTES = 8192
 MAX_RESPONSE_BYTES = 65536
@@ -214,8 +307,24 @@ def _read_response(reader, method):
 def _send_all(sock, payload):
     sent = 0
     while sent < len(payload):
-        count = sock.send(payload[sent:])
+        remaining = len(payload) - sent
+        try:
+            count = sock.send(payload[sent:])
+        except Exception as exc:
+            _diagnostic(
+                "stage=send errno=%s total=%d offset=%d remaining=%d send_count=error"
+                % (_errno_text(exc), len(payload), sent, remaining)
+            )
+            raise
+        _diagnostic(
+            "stage=send errno=none total=%d offset=%d remaining=%d send_count=%s"
+            % (len(payload), sent, remaining, str(count))
+        )
         if count is None or count <= 0:
+            _diagnostic(
+                "stage=send errno=unknown total=%d offset=%d remaining=%d send_count=%s no_progress=yes"
+                % (len(payload), sent, remaining, str(count))
+            )
             raise OSError("Socket send made no progress")
         sent += count
 
@@ -265,26 +374,84 @@ def request(method, url, data=None, headers=None, timeout=10, requests_impl=None
         address_info = socket.getaddrinfo(host, port, 0, socket.SOCK_STREAM)
         last_error = None
         stage = "TCP connect"
+        _log_heap("immediately before socket creation")
         for family, socktype, proto, _canonname, address in address_info:
             candidate = None
+
+            socket_create_start = _now_ms()
+            _log_heap("socket_create start")
+            _diagnostic("stage=socket_create start af=%s socktype=%s proto=%s" % (
+                str(family), str(socktype), str(proto)
+            ))
             try:
                 candidate = socket.socket(family, socktype, proto)
+                _log_heap("socket_create success")
+                _diagnostic(
+                    "stage=socket_create end result=success elapsed_ms=%d errno=none"
+                    % _elapsed_ms(socket_create_start)
+                )
+            except Exception as exc:
+                last_error = exc
+                _log_heap("socket_create failed")
+                _diagnostic(
+                    "stage=socket_create end result=failed elapsed_ms=%d errno=%s exception=%s"
+                    % (_elapsed_ms(socket_create_start), _errno_text(exc), str(exc))
+                )
+                continue
+
+            timeout_start = _now_ms()
+            _log_heap("settimeout start")
+            _diagnostic("stage=settimeout start timeout=%s" % str(timeout))
+            try:
                 candidate.settimeout(timeout)
+                _log_heap("settimeout success")
+                _diagnostic(
+                    "stage=settimeout end result=success elapsed_ms=%d errno=none"
+                    % _elapsed_ms(timeout_start)
+                )
+            except Exception as exc:
+                last_error = exc
+                _log_heap("settimeout failed")
+                _diagnostic(
+                    "stage=settimeout end result=failed elapsed_ms=%d errno=%s exception=%s"
+                    % (_elapsed_ms(timeout_start), _errno_text(exc), str(exc))
+                )
+                try:
+                    candidate.close()
+                except Exception:
+                    pass
+                continue
+
+            connect_start = _now_ms()
+            _log_heap("connect start")
+            _diagnostic("stage=connect start address=%s" % str(address))
+            try:
                 candidate.connect(address)
+                _log_heap("connect success")
+                _diagnostic(
+                    "stage=connect end result=success elapsed_ms=%d errno=none"
+                    % _elapsed_ms(connect_start)
+                )
                 sock = candidate
                 break
             except Exception as exc:
                 last_error = exc
-                if candidate is not None:
-                    try:
-                        candidate.close()
-                    except Exception:
-                        pass
+                _log_heap("connect failed")
+                _diagnostic(
+                    "stage=connect end result=failed elapsed_ms=%d errno=%s exception=%s"
+                    % (_elapsed_ms(connect_start), _errno_text(exc), str(exc))
+                )
+                try:
+                    candidate.close()
+                except Exception:
+                    pass
         if sock is None:
             raise OSError("TCP connect failed: %s" % last_error)
 
         stage = "HTTP request send"
+        _log_heap("before send")
         _send_all(sock, request_bytes)
+        _log_heap("after successful send")
         stage = "HTTP response read"
         response = _read_response(_SocketReader(sock), method)
         return response
@@ -300,5 +467,10 @@ def request(method, url, data=None, headers=None, timeout=10, requests_impl=None
         if sock is not None:
             try:
                 sock.close()
-            except Exception:
-                pass
+                _diagnostic("stage=socket cleanup result=closed")
+            except Exception as exc:
+                _diagnostic(
+                    "stage=socket cleanup result=close_failed errno=%s"
+                    % _errno_text(exc)
+                )
+        _log_heap("after socket cleanup")

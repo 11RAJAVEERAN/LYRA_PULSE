@@ -1,5 +1,5 @@
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Count, OuterRef, Q, Subquery
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers, status
@@ -18,6 +18,7 @@ from apps.accounts.scope import scope_queryset
 from apps.common.responses import success_response
 
 from apps.branches.models import Branch
+from apps.fingerprints.models import FingerprintEnrollment
 
 from .document_validation import validate_document_file
 from .models import Employee, EmployeeDocument, EmployeeType, PayrollGroup
@@ -37,6 +38,25 @@ class EmployeeManagementListCreateView(ListCreateAPIView):
     def get_queryset(self):
         queryset = Employee.objects.select_related(
             "user", "branch__organization", "department", "designation", "employee_type", "payroll_group",
+        ).annotate(
+            active_fingerprint_count=Count(
+                "fingerprints",
+                filter=Q(fingerprints__is_active=True),
+                distinct=True,
+            ),
+            latest_fingerprint_enrollment_status=Subquery(
+                FingerprintEnrollment.objects.filter(employee_id=OuterRef("pk"))
+                .order_by("-created_at", "-pk")
+                .values("status")[:1]
+            ),
+            pending_fingerprint_enrollment_status=Subquery(
+                FingerprintEnrollment.objects.filter(
+                    employee_id=OuterRef("pk"),
+                    status__in=FingerprintEnrollment.ACTIVE_STATUSES,
+                )
+                .order_by("-created_at", "-pk")
+                .values("status")[:1]
+            ),
         ).order_by("employee_code")
         queryset = scope_queryset(queryset, self.request.user, "branch")
         for parameter, field in (("branch", "branch_id"), ("department", "department_id"), ("designation", "designation_id")):
