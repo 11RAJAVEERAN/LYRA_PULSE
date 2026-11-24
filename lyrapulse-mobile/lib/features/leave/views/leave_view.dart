@@ -1,8 +1,8 @@
-import 'package:flutter/material.dart';
+// import 'package:flutter/material.dart';
 
-class LeaveView extends StatelessWidget {
-  const LeaveView({super.key});
+// class LeaveView extends StatelessWidget {
+//   const LeaveView({super.key});
 
-  @override
-  Widget build(BuildContext context) => const SizedBox.shrink();
-}
+//   @override
+//   Widget build(BuildContext context) => const SizedBox.shrink();
+// }

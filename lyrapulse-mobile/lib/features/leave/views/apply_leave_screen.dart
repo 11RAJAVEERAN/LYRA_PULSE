@@ -4,8 +4,6 @@ import 'package:get/get.dart';
 
 import '../../../app/theme/app_colors.dart';
 import '../controllers/leave_controller.dart';
-import '../widgets/leave_balance_card.dart';
-import '../widgets/leave_calendar_sheet.dart';
 
 class ApplyLeaveScreen extends GetView<LeaveController> {
   const ApplyLeaveScreen({super.key});
@@ -28,8 +26,6 @@ class ApplyLeaveScreen extends GetView<LeaveController> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const LeaveBalanceCard(),
-            const SizedBox(height: 25),
             _heading('Leave Type'),
             const SizedBox(height: 10),
             Obx(
@@ -45,7 +41,7 @@ class ApplyLeaveScreen extends GetView<LeaveController> {
                   return DropdownMenuItem(
                     value: type,
                     child: Text(
-                      '$type Leave',
+                      _leaveTypeLabel(type),
                       style: GoogleFonts.inter(),
                     ),
                   );
@@ -60,57 +56,20 @@ class ApplyLeaveScreen extends GetView<LeaveController> {
               final start = controller.startDate.value;
               final end = controller.endDate.value;
 
-              return InkWell(
-                onTap: () {
-                  Get.bottomSheet(
-                    const LeaveCalendarSheet(),
-                    isScrollControlled: true,
-                    backgroundColor: AppColors.surface,
-                  );
-                },
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    border: Border.all(color: AppColors.border),
-                    borderRadius: BorderRadius.circular(14),
+              return Row(
+                children: [
+                  _dateBox(
+                    label: 'Start Date',
+                    date: start,
+                    onTap: () => _pickDate(context, isStart: true),
                   ),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.calendar_month,
-                        color: AppColors.primaryBlue,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              start == null
-                                  ? 'Select Start & End Date'
-                                  : '${_date(start)} - ${end == null ? 'Select End Date' : _date(end)}',
-                              style: GoogleFonts.inter(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(height: 5),
-                            Text(
-                              'Tap to open calendar',
-                              style: GoogleFonts.inter(
-                                fontSize: 11,
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const Icon(Icons.chevron_right),
-                    ],
+                  const SizedBox(width: 12),
+                  _dateBox(
+                    label: 'End Date',
+                    date: end,
+                    onTap: () => _pickDate(context, isStart: false),
                   ),
-                ),
+                ],
               );
             }),
             const SizedBox(height: 22),
@@ -142,16 +101,20 @@ class ApplyLeaveScreen extends GetView<LeaveController> {
                           color: AppColors.textSecondary,
                         ),
                       ),
-                      Obx(
-                        () => Text(
-                          '${controller.calculatedDays} Days',
+                      Obx(() {
+                        final d = controller.calculatedDays;
+                        final text = d == d.truncateToDouble()
+                            ? d.toInt().toString()
+                            : d.toString();
+                        return Text(
+                          '$text Days',
                           style: GoogleFonts.inter(
                             color: AppColors.primaryBlue,
                             fontSize: 17,
                             fontWeight: FontWeight.bold,
                           ),
-                        ),
-                      ),
+                        );
+                      }),
                     ],
                   ),
                 ],
@@ -228,37 +191,43 @@ class ApplyLeaveScreen extends GetView<LeaveController> {
     );
   }
 
+  String _leaveTypeLabel(String type) {
+    return type == 'LWP' ? 'Loss of Pay' : '$type Leave';
+  }
+
   Widget _durationOption(String value) {
     return Expanded(
       child: Obx(() {
         final selected = controller.selectedDuration.value == value;
+        final disabled = value == 'Half Day' && !controller.isSingleDay;
 
-        return GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: () {
-            controller.selectDuration(value);
-          },
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            decoration: BoxDecoration(
-              color: selected ? AppColors.infoBackground : AppColors.surface,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color:
-                    selected ? AppColors.primaryBlue : AppColors.borderStrong,
-                width: selected ? 1.5 : 1,
+        return Opacity(
+          opacity: disabled ? 0.4 : 1,
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: disabled ? null : () => controller.selectDuration(value),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              decoration: BoxDecoration(
+                color: selected ? AppColors.infoBackground : AppColors.surface,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color:
+                      selected ? AppColors.primaryBlue : AppColors.borderStrong,
+                  width: selected ? 1.5 : 1,
+                ),
               ),
-            ),
-            child: Center(
-              child: Text(
-                value,
-                style: GoogleFonts.inter(
-                  color: selected
-                      ? AppColors.primaryBlue
-                      : AppColors.textSecondary,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 12,
+              child: Center(
+                child: Text(
+                  value,
+                  style: GoogleFonts.inter(
+                    color: selected
+                        ? AppColors.primaryBlue
+                        : AppColors.textSecondary,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                  ),
                 ),
               ),
             ),
@@ -266,6 +235,93 @@ class ApplyLeaveScreen extends GetView<LeaveController> {
         );
       }),
     );
+  }
+
+  Widget _dateBox({
+    required String label,
+    required DateTime? date,
+    required VoidCallback onTap,
+  }) {
+    return Expanded(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            border: Border.all(color: AppColors.border),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Row(
+            children: [
+              const Icon(
+                Icons.calendar_month,
+                color: AppColors.primaryBlue,
+                size: 20,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      date == null ? 'Select' : _date(date),
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickDate(BuildContext context, {required bool isStart}) async {
+    final today = DateTime.now();
+    final todayOnly = DateTime(today.year, today.month, today.day);
+
+    if (!isStart && controller.startDate.value == null) {
+      Get.snackbar(
+        'Start Date',
+        'First select the start date.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
+    final first = isStart ? todayOnly : controller.startDate.value!;
+    final initial = isStart
+        ? (controller.startDate.value ?? todayOnly)
+        : (controller.endDate.value ?? first);
+
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial.isBefore(first) ? first : initial,
+      firstDate: first,
+      lastDate: DateTime(today.year + 1, 12, 31),
+    );
+
+    if (picked == null) return;
+
+    if (isStart) {
+      controller.setStartDate(picked);
+    } else {
+      controller.setEndDate(picked);
+    }
   }
 
   Widget _heading(String title) {

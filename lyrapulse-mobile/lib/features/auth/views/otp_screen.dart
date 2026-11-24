@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
@@ -15,12 +14,11 @@ class OtpScreen extends StatefulWidget {
   State<OtpScreen> createState() => _OtpScreenState();
 }
 
-class _OtpScreenState extends State<OtpScreen> with WidgetsBindingObserver {
+class _OtpScreenState extends State<OtpScreen> {
   // Keeps the content phone-sized on Flutter Web / tablets.
   static const double _maxContentWidth = 480;
 
   final controller = Get.find<AuthController>();
-  final _verifyButtonKey = GlobalKey();
 
   Worker? _verifyWorker;
   bool _hasError = false;
@@ -28,8 +26,6 @@ class _OtpScreenState extends State<OtpScreen> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
-
-    WidgetsBinding.instance.addObserver(this);
 
     controller.startCountdown();
 
@@ -47,40 +43,14 @@ class _OtpScreenState extends State<OtpScreen> with WidgetsBindingObserver {
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-
     _verifyWorker?.dispose();
-
     controller.stopCountdown();
-
     super.dispose();
   }
 
-  /// When the keyboard opens, keep the Verify button visible above it.
-  @override
-  void didChangeMetrics() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-
-      final view = View.maybeOf(context);
-
-      if (view == null || view.viewInsets.bottom <= 0) {
-        return;
-      }
-
-      final buttonContext = _verifyButtonKey.currentContext;
-
-      if (buttonContext == null) return;
-
-      Scrollable.ensureVisible(
-        buttonContext,
-        alignment: 1,
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeInOut,
-        alignmentPolicy: ScrollPositionAlignmentPolicy.keepVisibleAtEnd,
-      );
-    });
-  }
+  // ---------------------------------------------------------------------------
+  // Helpers
+  // ---------------------------------------------------------------------------
 
   String get _maskedPhone {
     final digits =
@@ -96,14 +66,13 @@ class _OtpScreenState extends State<OtpScreen> with WidgetsBindingObserver {
 
   String _formatCountdown(int seconds) {
     final minutes = (seconds ~/ 60).toString().padLeft(2, '0');
-
     final secs = (seconds % 60).toString().padLeft(2, '0');
-
     return '$minutes:$secs';
   }
 
   void _verify() {
     FocusManager.instance.primaryFocus?.unfocus();
+    HapticFeedback.selectionClick();
 
     if (!RegExp(r'^\d{6}$').hasMatch(controller.otpController.text)) {
       setState(() => _hasError = true);
@@ -118,6 +87,10 @@ class _OtpScreenState extends State<OtpScreen> with WidgetsBindingObserver {
     }
   }
 
+  // ---------------------------------------------------------------------------
+  // Build
+  // ---------------------------------------------------------------------------
+
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -125,258 +98,170 @@ class _OtpScreenState extends State<OtpScreen> with WidgetsBindingObserver {
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.dark,
         statusBarBrightness: Brightness.light,
-
-        // Match bottom system area with the page decoration.
-        systemNavigationBarColor: AppColors.selected,
+        systemNavigationBarColor: AppColors.background,
         systemNavigationBarIconBrightness: Brightness.dark,
       ),
       child: Scaffold(
         backgroundColor: AppColors.background,
-        resizeToAvoidBottomInset: false,
-        body: Stack(
-          fit: StackFit.expand,
-          children: [
-            // Bottom decorative wave - front.
-            _buildWave(
-              bottom: -55,
-              side: -70,
-              height: 170,
-              radius: 260,
-              vRadius: 110,
-              color: AppColors.selected,
-            ),
-
-            // Bottom decorative wave - back.
-            _buildWave(
-              bottom: -100,
-              side: -30,
-              height: 150,
-              radius: 250,
-              vRadius: 100,
-              color: AppColors.infoBackground,
-            ),
-
-            SafeArea(
-              bottom: false,
-              child: SingleChildScrollView(
-                keyboardDismissBehavior:
-                    ScrollViewKeyboardDismissBehavior.onDrag,
-                padding: EdgeInsets.only(
-                  left: 24,
-                  right: 24,
-                  top: 12,
-                  bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-                ),
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(
-                      maxWidth: _maxContentWidth,
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _buildIllustration(),
-                        const SizedBox(height: 23),
-                        Semantics(
-                          header: true,
-                          child: Text(
-                            'OTP Verification',
-                            textAlign: TextAlign.center,
-
-                            // Same heading style as Login screen.
-                            style: AppTextStyles.display.copyWith(
-                              color: AppColors.primary,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          "We've sent a 6-digit OTP to your registered\n"
-                          'mobile number',
-                          textAlign: TextAlign.center,
-
-                          // Same body style as Login screen.
-                          style: AppTextStyles.bodySmall.copyWith(
-                            fontSize: 14,
-                          ),
-                        ),
-                        const SizedBox(height: 18),
-                        _buildPhone(),
-                        const SizedBox(height: 28),
-                        AutofillGroup(
-                          child: OtpInput(
-                            controller: controller.otpController,
-                            hasError: _hasError,
-                            onChanged: _clearError,
-                          ),
-                        ),
-                        AnimatedSize(
-                          duration: const Duration(milliseconds: 180),
-                          child: _hasError
-                              ? Padding(
-                                  padding: const EdgeInsets.only(top: 10),
-                                  child: Semantics(
-                                    liveRegion: true,
-                                    child: Text(
-                                      'We couldn’t verify that code. Check it and try again.',
-                                      textAlign: TextAlign.center,
-                                      style: AppTextStyles.bodySmall.copyWith(
-                                        color: AppColors.error,
-                                      ),
-                                    ),
-                                  ),
-                                )
-                              : const SizedBox.shrink(),
-                        ),
-                        const SizedBox(height: 26),
-                        _buildResend(),
-                        const SizedBox(height: 30),
-                        Obx(
-                          () => _VerifyButton(
-                            key: _verifyButtonKey,
-                            loading: controller.isVerifying.value,
-                            onPressed: _verify,
-                          ),
-                        ),
-                        const SizedBox(height: 32),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildWave({
-    required double bottom,
-    required double side,
-    required double height,
-    required double radius,
-    required double vRadius,
-    required Color color,
-  }) {
-    return Positioned(
-      bottom: bottom,
-      left: side,
-      right: side,
-      child: IgnorePointer(
-        child: Container(
-          height: height,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.elliptical(
-                radius,
-                vRadius,
-              ),
-              topRight: Radius.elliptical(
-                radius,
-                vRadius,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// Circle with a phone outline,
-  /// password-star bar and check badge.
-  Widget _buildIllustration() {
-    return Container(
-      width: 200,
-      height: 190,
-      decoration: const BoxDecoration(
-        shape: BoxShape.circle,
-
-        // Existing Login theme color.
-        color: AppColors.infoBackground,
-      ),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          // Phone outline.
-          Container(
-            width: 100,
-            height: 140,
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: AppColors.primary,
-                width: 5,
-              ),
-              borderRadius: BorderRadius.circular(23),
-            ),
-            child: const Align(
-              alignment: Alignment.topCenter,
-              child: Padding(
-                padding: EdgeInsets.only(top: 5),
-                child: SizedBox(
-                  width: 33,
-                  height: 7,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      borderRadius: BorderRadius.all(
-                        Radius.circular(8),
+        // Scaffold lifts the pinned button above the keyboard by itself.
+        resizeToAvoidBottomInset: true,
+        body: SafeArea(
+          child: Column(
+            children: [
+              _buildTopBar(context),
+              Expanded(
+                child: SingleChildScrollView(
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
+                  padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints:
+                          const BoxConstraints(maxWidth: _maxContentWidth),
+                      child: Column(
+                        children: [
+                          _buildIntro(),
+                          const SizedBox(height: 32),
+                          _buildOtpSection(),
+                          const SizedBox(height: 28),
+                          _buildResend(),
+                          const SizedBox(height: 24),
+                          _buildSecurityNote(),
+                        ],
                       ),
                     ),
                   ),
                 ),
               ),
-            ),
+              _buildBottomButton(),
+            ],
           ),
+        ),
+      ),
+    );
+  }
 
-          // OTP password strip.
-          Positioned(
-            top: 63,
-            left: 36,
-            child: Container(
-              width: 120,
-              height: 50,
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                  colors: [
-                    AppColors.primary,
-                    AppColors.secondary,
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(13),
-              ),
-              child: Center(
-                child: Text(
-                  '✱ ✱ ✱ ✱ ✱ ✱',
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.surface,
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
+  // ---------------------------------------------------------------------------
+  // Sections
+  // ---------------------------------------------------------------------------
+
+  /// Back button row (only shown when there is a previous screen).
+  Widget _buildTopBar(BuildContext context) {
+    final canPop = Navigator.of(context).canPop();
+
+    return SizedBox(
+      height: 56,
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: canPop
+            ? Padding(
+                padding: const EdgeInsets.only(left: 8),
+                child: IconButton(
+                  tooltip: 'Back',
+                  onPressed: () => Get.back(),
+                  icon: const Icon(
+                    Icons.arrow_back_ios_new_rounded,
+                    size: 20,
+                    color: AppColors.primary,
                   ),
                 ),
+              )
+            : null,
+      ),
+    );
+  }
+
+  /// Lock badge, title, subtitle and masked phone number.
+  Widget _buildIntro() {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 450),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) {
+        return Opacity(
+          opacity: value,
+          child: Transform.translate(
+            offset: Offset(0, 16 * (1 - value)),
+            child: child,
+          ),
+        );
+      },
+      child: Column(
+        children: [
+          Container(
+            width: 84,
+            height: 84,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [AppColors.primary, AppColors.secondary],
+              ),
+              boxShadow: const [
+                BoxShadow(
+                  color: AppColors.selection,
+                  blurRadius: 20,
+                  offset: Offset(0, 8),
+                ),
+              ],
+            ),
+            child: const Icon(
+              Icons.lock_outline_rounded,
+              size: 38,
+              color: AppColors.surface,
+            ),
+          ),
+          const SizedBox(height: 24),
+          Semantics(
+            header: true,
+            child: Text(
+              'OTP Verification',
+              textAlign: TextAlign.center,
+              style: AppTextStyles.display.copyWith(
+                 fontSize: 25,
+                color: AppColors.primary,
               ),
             ),
           ),
+          const SizedBox(height: 10),
+          Text(
+            "We've sent a 6-digit OTP to your\nregistered mobile number",
+            textAlign: TextAlign.center,
+            style: AppTextStyles.bodySmall.copyWith(
+              fontSize: 14,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 18),
+          _buildPhoneChip(),
+        ],
+      ),
+    );
+  }
 
-          // Check badge.
-          Positioned(
-            bottom: 28,
-            right: 32,
-            child: Container(
-              width: 45,
-              height: 50,
-              decoration: BoxDecoration(
-                color: AppColors.primaryBlue,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: const Icon(
-                Icons.check_rounded,
-                size: 35,
-                color: AppColors.surface,
-              ),
+  Widget _buildPhoneChip() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.infoBackground,
+        borderRadius: BorderRadius.circular(30),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(
+            Icons.call_rounded,
+            color: AppColors.primaryBlue,
+            size: 18,
+          ),
+          const SizedBox(width: 10),
+          Text(
+            _maskedPhone,
+            style: AppTextStyles.title.copyWith(
+              fontSize: 16,
+              letterSpacing: 0.4,
+              color: AppColors.primary,
             ),
           ),
         ],
@@ -384,22 +269,48 @@ class _OtpScreenState extends State<OtpScreen> with WidgetsBindingObserver {
     );
   }
 
-  Widget _buildPhone() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+  /// OTP boxes and the inline error message.
+  Widget _buildOtpSection() {
+    return Column(
       children: [
-        const Icon(
-          Icons.call_rounded,
-          color: AppColors.primaryBlue,
-          size: 23,
-        ),
-        const SizedBox(width: 12),
-        Text(
-          _maskedPhone,
-          style: AppTextStyles.title.copyWith(
-            fontSize: 17,
-            color: AppColors.primary,
+        AutofillGroup(
+          child: OtpInput(
+            controller: controller.otpController,
+            hasError: _hasError,
+            onChanged: _clearError,
           ),
+        ),
+        AnimatedSize(
+          duration: const Duration(milliseconds: 180),
+          alignment: Alignment.topCenter,
+          child: _hasError
+              ? Padding(
+                  padding: const EdgeInsets.only(top: 14),
+                  child: Semantics(
+                    liveRegion: true,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.error_outline_rounded,
+                          size: 18,
+                          color: AppColors.error,
+                        ),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            'We couldn’t verify that code. Check it and try again.',
+                            textAlign: TextAlign.center,
+                            style: AppTextStyles.bodySmall.copyWith(
+                              color: AppColors.error,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              : const SizedBox(width: double.infinity),
         ),
       ],
     );
@@ -408,79 +319,115 @@ class _OtpScreenState extends State<OtpScreen> with WidgetsBindingObserver {
   Widget _buildResend() {
     return Obx(() {
       final seconds = controller.secondsRemaining.value;
-
       final resending = controller.isResendingOtp.value;
-
       final canResend = seconds == 0 && !resending;
 
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+      return Wrap(
+        alignment: WrapAlignment.center,
+        crossAxisAlignment: WrapCrossAlignment.center,
         children: [
-          const Icon(
-            Icons.refresh_rounded,
-            color: AppColors.primaryBlue,
-            size: 26,
+          Text(
+            seconds > 0 ? 'Resend OTP in ' : 'Didn’t receive OTP? ',
+            style: AppTextStyles.bodySmall.copyWith(fontSize: 14),
           ),
-          const SizedBox(width: 9),
-          Flexible(
-            child: Wrap(
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                Text(
-                  seconds > 0 ? 'Resend OTP in ' : 'Didn’t receive OTP? ',
-                  style: AppTextStyles.bodySmall.copyWith(
-                    fontSize: 14,
-                  ),
+          if (seconds > 0)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.infoBackground,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                _formatCountdown(seconds),
+                style: AppTextStyles.bodySmall.copyWith(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primaryBlue,
                 ),
-                if (seconds > 0)
-                  Text(
-                    _formatCountdown(seconds),
-                    style: AppTextStyles.bodySmall.copyWith(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.primaryBlue,
-                    ),
-                  )
-                else if (resending)
-                  const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: AppColors.primaryBlue,
-                    ),
-                  )
-                else
-                  TextButton(
-                    onPressed: canResend ? controller.resendOtp : null,
-                    style: TextButton.styleFrom(
-                      minimumSize: const Size(48, 40),
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      foregroundColor: AppColors.primaryBlue,
-                      textStyle: AppTextStyles.bodySmall.copyWith(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    child: Text('Resend', style: GoogleFonts.inter()),
-                  ),
-              ],
+              ),
+            )
+          else if (resending)
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 8),
+              child: SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: AppColors.primaryBlue,
+                ),
+              ),
+            )
+          else
+            TextButton(
+              onPressed: canResend ? controller.resendOtp : null,
+              style: TextButton.styleFrom(
+                minimumSize: const Size(48, 40),
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                foregroundColor: AppColors.primaryBlue,
+                textStyle: AppTextStyles.bodySmall.copyWith(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              child: const Text('Resend'),
             ),
-          ),
         ],
       );
     });
   }
+
+  Widget _buildSecurityNote() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        // Icon(
+        //   Icons.shield_outlined,
+        //   size: 16,
+        //   color: AppColors.primary.withOpacity(0.55),
+        // ),
+        // const SizedBox(width: 6),
+        // Flexible(
+        //   child: Text(
+        //     'Never share your OTP with anyone.',
+        //     textAlign: TextAlign.center,
+        //     style: AppTextStyles.bodySmall.copyWith(
+        //       fontSize: 12.5,
+        //       color: AppColors.primary.withOpacity(0.55),
+        //     ),
+        //   ),
+        // ),
+      ],
+    );
+  }
+
+  /// Verify button pinned at the bottom.
+  Widget _buildBottomButton() {
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: _maxContentWidth),
+            child: Obx(
+              () => _VerifyButton(
+                loading: controller.isVerifying.value,
+                onPressed: _verify,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
-/// Verify OTP button.
-/// Uses the same primary -> secondary gradient
-/// used by the Login button.
+/// Verify OTP button (primary -> secondary gradient, same as Login).
 class _VerifyButton extends StatelessWidget {
   const _VerifyButton({
     required this.loading,
     required this.onPressed,
-    super.key,
   });
 
   final bool loading;
@@ -488,29 +435,24 @@ class _VerifyButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final radius = BorderRadius.circular(23);
+    final radius = BorderRadius.circular(18);
 
     return SizedBox(
       width: double.infinity,
-      height: 66,
+      height: 58,
       child: DecoratedBox(
         decoration: BoxDecoration(
           gradient: const LinearGradient(
             begin: Alignment.centerLeft,
             end: Alignment.centerRight,
-            colors: [
-              AppColors.primary,
-              AppColors.secondary,
-            ],
+            colors: [AppColors.primary, AppColors.secondary],
           ),
           borderRadius: radius,
-
-          // Same shadow token used by Login screen.
           boxShadow: const [
             BoxShadow(
               color: AppColors.selection,
-              blurRadius: 18,
-              offset: Offset(0, 8),
+              blurRadius: 16,
+              offset: Offset(0, 6),
             ),
           ],
         ),
@@ -533,15 +475,13 @@ class _VerifyButton extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          'Verify OTP',
-                          style: AppTextStyles.button.copyWith(
-                            fontSize: 17,
-                          ),
+                          'Submit',
+                          style: AppTextStyles.button.copyWith(fontSize: 18),
                         ),
-                        const SizedBox(width: 18),
+                        const SizedBox(width: 12),
                         const Icon(
                           Icons.arrow_forward_rounded,
-                          size: 29,
+                          size: 24,
                           color: AppColors.surface,
                         ),
                       ],
