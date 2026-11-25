@@ -53,6 +53,23 @@ class EmployeeFingerprintEnrollmentStartView(GenericAPIView):
                 device_id = request.data.get("device_id")
                 finger = request.data.get("finger")
                 device = Device.objects.filter(device_id=device_id).first()
+                now = timezone.now()
+                FingerprintEnrollment.objects.filter(
+                    employee=employee,
+                    status__in=FingerprintEnrollment.ACTIVE_STATUSES,
+                    expires_at__lte=now,
+                ).update(
+                    status=FingerprintEnrollment.Status.EXPIRED,
+                    completed_at=now,
+                    failure_reason="EXPIRED",
+                )
+                employee_active = FingerprintEnrollment.objects.filter(
+                    employee=employee,
+                    status__in=FingerprintEnrollment.ACTIVE_STATUSES,
+                    expires_at__gt=now,
+                ).order_by("created_at").first()
+                if employee_active is not None:
+                    raise ValidationError({"employee_id": "This employee already has a fingerprint enrollment in progress."})
                 if device is not None and finger:
                     active = FingerprintEnrollment.objects.filter(
                         device=device,
@@ -93,6 +110,9 @@ class EmployeeFingerprintEnrollmentStartView(GenericAPIView):
                                 "expires_at": completed.expires_at,
                                 "fingerprint_slot": completed.actual_slot,
                             }, "Enrollment was already completed.", status.HTTP_200_OK)
+
+                    if EmployeeFingerprint.objects.filter(employee=employee, is_active=True).count() >= 2:
+                        raise ValidationError({"employee_id": "This employee already has the maximum number of active fingerprints."})
 
                 serializer = self.get_serializer(
                     data=request.data,

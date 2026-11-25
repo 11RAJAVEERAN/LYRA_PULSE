@@ -1,7 +1,8 @@
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Prefetch, Q
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from rest_framework import serializers, status
 from rest_framework.exceptions import NotFound
 from rest_framework.generics import ListAPIView, ListCreateAPIView, RetrieveUpdateAPIView, RetrieveAPIView
@@ -18,6 +19,7 @@ from apps.accounts.scope import scope_queryset
 from apps.common.responses import success_response
 
 from apps.branches.models import Branch
+from apps.fingerprints.models import EmployeeFingerprint, FingerprintEnrollment
 
 from .document_validation import validate_document_file
 from .models import Employee, EmployeeDocument, EmployeeType, PayrollGroup
@@ -37,6 +39,12 @@ class EmployeeManagementListCreateView(ListCreateAPIView):
     def get_queryset(self):
         queryset = Employee.objects.select_related(
             "user", "branch__organization", "department", "designation", "employee_type", "payroll_group",
+        ).prefetch_related(
+            Prefetch("fingerprints", queryset=EmployeeFingerprint.objects.filter(is_active=True).select_related("device"), to_attr="_active_fingerprint_mappings"),
+            Prefetch("fingerprint_enrollments", queryset=FingerprintEnrollment.objects.filter(
+                status__in=FingerprintEnrollment.ACTIVE_STATUSES, expires_at__gt=timezone.now(),
+            ).order_by("-created_at"), to_attr="_active_fingerprint_enrollment_attempts"),
+            Prefetch("fingerprint_enrollments", queryset=FingerprintEnrollment.objects.order_by("-created_at")[:1], to_attr="_latest_fingerprint_enrollment_attempts"),
         ).order_by("employee_code")
         queryset = scope_queryset(queryset, self.request.user, "branch")
         for parameter, field in (("branch", "branch_id"), ("department", "department_id"), ("designation", "designation_id")):

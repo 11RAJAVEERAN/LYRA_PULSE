@@ -3,6 +3,7 @@ from datetime import date
 
 from rest_framework import serializers
 from rest_framework.exceptions import PermissionDenied
+from django.utils import timezone
 from django.contrib.auth import get_user_model
 from django.db import transaction
 
@@ -11,6 +12,7 @@ from apps.accounts.serializers import normalize_phone_number
 from apps.branches.models import Branch
 from apps.departments.models import Department
 from apps.designations.models import Designation
+from apps.fingerprints.models import EmployeeFingerprint, FingerprintEnrollment
 from .models import Employee, EmployeeDocument, EmployeeType, PayrollGroup
 
 User = get_user_model()
@@ -71,6 +73,7 @@ class EmployeeManagementSerializer(serializers.ModelSerializer):
     payroll_group = serializers.PrimaryKeyRelatedField(queryset=PayrollGroup.objects.all(), required=False, allow_null=True)
     # Write-only; reads return only the masked value so the full account number is never sent back.
     bank_account_number = serializers.CharField(write_only=True, required=False, allow_blank=True, max_length=34)
+    fingerprint_enrollment = serializers.SerializerMethodField()
 
     class Meta:
         model = Employee
@@ -85,7 +88,8 @@ class EmployeeManagementSerializer(serializers.ModelSerializer):
                   # Salary + bank (sensitive)
                   "salary_type", "monthly_salary", "payroll_group",
                   "bank_name", "bank_branch_name", "bank_account_number", "bank_ifsc_code",
-                  "biometric_attendance_enabled", "mobile_gps_attendance_enabled", "photo_attendance_enabled")
+                  "biometric_attendance_enabled", "mobile_gps_attendance_enabled", "photo_attendance_enabled",
+                  "fingerprint_enrollment")
         read_only_fields = ("id",)
 
     def get_organization(self, obj):
@@ -93,6 +97,46 @@ class EmployeeManagementSerializer(serializers.ModelSerializer):
 
     def get_organization_name(self, obj):
         return obj.branch.organization.name if obj.branch_id and obj.branch.organization_id else None
+
+    def get_fingerprint_enrollment(self, obj):
+        mappings = getattr(obj, "_active_fingerprint_mappings", None)
+        active_attempts = getattr(obj, "_active_fingerprint_enrollment_attempts", None)
+        latest_attempts = getattr(obj, "_latest_fingerprint_enrollment_attempts", None)
+        if mappings is None:
+            mappings = list(EmployeeFingerprint.objects.filter(employee=obj, is_active=True).select_related("device"))
+        if active_attempts is None:
+            active_attempts = list(FingerprintEnrollment.objects.filter(
+                employee=obj,
+                status__in=FingerprintEnrollment.ACTIVE_STATUSES,
+                expires_at__gt=timezone.now(),
+            ).order_by("-created_at"))
+        if latest_attempts is None:
+            latest_attempts = list(FingerprintEnrollment.objects.filter(employee=obj).order_by("-created_at")[:1])
+
+        latest_attempt = latest_attempts[0] if latest_attempts else None
+        if active_attempts:
+            state = "PENDING"
+            latest_attempt = active_attempts[0]
+        elif latest_attempt and latest_attempt.status == FingerprintEnrollment.Status.FAILED and len(mappings) < 2:
+            state = "FAILED"
+        elif mappings:
+            state = "ENROLLED"
+        elif latest_attempt and latest_attempt.status == FingerprintEnrollment.Status.FAILED:
+            state = "FAILED"
+        else:
+            state = "NOT_ENROLLED"
+
+        latest_mapping = max(mappings, key=lambda mapping: mapping.created_at, default=None)
+        return {
+            "status": state,
+            "fingerprint_count": len(mappings),
+            "last_enrolled": latest_mapping.created_at if latest_mapping else None,
+            "device_id": latest_mapping.device.device_id if latest_mapping else None,
+            "branch_name": obj.branch.name if obj.branch_id else None,
+            "department_name": obj.department.name if obj.department_id else None,
+            "enrollment_id": str(latest_attempt.id) if latest_attempt and state == "PENDING" else None,
+            "failure_reason": latest_attempt.failure_reason if latest_attempt and state == "FAILED" else None,
+        }
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
