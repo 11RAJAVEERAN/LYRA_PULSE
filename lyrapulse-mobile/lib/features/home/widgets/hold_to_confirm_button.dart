@@ -8,6 +8,19 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../app/theme/app_colors.dart';
 
+// Aurora palette (green -> teal -> blue), like in-display fingerprint effects.
+const _auroraGreen = Color(0xFF34D399);
+const _auroraTeal = Color(0xFF06B6D4);
+const _auroraBlue = Color(0xFF60A5FA);
+const _auroraStops = [_auroraGreen, _auroraTeal, _auroraBlue];
+
+/// v: 0..1 -> green .. teal .. blue
+Color _auroraAt(double v) {
+  final s = v.clamp(0.0, 1.0) * (_auroraStops.length - 1);
+  final i = s.floor().clamp(0, _auroraStops.length - 2);
+  return Color.lerp(_auroraStops[i], _auroraStops[i + 1], s - i)!;
+}
+
 class HoldToConfirmButton extends StatefulWidget {
   final bool isCheckOut;
   final bool isEnabled;
@@ -28,6 +41,7 @@ class _HoldToConfirmButtonState extends State<HoldToConfirmButton>
     with TickerProviderStateMixin {
   late final AnimationController _holdController;
   late final AnimationController _waveController;
+  late final AnimationController _swirlController; // looping particle motion
 
   // Success beep (generated in code, no asset file needed).
   final AudioPlayer _player = AudioPlayer();
@@ -39,6 +53,7 @@ class _HoldToConfirmButtonState extends State<HoldToConfirmButton>
 
   static const _holdDuration = Duration(seconds: 2);
   static const _waveDuration = Duration(milliseconds: 1400);
+  static const _swirlDuration = Duration(milliseconds: 3000);
 
   Color get _buttonColor =>
       widget.isCheckOut ? AppColors.warning : AppColors.success;
@@ -55,6 +70,11 @@ class _HoldToConfirmButtonState extends State<HoldToConfirmButton>
     _waveController = AnimationController(
       vsync: this,
       duration: _waveDuration,
+    );
+
+    _swirlController = AnimationController(
+      vsync: this,
+      duration: _swirlDuration,
     );
 
     _holdController.addStatusListener(_handleHoldStatus);
@@ -141,6 +161,7 @@ class _HoldToConfirmButtonState extends State<HoldToConfirmButton>
     // Hold finished -> big success moment (vibration + beep).
     _isHolding = false;
     _isProcessing = true;
+    _swirlController.stop();
     HapticFeedback.heavyImpact();
     _playSuccessBeep();
 
@@ -153,6 +174,7 @@ class _HoldToConfirmButtonState extends State<HoldToConfirmButton>
       _lastHapticStep = 0;
       _holdController.reset();
       _waveController.reset();
+      _swirlController.reset();
 
       setState(() {});
 
@@ -174,6 +196,7 @@ class _HoldToConfirmButtonState extends State<HoldToConfirmButton>
     _waveController.stop();
     _waveController.reset();
 
+    _swirlController.repeat();
     _holdController.forward(from: 0);
   }
 
@@ -188,6 +211,9 @@ class _HoldToConfirmButtonState extends State<HoldToConfirmButton>
 
     _waveController.stop();
     _waveController.reset();
+
+    _swirlController.stop();
+    _swirlController.reset();
 
     setState(() {});
   }
@@ -209,6 +235,7 @@ class _HoldToConfirmButtonState extends State<HoldToConfirmButton>
     _holdController.removeListener(_handleHoldTick);
     _holdController.dispose();
     _waveController.dispose();
+    _swirlController.dispose();
     _player.dispose();
     super.dispose();
   }
@@ -226,7 +253,7 @@ class _HoldToConfirmButtonState extends State<HoldToConfirmButton>
     final size = 92 + (eased * 150);
     final opacity = (1 - eased) * 0.8;
 
-    final waveColor = waveIndex.isEven ? AppColors.accent : AppColors.secondary;
+    final waveColor = waveIndex.isEven ? _auroraGreen : _auroraBlue;
     return Container(
       width: size,
       height: size,
@@ -263,10 +290,12 @@ class _HoldToConfirmButtonState extends State<HoldToConfirmButton>
           animation: Listenable.merge([
             _holdController,
             _waveController,
+            _swirlController,
           ]),
           builder: (context, child) {
             final waveProgress = _waveController.value;
             final holdValue = _holdController.value;
+            final swirlT = _swirlController.value;
             final isWaveActive = _isProcessing;
 
             final glow =
@@ -276,21 +305,26 @@ class _HoldToConfirmButtonState extends State<HoldToConfirmButton>
                 ? Curves.easeIn.transform(holdValue.clamp(0.0, 1.0))
                 : 0.0;
 
+            // Aurora fades in almost instantly after press (~200 ms).
+            final appear = _isHolding
+                ? Curves.easeOut.transform((holdValue * 10).clamp(0.0, 1.0))
+                : 0.0;
+
             double scale = 1.0;
             if (_isHolding) {
-              scale = 1.0 + 0.2 * Curves.easeOut.transform(holdValue);
+              scale = 1.0 + 0.12 * Curves.easeOut.transform(holdValue);
             } else if (isWaveActive) {
               scale = 1.0 +
                   0.2 * (1 - Curves.easeOutBack.transform(waveProgress));
             }
 
-            final shake = _isHolding && holdValue > 0.6
-                ? math.sin(holdValue * 90) * (holdValue - 0.6) * 3
+            final shake = _isHolding && holdValue > 0.7
+                ? math.sin(holdValue * 90) * (holdValue - 0.7) * 3
                 : 0.0;
 
-            final ringColor = isWaveActive
-                ? AppColors.success
-                : (_isHolding ? AppColors.accent : AppColors.secondary);
+            final ringColor =
+                isWaveActive ? AppColors.success : AppColors.secondary;
+
 
             final showDone = isWaveActive;
 
@@ -299,25 +333,30 @@ class _HoldToConfirmButtonState extends State<HoldToConfirmButton>
               clipBehavior: Clip.none,
               children: [
                 if (_isHolding) ...[
+                  // Soft green/blue aura behind everything
                   Container(
-                    width: 100 + charge * 40,
-                    height: 100 + charge * 40,
+                    width: 130 + charge * 50,
+                    height: 130 + charge * 50,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: RadialGradient(
                         colors: [
-                          buttonColor.withValues(alpha: 0.28 * charge),
-                          buttonColor.withValues(alpha: 0),
+                          _auroraGreen.withValues(alpha: 0.38 * appear),
+                          _auroraBlue.withValues(alpha: 0.14 * appear),
+                          _auroraBlue.withValues(alpha: 0),
+                         
                         ],
+                        stops: const [0.0, 0.6, 1.0],
                       ),
                     ),
                   ),
+                  // Swirling particles + aurora ribbons
                   CustomPaint(
                     size: const Size(100, 100),
-                    painter: _ChargePainter(
+                    painter: _AuroraSwirlPainter(
+                      t: swirlT,
                       progress: holdValue,
-                      color: buttonColor,
-                      accent: AppColors.accent,
+                      appear: appear,
                     ),
                   ),
                 ],
@@ -333,14 +372,12 @@ class _HoldToConfirmButtonState extends State<HoldToConfirmButton>
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.primaryBlue
-                              .withValues(alpha: 0.28 * glow),
+                          color: _auroraBlue.withValues(alpha: 0.30 * glow),
                           blurRadius: 30 + (glow * 30),
                           spreadRadius: 4 + (glow * 8),
                         ),
                         BoxShadow(
-                          color: AppColors.success
-                              .withValues(alpha: 0.35 * glow),
+                          color: _auroraGreen.withValues(alpha: 0.40 * glow),
                           blurRadius: 24 + (glow * 24),
                           spreadRadius: 3 + (glow * 6),
                         ),
@@ -357,12 +394,13 @@ class _HoldToConfirmButtonState extends State<HoldToConfirmButton>
                       alignment: Alignment.center,
                       clipBehavior: Clip.none,
                       children: [
+                        // Track ring (turns full green on DONE)
                         SizedBox(
                           width: 106,
                           height: 106,
                           child: CircularProgressIndicator(
-                            value: isWaveActive ? 1 : (_isHolding ? holdValue : 0),
-                            strokeWidth: _isHolding ? 4.5 + holdValue * 3 : 4.5,
+                            value: isWaveActive ? 1 : 0,
+                            strokeWidth: 4.5,
                             strokeCap: StrokeCap.round,
                             backgroundColor:
                                 AppColors.primaryBlue.withValues(alpha: 0.13),
@@ -370,32 +408,50 @@ class _HoldToConfirmButtonState extends State<HoldToConfirmButton>
                                 AlwaysStoppedAnimation<Color>(ringColor),
                           ),
                         ),
+                        // Aurora progress ring while holding
+                        if (_isHolding)
+                          CustomPaint(
+                            size: const Size(106, 106),
+                            painter: _AuroraRingPainter(
+                              progress: holdValue,
+                              rotation: swirlT * math.pi * 2,
+                              strokeWidth: 4.5 + holdValue * 2.5,
+                            ),
+                          ),
                         Container(
                           width: 88,
                           height: 88,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             gradient: LinearGradient(
-                              colors: [
-                                showDone ? AppColors.success : buttonColor,
-                                _isHolding
-                                    ? AppColors.secondaryDark
-                                    : (showDone
-                                        ? AppColors.success
-                                            .withValues(alpha: 0.8)
-                                        : buttonColor.withValues(alpha: 0.78)),
-                              ],
+                              colors: _isHolding
+                                  ? const [_auroraGreen, _auroraTeal]
+                                  : [
+                                      showDone ? AppColors.success : buttonColor,
+                                      showDone
+                                          ? AppColors.success
+                                              .withValues(alpha: 0.8)
+                                          : buttonColor.withValues(alpha: 0.78),
+                                    ],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: buttonColor.withValues(
-                                  alpha: 0.24 + (charge * 0.3) + (glow * 0.25),
+                                color: (_isHolding ? _auroraGreen : buttonColor)
+                                    .withValues(
+                                  alpha: 0.24 + (charge * 0.35) + (glow * 0.25),
                                 ),
-                                blurRadius: 18 + (charge * 22) + (glow * 18),
-                                spreadRadius: 1 + (charge * 4) + (glow * 3),
+                                blurRadius: 18 + (charge * 24) + (glow * 18),
+                                spreadRadius: 1 + (charge * 5) + (glow * 3),
                               ),
+                              if (_isHolding)
+                                BoxShadow(
+                                  color: _auroraBlue
+                                      .withValues(alpha: 0.30 * appear),
+                                  blurRadius: 30,
+                                  spreadRadius: 2,
+                                ),
                               if (isWaveActive)
                                 BoxShadow(
                                   color: AppColors.secondary
@@ -447,55 +503,210 @@ class _HoldToConfirmButtonState extends State<HoldToConfirmButton>
   }
 }
 
-/// Spinning energy rays + glowing spark at the tip of the progress ring.
-class _ChargePainter extends CustomPainter {
-  _ChargePainter({
+/// Green -> blue progress ring with a glowing spark at the tip.
+class _AuroraRingPainter extends CustomPainter {
+  _AuroraRingPainter({
     required this.progress,
-    required this.color,
-    required this.accent,
+    required this.rotation,
+    required this.strokeWidth,
   });
 
   final double progress;
-  final Color color;
-  final Color accent;
+  final double rotation;
+  final double strokeWidth;
+
+  // First = last -> seamless loop while rotating.
+  static const _colors = [
+    _auroraGreen,
+    _auroraTeal,
+    _auroraBlue,
+    _auroraTeal,
+    _auroraGreen,
+  ];
 
   @override
   void paint(Canvas canvas, Size size) {
     final center = size.center(Offset.zero);
+    final radius = (size.width - strokeWidth) / 2;
+    final rect = Rect.fromCircle(center: center, radius: radius);
+
+    final shader = SweepGradient(
+      colors: _colors,
+      transform: GradientRotation(rotation),
+    ).createShader(rect);
+
     final p = progress.clamp(0.0, 1.0);
+    final sweep = p * math.pi * 2;
 
-    const rays = 16;
-    final rotation = p * math.pi * 2;
-    for (int i = 0; i < rays; i++) {
-      final a = rotation + (i / rays) * math.pi * 2;
-      final inner = 60 + p * 6;
-      final len = (6 + p * 16) * (i.isEven ? 1.0 : 0.6);
-      final paint = Paint()
-        ..color = (i.isEven ? color : accent).withValues(alpha: 0.15 + p * 0.6)
-        ..strokeWidth = 2.2
-        ..strokeCap = StrokeCap.round;
-      canvas.drawLine(
-        center + Offset(math.cos(a), math.sin(a)) * inner,
-        center + Offset(math.cos(a), math.sin(a)) * (inner + len),
-        paint,
-      );
-    }
-
-    final tipAngle = -math.pi / 2 + p * math.pi * 2;
-    final tip = center + Offset(math.cos(tipAngle), math.sin(tipAngle)) * 53;
-    canvas.drawCircle(
-      tip,
-      9,
+    // Soft glow
+    canvas.drawArc(
+      rect,
+      -math.pi / 2,
+      sweep,
+      false,
       Paint()
-        ..color = accent.withValues(alpha: 0.45)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
+        ..shader = shader
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = strokeWidth + 6
+        ..strokeCap = StrokeCap.round
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 9),
     );
-    canvas.drawCircle(tip, 3.5, Paint()..color = Colors.white);
+
+    // Main ring
+    canvas.drawArc(
+      rect,
+      -math.pi / 2,
+      sweep,
+      false,
+      Paint()
+        ..shader = shader
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = strokeWidth
+        ..strokeCap = StrokeCap.round,
+    );
+
+    // Spark at the tip
+    if (p > 0) {
+      final tipAngle = -math.pi / 2 + sweep;
+      final tip =
+          center + Offset(math.cos(tipAngle), math.sin(tipAngle)) * radius;
+      canvas.drawCircle(
+        tip,
+        9,
+        Paint()
+          ..color = _auroraTeal.withValues(alpha: 0.55)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
+      );
+      canvas.drawCircle(tip, 3.5, Paint()..color = Colors.white);
+    }
   }
 
   @override
-  bool shouldRepaint(covariant _ChargePainter old) =>
+  bool shouldRepaint(covariant _AuroraRingPainter old) =>
       old.progress != progress ||
-      old.color != color ||
-      old.accent != accent;
+      old.rotation != rotation ||
+      old.strokeWidth != strokeWidth;
+}
+
+class _Particle {
+  const _Particle({
+    required this.angle,
+    required this.radius,
+    required this.dir,
+    required this.speed,
+    required this.size,
+    required this.phase,
+    required this.hue,
+  });
+
+  final double angle;
+  final double radius;
+  final int dir; // +1 / -1 rotation direction
+  final int speed; // integer -> seamless loop
+  final double size;
+  final double phase;
+  final double hue; // 0..1 along the aurora palette
+}
+
+List<_Particle> _buildParticles() {
+  final r = math.Random(7);
+  return List.generate(
+    70,
+    (_) => _Particle(
+      angle: r.nextDouble() * math.pi * 2,
+      radius: 44 + r.nextDouble() * 34,
+      dir: r.nextBool() ? 1 : -1,
+      speed: 1 + r.nextInt(2),
+      size: 0.8 + r.nextDouble() * 2.2,
+      phase: r.nextDouble() * math.pi * 2,
+      hue: r.nextDouble(),
+    ),
+  );
+}
+
+final List<_Particle> _particles = _buildParticles();
+
+/// Glowing particle cloud + flowing aurora ribbons around the button.
+class _AuroraSwirlPainter extends CustomPainter {
+  _AuroraSwirlPainter({
+    required this.t,
+    required this.progress,
+    required this.appear,
+  });
+
+  final double t; // 0..1 looping
+  final double progress; // 0..1 hold progress
+  final double appear; // 0..1 fade-in
+
+  final Paint _dot = Paint();
+  final Paint _dotGlow = Paint()
+    ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.5);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (appear <= 0) return;
+
+    final c = size.center(Offset.zero);
+    const tau = math.pi * 2;
+    final spread = 1 + progress * 0.18; // cloud slowly expands while holding
+
+    // Flowing aurora ribbons
+    for (int k = 0; k < 3; k++) {
+      final r = (54 + k * 10.0) * spread;
+      final dir = k.isEven ? 1 : -1;
+      final start = dir * t * tau * (1 + k) + k * 2.1;
+      final sweep = 1.3 + 0.5 * math.sin(t * tau + k);
+      final col = _auroraAt(k / 2);
+      final rect = Rect.fromCircle(center: c, radius: r);
+
+      canvas.drawArc(
+        rect,
+        start,
+        sweep,
+        false,
+        Paint()
+          ..color = col.withValues(alpha: 0.38 * appear)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 6
+          ..strokeCap = StrokeCap.round
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 7),
+      );
+      canvas.drawArc(
+        rect,
+        start,
+        sweep,
+        false,
+        Paint()
+          ..color = col.withValues(alpha: 0.85 * appear)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.6
+          ..strokeCap = StrokeCap.round,
+      );
+    }
+
+    // Sparkling particles
+    for (final p in _particles) {
+      final ang = p.angle +
+          p.dir * t * tau * p.speed +
+          math.sin(t * tau * 2 + p.phase) * 0.18;
+      final rad =
+          (p.radius + math.sin(t * tau * p.speed + p.phase) * 5) * spread;
+      final pos = c + Offset(math.cos(ang), math.sin(ang)) * rad;
+
+      final twinkle = 0.35 + 0.65 * (0.5 + 0.5 * math.sin(t * tau * 2 + p.phase));
+      final alpha = (twinkle * appear).clamp(0.0, 1.0);
+      final col = _auroraAt(p.hue);
+
+      if (p.size > 2) {
+        _dotGlow.color = col.withValues(alpha: alpha * 0.45);
+        canvas.drawCircle(pos, p.size * 2.4, _dotGlow);
+      }
+      _dot.color = col.withValues(alpha: alpha);
+      canvas.drawCircle(pos, p.size * (0.8 + 0.4 * twinkle), _dot);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _AuroraSwirlPainter old) =>
+      old.t != t || old.progress != progress || old.appear != appear;
 }
