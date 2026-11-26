@@ -35,6 +35,29 @@ class EmployeeFingerprintEnrollmentStartView(GenericAPIView):
     permission_classes = [IsAuthenticated, IsHROrAdmin]
     serializer_class = FingerprintEnrollmentStartSerializer
 
+    def get(self, request, employee_id):
+        employee = get_object_or_404(
+            scope_queryset(Employee.objects.all(), request.user, "branch"),
+            pk=employee_id,
+        )
+        now = timezone.now()
+        FingerprintEnrollment.objects.filter(
+            employee=employee,
+            status__in=FingerprintEnrollment.ACTIVE_STATUSES,
+            expires_at__lte=now,
+        ).update(
+            status=FingerprintEnrollment.Status.EXPIRED,
+            completed_at=now,
+            failure_reason="EXPIRED",
+        )
+        history = FingerprintEnrollment.objects.filter(
+            employee=employee,
+        ).select_related("device").order_by("-created_at")[:100]
+        return success_response(
+            FingerprintEnrollmentStatusSerializer(history, many=True).data,
+            "Fingerprint enrollment history retrieved.",
+        )
+
     def post(self, request, employee_id):
         employee = get_object_or_404(
             scope_queryset(Employee.objects.select_related("branch"), request.user, "branch"),
@@ -110,9 +133,6 @@ class EmployeeFingerprintEnrollmentStartView(GenericAPIView):
                                 "expires_at": completed.expires_at,
                                 "fingerprint_slot": completed.actual_slot,
                             }, "Enrollment was already completed.", status.HTTP_200_OK)
-
-                    if EmployeeFingerprint.objects.filter(employee=employee, is_active=True).count() >= 2:
-                        raise ValidationError({"employee_id": "This employee already has the maximum number of active fingerprints."})
 
                 serializer = self.get_serializer(
                     data=request.data,
