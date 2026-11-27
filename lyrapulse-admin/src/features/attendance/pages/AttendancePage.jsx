@@ -89,7 +89,7 @@ export function AttendancePage() {
         <AttendanceSummaryCards summary={summary.data} loading={summary.isLoading} range={range} />
       )}
 
-      <Paper variant="outlined" sx={{ overflow: 'hidden' }}>
+      <Paper variant="outlined" sx={{ overflow: 'hidden', minWidth: 0, maxWidth: '100%' }}>
         <AttendanceFilters
           search={search} onSearch={setSearch} filters={filters} onFilter={changeFilter}
           options={optionsQuery.data ?? EMPTY_OPTIONS} optionsLoading={optionsQuery.isLoading}
@@ -118,7 +118,8 @@ export function AttendancePage() {
           onRowsPerPageChange={(event) => setPageSize(Number(event.target.value))}
           labelRowsPerPage="Rows"
           labelDisplayedRows={({ from, to, count }) => `Showing ${from}–${to} of ${count} records`}
-          sx={{ borderTop: 1, borderColor: 'divider' }}
+          sx={{ borderTop: '1px solid', borderColor: 'divider', '& .MuiTablePagination-toolbar': { minHeight: 52, alignItems: 'center' }, '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows': { m: 0 } }}
+          slotProps={{ select: { inputProps: { 'aria-label': 'Rows per page' } } }}
         />
       </Paper>
 

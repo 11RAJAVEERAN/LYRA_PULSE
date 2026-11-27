@@ -241,7 +241,7 @@ export function ShiftAssignmentsPage() {
       ) : filteredEmployees.length === 0 ? (
         <EmptyState compact title={normalizedSearch || status !== 'all' ? 'No employees match these filters' : 'No employees found'} description="Try changing the filters or clearing the search." />
       ) : (
-        <TableContainer sx={{ overflowX: 'auto' }}>
+        <TableContainer sx={{ overflowX: 'auto', maxHeight: 'max(calc(100vh - 300px), 448px)', '& .MuiTableHead-root .MuiTableCell-head': { position: 'sticky', top: 0, zIndex: 2 } }}>
           <Table size="small" sx={{ minWidth: canAssign ? 1600 : 1550, tableLayout: 'fixed', '& .MuiTableBody-root .MuiTableRow-root': { height: 64, '& > .MuiTableCell-root': { py: 1.25, px: 1.5, fontSize: '0.875rem', verticalAlign: 'middle', whiteSpace: 'nowrap' } } }} aria-label="Employee shift assignments">
             <TableHead><TableRow sx={{ bgcolor: 'info.light', height: 48 }}>
               {canAssign ? <TableCell padding="checkbox" sx={{ width: 48 }}>

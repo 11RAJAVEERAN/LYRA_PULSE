@@ -252,7 +252,7 @@ export function OrganizationStructureManager({ page, api }) {
                 description={search ? 'Try a different search or filter.' : 'Add a ' + page.singular.toLowerCase() + ' to get started.'} />
             ) : (
               <>
-                <TableContainer sx={{ overflowX: 'auto' }}>
+                <TableContainer sx={{ overflowX: 'auto', maxHeight: 'max(calc(100vh - 300px), 448px)', '& .MuiTableHead-root .MuiTableCell-head': { position: 'sticky', top: 0, zIndex: 2 } }}>
                   <Table size="small" aria-label={page.title} sx={{ minWidth: 650, '& .MuiTableBody-root .MuiTableRow-root': { height: 64, '& > .MuiTableCell-root': { py: 1.25, px: 1.5, fontSize: '0.875rem', verticalAlign: 'middle', whiteSpace: 'nowrap' } } }}>
                     <TableHead>
                       <TableRow>

@@ -2,6 +2,7 @@ import { Avatar, Box, IconButton, Skeleton, Stack, Table, TableBody, TableCell, 
 import { BadgeCheck, MapPinOff, EllipsisVertical } from 'lucide-react'
 import { StatusChip } from '../../../components/common/StatusChip'
 import { NO_VALUE, formatDate, formatTime, initials } from '../utils/format'
+import { headCellSx } from '../../employees/components/ColumnHeader'
 
 const cellSx = { py: 1.25 }
 
@@ -40,20 +41,20 @@ export function AttendanceTable({ rows, loading, showDate, onOpen }) {
   const columnCount = showDate ? 10 : 9
 
   return (
-    <TableContainer sx={{ border: 0, borderRadius: 0 }}>
+    <TableContainer sx={{ border: 0, borderRadius: 0, maxHeight: 'max(calc(100vh - 300px), 448px)', '& .MuiTableHead-root .MuiTableCell-head': { position: 'sticky', top: 0, zIndex: 2 } }}>
       <Table size="small" sx={{ minWidth: 900, '& .MuiTableBody-root .MuiTableRow-root': { height: 64, '& > .MuiTableCell-root': { py: 1.25, px: 1.5, fontSize: '0.875rem', verticalAlign: 'middle', whiteSpace: 'nowrap' } } }} aria-label="Attendance records">
         <TableHead>
           <TableRow>
-            <TableCell>Employee</TableCell>
-            {showDate ? <TableCell>Date</TableCell> : null}
-            <TableCell>Branch</TableCell>
-            <TableCell>Department</TableCell>
-            <TableCell>Designation</TableCell>
-            <TableCell>Check In</TableCell>
-            <TableCell>Check Out</TableCell>
-            <TableCell>Working Hours</TableCell>
-            <TableCell>Status</TableCell>
-            <TableCell align="right">Actions</TableCell>
+            <TableCell sx={headCellSx}>Employee</TableCell>
+            {showDate ? <TableCell sx={headCellSx}>Date</TableCell> : null}
+            <TableCell sx={headCellSx}>Branch</TableCell>
+            <TableCell sx={headCellSx}>Department</TableCell>
+            <TableCell sx={headCellSx}>Designation</TableCell>
+            <TableCell sx={headCellSx}>Check In</TableCell>
+            <TableCell sx={headCellSx}>Check Out</TableCell>
+            <TableCell sx={headCellSx}>Working Hours</TableCell>
+            <TableCell sx={headCellSx}>Status</TableCell>
+            <TableCell align="right" sx={headCellSx}>Actions</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -68,8 +69,8 @@ export function AttendanceTable({ rows, loading, showDate, onOpen }) {
                   <Stack direction="row" sx={{ alignItems: 'center', gap: 1.25 }}>
                     <Avatar src={employee.profile_photo ?? undefined} alt="" sx={{ width: 34, height: 34 }}>{initials(employee.name)}</Avatar>
                     <Box sx={{ minWidth: 0 }}>
-                      <Typography variant="body2" sx={{ fontWeight: 600, lineHeight: 1.3 }} noWrap>{employee.name}</Typography>
-                      <Typography variant="caption" color="text.secondary">{employee.employee_code}</Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary', lineHeight: 1.35 }} noWrap>{employee.name}</Typography>
+                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', lineHeight: 1.3, fontVariantNumeric: 'tabular-nums' }}>{employee.employee_code}</Typography>
                     </Box>
                   </Stack>
                 </TableCell>
