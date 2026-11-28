@@ -28,7 +28,7 @@ class ProfileTabBar extends GetView<ProfileController> {
       child: InkWell(
         onTap: () => controller.changeTab(index),
         child: Container(
-          height: 65,
+          height: 60,
           decoration: BoxDecoration(
             color: AppColors.surface,
             border: Border(
@@ -36,7 +36,7 @@ class ProfileTabBar extends GetView<ProfileController> {
                 color: selected
                     ? AppColors.primaryBlue
                     : AppColors.surface,
-                width: 3,
+                width: 4,
               ),
             ),
           ),

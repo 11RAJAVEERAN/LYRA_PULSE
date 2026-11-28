@@ -24,10 +24,10 @@ class ProfileInfoRow extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           SizedBox(
-            width: 45,
+            width: 30,
             child: Icon(
               icon,
-              size: 27,
+              size: 25,
               color: AppColors.textSecondary,
             ),
           ),

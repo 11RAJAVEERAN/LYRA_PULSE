@@ -1,4 +1,3 @@
-
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -12,68 +11,52 @@ class ProfileAvatar extends GetView<ProfileController> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      height: 220,
-      color: AppColors.infoBackground,
-      child: Center(
-        child: Obx(() {
-          final localPath = controller.selectedImagePath.value;
+    return Obx(() {
+      final path = controller.selectedImagePath.value;
 
-          ImageProvider? imageProvider;
-
-          if (localPath.isNotEmpty) {
-            imageProvider = FileImage(File(localPath));
-          }
-
-          return Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Container(
-                width: 145,
-                height: 145,
+      return Stack(
+        children: [
+          CircleAvatar(
+            radius: 52,
+            backgroundColor: AppColors.surface,
+            child: CircleAvatar(
+              radius: 48,
+              backgroundColor: AppColors.secondarySoft,
+              backgroundImage: path.isNotEmpty ? FileImage(File(path)) : null,
+              child: path.isEmpty
+                  ? const Icon(
+                      Icons.person,
+                      size: 58,
+                      color: AppColors.primaryDark,
+                    )
+                  : null,
+            ),
+          ),
+          Positioned(
+            right: 0,
+            bottom: 0,
+            child: GestureDetector(
+              onTap: controller.pickProfileImage,
+              child: Container(
+                padding: const EdgeInsets.all(9),
                 decoration: BoxDecoration(
+                  color: AppColors.accent,
                   shape: BoxShape.circle,
-                  color: AppColors.borderStrong,
                   border: Border.all(
-                    color: AppColors.accent,
-                    width: 4,
+                    color: AppColors.surface,
+                    width: 2,
                   ),
-                  image: imageProvider != null
-                      ? DecorationImage(
-                          image: imageProvider,
-                          fit: BoxFit.cover,
-                        )
-                      : null,
                 ),
-                child: imageProvider == null
-                    ? const Icon(
-                        Icons.person,
-                        color: AppColors.surface,
-                        size: 100,
-                      )
-                    : null,
-              ),
-              Positioned(
-                right: -5,
-                bottom: -5,
-                child: Material(
+                child: const Icon(
+                  Icons.camera_alt_outlined,
+                  size: 12,
                   color: AppColors.surface,
-                  shape: const CircleBorder(),
-                  elevation: 4,
-                  child: IconButton(
-                    onPressed: controller.pickProfileImage,
-                    icon: const Icon(
-                      Icons.edit_outlined,
-                      color: AppColors.primaryBlue,
-                    ),
-                  ),
                 ),
               ),
-            ],
-          );
-        }),
-      ),
-    );
+            ),
+          ),
+        ],
+      );
+    });
   }
 }

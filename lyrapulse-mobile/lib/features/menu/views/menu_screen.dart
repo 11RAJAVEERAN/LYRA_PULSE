@@ -183,52 +183,113 @@ class MenuScreen extends StatelessWidget {
       ),
     );
   }
-Widget _buildLogoutButton(LyraMenuController controller) {
-  return InkWell(
-    borderRadius: BorderRadius.circular(16),
-    onTap: () {
-      Get.defaultDialog(
-        title: 'Logout',
-        middleText: 'Are you sure you want to logout?',
-        textCancel: 'Cancel',
-        textConfirm: 'Logout',
-        confirmTextColor: AppColors.surface,
-        buttonColor: AppColors.error,
-        onConfirm: () {
-          Get.back();
-          controller.logout();
-        },
-      );
-    },
-    child: Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 17),
-      decoration: BoxDecoration(
-        color: AppColors.errorBackground,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppColors.error.withValues(alpha: 0.25),
+
+  Widget _buildLogoutButton(LyraMenuController controller) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: () => _showLogoutDialog(controller),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.logout_rounded,
+              color: AppColors.error,
+            ),
+            const SizedBox(width: 12),
+            Text(
+              'Logout',
+              style: Get.textTheme.titleMedium?.copyWith(
+                color: AppColors.error,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
         ),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+    );
+  }
+
+Future<void> _showLogoutDialog(LyraMenuController controller) {
+  return Get.dialog(
+    AlertDialog(
+      backgroundColor: AppColors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+      ),
+      contentPadding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+      actionsPadding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.logout_rounded,
-            color: AppColors.error,
-            size: 21,
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: AppColors.error.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.logout_rounded,
+              color: AppColors.error,
+              size: 32,
+            ),
           ),
-          SizedBox(width: 10),
+          const SizedBox(height: 16),
           Text(
             'Logout',
-            style: GoogleFonts.inter(
-              color: AppColors.error,
-              fontSize: 15,
+            style: Get.textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.w700,
             ),
           ),
+          const SizedBox(height: 8),
+          Text(
+            'Are you sure you want to logout from your account?',
+            textAlign: TextAlign.center,
+            style: Get.textTheme.bodyMedium,
+          ),
         ],
       ),
+      actions: [
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: Get.back,
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text('Cancel'),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: ElevatedButton(
+                onPressed: () {
+                  Get.back();
+                  controller.logout();
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.error,
+                  foregroundColor: AppColors.surface,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text('Logout'),
+              ),
+            ),
+          ],
+        ),
+      ],
     ),
   );
 }

@@ -17,8 +17,8 @@ class ProfileInfoCard extends StatelessWidget {
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.symmetric(
-        horizontal: 20,
-        vertical: 22,
+        horizontal: 18,
+        vertical: 20,
       ),
       padding: const EdgeInsets.symmetric(
         horizontal: 20,
@@ -49,7 +49,7 @@ class ProfileInfoCard extends StatelessWidget {
               if (index != items.length - 1)
                 const Divider(
                   height: 1,
-                  indent: 55,
+                  indent: 30,
                   color: AppColors.border,
                 ),
             ],
