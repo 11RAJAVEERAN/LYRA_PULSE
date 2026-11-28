@@ -118,6 +118,56 @@ class FingerprintEnrollmentAPITests(TestCase):
         self.assertGreater(enrollment.expires_at, timezone.now())
         self.assertEqual(enrollment.created_by, self.admin)
 
+    def test_employee_list_reports_backend_fingerprint_enrollment_status(self):
+        self.client.force_authenticate(self.admin)
+
+        response = self.client.get("/api/v1/employees/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["data"][0]["fingerprint_enrollment"]["status"], "NOT_ENROLLED")
+
+        started = self.enroll(finger="first_finger")
+        enrollment = FingerprintEnrollment.objects.get(pk=started.data["data"]["enrollment_id"])
+        response = self.client.get("/api/v1/employees/")
+        self.assertEqual(response.data["data"][0]["fingerprint_enrollment"]["status"], "PENDING")
+
+        self.device_client().post(
+            self.result_url(enrollment),
+            {"status": "FAILED", "error_code": "DUPLICATE_FINGERPRINT"},
+            format="json",
+        )
+        response = self.client.get("/api/v1/employees/")
+        failed_status = response.data["data"][0]["fingerprint_enrollment"]
+        self.assertEqual(failed_status["status"], "FAILED")
+        self.assertEqual(failed_status["failure_reason"], "DUPLICATE_FINGERPRINT")
+
+    def test_employee_list_marks_active_fingerprint_mapping_as_enrolled(self):
+        mapping = EmployeeFingerprint.objects.create(
+            employee=self.employee,
+            device=self.device,
+            fingerprint_slot=12,
+            finger="right_index",
+        )
+        self.client.force_authenticate(self.admin)
+
+        response = self.client.get("/api/v1/employees/")
+
+        self.assertEqual(response.status_code, 200)
+        status_data = response.data["data"][0]["fingerprint_enrollment"]
+        self.assertEqual(status_data["status"], "ENROLLED")
+        self.assertEqual(status_data["fingerprint_count"], 1)
+        self.assertEqual(status_data["device_id"], self.device.device_id)
+        self.assertIsNotNone(status_data["last_enrolled"])
+
+    def test_employee_cannot_start_a_second_simultaneous_enrollment(self):
+        first = self.enroll(finger="first_finger")
+        self.assertEqual(first.status_code, 201)
+
+        second = self.enroll(finger="second_finger")
+
+        self.assertEqual(second.status_code, 400)
+        self.assertIn("already has a fingerprint enrollment in progress", str(second.data))
+        self.assertEqual(FingerprintEnrollment.objects.filter(employee=self.employee).count(), 1)
+
     def test_employee_must_exist(self):
         self.client.force_authenticate(self.admin)
 

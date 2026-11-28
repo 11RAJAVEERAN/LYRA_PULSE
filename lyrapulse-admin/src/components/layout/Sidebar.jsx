@@ -1,9 +1,9 @@
 import {
-  BadgeCheck,
   Building2,
   CalendarCheck2,
   ChevronRight,
   ClipboardList,
+  Fingerprint,
   LayoutDashboard,
   MapPin,
   NotebookPen,
@@ -45,7 +45,14 @@ const navItems = [
   { label: 'Leaves', path: '/leaves', icon: NotebookPen },
   { label: 'Companies', path: '/companies', icon: Building2, superadminOnly: true },
   { label: 'Branches', path: '/branches', icon: MapPin },
-  { label: 'Devices', path: '/devices', icon: BadgeCheck },
+  {
+    label: 'Biometric ',
+    icon: Fingerprint,
+    children: [
+      { label: 'Device Management', path: '/devices' },
+      { label: 'Fingerprint Enrollment', path: '/fingerprint-enrollment' },
+    ],
+  },
   {
     label: 'Reports',
     icon: ClipboardList,

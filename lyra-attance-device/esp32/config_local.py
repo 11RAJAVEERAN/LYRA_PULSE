@@ -6,4 +6,4 @@ TEST_MODE = False
 ATTENDANCE_SYNC_ENABLED = True
 
 # Use the verified Django LAN address only; never use localhost or 127.0.0.1.
-API_BASE_URL = "http://192.168.1.105:8000/"
+API_BASE_URL = "http://192.168.1.106:8000/"

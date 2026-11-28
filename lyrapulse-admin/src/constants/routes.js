@@ -15,6 +15,7 @@ export const ROUTES = {
   departments: '/departments',
   designations: '/designations',
   devices: '/devices',
+  fingerprintEnrollment: '/fingerprint-enrollment',
   reports: '/reports',
   settings: '/settings',
   adminUsers: '/admin-users',

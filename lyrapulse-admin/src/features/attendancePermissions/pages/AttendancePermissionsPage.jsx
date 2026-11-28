@@ -15,6 +15,7 @@ import { LoadingState } from '../../../components/common/LoadingState'
 import { ErrorState } from '../../../components/common/ErrorState'
 import { attendancePermissionsApi } from '../api/attendancePermissionsApi'
 import { authService } from '../../../services/authService'
+import { headCellSx } from '../../employees/components/ColumnHeader'
 
 const PAGE_SIZE = 25
 
@@ -86,32 +87,11 @@ const switchSx = (C) => ({
 
 
 
-const headCellSx = (C) => ({
-  bgcolor: C.headBg,
-  color: C.navy,
-  fontSize: C.caption,
-  fontWeight: 600,
-  height: 44,
-  px: 2,
-  whiteSpace: 'nowrap',
-  borderBottom: `1px solid ${C.border}`,
-})
-
-
-
-const bodyCellSx = (C) => ({
-  py: 1.25,
-  px: 2,
-  fontSize: C.body2,
-  color: C.navy,
-  borderBottom: `1px solid ${C.border}`,
-  whiteSpace: 'nowrap',
-})
-
-
+/* Table header/body cell styling now comes from the Employee table:
+   header = shared headCellSx (imported above), body = row-level `& td` rule in the TableRow below. */
 
 /* Sticky (frozen) columns so Employee stays visible while scrolling horizontally */
-const stickyHead = (C, left, extra = {}) => ({ position: 'sticky', left, zIndex: 3, bgcolor: C.headBg, ...extra })
+const stickyHead = (C, left, extra = {}) => ({ position: 'sticky', left, zIndex: 3, bgcolor: headCellSx.bgcolor ?? C.card, ...extra })
 const stickyBody = (C, left, extra = {}) => ({ position: 'sticky', left, zIndex: 2, bgcolor: C.card, ...extra })
 const stickyEdge = (C) => ({ boxShadow: C.edgeShadow })
 
@@ -554,40 +534,19 @@ export function AttendancePermissionsPage() {
           description="Try another search or branch filter."
         />
       ) : (
-        <Paper
-          elevation={0}
-          sx={{
-            width: '100%',
-            minWidth: 0,
-            maxWidth: '100%',
-            overflow: 'hidden',
-            borderRadius: '16px',
-            border: `1px solid ${C.border}`,
-            bgcolor: C.card,
-            boxShadow: C.cardShadow,
-          }}
-        >
-          <TableContainer
-            sx={{
-              width: '100%',
-              overflowX: 'auto',
-              scrollbarWidth: 'thin',
-              scrollbarColor: `${C.off} transparent`,
-              '&::-webkit-scrollbar': { height: 8 },
-              '&::-webkit-scrollbar-track': { background: 'transparent' },
-              '&::-webkit-scrollbar-thumb': { backgroundColor: C.off, borderRadius: 8 },
-              '&:hover::-webkit-scrollbar-thumb': { backgroundColor: C.disabled },
-            }}
-          >
+        /* Same wrapper as the Employee page table */
+        <Paper variant="outlined" sx={{ overflow: 'hidden', minWidth: 0, maxWidth: '100%' }}>
+          <TableContainer sx={{ border: 0, borderRadius: 0, maxHeight: 'max(calc(100vh - 300px), 448px)', '& .MuiTableHead-root .MuiTableCell-head': { position: 'sticky', top: 0, zIndex: 3 }, '& .MuiTableHead-root .MuiTableCell-head:nth-of-type(-n+2)': { zIndex: 4 } }}>
             <Table
               aria-label="Employee attendance permissions"
-              sx={{ width: '100%', minWidth: 1910, tableLayout: 'auto', borderCollapse: 'separate' }}
+              size="small"
+              sx={{ minWidth: 1910, borderCollapse: 'separate' }}
             >
               <TableHead>
                 <TableRow>
                   <TableCell
                     padding="checkbox"
-                    sx={{ ...headCellSx(C), ...stickyHead(C,0), width: 44, minWidth: 44, pl: 1 }}
+                    sx={{ ...headCellSx, ...stickyHead(C, 0), width: 44, minWidth: 44, pl: 1 }}
                   >
                     <Checkbox
                       checked={allOnPage}
@@ -603,21 +562,21 @@ export function AttendancePermissionsPage() {
                       inputProps={{ 'aria-label': 'Select all employees on this page' }}
                     />
                   </TableCell>
-                  <TableCell sx={{ ...headCellSx(C), ...stickyHead(C,44, stickyEdge(C)), minWidth: 230 }}>
+                  <TableCell sx={{ ...headCellSx, ...stickyHead(C, 44, stickyEdge(C)), minWidth: 230 }}>
                     Employee
                   </TableCell>
-                  <TableCell sx={{ ...headCellSx(C), minWidth: 170 }}>Role / Designation</TableCell>
-                  <TableCell sx={{ ...headCellSx(C), minWidth: 210 }}>Attendance Method</TableCell>
+                  <TableCell sx={{ ...headCellSx, minWidth: 170 }}>Role / Designation</TableCell>
+                  <TableCell sx={{ ...headCellSx, minWidth: 210 }}>Attendance Method</TableCell>
                   {fields.map(([field, label]) => (
-                    <TableCell key={field} align="center" sx={{ ...headCellSx(C), minWidth: 160 }}>
+                    <TableCell key={field} align="center" sx={{ ...headCellSx, minWidth: 160 }}>
                       {label}
                     </TableCell>
                   ))}
-                  <TableCell align="center" sx={{ ...headCellSx(C), minWidth: 150 }}>
+                  <TableCell align="center" sx={{ ...headCellSx, minWidth: 150 }}>
                     Face Verification
                   </TableCell>
-                  <TableCell sx={{ ...headCellSx(C), minWidth: 260 }}>Fingerprint Device</TableCell>
-                  <TableCell align="center" sx={{ ...headCellSx(C), minWidth: 90 }}>
+                  <TableCell sx={{ ...headCellSx, minWidth: 260 }}>Fingerprint Device</TableCell>
+                  <TableCell align="center" sx={{ ...headCellSx, minWidth: 90 }}>
                     Actions
                   </TableCell>
                 </TableRow>
@@ -637,8 +596,9 @@ export function AttendancePermissionsPage() {
                       hover
                       selected={isSelected}
                       sx={{
+                        /* Employee table row sizing, applied to every data cell (checkbox cell keeps its own compact padding) */
                         height: 64,
-                        '&:last-child .MuiTableCell-root': { borderBottom: 0 },
+                        '& td:not(.MuiTableCell-paddingCheckbox)': { py: 1.25, px: 1.5, fontSize: '0.875rem', verticalAlign: 'middle', whiteSpace: 'nowrap' },
                         '&.Mui-selected, &.Mui-selected:hover': { bgcolor: C.selectedRow },
                         '&.Mui-selected > .MuiTableCell-root': { bgcolor: C.selectedRow },
                         '&:hover > .MuiTableCell-root': { bgcolor: C.hover },
@@ -647,7 +607,7 @@ export function AttendancePermissionsPage() {
                     >
                       <TableCell
                         padding="checkbox"
-                        sx={{ ...bodyCellSx(C), ...stickyBody(C,0), width: 44, minWidth: 44, pl: 1 }}
+                        sx={{ ...stickyBody(C, 0), width: 44, minWidth: 44, pl: 1 }}
                       >
                         <Checkbox
                           checked={isSelected}
@@ -657,18 +617,19 @@ export function AttendancePermissionsPage() {
                         />
                       </TableCell>
 
-                      <TableCell sx={{ ...bodyCellSx(C), ...stickyBody(C,44, stickyEdge(C)), minWidth: 230 }}>
+                      <TableCell sx={{ ...stickyBody(C, 44, stickyEdge(C)), minWidth: 230 }}>
                         <Typography
+                          variant="body2"
                           noWrap
-                          sx={{ fontWeight: 700, color: C.navy, fontSize: C.body2, lineHeight: 1.3 }}
+                          sx={{ fontWeight: 600, color: 'text.primary', lineHeight: 1.35 }}
                         >
                           {row.name}
                         </Typography>
                       </TableCell>
 
-                      <TableCell sx={{ ...bodyCellSx(C), minWidth: 170 }}>{row.role || '—'}</TableCell>
+                      <TableCell sx={{ minWidth: 170 }}>{row.role || '—'}</TableCell>
 
-                      <TableCell sx={{ ...bodyCellSx(C), minWidth: 210 }}>
+                      <TableCell sx={{ minWidth: 210 }}>
                         <Chip
                           size="small"
                           icon={MethodIcon ? <MethodIcon size={14} aria-hidden="true" /> : undefined}
@@ -692,7 +653,7 @@ export function AttendancePermissionsPage() {
                             : `${label} permission`
 
                         return (
-                          <TableCell key={field} align="center" sx={{ ...bodyCellSx(C), minWidth: 160 }}>
+                          <TableCell key={field} align="center" sx={{ minWidth: 160 }}>
                             <Tooltip title={message}>
                               <Box
                                 component="span"
@@ -712,7 +673,7 @@ export function AttendancePermissionsPage() {
                         )
                       })}
 
-                      <TableCell align="center" sx={{ ...bodyCellSx(C), minWidth: 150 }}>
+                      <TableCell align="center" sx={{ minWidth: 150 }}>
                         <Tooltip title="Secure face matching and liveness verification are not configured. Photo capture is not face verification.">
                           <Chip
                             size="small"
@@ -730,7 +691,7 @@ export function AttendancePermissionsPage() {
                         </Tooltip>
                       </TableCell>
 
-                      <TableCell sx={{ ...bodyCellSx(C), minWidth: 260 }}>
+                      <TableCell sx={{ minWidth: 260 }}>
                         {row.biometric_devices?.length ? (
                           <Stack direction="row" spacing={0.5} useFlexGap sx={{ flexWrap: 'nowrap' }}>
                             {row.biometric_devices.map((device) => (
@@ -752,13 +713,13 @@ export function AttendancePermissionsPage() {
                             ))}
                           </Stack>
                         ) : (
-                          <Typography sx={{ color: C.muted, fontSize: C.body2 }}>
+                          <Typography variant="body2" color="text.secondary">
                             No assigned fingerprint device
                           </Typography>
                         )}
                       </TableCell>
 
-                      <TableCell align="center" sx={{ ...bodyCellSx(C), minWidth: 90 }}>
+                      <TableCell align="center" sx={{ minWidth: 90 }}>
                         <Tooltip title="More actions">
                           <span>
                             <Button

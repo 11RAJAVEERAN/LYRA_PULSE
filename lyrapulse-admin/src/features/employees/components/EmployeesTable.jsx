@@ -46,7 +46,7 @@ const cells = {
 
 export function EmployeesTable({ rows, allRows, columns, ctx, sort, onSort, onSortTo, filters, onFilterChange, canEdit, onEdit, onView }) {
   return (
-    <TableContainer sx={{ border: 0, borderRadius: 0 }}>
+    <TableContainer sx={{ border: 0, borderRadius: 0, maxHeight: 'min(690px, max(calc(100vh - 300px), 448px))', '& .MuiTableHead-root .MuiTableCell-head': { position: 'sticky', top: 0, zIndex: 2 } }}>
       <Table aria-label="Employees" size="small" sx={{ minWidth: 640 }}>
         <TableHead>
           <TableRow>

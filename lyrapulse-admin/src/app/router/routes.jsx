@@ -9,6 +9,7 @@ import { AdminLayout } from '../../components/layout/AdminLayout'
 import { AdminUsersPage } from '../../features/adminUsers/pages/AdminUsersPage'
 import { SuperAdminRoute } from './SuperAdminRoute'
 import { DevicesPage } from '../../features/devices/pages/DevicesPage'
+import { FingerprintEnrollmentPage } from '../../features/devices/pages/FingerprintEnrollmentPage'
 import { AttendancePermissionsPage } from '../../features/attendancePermissions/pages/AttendancePermissionsPage'
 import { DepartmentsPage } from '../../features/departments/pages/DepartmentsPage'
 import { DesignationsPage } from '../../features/designations/pages/DesignationsPage'
@@ -60,6 +61,10 @@ export const routes = [
           {
             path: ROUTES.devices,
             element: <DevicesPage />,
+          },
+          {
+            path: ROUTES.fingerprintEnrollment,
+            element: <FingerprintEnrollmentPage />,
           },
           {
             path: ROUTES.permissions,
