@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     "apps.devices",
     "apps.fingerprints",
     "apps.attendance",
+    "apps.reports",
     "apps.shifts",
 ]
 

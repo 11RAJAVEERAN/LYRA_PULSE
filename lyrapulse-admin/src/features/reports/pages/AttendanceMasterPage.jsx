@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   CalendarDays,
   ChevronDown,
@@ -8,227 +8,138 @@ import {
   FileText,
   Filter,
 } from "lucide-react";
-import { colors, palette } from "../theme/colors";
-import { typography } from "../theme/typography";
-import { ReportTableStyles } from "./ReportTableStyles";
-
-const attendanceData = [
-  {
-    id: "1615",
-    employee: "SARAVANAN",
-    role: "Floor Supervisor",
-    department: "F&B Production",
-    date: "2026-10-01",
-    day: "Thursday",
-    firstPunch: "-",
-    lastPunch: "-",
-    workingHours: "8h",
-    breakHours: "-",
-    status: "FD",
-  },
-  {
-    id: "1614",
-    employee: "MOHAN TOMATA",
-    role: "Commis I",
-    department: "F&B Production",
-    date: "2026-10-01",
-    day: "Thursday",
-    firstPunch: "-",
-    lastPunch: "-",
-    workingHours: "8h",
-    breakHours: "-",
-    status: "FD",
-  },
-  {
-    id: "1613",
-    employee: "LOKESH KUMAR",
-    role: "Commis II",
-    department: "F&B Production",
-    date: "2026-10-01",
-    day: "Thursday",
-    firstPunch: "-",
-    lastPunch: "-",
-    workingHours: "8h",
-    breakHours: "-",
-    status: "FD",
-  },
-  {
-    id: "1612",
-    employee: "KAVIPRIYA M",
-    role: "Store Asst",
-    department: "F&B Production",
-    date: "2026-10-01",
-    day: "Thursday",
-    firstPunch: "08:08 AM",
-    lastPunch: "05:44 PM",
-    workingHours: "9h 35m",
-    breakHours: "-",
-    status: "FD",
-  },
-  {
-    id: "1611",
-    employee: "SEETHA M",
-    role: "Store Asst",
-    department: "F&B Production",
-    date: "2026-10-01",
-    day: "Thursday",
-    firstPunch: "07:58 AM",
-    lastPunch: "05:45 PM",
-    workingHours: "9h 46m",
-    breakHours: "-",
-    status: "FD",
-  },
-];
+import { colors, palette } from "../../../theme/colors";
+import { typography } from "../../../theme/typography";
+import { ReportTableStyles } from "../components/ReportTableStyles";
+import { downloadReport, reportsApi } from "../api/reportsApi";
 
 export default function AttendanceMasterPage() {
-  const [startDate, setStartDate] = useState("2026-10-01");
-  const [endDate, setEndDate] = useState("2026-10-22");
-  const [department, setDepartment] = useState("");
+  const today = new Date();
+  const toIso = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+  const endDefault = toIso(today);
+  const startDefaultDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 27);
+  const startDefault = toIso(startDefaultDate);
+  const [startDate, setStartDate] = useState(startDefault);
+  const [endDate, setEndDate] = useState(endDefault);
+  const [branch, setBranch] = useState("");
   const [searchText, setSearchText] = useState("");
+  const [filters, setFilters] = useState({ startDate: startDefault, endDate: endDefault, branch: "", search: "" });
+  const [branches, setBranches] = useState([]);
+  const [branchError, setBranchError] = useState("");
+  const [rows, setRows] = useState([]);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [count, setCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [exporting, setExporting] = useState("");
+  const [sort, setSort] = useState({ key: "date", direction: "desc", ordering: "-attendance_date" });
 
-  const [filters, setFilters] = useState({
-    startDate: "2026-10-01",
-    endDate: "2026-10-22",
-    department: "",
-    search: "",
-  });
-
-  const [sort, setSort] = useState({
-    key: "employee",
-    direction: "asc",
-  });
-
-  const rows = attendanceData
-    .filter((row) => {
-      const matchesDate =
-        row.date >= filters.startDate && row.date <= filters.endDate;
-
-      const matchesDepartment =
-        !filters.department || row.department === filters.department;
-
-      const term = filters.search.toLowerCase();
-
-      const matchesSearch =
-        !term ||
-        row.employee.toLowerCase().includes(term) ||
-        row.id.toLowerCase().includes(term) ||
-        row.role.toLowerCase().includes(term) ||
-        row.department.toLowerCase().includes(term);
-
-      return matchesDate && matchesDepartment && matchesSearch;
-    })
-    .sort((a, b) => {
-      const first = String(a[sort.key] ?? "").toLowerCase();
-      const second = String(b[sort.key] ?? "").toLowerCase();
-
-      const result = first.localeCompare(second, undefined, {
-        numeric: true,
+  useEffect(() => {
+    const controller = new AbortController();
+    reportsApi.branches(controller.signal)
+      .then((data) => setBranches(Array.isArray(data) ? data : []))
+      .catch((requestError) => {
+        if (requestError.name !== "CanceledError") setBranchError("Branches could not be loaded. Please retry the page.");
       });
+    return () => controller.abort();
+  }, []);
 
-      return sort.direction === "asc" ? result : -result;
-    });
+  useEffect(() => {
+    const controller = new AbortController();
+    const params = {
+      start_date: filters.startDate,
+      end_date: filters.endDate,
+      page,
+      page_size: pageSize,
+      ordering: sort.ordering,
+    };
+    if (filters.branch) params.branch = filters.branch;
+    if (filters.search) params.search = filters.search;
+    setLoading(true);
+    setError("");
+    reportsApi.list("attendance-master", params, controller.signal)
+      .then((response) => {
+        setRows(response?.results ?? []);
+        setCount(response?.count ?? 0);
+        setTotalPages(response?.total_pages ?? 1);
+      })
+      .catch((requestError) => {
+        if (requestError.name !== "CanceledError") {
+          setError(requestError.response?.data?.message || requestError.response?.data?.detail || "Attendance records could not be loaded. Please try again.");
+          setRows([]);
+          setCount(0);
+        }
+      })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
+  }, [filters, page, pageSize, sort.ordering]);
 
   const handleSearch = () => {
-    if (startDate > endDate) {
-      window.alert("Start date cannot be after end date.");
+    const rangeDays = startDate && endDate ? (Date.parse(`${endDate}T00:00:00`) - Date.parse(`${startDate}T00:00:00`)) / 86400000 + 1 : 0;
+    if (!startDate || !endDate || startDate > endDate || endDate > endDefault || rangeDays > 92) {
+      setError("Choose a valid date range within the last 92 days and ending today or earlier.");
       return;
     }
-
-    setFilters({
-      startDate,
-      endDate,
-      department,
-      search: searchText.trim(),
-    });
+    setFilters({ startDate, endDate, branch, search: searchText.trim() });
+    setPage(1);
   };
 
+  const orderingFor = { employee: "employee_name", role: "designation", date: "attendance_date", status: "classification" };
   const handleSort = (key) => {
-    setSort((previous) => ({
-      key,
-      direction:
-        previous.key === key && previous.direction === "asc" ? "desc" : "asc",
-    }));
+    const field = orderingFor[key];
+    if (!field) return;
+    const descending = sort.key === key ? sort.direction === "asc" : key === "date";
+    setSort({ key, direction: descending ? "desc" : "asc", ordering: `${descending ? "-" : ""}${field}` });
+    setPage(1);
   };
 
-  const exportExcel = () => {
-    const headers = [
-      "Employee ID",
-      "Employee",
-      "Role",
-      "Department",
-      "Date",
-      "Day",
-      "First Punch",
-      "Last Punch",
-      "Working Hours",
-      "Break Hours",
-      "Status",
-    ];
+  const formatPunch = (value) => value ? new Date(value).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "-";
+  const displayRows = rows.map((item) => ({
+    id: item.employee?.employee_code ?? item.employee?.id,
+    employee: item.employee?.name ?? "-",
+    role: item.designation?.name ?? "-",
+    department: item.department?.name ?? "-",
+    date: item.attendance_date,
+    day: item.day ?? "-",
+    firstPunch: formatPunch(item.first_punch_at),
+    lastPunch: formatPunch(item.last_punch_at),
+    workingHours: item.working_hours_display ?? "-",
+    breakHours: item.break_hours_display ?? "-",
+    status: item.classification_display ?? item.classification ?? "-",
+  }));
 
-    const csv = [
-      headers,
-      ...rows.map((row) => [
-        row.id,
-        row.employee,
-        row.role,
-        row.department,
-        row.date,
-        row.day,
-        row.firstPunch,
-        row.lastPunch,
-        row.workingHours,
-        row.breakHours,
-        row.status,
-      ]),
-    ]
-      .map((line) =>
-        line.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(","),
-      )
-      .join("\r\n");
-
-    const blob = new Blob(["\uFEFF" + csv], {
-      type: "text/csv;charset=utf-8;",
-    });
-
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-
-    link.href = url;
-    link.download = "Attendance_Master.csv";
-
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-
-    URL.revokeObjectURL(url);
+  const exportReport = async (format) => {
+    setExporting(format);
+    setError("");
+    const params = {
+      start_date: filters.startDate,
+      end_date: filters.endDate,
+      ordering: sort.ordering,
+      export_format: format,
+    };
+    if (filters.branch) params.branch = filters.branch;
+    if (filters.search) params.search = filters.search;
+    try {
+      const downloaded = await reportsApi.export("attendance-master", params);
+      downloadReport(downloaded, `attendance-master.${format}`);
+    } catch (requestError) {
+      setError(requestError.response?.status ? "The export could not be generated. Please try again." : "Unable to connect to the attendance service.");
+    } finally {
+      setExporting("");
+    }
   };
 
   const SortButton = ({ column, children }) => (
-    <button
-      type="button"
-      className="am-sort"
-      onClick={() => handleSort(column)}
-    >
+    <button type="button" className="am-sort" onClick={() => handleSort(column)}>
       <span className="am-sort-label">{children}</span>
-
       <span className="am-sort-tools">
-        {sort.key === column ? (
-          sort.direction === "asc" ? (
-            <ChevronUp size={15} />
-          ) : (
-            <ChevronDown size={15} />
-          )
-        ) : (
-          <ChevronsUpDown size={15} />
-        )}
-
-        <span className="am-filter-icon">
-          <Filter size={14} />
-        </span>
+        {sort.key === column ? (sort.direction === "asc" ? <ChevronUp size={15} /> : <ChevronDown size={15} />) : <ChevronsUpDown size={15} />}
+        <span className="am-filter-icon"><Filter size={14} /></span>
       </span>
     </button>
   );
-
   return (
     <div className="am-page">
       <ReportTableStyles />
@@ -626,13 +537,26 @@ export default function AttendanceMasterPage() {
           color: ${colors.textSecondary} !important;
         }
 
+        .am-error { margin: 0 0 12px; padding: 10px 14px; color: #9f1d1d; background: #fff1f0; border: 1px solid #f0b6b1; border-radius: 8px; }
+
         .am-footer {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          flex-wrap: wrap;
+          gap: 12px;
           padding: 12px 20px;
           color: ${colors.textSecondary};
           font-size: ${typography.caption.fontSize};
           line-height: ${typography.caption.lineHeight};
           border-top: 1px solid ${colors.border};
         }
+
+        .am-pagination { display: flex; align-items: center; gap: 8px; }
+        .am-pagination button, .am-pagination select { min-height: 34px; padding: 0 10px; color: ${colors.textPrimary}; border: 1px solid ${colors.border}; border-radius: 6px; background: ${colors.surface}; font: inherit; cursor: pointer; }
+        .am-pagination button[aria-current="page"] { color: white; background: ${colors.primaryBlue}; border-color: ${colors.primaryBlue}; }
+        .am-pagination button:disabled { opacity: .5; cursor: default; }
+        .am-pagination label { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
 
         @media (max-width: 1100px) {
           .am-toolbar {
@@ -769,18 +693,18 @@ export default function AttendanceMasterPage() {
         <h1 className="am-title">Attendance Master</h1>
 
         <div className="am-header-actions">
-          <button type="button" className="am-export-btn" onClick={exportExcel}>
+          <button type="button" className="am-export-btn" onClick={() => exportReport("xlsx")} disabled={Boolean(exporting) || loading}>
             <Download size={16} />
-            <span>Export Excel</span>
+            <span>{exporting === "xlsx" ? "Exporting…" : "Export Excel"}</span>
           </button>
 
           <button
             type="button"
             className="am-export-btn"
-            onClick={() => window.print()}
+            onClick={() => exportReport("pdf")} disabled={Boolean(exporting) || loading}
           >
             <FileText size={16} />
-            <span>Export PDF</span>
+            <span>{exporting === "pdf" ? "Exporting…" : "Export PDF"}</span>
           </button>
         </div>
       </div>
@@ -805,6 +729,7 @@ export default function AttendanceMasterPage() {
                 type="date"
                 aria-label="End date"
                 value={endDate}
+                max={endDefault}
                 min={startDate}
                 onChange={(event) => setEndDate(event.target.value)}
               />
@@ -812,12 +737,13 @@ export default function AttendanceMasterPage() {
 
             <div className="am-department">
               <select
-                aria-label="Choose Department"
-                value={department}
-                onChange={(event) => setDepartment(event.target.value)}
+                aria-label="Choose Branch"
+                value={branch}
+                onChange={(event) => setBranch(event.target.value)}
+                disabled={Boolean(branchError)}
               >
-                <option value="">Choose Department</option>
-                <option value="F&B Production">F&amp;B Production</option>
+                <option value="">Choose Branch</option>
+                {branches.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
               </select>
 
               <ChevronDown size={19} />
@@ -846,6 +772,8 @@ export default function AttendanceMasterPage() {
         </div>
       </section>
 
+      {branchError && <div role="alert" className="am-error">{branchError}</div>}
+      {error && !loading && <div role="alert" className="am-error">{error}</div>}
       <section className="am-table-card">
         <div className="am-table-wrap">
           <table className="am-table">
@@ -886,8 +814,10 @@ export default function AttendanceMasterPage() {
             </thead>
 
             <tbody>
-              {rows.length > 0 ? (
-                rows.map((row) => (
+              {loading ? (
+                <tr><td colSpan={9} className="am-empty">Loading attendance records…</td></tr>
+              ) : displayRows.length > 0 ? (
+                displayRows.map((row) => (
                   <tr key={`${row.id}-${row.date}`}>
                     <td className="am-employee">
                       <div className="am-employee-name">{row.employee}</div>
@@ -921,7 +851,7 @@ export default function AttendanceMasterPage() {
               ) : (
                 <tr>
                   <td colSpan={9} className="am-empty">
-                    No attendance records found.
+                    {error || "No attendance records found."}
                   </td>
                 </tr>
               )}
@@ -930,7 +860,19 @@ export default function AttendanceMasterPage() {
         </div>
 
         <div className="am-footer">
-          Showing {rows.length} attendance records
+          <span>Showing {count === 0 ? 0 : (page - 1) * pageSize + 1}–{Math.min(page * pageSize, count)} of {count} Results</span>
+          <div className="am-pagination">
+            <label>Rows per page
+              <select aria-label="Rows per page" value={pageSize} onChange={(event) => { setPageSize(Number(event.target.value)); setPage(1); }}>
+                {[10, 25, 50, 100].map((size) => <option key={size} value={size}>{size} / Page</option>)}
+              </select>
+            </label>
+            <button type="button" disabled={page <= 1 || loading} onClick={() => setPage((current) => current - 1)}>Previous</button>
+            {Array.from(new Set([1, page - 1, page, page + 1, totalPages])).filter((number) => number >= 1 && number <= totalPages).sort((first, second) => first - second).map((number) => (
+              <button type="button" key={number} aria-current={number === page ? "page" : undefined} disabled={loading} onClick={() => setPage(number)}>{number}</button>
+            ))}
+            <button type="button" disabled={page >= totalPages || loading} onClick={() => setPage((current) => current + 1)}>Next</button>
+          </div>
         </div>
       </section>
     </div>

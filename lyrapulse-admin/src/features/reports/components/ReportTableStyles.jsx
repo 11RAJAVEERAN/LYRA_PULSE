@@ -1,5 +1,5 @@
-import { colors } from '../theme/colors'
-import { typography } from '../theme/typography'
+import { colors } from '../../../theme/colors'
+import { typography } from '../../../theme/typography'
 
 // Keep the reference report tables consistent with the existing Employees table.
 export function ReportTableStyles() {
