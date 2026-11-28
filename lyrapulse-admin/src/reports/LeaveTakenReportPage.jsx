@@ -4,38 +4,100 @@ import {
   ArrowUpDown,
   SlidersHorizontal,
   Search,
-  FileSpreadsheet,
+  Download,
   FileText,
 } from "lucide-react";
 
-import { colors } from "../theme/colors";
+import { colors, palette } from "../theme/colors";
 import { typography } from "../theme/typography";
-import { ReportTableStyles } from './ReportTableStyles'
+import { ReportTableStyles } from "./ReportTableStyles";
 
 const styles = `
 .leave-report-page {
   width: 100%;
   min-height: 100%;
-  padding: 18px;
-  background: ${colors.background};
+  padding: 0;
+  background: transparent;
   font-family: ${typography.fontFamily};
   color: ${colors.textPrimary};
 }
 
-.leave-report-card {
-  width: 100%;
-  min-height: 610px;
-  background: ${colors.surface};
-  border: 1px solid ${colors.border};
-  border-radius: 12px;
-  overflow: hidden;
+.leave-report-page * {
+  box-sizing: border-box;
+}
+
+.leave-report-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 14px;
 }
 
 .leave-report-title {
-  padding: 20px 24px;
-  font-size: 21px;
-  font-weight: 650;
-  color: ${colors.textPrimary};
+  margin: 0;
+  padding: 0;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  line-height: 1.25;
+  color: ${colors.primary || "#1a237e"};
+}
+
+.leave-report-header-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.leave-report-export-btn {
+  height: 40px;
+  padding: 0 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: ${palette?.lyra?.primaryGradient || colors.primaryBlue || `linear-gradient(90deg, ${colors.primary}, ${colors.secondary})`};
+  color: ${colors.surface};
+  font-family: ${typography.fontFamily};
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: ${palette?.lyra?.actionShadow || "0 2px 6px rgba(37, 99, 235, 0.22)"};
+  transition: opacity 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.leave-report-export-btn:hover {
+  opacity: 0.94;
+  box-shadow: ${palette?.lyra?.actionShadow || "0 4px 10px rgba(37, 99, 235, 0.28)"};
+}
+
+.leave-report-export-btn:active {
+  transform: translateY(1px);
+}
+
+.leave-report-filter-card {
+  width: 100%;
+  margin-bottom: 16px;
+  background: ${colors.surface};
+  border: 1px solid ${colors.border};
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.leave-report-table-card {
+  width: 100%;
+  min-height: 500px;
+  background: ${colors.surface};
+  border: 1px solid ${colors.border};
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  overflow: hidden;
 }
 
 .leave-report-toolbar {
@@ -43,20 +105,19 @@ const styles = `
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 16px;
-  padding: 20px 24px;
+  gap: 12px;
+  padding: 16px 20px;
 }
 
-.leave-report-filters,
-.leave-report-export {
+.leave-report-filters {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 16px;
+  gap: 10px;
 }
 
 .leave-report-date {
-  height: 44px;
+  height: 40px;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -66,74 +127,71 @@ const styles = `
   background: ${colors.surface};
 }
 
+.leave-report-date:focus-within {
+  border-color: ${colors.primaryBlue};
+  box-shadow: 0 0 0 3px ${colors.focusSubtle};
+}
+
 .leave-report-date svg {
   color: ${colors.textSecondary};
   flex-shrink: 0;
 }
 
 .leave-report-date input {
-  width: 116px;
+  width: 122px;
   border: none;
   outline: none;
   color: ${colors.textPrimary};
   font-family: ${typography.fontFamily};
-  font-size: 14px;
+  font-size: 13px;
   background: transparent;
 }
 
 .leave-date-arrow {
-  color: ${colors.textSecondary};
+  color: ${colors.disabled || colors.textSecondary};
 }
 
 .leave-report-btn {
-  min-height: 44px;
-  padding: 0 20px;
+  height: 40px;
+  padding: 0 16px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   border-radius: 8px;
   font-family: ${typography.fontFamily};
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
+  white-space: nowrap;
   cursor: pointer;
-  transition: 0.2s;
+  transition: 0.15s ease;
 }
 
 .leave-primary-btn {
-  min-width: 116px;
+  min-width: 110px;
   border: none;
   color: ${colors.surface};
-  background: linear-gradient(90deg, ${colors.primary}, ${colors.secondary});
+  background: ${palette?.lyra?.primaryGradient || `linear-gradient(90deg, ${colors.primary}, ${colors.secondary})`};
 }
 
 .leave-primary-btn:hover {
-  opacity: 0.9;
-  box-shadow: 0 5px 14px ${colors.selection};
-}
-
-.leave-outline-btn {
-  border: 1px solid ${colors.border};
-  color: ${colors.textPrimary};
-  background: ${colors.surface};
-}
-
-.leave-outline-btn:hover {
-  background: ${colors.hover};
-  border-color: ${colors.primaryBlue};
+  opacity: 0.94;
+  box-shadow: ${palette?.lyra?.actionShadow || `0 5px 14px ${colors.selection}`};
 }
 
 .leave-report-table-wrapper {
   width: 100%;
   overflow-x: auto;
-  border-top: 1px solid ${colors.border};
 }
 
 .leave-report-table {
   width: 100%;
-  border-collapse: collapse;
+  min-width: 720px;
+  border-collapse: separate;
+  border-spacing: 0;
   table-layout: fixed;
   text-align: left;
+  font-size: 13px;
 }
 
 .leave-report-table thead {
@@ -141,36 +199,54 @@ const styles = `
 }
 
 .leave-report-table th {
-  height: 62px;
-  padding: 12px 18px;
+  height: 54px;
+  padding: 10px 16px;
   color: ${colors.primary};
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 700;
   border-bottom: 1px solid ${colors.border};
+  vertical-align: middle;
+  white-space: nowrap;
 }
 
 .leave-report-table th:nth-child(1) {
   width: 38%;
+  border-right: 1px solid ${colors.border};
 }
 
 .leave-report-table th:nth-child(2) {
   width: 38%;
+  border-right: 1px solid ${colors.border};
 }
 
 .leave-report-table th:nth-child(3) {
   width: 24%;
-  border-left: 1px solid ${colors.border};
 }
 
 .leave-table-heading {
   display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: space-between;
+  gap: 10px;
+  white-space: nowrap;
+}
+
+.leave-table-heading-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .leave-table-heading svg {
   color: ${colors.textSecondary};
   cursor: pointer;
+  flex-shrink: 0;
+}
+
+.leave-table-filter-icon {
+  padding-left: 8px;
+  border-left: 1px solid ${colors.border};
 }
 
 .leave-empty-cell {
@@ -184,55 +260,107 @@ const styles = `
   align-items: center;
   justify-content: center;
   text-align: center;
+  padding: 24px;
 }
 
 .leave-empty-icon {
-  width: 74px;
-  height: 74px;
+  width: 68px;
+  height: 68px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: ${colors.infoBackground};
   color: ${colors.primaryBlue};
   border-radius: 50%;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 .leave-empty-state h3 {
   margin: 0;
   color: ${colors.textPrimary};
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 600;
 }
 
 .leave-empty-state p {
-  margin: 7px 0 0;
+  margin: 6px 0 0;
   color: ${colors.textSecondary};
   font-size: 13px;
 }
 
 @media (max-width: 768px) {
-  .leave-report-page {
-    padding: 10px;
-  }
-
-  .leave-report-toolbar {
-    align-items: flex-start;
+  .leave-report-header {
+    align-items: stretch;
     flex-direction: column;
-    padding: 16px;
+    margin-bottom: 12px;
   }
 
-  .leave-report-filters,
-  .leave-report-export {
+  .leave-report-title {
+    font-size: 20px;
+  }
+
+  .leave-report-header-actions {
     width: 100%;
   }
 
+  .leave-report-export-btn {
+    flex: 1;
+    padding: 0 12px;
+    font-size: 12px;
+  }
+
+  .leave-report-filter-card {
+    margin-bottom: 12px;
+  }
+
+  .leave-report-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+    padding: 12px 16px;
+  }
+
+  .leave-report-filters {
+    width: 100%;
+    align-items: stretch;
+    flex-direction: column;
+  }
+
   .leave-report-date {
-    max-width: 100%;
+    width: 100%;
+    justify-content: space-between;
   }
 
   .leave-report-date input {
-    width: 105px;
+    width: 42%;
+  }
+
+  .leave-primary-btn {
+    width: 100%;
+  }
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  .leave-report-header,
+  .leave-report-header .leave-report-title,
+  .leave-report-table-card,
+  .leave-report-table-card * {
+    visibility: visible;
+  }
+
+  .leave-report-header-actions,
+  .leave-report-filter-card {
+    display: none !important;
+  }
+
+  .leave-report-table-card {
+    position: static;
+    width: 100%;
+    border: 0;
+    box-shadow: none;
   }
 }
 `;
@@ -275,13 +403,35 @@ export default function LeaveTakenReportPage() {
       <ReportTableStyles />
 
       <div className="leave-report-page">
-        <div className="leave-report-card">
-          <div className="leave-report-title">Leave Taken Report</div>
+        <div className="leave-report-header">
+          <h1 className="leave-report-title">Leave Taken Report</h1>
 
+          <div className="leave-report-header-actions">
+            <button
+              type="button"
+              className="leave-report-export-btn"
+              onClick={handleExcelExport}
+            >
+              <Download size={16} />
+              <span>Export Excel</span>
+            </button>
+
+            <button
+              type="button"
+              className="leave-report-export-btn"
+              onClick={handlePDFExport}
+            >
+              <FileText size={16} />
+              <span>Export PDF</span>
+            </button>
+          </div>
+        </div>
+
+        <section className="leave-report-filter-card">
           <div className="leave-report-toolbar">
             <div className="leave-report-filters">
               <div className="leave-report-date">
-                <CalendarDays size={18} />
+                <CalendarDays size={17} />
 
                 <input
                   type="date"
@@ -299,49 +449,42 @@ export default function LeaveTakenReportPage() {
               </div>
 
               <button
+                type="button"
                 className="leave-report-btn leave-primary-btn"
                 onClick={handleSearch}
               >
                 Search
               </button>
             </div>
-
-            <div className="leave-report-export">
-              <button
-                className="leave-report-btn leave-outline-btn"
-                onClick={handleExcelExport}
-              >
-                <FileSpreadsheet size={17} />
-                Export Excel
-              </button>
-
-              <button
-                className="leave-report-btn leave-outline-btn"
-                onClick={handlePDFExport}
-              >
-                <FileText size={17} />
-                Export PDF
-              </button>
-            </div>
           </div>
+        </section>
 
+        <section className="leave-report-table-card">
           <div className="leave-report-table-wrapper">
             <table className="leave-report-table">
               <thead>
                 <tr>
                   <th>
                     <div className="leave-table-heading">
-                      Employee
-                      <ArrowUpDown size={18} />
-                      <SlidersHorizontal size={18} />
+                      <span>Employee</span>
+                      <div className="leave-table-heading-actions">
+                        <ArrowUpDown size={15} />
+                        <span className="leave-table-filter-icon">
+                          <SlidersHorizontal size={14} />
+                        </span>
+                      </div>
                     </div>
                   </th>
 
                   <th>
                     <div className="leave-table-heading">
-                      Roles
-                      <ArrowUpDown size={18} />
-                      <SlidersHorizontal size={18} />
+                      <span>Roles</span>
+                      <div className="leave-table-heading-actions">
+                        <ArrowUpDown size={15} />
+                        <span className="leave-table-filter-icon">
+                          <SlidersHorizontal size={14} />
+                        </span>
+                      </div>
                     </div>
                   </th>
 
@@ -354,19 +497,23 @@ export default function LeaveTakenReportPage() {
                   <td colSpan={3} className="leave-empty-cell">
                     <div className="leave-empty-state">
                       <div className="leave-empty-icon">
-                        <Search size={27} />
+                        <Search size={26} />
                       </div>
 
                       <h3>No Data Found</h3>
 
-                      <p>No leave records found for the selected date range.</p>
+                      <p>
+                        {searched
+                          ? `No leave records found for ${fromDate} to ${toDate}.`
+                          : "No leave records found for the selected date range."}
+                      </p>
                     </div>
                   </td>
                 </tr>
               </tbody>
             </table>
           </div>
-        </div>
+        </section>
       </div>
     </>
   );
