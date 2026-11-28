@@ -38,7 +38,7 @@ class CameraCaptureScreen extends GetView<CameraCaptureController> {
                   borderRadius: BorderRadius.circular(AppDimensions.cardRadius),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.primary.withOpacity(.15),
+                      color: AppColors.primary.withValues(alpha: .15),
                       blurRadius: 24,
                       offset: const Offset(0, 10),
                     ),
@@ -138,7 +138,7 @@ class _Preview extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(150),
               border: Border.all(
-                color: AppColors.primary.withOpacity(.7),
+                color: AppColors.primary.withValues(alpha: .7),
                 width: 2.5,
               ),
             ),
@@ -170,7 +170,7 @@ class _ShutterButton extends StatelessWidget {
               border: Border.all(color: AppColors.primary, width: 3),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.primary.withOpacity(.35),
+                  color: AppColors.primary.withValues(alpha: .35),
                   blurRadius: 18,
                   spreadRadius: 1,
                 ),

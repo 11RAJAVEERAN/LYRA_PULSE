@@ -123,8 +123,8 @@ class _AttendanceSuccessScreenState extends State<AttendanceSuccessScreen>
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: RadialGradient(colors: [
-                AppColors.success.withOpacity(0.16),
-                AppColors.success.withOpacity(0.0),
+                AppColors.success.withValues(alpha: 0.16),
+                AppColors.success.withValues(alpha: 0.0),
               ]),
             ),
           ),
@@ -172,14 +172,14 @@ class _AttendanceSuccessScreenState extends State<AttendanceSuccessScreen>
                                   gradient: LinearGradient(
                                     colors: [
                                       AppColors.success,
-                                      AppColors.success.withOpacity(0.78),
+                                      AppColors.success.withValues(alpha: 0.78),
                                     ],
                                     begin: Alignment.topLeft,
                                     end: Alignment.bottomRight,
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: AppColors.success.withOpacity(0.4),
+                                      color: AppColors.success.withValues(alpha: 0.4),
                                       blurRadius: 30,
                                       offset: const Offset(0, 12),
                                     ),
@@ -377,7 +377,7 @@ class _ColorInfoRow extends StatelessWidget {
       width: 38,
       height: 38,
       decoration: BoxDecoration(
-        color: color.withOpacity(0.14),
+        color: color.withValues(alpha: 0.14),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Icon(icon, size: 20, color: color),
@@ -427,11 +427,11 @@ class _TimeTile extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 14),
       decoration: BoxDecoration(
         color: active
-            ? AppColors.successBackground.withOpacity(0.6)
-            : Colors.grey.withOpacity(0.08),
+            ? AppColors.successBackground.withValues(alpha: 0.6)
+            : Colors.grey.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: active ? AppColors.success.withOpacity(0.35) : Colors.transparent,
+          color: active ? AppColors.success.withValues(alpha: 0.35) : Colors.transparent,
         ),
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -498,7 +498,7 @@ class _RipplePainter extends CustomPainter {
       final t = (progress + i / rings) % 1.0;
       final radius = 59 + (size.width / 2 - 59) * t;
       final paint = Paint()
-        ..color = color.withOpacity((1 - t) * 0.28)
+        ..color = color.withValues(alpha: (1 - t) * 0.28)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2.5;
       canvas.drawCircle(center, radius, paint);
@@ -548,7 +548,7 @@ class _ConfettiPainter extends CustomPainter {
           size.height * 0.85 * t * t; // gravity
       final opacity = t < 0.7 ? 1.0 : (1 - (t - 0.7) / 0.3).clamp(0.0, 1.0);
 
-      final paint = Paint()..color = p.color.withOpacity(opacity);
+      final paint = Paint()..color = p.color.withValues(alpha: opacity);
       canvas.save();
       canvas.translate(origin.dx + dx, origin.dy + dy);
       canvas.rotate(p.spin * t);
