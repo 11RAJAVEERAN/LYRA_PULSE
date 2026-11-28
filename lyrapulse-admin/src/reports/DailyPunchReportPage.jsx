@@ -1,8 +1,15 @@
 import { useMemo, useState } from "react";
-import { ArrowDownUp, ChevronDown, Filter, Search } from "lucide-react";
+import {
+  ArrowDownUp,
+  ChevronDown,
+  Download,
+  FileText,
+  Filter,
+  Search,
+} from "lucide-react";
 import { colors, palette } from "../theme/colors";
 import { typography } from "../theme/typography";
-import { ReportTableStyles } from './ReportTableStyles'
+import { ReportTableStyles } from "./ReportTableStyles";
 
 const initialRows = [
   {
@@ -203,8 +210,7 @@ export default function DailyPunchReportPage() {
         .daily-punch-page {
           width: 100%;
           min-width: 0;
-          padding: 8px;
-          box-sizing: border-box;
+          padding: 0;
           color: ${colors.textPrimary};
           font-family: ${typography.fontFamily};
           font-size: ${typography.body2.fontSize};
@@ -215,39 +221,96 @@ export default function DailyPunchReportPage() {
           box-sizing: border-box;
         }
 
-        .daily-punch-card {
-          width: 100%;
-          overflow: hidden;
-          background: ${colors.surface};
-          border: 1px solid ${colors.border};
-          border-radius: 16px;
-          box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+        .daily-punch-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          flex-wrap: wrap;
+          gap: 12px;
+          margin-bottom: 14px;
         }
 
         .daily-punch-title {
           margin: 0;
-          padding: 23px 29px;
-          color: ${colors.textPrimary};
+          padding: 0;
+          color: ${colors.primary || "#1a237e"};
           font-family: inherit;
-          font-size: ${typography.h5.fontSize};
-          line-height: ${typography.h5.lineHeight};
-          letter-spacing: ${typography.h5.letterSpacing};
-          font-weight: ${typography.h5.fontWeight};
+          font-size: 24px;
+          font-weight: 700;
+          letter-spacing: -0.015em;
+          line-height: 1.25;
+        }
+
+        .daily-punch-header-actions {
+          display: flex;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 10px;
+        }
+
+        .daily-punch-export-btn {
+          height: 40px;
+          padding: 0 16px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          border: 1px solid transparent;
+          border-radius: 8px;
+          background: ${palette?.lyra?.primaryGradient || colors.primaryBlue || "#2563eb"};
+          color: ${colors.surface || "#ffffff"};
+          font-family: inherit;
+          font-size: ${typography.button.fontSize};
+          font-weight: ${typography.button.fontWeight};
+          line-height: ${typography.button.lineHeight};
+          white-space: nowrap;
+          cursor: pointer;
+          box-shadow: ${palette?.lyra?.actionShadow || "0 2px 6px rgba(37, 99, 235, 0.22)"};
+          transition: opacity 140ms ease, transform 140ms ease, box-shadow 140ms ease;
+        }
+
+        .daily-punch-export-btn:hover {
+          opacity: 0.94;
+          box-shadow: ${palette?.lyra?.actionShadow || "0 4px 10px rgba(37, 99, 235, 0.28)"};
+        }
+
+        .daily-punch-export-btn:active {
+          transform: translateY(1px);
+        }
+
+        .daily-punch-filter-card {
+          width: 100%;
+          margin-bottom: 16px;
+          background: ${colors.surface};
+          border: 1px solid ${colors.border};
+          border-radius: 12px;
+          box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+        }
+
+        .daily-punch-table-card {
+          width: 100%;
+          overflow: hidden;
+          background: ${colors.surface};
+          border: 1px solid ${colors.border};
+          border-radius: 12px;
+          box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
         }
 
         .daily-punch-toolbar {
           display: flex;
           flex-wrap: wrap;
           align-items: center;
-          gap: 12px 24px;
-          padding: 23px 29px 24px;
+          gap: 10px 12px;
+          padding: 16px 20px;
         }
 
         .daily-punch-date-range {
           display: flex;
           align-items: center;
-          gap: 12px;
-          height: 48px;
+          gap: 10px;
+          width: 300px;
+          max-width: 100%;
+          height: 40px;
           padding: 0 12px;
           border: 1px solid ${colors.border};
           border-radius: 8px;
@@ -260,7 +323,7 @@ export default function DailyPunchReportPage() {
         }
 
         .daily-punch-date-range input {
-          width: 132px;
+          width: 46%;
           min-width: 0;
           border: 0;
           outline: 0;
@@ -272,15 +335,16 @@ export default function DailyPunchReportPage() {
 
         .daily-punch-date-arrow {
           color: ${colors.disabled};
-          font-size: 20px;
+          font-size: 16px;
+          flex-shrink: 0;
         }
 
         .daily-punch-branch {
           position: relative;
           display: flex;
           align-items: center;
-          width: 307px;
-          height: 48px;
+          width: 220px;
+          height: 40px;
           border: 1px solid ${colors.border};
           border-radius: 8px;
           background: ${colors.surface};
@@ -294,7 +358,7 @@ export default function DailyPunchReportPage() {
         .daily-punch-branch select {
           width: 100%;
           height: 100%;
-          padding: 0 42px 0 13px;
+          padding: 0 36px 0 13px;
           appearance: none;
           border: 0;
           outline: 0;
@@ -307,18 +371,18 @@ export default function DailyPunchReportPage() {
 
         .daily-punch-branch svg {
           position: absolute;
-          right: 13px;
+          right: 12px;
           color: ${colors.textSecondary};
           pointer-events: none;
         }
 
         .daily-punch-search {
-          display: flex;
+          display: inline-flex;
           align-items: center;
           justify-content: center;
           gap: 7px;
           height: 40px;
-          min-width: 110px;
+          min-width: 105px;
           padding: 0 16px;
           border: 0;
           border-radius: 8px;
@@ -328,6 +392,7 @@ export default function DailyPunchReportPage() {
           font-size: ${typography.button.fontSize};
           font-weight: ${typography.button.fontWeight};
           line-height: ${typography.button.lineHeight};
+          white-space: nowrap;
           cursor: pointer;
           transition: box-shadow 140ms ease;
         }
@@ -337,50 +402,20 @@ export default function DailyPunchReportPage() {
           box-shadow: ${palette.lyra.actionShadow};
         }
 
+        .daily-punch-export-btn:focus-visible,
         .daily-punch-search:focus-visible,
-        .daily-punch-export button:focus-visible,
         .daily-punch-th-content button:focus-visible {
           outline: 3px solid ${colors.focusRing};
           outline-offset: 2px;
         }
 
-        .daily-punch-export {
-          display: flex;
-          align-items: center;
-          gap: 16px;
-          margin-left: auto;
-        }
-
-        .daily-punch-export button {
-          min-width: 143px;
-          min-height: 40px;
-          padding: 0 16px;
-          border: 1px solid ${colors.border};
-          border-radius: 8px;
-          background: ${colors.surface};
-          color: ${colors.textPrimary};
-          font-family: inherit;
-          font-size: ${typography.button.fontSize};
-          font-weight: ${typography.button.fontWeight};
-          line-height: ${typography.button.lineHeight};
-          white-space: nowrap;
-          cursor: pointer;
-          transition: background-color 140ms ease, border-color 140ms ease;
-        }
-
-        .daily-punch-export button:hover {
-          background: ${colors.hover};
-          border-color: ${colors.borderStrong};
-        }
-
         .daily-punch-table-scroll {
           width: 100%;
-          max-height: calc(100vh - 265px);
+          max-height: calc(100vh - 280px);
           min-height: 300px;
           overflow: auto;
           scrollbar-width: thin;
           scrollbar-color: ${colors.borderStrong} ${colors.surfaceMuted};
-          border-top: 1px solid ${colors.border};
         }
 
         .daily-punch-table {
@@ -388,15 +423,15 @@ export default function DailyPunchReportPage() {
           min-width: 100%;
           border-collapse: separate;
           border-spacing: 0;
-          table-layout: fixed;
+          table-layout: auto;
           font-family: inherit;
-          font-size: ${typography.body2.fontSize};
-          line-height: ${typography.body2.lineHeight};
+          font-size: 13px;
+          line-height: 1.4;
         }
 
         .daily-punch-table th,
         .daily-punch-table td {
-          padding: 22px 20px;
+          padding: 12px 14px;
           border-bottom: 1px solid ${colors.border};
           text-align: left;
           vertical-align: middle;
@@ -406,19 +441,20 @@ export default function DailyPunchReportPage() {
           position: sticky;
           top: 0;
           z-index: 3;
-          height: 92px;
-          padding: 14px 20px;
-          background: ${colors.surfaceMuted};
-          color: ${colors.textSecondary};
+          height: 62px;
+          padding: 10px 14px;
+          background: ${colors.infoBackground || colors.surfaceMuted};
+          color: ${colors.primary || colors.textSecondary};
           font-family: inherit;
-          font-size: ${typography.caption.fontSize};
-          font-weight: ${typography.overline.fontWeight};
-          letter-spacing: 0.04em;
-          text-transform: uppercase;
+          font-size: 13px;
+          font-weight: 700;
+          letter-spacing: 0;
+          text-transform: none;
+          white-space: nowrap;
         }
 
         .daily-punch-table tbody td {
-          height: 150px;
+          min-height: 68px;
           background: ${colors.surface};
         }
 
@@ -430,24 +466,26 @@ export default function DailyPunchReportPage() {
           position: sticky;
           left: 0;
           z-index: 2;
-          width: 260px;
-          min-width: 260px;
+          width: 220px;
+          min-width: 220px;
+          padding-right: 16px;
           border-right: 1px solid ${colors.border};
         }
 
         .daily-punch-table .fixed-role {
           position: sticky;
-          left: 260px;
+          left: 220px;
           z-index: 2;
-          width: 280px;
-          min-width: 280px;
+          width: 220px;
+          min-width: 220px;
+          padding-right: 16px;
           border-right: 1px solid ${colors.border};
         }
 
         .daily-punch-table thead .fixed-name,
         .daily-punch-table thead .fixed-role {
           z-index: 5;
-          background: ${colors.surfaceMuted};
+          background: ${colors.infoBackground || colors.surfaceMuted};
         }
 
         .daily-punch-table tbody .fixed-name,
@@ -463,11 +501,19 @@ export default function DailyPunchReportPage() {
         .daily-punch-th-content {
           display: flex;
           align-items: center;
-          gap: 9px;
+          justify-content: space-between;
+          gap: 10px;
           white-space: nowrap;
         }
 
-        .daily-punch-th-content button {
+        .daily-punch-th-actions {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          flex-shrink: 0;
+        }
+
+        .daily-punch-th-actions button {
           display: inline-flex;
           align-items: center;
           justify-content: center;
@@ -476,22 +522,28 @@ export default function DailyPunchReportPage() {
           background: transparent;
           color: ${colors.textSecondary};
           cursor: pointer;
+          flex-shrink: 0;
         }
 
-        .daily-punch-th-content button:hover {
+        .daily-punch-th-actions button:hover {
           color: ${colors.primaryBlue};
+        }
+
+        .daily-punch-filter-btn {
+          padding-left: 8px !important;
+          border-left: 1px solid ${colors.border} !important;
         }
 
         .daily-punch-date-column,
         .daily-punch-value {
-          width: 168px;
-          min-width: 168px;
+          width: 156px;
+          min-width: 156px;
         }
 
         .daily-punch-date-heading {
           display: flex;
           flex-direction: column;
-          gap: 4px;
+          gap: 3px;
           white-space: nowrap;
         }
 
@@ -505,12 +557,14 @@ export default function DailyPunchReportPage() {
           color: ${colors.textSecondary};
           font-family: inherit;
           font-size: ${typography.caption.fontSize};
+          font-weight: 400;
         }
 
         .daily-punch-primary,
         .daily-punch-secondary {
           display: block;
           line-height: ${typography.body2.lineHeight};
+          white-space: nowrap;
         }
 
         .daily-punch-primary {
@@ -520,6 +574,7 @@ export default function DailyPunchReportPage() {
         }
 
         .daily-punch-secondary {
+          margin-top: 3px;
           color: ${colors.textSecondary};
           font-size: ${typography.caption.fontSize};
         }
@@ -527,16 +582,17 @@ export default function DailyPunchReportPage() {
         .daily-punch-value {
           text-align: center !important;
           color: ${colors.textPrimary};
+          white-space: nowrap;
         }
 
         .daily-punch-empty {
-          height: 160px !important;
+          height: 140px !important;
           text-align: center !important;
           color: ${colors.textSecondary};
         }
 
         .daily-punch-footer {
-          padding: 12px 24px;
+          padding: 12px 20px;
           border-top: 1px solid ${colors.border};
           color: ${colors.textSecondary};
           font-size: ${typography.caption.fontSize};
@@ -545,25 +601,35 @@ export default function DailyPunchReportPage() {
 
         @media (max-width: 1100px) {
           .daily-punch-toolbar {
-            gap: 12px;
-            padding: 18px;
-          }
-
-          .daily-punch-export {
-            width: 100%;
-            margin-left: 0;
+            gap: 10px;
+            padding: 14px 16px;
           }
         }
 
         @media (max-width: 650px) {
-          .daily-punch-page {
-            padding: 4px;
+          .daily-punch-header {
+            align-items: stretch;
+            flex-direction: column;
+            margin-bottom: 12px;
           }
 
           .daily-punch-title {
-            padding: 18px;
-            font-size: ${typography.h6.fontSize};
-            line-height: ${typography.h6.lineHeight};
+            font-size: 20px;
+            line-height: 1.25;
+          }
+
+          .daily-punch-header-actions {
+            width: 100%;
+          }
+
+          .daily-punch-export-btn {
+            flex: 1;
+            padding: 0 12px;
+            font-size: ${typography.caption.fontSize};
+          }
+
+          .daily-punch-filter-card {
+            margin-bottom: 12px;
           }
 
           .daily-punch-toolbar {
@@ -586,32 +652,39 @@ export default function DailyPunchReportPage() {
             width: 100%;
           }
 
-          .daily-punch-export {
-            gap: 10px;
-          }
-
-          .daily-punch-export button {
-            flex: 1;
-            min-width: 0;
-            padding: 0 7px;
-            font-size: ${typography.caption.fontSize};
-          }
-
           .daily-punch-table-scroll {
             max-height: calc(100vh - 360px);
           }
         }
 
         @media print {
-          .daily-punch-toolbar,
+          body * {
+            visibility: hidden;
+          }
+
+          .daily-punch-header,
+          .daily-punch-header .daily-punch-title,
+          .daily-punch-table-card,
+          .daily-punch-table-card * {
+            visibility: visible;
+          }
+
+          .daily-punch-header-actions,
+          .daily-punch-filter-card,
           .daily-punch-footer {
             display: none !important;
           }
 
-          .daily-punch-page,
-          .daily-punch-card {
-            padding: 0;
+          .daily-punch-header {
+            position: static;
+            margin-bottom: 10px;
+          }
+
+          .daily-punch-table-card {
+            position: static;
+            width: 100%;
             border: 0;
+            box-shadow: none;
           }
 
           .daily-punch-table-scroll {
@@ -633,15 +706,37 @@ export default function DailyPunchReportPage() {
           }
 
           .daily-punch-table thead th {
-            background: ${colors.surfaceMuted} !important;
+            background: ${colors.infoBackground || colors.surfaceMuted} !important;
             print-color-adjust: exact;
           }
         }
       `}</style>
 
-      <div className="daily-punch-card">
+      <div className="daily-punch-header">
         <h1 className="daily-punch-title">Daily Punch Report</h1>
 
+        <div className="daily-punch-header-actions">
+          <button
+            type="button"
+            className="daily-punch-export-btn"
+            onClick={() => exportCSV(rows, dates)}
+          >
+            <Download size={16} />
+            <span>Export Excel</span>
+          </button>
+
+          <button
+            type="button"
+            className="daily-punch-export-btn"
+            onClick={() => window.print()}
+          >
+            <FileText size={16} />
+            <span>Export PDF</span>
+          </button>
+        </div>
+      </div>
+
+      <section className="daily-punch-filter-card">
         <div className="daily-punch-toolbar">
           <div className="daily-punch-date-range">
             <input
@@ -674,20 +769,17 @@ export default function DailyPunchReportPage() {
               <option value="Hyderabad">Hyderabad</option>
             </select>
 
-            <ChevronDown size={21} />
+            <ChevronDown size={19} />
           </label>
 
-          <button className="daily-punch-search" onClick={search}>
-            <Search size={17} />
-            Search
+          <button type="button" className="daily-punch-search" onClick={search}>
+            <Search size={16} />
+            <span>Search</span>
           </button>
-
-          <div className="daily-punch-export">
-            <button onClick={() => exportCSV(rows, dates)}>Export Excel</button>
-            <button onClick={() => window.print()}>Export PDF</button>
-          </div>
         </div>
+      </section>
 
+      <section className="daily-punch-table-card">
         <div className="daily-punch-table-scroll">
           <table className="daily-punch-table">
             <thead>
@@ -700,19 +792,24 @@ export default function DailyPunchReportPage() {
                     <div className="daily-punch-th-content">
                       <span>{column.label}</span>
 
-                      <button
-                        aria-label={`Sort by ${column.label}`}
-                        onClick={() => sortBy(column.key)}
-                      >
-                        <ArrowDownUp size={17} />
-                      </button>
+                      <div className="daily-punch-th-actions">
+                        <button
+                          type="button"
+                          aria-label={`Sort by ${column.label}`}
+                          onClick={() => sortBy(column.key)}
+                        >
+                          <ArrowDownUp size={15} />
+                        </button>
 
-                      <button
-                        aria-label={`Filter ${column.label}`}
-                        onClick={filterBy}
-                      >
-                        <Filter size={17} />
-                      </button>
+                        <button
+                          type="button"
+                          className="daily-punch-filter-btn"
+                          aria-label={`Filter ${column.label}`}
+                          onClick={filterBy}
+                        >
+                          <Filter size={14} />
+                        </button>
+                      </div>
                     </div>
                   </th>
                 ))}
@@ -767,7 +864,7 @@ export default function DailyPunchReportPage() {
         <div className="daily-punch-footer">
           Showing {rows.length} employees · {dates.length} days
         </div>
-      </div>
+      </section>
     </div>
   );
 }

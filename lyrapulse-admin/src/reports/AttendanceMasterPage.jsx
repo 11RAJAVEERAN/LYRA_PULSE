@@ -4,11 +4,13 @@ import {
   ChevronDown,
   ChevronUp,
   ChevronsUpDown,
+  Download,
+  FileText,
   Filter,
 } from "lucide-react";
 import { colors, palette } from "../theme/colors";
 import { typography } from "../theme/typography";
-import { ReportTableStyles } from './ReportTableStyles'
+import { ReportTableStyles } from "./ReportTableStyles";
 
 const attendanceData = [
   {
@@ -207,21 +209,21 @@ export default function AttendanceMasterPage() {
       className="am-sort"
       onClick={() => handleSort(column)}
     >
-      <span>{children}</span>
+      <span className="am-sort-label">{children}</span>
 
       <span className="am-sort-tools">
         {sort.key === column ? (
           sort.direction === "asc" ? (
-            <ChevronUp size={19} />
+            <ChevronUp size={15} />
           ) : (
-            <ChevronDown size={19} />
+            <ChevronDown size={15} />
           )
         ) : (
-          <ChevronsUpDown size={19} />
+          <ChevronsUpDown size={15} />
         )}
 
         <span className="am-filter-icon">
-          <Filter size={19} />
+          <Filter size={14} />
         </span>
       </span>
     </button>
@@ -230,11 +232,12 @@ export default function AttendanceMasterPage() {
   return (
     <div className="am-page">
       <ReportTableStyles />
+
       <style>{`
         .am-page {
           width: 100%;
           min-width: 0;
-          padding: 14px 6px;
+          padding: 0;
           color: ${colors.textPrimary};
           font-family: ${typography.fontFamily};
           font-size: ${typography.body2.fontSize};
@@ -245,23 +248,85 @@ export default function AttendanceMasterPage() {
           box-sizing: border-box;
         }
 
-        .am-card {
+        .am-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          flex-wrap: wrap;
+          gap: 12px;
+          margin-bottom: 14px;
+        }
+
+        .am-title {
+          padding: 0;
+          margin: 0;
+          font-size: 24px;
+          font-weight: 700;
+          letter-spacing: -0.015em;
+          line-height: 1.25;
+          color: ${colors.primary || "#1a237e"};
+        }
+
+        .am-header-actions {
+          display: flex;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 10px;
+        }
+
+        .am-export-btn {
+          height: 40px;
+          padding: 0 16px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          border: 1px solid transparent;
+          border-radius: 8px;
+          background: ${palette?.lyra?.primaryGradient || colors.primaryBlue || "#2563eb"};
+          color: ${colors.surface || "#ffffff"};
+          font-family: inherit;
+          font-size: ${typography.button.fontSize};
+          font-weight: ${typography.button.fontWeight};
+          line-height: ${typography.button.lineHeight};
+          white-space: nowrap;
+          cursor: pointer;
+          box-shadow: ${palette?.lyra?.actionShadow || "0 2px 6px rgba(37, 99, 235, 0.22)"};
+          transition: opacity 140ms ease, transform 140ms ease, box-shadow 140ms ease;
+        }
+
+        .am-export-btn:hover {
+          opacity: 0.94;
+          box-shadow: ${palette?.lyra?.actionShadow || "0 4px 10px rgba(37, 99, 235, 0.28)"};
+        }
+
+        .am-export-btn:active {
+          transform: translateY(1px);
+        }
+
+        .am-export-btn:focus-visible,
+        .am-button:focus-visible,
+        .am-sort:focus-visible {
+          outline: 3px solid ${colors.focusRing};
+          outline-offset: 2px;
+        }
+
+        .am-filter-card {
+          width: 100%;
+          margin-bottom: 16px;
+          background: ${colors.surface};
+          border: 1px solid ${colors.border};
+          border-radius: 12px;
+          box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+        }
+
+        .am-table-card {
           width: 100%;
           overflow: hidden;
           background: ${colors.surface};
           border: 1px solid ${colors.border};
-          border-radius: 16px;
+          border-radius: 12px;
           box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-        }
-
-        .am-title {
-          padding: 22px 29px 26px;
-          margin: 0;
-          font-size: ${typography.h5.fontSize};
-          font-weight: ${typography.h5.fontWeight};
-          letter-spacing: ${typography.h5.letterSpacing};
-          line-height: ${typography.h5.lineHeight};
-          color: ${colors.textPrimary};
         }
 
         .am-toolbar {
@@ -269,22 +334,21 @@ export default function AttendanceMasterPage() {
           align-items: center;
           justify-content: space-between;
           flex-wrap: wrap;
-          gap: 18px;
-          padding: 20px 29px 24px;
+          gap: 12px;
+          padding: 16px 20px;
         }
 
-        .am-filters,
-        .am-exports {
+        .am-filters {
           display: flex;
           align-items: center;
           flex-wrap: wrap;
-          gap: 12px;
+          gap: 8px;
         }
 
         .am-date {
-          width: 375px;
+          width: 300px;
           max-width: 100%;
-          height: 48px;
+          height: 40px;
           display: flex;
           align-items: center;
           gap: 10px;
@@ -321,14 +385,14 @@ export default function AttendanceMasterPage() {
 
         .am-department {
           position: relative;
-          width: 230px;
-          height: 48px;
+          width: 220px;
+          height: 40px;
         }
 
         .am-department select {
           width: 100%;
           height: 100%;
-          padding: 0 40px 0 13px;
+          padding: 0 36px 0 13px;
           appearance: none;
           border: 1px solid ${colors.border};
           border-radius: 8px;
@@ -347,14 +411,14 @@ export default function AttendanceMasterPage() {
         .am-department svg {
           position: absolute;
           right: 12px;
-          top: 14px;
+          top: 11px;
           pointer-events: none;
           color: ${colors.textSecondary};
         }
 
         .am-button {
-          min-height: 40px;
-          padding: 0 16px;
+          height: 40px;
+          padding: 0 14px;
           display: inline-flex;
           align-items: center;
           justify-content: center;
@@ -370,18 +434,13 @@ export default function AttendanceMasterPage() {
           text-transform: none;
           white-space: nowrap;
           cursor: pointer;
-          transition: background-color 140ms ease, border-color 140ms ease,
+          transition: background-color 140ms ease,
+            border-color 140ms ease,
             box-shadow 140ms ease;
         }
 
-        .am-button:focus-visible,
-        .am-sort:focus-visible {
-          outline: 3px solid ${colors.focusRing};
-          outline-offset: 2px;
-        }
-
         .am-search {
-          min-width: 110px;
+          min-width: 105px;
           border-color: transparent;
           background: ${palette.lyra.primaryGradient};
           color: ${colors.surface};
@@ -423,33 +482,32 @@ export default function AttendanceMasterPage() {
 
         .am-table-wrap {
           width: 100%;
-          max-height: 68vh;
+          max-height: 70vh;
           overflow: auto;
-          border-top: 1px solid ${colors.border};
         }
 
         .am-table {
           width: 100%;
-          min-width: 1100px;
-          table-layout: fixed;
+          min-width: 1120px;
+          table-layout: auto;
           border-collapse: separate;
           border-spacing: 0;
           font-family: inherit;
-          font-size: 18px;
-          line-height: 1.35;
+          font-size: 13px;
+          line-height: 1.4;
         }
 
         .am-table th {
           position: sticky;
           top: 0;
           z-index: 2;
-          height: 60px;
-          padding: 12px 18px;
+          height: 46px;
+          padding: 10px 14px;
           background: ${colors.infoBackground};
           color: ${colors.primary};
           text-align: left;
           font-family: inherit;
-          font-size: 17px;
+          font-size: 13px;
           font-weight: 700;
           letter-spacing: 0;
           text-transform: none;
@@ -459,15 +517,16 @@ export default function AttendanceMasterPage() {
         }
 
         .am-table td {
-          height: 80px;
-          padding: 14px 18px;
+          min-height: 54px;
+          padding: 10px 14px;
           color: ${colors.textPrimary};
           white-space: nowrap;
           background: ${colors.surface};
           border-bottom: 1px solid ${colors.border};
           font-family: inherit;
-          font-size: 18px;
-          line-height: 1.35;
+          font-size: 13px;
+          line-height: 1.4;
+          vertical-align: middle;
         }
 
         .am-table tbody tr:hover td {
@@ -476,21 +535,24 @@ export default function AttendanceMasterPage() {
 
         .am-table .am-employee {
           min-width: 220px;
+          padding-right: 18px;
           border-right: 1px solid ${colors.border};
         }
 
         .am-table .am-role {
           min-width: 210px;
+          padding-right: 18px;
           border-right: 1px solid ${colors.border};
         }
 
         .am-sort {
           width: 100%;
+          min-width: 0;
           padding: 0;
           display: flex;
           align-items: center;
           justify-content: space-between;
-          gap: 10px;
+          gap: 12px;
           border: 0;
           background: transparent;
           color: inherit;
@@ -500,10 +562,14 @@ export default function AttendanceMasterPage() {
           cursor: pointer;
         }
 
+        .am-sort-label {
+          white-space: nowrap;
+        }
+
         .am-sort-tools {
           display: inline-flex;
           align-items: center;
-          gap: 12px;
+          gap: 8px;
           flex-shrink: 0;
           color: ${colors.textSecondary};
         }
@@ -514,13 +580,12 @@ export default function AttendanceMasterPage() {
         }
 
         .am-filter-icon {
-          width: 1px;
-          height: 24px;
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          padding-left: 12px;
+          padding-left: 8px;
           border-left: 1px solid ${colors.border};
+          flex-shrink: 0;
         }
 
         .am-employee-name {
@@ -528,28 +593,31 @@ export default function AttendanceMasterPage() {
           font-weight: ${typography.subtitle2.fontWeight};
           line-height: ${typography.subtitle2.lineHeight};
           color: ${colors.textPrimary};
+          white-space: nowrap;
         }
 
         .am-subtext {
-          margin-top: 4px;
+          margin-top: 3px;
           color: ${colors.textSecondary};
           font-size: ${typography.caption.fontSize};
           line-height: ${typography.caption.lineHeight};
+          white-space: nowrap;
         }
 
         .am-status {
           display: inline-flex;
           align-items: center;
-          gap: 11px;
+          gap: 8px;
           text-decoration: underline;
           text-underline-offset: 2px;
         }
 
         .am-status-dot {
-          width: 12px;
-          height: 12px;
-          border: 3px solid ${colors.primaryBlue};
+          width: 9px;
+          height: 9px;
+          border: 2px solid ${colors.primaryBlue};
           border-radius: 50%;
+          flex-shrink: 0;
         }
 
         .am-empty {
@@ -559,10 +627,11 @@ export default function AttendanceMasterPage() {
         }
 
         .am-footer {
-          padding: 14px 22px;
+          padding: 12px 20px;
           color: ${colors.textSecondary};
           font-size: ${typography.caption.fontSize};
           line-height: ${typography.caption.lineHeight};
+          border-top: 1px solid ${colors.border};
         }
 
         @media (max-width: 1100px) {
@@ -571,21 +640,38 @@ export default function AttendanceMasterPage() {
             flex-direction: column;
           }
 
-          .am-filters,
-          .am-exports {
+          .am-filters {
             gap: 10px;
           }
         }
 
         @media (max-width: 600px) {
+          .am-header {
+            align-items: stretch;
+            flex-direction: column;
+            margin-bottom: 12px;
+          }
+
           .am-title {
-            padding: 18px 16px;
-            font-size: ${typography.h6.fontSize};
-            line-height: ${typography.h6.lineHeight};
+            font-size: 20px;
+            line-height: 1.25;
+          }
+
+          .am-header-actions {
+            width: 100%;
+          }
+
+          .am-export-btn {
+            flex: 1;
+            padding: 0 12px;
+          }
+
+          .am-filter-card {
+            margin-bottom: 12px;
           }
 
           .am-toolbar {
-            padding: 14px 16px 18px;
+            padding: 12px 16px;
           }
 
           .am-filters {
@@ -611,20 +697,6 @@ export default function AttendanceMasterPage() {
           .am-search {
             width: 100%;
           }
-
-          .am-exports {
-            width: 100%;
-          }
-
-          .am-button {
-            flex: 1;
-            padding: 0 12px;
-          }
-
-          .am-table {
-            min-width: 1100px;
-            table-layout: auto;
-          }
         }
 
         @media print {
@@ -632,21 +704,31 @@ export default function AttendanceMasterPage() {
             visibility: hidden;
           }
 
-          .am-card,
-          .am-card * {
+          .am-header,
+          .am-header .am-title,
+          .am-table-card,
+          .am-table-card * {
             visibility: visible;
           }
 
-          .am-card {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            border: 0;
+          .am-header-actions {
+            display: none;
           }
 
-          .am-toolbar {
+          .am-header {
+            position: static;
+            margin-bottom: 10px;
+          }
+
+          .am-filter-card {
             display: none;
+          }
+
+          .am-table-card {
+            position: static;
+            width: 100%;
+            border: 0;
+            box-shadow: none;
           }
 
           .am-table-wrap {
@@ -656,7 +738,7 @@ export default function AttendanceMasterPage() {
 
           .am-table {
             min-width: 0;
-            font-size: 9px;
+            font-size: 10px;
           }
 
           .am-table th {
@@ -683,9 +765,27 @@ export default function AttendanceMasterPage() {
         }
       `}</style>
 
-      <section className="am-card">
+      <div className="am-header">
         <h1 className="am-title">Attendance Master</h1>
 
+        <div className="am-header-actions">
+          <button type="button" className="am-export-btn" onClick={exportExcel}>
+            <Download size={16} />
+            <span>Export Excel</span>
+          </button>
+
+          <button
+            type="button"
+            className="am-export-btn"
+            onClick={() => window.print()}
+          >
+            <FileText size={16} />
+            <span>Export PDF</span>
+          </button>
+        </div>
+      </div>
+
+      <section className="am-filter-card">
         <div className="am-toolbar">
           <div className="am-filters">
             <div className="am-date">
@@ -743,22 +843,10 @@ export default function AttendanceMasterPage() {
               Search
             </button>
           </div>
-
-          <div className="am-exports">
-            <button type="button" className="am-button" onClick={exportExcel}>
-              Export Excel
-            </button>
-
-            <button
-              type="button"
-              className="am-button"
-              onClick={() => window.print()}
-            >
-              Export PDF
-            </button>
-          </div>
         </div>
+      </section>
 
+      <section className="am-table-card">
         <div className="am-table-wrap">
           <table className="am-table">
             <thead>
@@ -822,6 +910,7 @@ export default function AttendanceMasterPage() {
                     <td>
                       <span className="am-status">
                         {row.status}
+
                         {row.firstPunch === "-" && (
                           <span className="am-status-dot" />
                         )}
