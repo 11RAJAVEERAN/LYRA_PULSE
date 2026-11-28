@@ -26,8 +26,10 @@ class MenuScreen extends StatelessWidget {
         title: Text(
           'Menu',
           style: GoogleFonts.inter(
+            fontSize: 20,
             fontWeight: FontWeight.w700,
             color: AppColors.textPrimary,
+           
           ),
         ),
         backgroundColor: AppColors.surface,

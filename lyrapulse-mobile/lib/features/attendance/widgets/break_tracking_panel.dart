@@ -1,9 +1,11 @@
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../app/theme/app_colors.dart';
 import 'package:get/get.dart';
 
+import '../../../app/theme/app_colors.dart';
 import '../controllers/attendance_controller.dart';
+import '../../../data/models/attendance_model.dart';
 
 class BreakTrackingPanel extends StatefulWidget {
   const BreakTrackingPanel({super.key});
@@ -13,102 +15,39 @@ class BreakTrackingPanel extends StatefulWidget {
 }
 
 class _BreakTrackingPanelState extends State<BreakTrackingPanel> {
-  final AttendanceController controller = Get.find<AttendanceController>();
+  final AttendanceController controller =
+      Get.find<AttendanceController>();
 
-  String selectedBreakType = 'Lunch';
   bool isExpanded = false;
-  bool isProcessing = false;
 
-  final List<String> breakTypes = [
-    'Lunch',
-    'Tea',
-    'Personal',
-  ];
+  String _formatDuration(Duration duration) {
+    final hours = duration.inHours.toString().padLeft(2, '0');
+    final minutes = (duration.inMinutes % 60)
+        .toString()
+        .padLeft(2, '0');
+    final seconds = (duration.inSeconds % 60)
+        .toString()
+        .padLeft(2, '0');
 
-  Future<void> _handleBreakCheckOut() async {
-    if (isProcessing) return;
-
-    setState(() => isProcessing = true);
-
-    try {
-      final message = await controller.startBreak(selectedBreakType);
-
-      if (!mounted) return;
-
-      Get.snackbar(
-        message == null ? 'Break Check Out' : 'Break Error',
-        message ?? '$selectedBreakType break timer started.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: message == null
-            ? AppColors.successBackground
-            : AppColors.errorBackground,
-        colorText: AppColors.primaryDark,
-        duration: const Duration(seconds: 3),
-      );
-    } catch (e) {
-      if (!mounted) return;
-
-      Get.snackbar(
-        'Break Error',
-        e.toString().replaceFirst('Exception: ', ''),
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: AppColors.errorBackground,
-        colorText: AppColors.primaryDark,
-      );
-    } finally {
-      if (mounted) {
-        setState(() => isProcessing = false);
-      }
-    }
+    return '$hours:$minutes:$seconds';
   }
 
-  Future<void> _handleBreakCheckIn() async {
-    if (isProcessing) return;
+  String _formatTime(DateTime? time) {
+    if (time == null) return '--:--';
 
-    setState(() => isProcessing = true);
+    final hour = time.hour % 12 == 0 ? 12 : time.hour % 12;
+    final minute = time.minute.toString().padLeft(2, '0');
+    final period = time.hour >= 12 ? 'PM' : 'AM';
 
-    try {
-      final message = await controller.endBreak();
-
-      if (!mounted) return;
-
-      Get.snackbar(
-        message == null ? 'Break Check In' : 'Break Error',
-        message ?? 'Break ended. Return time and location saved.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: message == null
-            ? AppColors.successBackground
-            : AppColors.errorBackground,
-        colorText: AppColors.primaryDark,
-        duration: const Duration(seconds: 4),
-      );
-    } catch (e) {
-      if (!mounted) return;
-
-      Get.snackbar(
-        'Break Error',
-        e.toString().replaceFirst('Exception: ', ''),
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: AppColors.errorBackground,
-        colorText: AppColors.primaryDark,
-      );
-    } finally {
-      if (mounted) {
-        setState(() => isProcessing = false);
-      }
-    }
+    return '$hour:$minute $period';
   }
 
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final activeBreak = controller.activeBreak;
-
-      // Read this reactive getter inside Obx.
-      // It subscribes this panel to the one-second timer tick.
-      final activeDuration = controller.activeBreakDuration;
-
-      final sessions = controller.breakSessions.reversed.toList();
+      final today = controller.today.value;
+      final sessions = today?.sessions ?? const <TodaySession>[];
+      final breakDuration = controller.breakDuration;
 
       return Card(
         margin: EdgeInsets.zero,
@@ -122,7 +61,9 @@ class _BreakTrackingPanelState extends State<BreakTrackingPanel> {
             InkWell(
               borderRadius: BorderRadius.circular(18),
               onTap: () {
-                setState(() => isExpanded = !isExpanded);
+                setState(() {
+                  isExpanded = !isExpanded;
+                });
               },
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -151,9 +92,9 @@ class _BreakTrackingPanelState extends State<BreakTrackingPanel> {
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          SizedBox(height: 4),
+                          const SizedBox(height: 4),
                           Text(
-                            'Manage your break check-in and check-out',
+                            'Today\'s break duration and sessions',
                             style: GoogleFonts.inter(
                               fontSize: 12,
                               color: AppColors.textSecondary,
@@ -162,12 +103,6 @@ class _BreakTrackingPanelState extends State<BreakTrackingPanel> {
                         ],
                       ),
                     ),
-                    if (activeBreak != null)
-                      const Icon(
-                        Icons.circle,
-                        size: 10,
-                        color: AppColors.warning,
-                      ),
                     const SizedBox(width: 8),
                     Icon(
                       isExpanded
@@ -178,6 +113,7 @@ class _BreakTrackingPanelState extends State<BreakTrackingPanel> {
                 ),
               ),
             ),
+
             if (isExpanded) ...[
               const Divider(height: 1),
               Padding(
@@ -185,146 +121,70 @@ class _BreakTrackingPanelState extends State<BreakTrackingPanel> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (controller.isBreakLoading.value)
+                    if (controller.isLoadingToday.value)
                       const Center(
                         child: CircularProgressIndicator(),
                       )
                     else ...[
-                      if (activeBreak != null) ...[
-                        Text(
-                          '${activeBreak.type} Break in Progress',
-                          style: GoogleFonts.inter(
-                            color: AppColors.warning,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 15,
-                          ),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: AppColors.warningBackground,
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Break Check Out: '
-                          '${controller.formatTime(activeBreak.startTime)}',
-                          style: GoogleFonts.inter(),
-                        ),
-                        const SizedBox(height: 8),
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: AppColors.warningBackground,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Break Duration',
-                                style: GoogleFonts.inter(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                controller.formatElapsedDuration(
-                                  activeDuration,
-                                ),
-                                style: GoogleFonts.inter(
-                                  fontSize: 28,
-                                  fontWeight: FontWeight.bold,
-                                  fontFeatures: [
-                                    FontFeature.tabularFigures(),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                      ] else ...[
-                        DropdownButtonFormField<String>(
-                          initialValue: selectedBreakType,
-                          decoration: const InputDecoration(
-                            labelText: 'Break Type',
-                            border: OutlineInputBorder(),
-                          ),
-                          items: breakTypes.map((type) {
-                            return DropdownMenuItem<String>(
-                              value: type,
-                              child: Text(type, style: GoogleFonts.inter()),
-                            );
-                          }).toList(),
-                          onChanged: isProcessing
-                              ? null
-                              : (value) {
-                                  if (value != null) {
-                                    setState(() {
-                                      selectedBreakType = value;
-                                    });
-                                  }
-                                },
-                        ),
-                        const SizedBox(height: 12),
-                      ],
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              onPressed: isProcessing || activeBreak == null
-                                  ? null
-                                  : _handleBreakCheckIn,
-                              icon: const Icon(Icons.login_rounded),
-                              label: Text(
-                                'Break Check In',
-                                style: GoogleFonts.inter(),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Total Break Duration',
+                              style: GoogleFonts.inter(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              onPressed: isProcessing || activeBreak != null
-                                  ? null
-                                  : _handleBreakCheckOut,
-                              icon: isProcessing
-                                  ? const SizedBox(
-                                      width: 18,
-                                      height: 18,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                      ),
-                                    )
-                                  : const Icon(Icons.logout_rounded),
-                              label: Text(
-                                'Break Check Out',
-                                style: GoogleFonts.inter(),
+                            const SizedBox(height: 6),
+                            Text(
+                              controller.formattedBreakDuration,
+                              style: GoogleFonts.inter(
+                                fontSize: 28,
+                                fontWeight: FontWeight.bold,
+                                fontFeatures: const [
+                                  FontFeature.tabularFigures(),
+                                ],
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
+
                       const SizedBox(height: 16),
-                      const Divider(),
-                      const SizedBox(height: 8),
+
                       Text(
-                        'Break History',
+                        'Attendance Sessions',
                         style: GoogleFonts.inter(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
+
                       const SizedBox(height: 8),
+
                       if (sessions.isEmpty)
                         Padding(
-                          padding: EdgeInsets.symmetric(vertical: 8),
+                          padding: const EdgeInsets.symmetric(vertical: 8),
                           child: Text(
-                            'No breaks recorded today.',
+                            'No attendance sessions available.',
                             style: GoogleFonts.inter(
-                                color: AppColors.textSecondary),
+                              color: AppColors.textSecondary,
+                            ),
                           ),
                         )
                       else
-                        ...sessions.map((session) {
-                          final isActive = session.isActive;
+                        ...sessions.asMap().entries.map((entry) {
+                          final index = entry.key;
+                          final session = entry.value;
+                          final isActive = session.checkOutAt == null;
 
                           return Container(
                             width: double.infinity,
@@ -338,91 +198,96 @@ class _BreakTrackingPanelState extends State<BreakTrackingPanel> {
                               ),
                             ),
                             child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                              crossAxisAlignment:
+                                  CrossAxisAlignment.start,
                               children: [
                                 Row(
                                   children: [
                                     Expanded(
                                       child: Text(
-                                        session.type,
+                                        'Session ${index + 1}',
                                         style: GoogleFonts.inter(
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
                                     ),
                                     Text(
-                                      isActive ? 'In Progress' : 'Completed',
+                                      isActive
+                                          ? 'Active'
+                                          : 'Completed',
                                       style: GoogleFonts.inter(
                                         fontSize: 12,
+                                        fontWeight: FontWeight.w600,
                                         color: isActive
                                             ? AppColors.warningDark
                                             : AppColors.successDark,
-                                        fontWeight: FontWeight.w600,
                                       ),
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: 6),
+
+                                const SizedBox(height: 8),
+
                                 Text(
-                                  'Break Check Out: '
-                                  '${controller.formatTime(session.startTime)}',
+                                  'Check In: ${_formatTime(session.checkInAt)}',
                                   style: GoogleFonts.inter(),
                                 ),
+
+                                const SizedBox(height: 4),
+
                                 Text(
-                                  'Break Check In: '
-                                  '${controller.formatTime(session.endTime)}',
+                                  'Check Out: ${_formatTime(session.checkOutAt)}',
                                   style: GoogleFonts.inter(),
                                 ),
-                                Text(
-                                  'Duration: '
-                                  '${controller.formatDuration(session.durationAt(DateTime.now()))}',
-                                  style: GoogleFonts.inter(),
-                                ),
-                                if (!isActive) ...[
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    'Return Location',
-                                    style: GoogleFonts.inter(
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 3),
-                                  if (session.endAddress != null &&
-                                      session.endAddress!.isNotEmpty)
-                                    Text(
-                                      session.endAddress!,
-                                      style: GoogleFonts.inter(),
-                                    )
-                                  else if (session.endLatitude != null &&
-                                      session.endLongitude != null)
-                                    Text(
-                                      'Lat: ${session.endLatitude!.toStringAsFixed(6)}\n'
-                                      'Lng: ${session.endLongitude!.toStringAsFixed(6)}',
-                                      style: GoogleFonts.inter(),
-                                    )
-                                  else
-                                    Text(
-                                      'Location not available',
-                                      style: GoogleFonts.inter(
-                                        color: AppColors.textSecondary,
-                                      ),
-                                    ),
-                                ],
                               ],
                             ),
                           );
                         }),
-                    ],
-                    const SizedBox(height: 8),
-                    const Divider(),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Total break time: '
-                      '${controller.formattedBreakDuration}',
-                      style: GoogleFonts.inter(
-                        fontWeight: FontWeight.w600,
+
+                      const SizedBox(height: 8),
+
+                      const Divider(),
+
+                      const SizedBox(height: 8),
+
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'Total break time',
+                              style: GoogleFonts.inter(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            _formatDuration(breakDuration),
+                            style: GoogleFonts.inter(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
+
+                      const SizedBox(height: 12),
+
+                      if (controller.isOnBreak)
+                        Text(
+                          'You are currently on break.',
+                          style: GoogleFonts.inter(
+                            color: AppColors.warningDark,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        )
+                      else
+                        Text(
+                          'Break duration is calculated from attendance sessions.',
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                    ],
                   ],
                 ),
               ),

@@ -42,7 +42,7 @@ class AuthController extends GetxController {
       otpController.clear();
       _populateDevOtp(devOtp);
       Get.toNamed(AppRoutes.otp);
-      _showDevOtp(devOtp);
+      // _showDevOtp(devOtp);
     } catch (error) {
       AppSnackbar.show(_errorMessage(error));
     } finally {
@@ -80,7 +80,7 @@ class AuthController extends GetxController {
       _populateDevOtp(devOtp);
       startCountdown();
       if (devOtp != null && kDebugMode) {
-        _showDevOtp(devOtp);
+        // _showDevOtp(devOtp);
       } else {
         AppSnackbar.show('A new OTP has been sent');
       }
@@ -187,12 +187,12 @@ class AuthController extends GetxController {
     }
   }
 
-  void _showDevOtp(String? devOtp) {
-    // Development convenience only; production responses carry no dev_otp.
-    if (devOtp != null && kDebugMode) {
-      AppSnackbar.show('Development OTP: $devOtp');
-    }
-  }
+  // void _showDevOtp(String? devOtp) {
+  //   // Development convenience only; production responses carry no dev_otp.
+  //   if (devOtp != null && kDebugMode) {
+  //     AppSnackbar.show('Development OTP: $devOtp');
+  //   }
+  // }
 
   void _populateDevOtp(String? devOtp) {
     if (!kDebugMode || devOtp == null || !RegExp(r'^\d{6}$').hasMatch(devOtp)) {

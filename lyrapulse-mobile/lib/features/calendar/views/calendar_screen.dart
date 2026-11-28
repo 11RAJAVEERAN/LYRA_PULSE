@@ -20,7 +20,7 @@ class CalendarScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FixedHeaderPage(
-      backgroundColor: AppColors.secondarySoft,
+      backgroundColor: AppColors.surface,
       header: _buildHeader(),
       pinned: Padding(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
@@ -40,7 +40,7 @@ class CalendarScreen extends StatelessWidget {
               : _buildListContent();
         }),
         const SizedBox(height: 22),
-        _buildRegularizationInfo(),
+        // _buildRegularizationInfo(),
       ],
     );
   }
@@ -73,21 +73,21 @@ class CalendarScreen extends StatelessWidget {
   }
 
   Widget _buildHeader() {
-    final now = DateTime.now();
-    const months = [
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December'
-    ];
+    // final now = DateTime.now();
+    // const months = [
+    //   'January',
+    //   'February',
+    //   'March',
+    //   'April',
+    //   'May',
+    //   'June',
+    //   'July',
+    //   'August',
+    //   'September',
+    //   'October',
+    //   'November',
+    //   'December'
+    // ];
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -95,35 +95,20 @@ class CalendarScreen extends StatelessWidget {
         color: AppColors.surface,
         border: Border(
           bottom: BorderSide(
-            color: AppColors.secondarySoft.withOpacity(0.6),
+            color: AppColors.secondarySoft.withValues(alpha: 0.6),
             width: 1,
           ),
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.secondarySoft.withOpacity(0.5),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
+            color: AppColors.secondarySoft.withValues(alpha: 0.5),
+            blurRadius: 10,
+            offset: const Offset(0, 7),
           ),
         ],
       ),
       child: Row(
         children: [
-          // Icon badge
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: AppColors.secondarySoft,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(
-              Icons.calendar_month_rounded,
-              size: 22,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          const SizedBox(width: 12),
-
           // Title + subtitle
           Expanded(
             child: Column(
@@ -135,17 +120,7 @@ class CalendarScreen extends StatelessWidget {
                   style: GoogleFonts.inter(
                     fontSize: 20,
                     fontWeight: FontWeight.w700,
-                    letterSpacing: -0.3,
                     color: AppColors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  '${months[now.month - 1]} ${now.year}',
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.textPrimary.withOpacity(0.55),
                   ),
                 ),
               ],
@@ -166,13 +141,13 @@ class CalendarScreen extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 18),
           decoration: BoxDecoration(
             color: AppColors.surface,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(10),
             border: Border.all(color: AppColors.border),
             boxShadow: const [
               BoxShadow(
                 color: AppColors.borderStrong,
-                blurRadius: 16,
-                offset: Offset(0, 5),
+                blurRadius: 5,
+                offset: Offset(0, 2),
               ),
             ],
           ),
@@ -181,12 +156,11 @@ class CalendarScreen extends StatelessWidget {
         const SizedBox(height: 18),
         const AttendanceLegend(),
         const SizedBox(height: 28),
-        _buildSectionTitle(
-          icon: Icons.event_note_rounded,
-          title: 'Attendance Data',
-        ),
+        // _buildSectionTitle(
+        //   icon: Icons.event_note_rounded,
+        //   title: 'Attendance Data',
+        // ),
         const SizedBox(height: 12),
-        _buildSelectedDateCard(),
       ],
     );
   }
@@ -265,130 +239,4 @@ class CalendarScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSectionTitle({
-    required IconData icon,
-    required String title,
-  }) {
-    return Row(
-      children: [
-        Icon(icon, color: AppColors.primaryBlue, size: 23),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            title,
-            style: GoogleFonts.inter(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSelectedDateCard() {
-    final date = controller.selectedDate.value;
-    final status = controller.statusForDay(date.day);
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 46,
-            height: 46,
-            decoration: BoxDecoration(
-              color: AppColors.infoSurface,
-              borderRadius: BorderRadius.circular(13),
-            ),
-            child: const Icon(
-              Icons.calendar_month_rounded,
-              color: AppColors.primaryBlue,
-            ),
-          ),
-          const SizedBox(width: 13),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '${date.day} ${controller.monthTitle}',
-                  style: GoogleFonts.inter(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  controller.statusLabel(status),
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Icon(
-            Icons.chevron_right_rounded,
-            color: AppColors.textSecondary,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRegularizationInfo() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.infoSurface,
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(
-            Icons.touch_app_rounded,
-            size: 25,
-            color: AppColors.primaryBlue,
-          ),
-          SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Attendance status from Project A',
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                SizedBox(height: 6),
-                Text(
-                  'Only dates returned by the attendance API are marked. '
-                  'Other day types are not provided by the current backend.',
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    height: 1.6,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }

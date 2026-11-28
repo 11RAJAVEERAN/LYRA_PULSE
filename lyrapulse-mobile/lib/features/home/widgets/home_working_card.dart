@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -33,25 +32,30 @@ class HomeWorkingCard extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 14),
-        Expanded(
-          child: Text(
-            label,
-            style: GoogleFonts.inter(
-              color: AppColors.surface,
-              fontWeight: FontWeight.w600,
-              fontSize: 13,
-            ),
+        Text(
+          label,
+          maxLines: 1,
+          style: GoogleFonts.inter(
+            color: AppColors.surface,
+            fontWeight: FontWeight.w700,
+            fontSize: 13,
           ),
         ),
         const SizedBox(width: 8),
-        Flexible(
-          child: Text(
-            value,
-            textAlign: TextAlign.right,
-            style: GoogleFonts.inter(
-              color: AppColors.surface,
-              fontSize: 15,
-              fontWeight: FontWeight.w800,
+        Expanded(
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerRight,
+            child: Text(
+              value,
+              maxLines: 1,
+              softWrap: false,
+              textAlign: TextAlign.right,
+              style: GoogleFonts.inter(
+                color: AppColors.surface,
+                fontSize: 15,
+                fontWeight: FontWeight.w800,
+              ),
             ),
           ),
         ),
@@ -67,9 +71,9 @@ class HomeWorkingCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         gradient: const LinearGradient(
           colors: [
+            AppColors.primaryDark,
             AppColors.secondaryDark,
-            AppColors.secondaryDark,
-            AppColors.secondaryDark,
+            AppColors.primary,
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -78,7 +82,7 @@ class HomeWorkingCard extends StatelessWidget {
           BoxShadow(
             color: AppColors.primary.withValues(alpha: .22),
             blurRadius: 25,
-            offset: const Offset(0, 12),
+            offset: const Offset(0, 30),
           ),
         ],
       ),
@@ -175,13 +179,13 @@ class HomeWorkingCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 10),
-          Obx(
-            () => _infoRow(
-              Icons.coffee_rounded,
-              'Total Break Time',
-              attendanceController.formattedBreakDuration,
-            ),
-          ),
+              Obx(
+                () => _infoRow(
+                  Icons.coffee_rounded,
+                  'Total Break Time',
+                  attendanceController.formattedBreakDuration,
+                ),
+              ),
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 6),
                 child: Divider(

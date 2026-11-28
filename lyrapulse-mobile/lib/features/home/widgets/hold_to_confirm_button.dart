@@ -38,7 +38,7 @@ class _HoldToConfirmButtonState extends State<HoldToConfirmButton>
   int _lastHapticStep = 0;
 
   static const _holdDuration = Duration(seconds: 2);
-  static const _waveDuration = Duration(milliseconds: 1400);
+  static const _waveDuration = Duration(milliseconds: 1300);
 
   Color get _buttonColor =>
       widget.isCheckOut ? AppColors.warning : AppColors.success;
@@ -138,10 +138,13 @@ class _HoldToConfirmButtonState extends State<HoldToConfirmButton>
       return;
     }
 
-    // Hold finished -> big success moment (vibration + beep).
+    // Ring complete -> BLAST (vibration + beep + visual burst).
     _isHolding = false;
     _isProcessing = true;
     HapticFeedback.heavyImpact();
+    Future.delayed(const Duration(milliseconds: 90), () {
+      if (mounted && _isProcessing) HapticFeedback.heavyImpact();
+    });
     _playSuccessBeep();
 
     setState(() {});
@@ -156,7 +159,7 @@ class _HoldToConfirmButtonState extends State<HoldToConfirmButton>
 
       setState(() {});
 
-      // Navigate only after all pulse waves finish.
+      // Navigate only after the blast finishes.
       widget.onConfirm();
     });
   }
@@ -213,36 +216,29 @@ class _HoldToConfirmButtonState extends State<HoldToConfirmButton>
     super.dispose();
   }
 
-  /// Bigger, overlapping pulse waves for the success burst.
-  Widget _buildPulseWave(double progress, int waveIndex) {
+  /// Thin trailing pulse rings after the blast (single colour).
+  Widget _buildPulseWave(double progress, int waveIndex, Color color) {
+    // Starts a bit after the blast so they trail it.
     final waveProgress =
-        ((progress - waveIndex * 0.18) / 0.64).clamp(0.0, 1.0);
+        ((progress - 0.12 - waveIndex * 0.14) / 0.6).clamp(0.0, 1.0);
 
     if (waveProgress <= 0 || waveProgress >= 1) {
       return const SizedBox.shrink();
     }
 
     final eased = Curves.easeOutCubic.transform(waveProgress);
-    final size = 92 + (eased * 150);
-    final opacity = (1 - eased) * 0.8;
+    final size = 96 + (eased * 120);
+    final opacity = (1 - eased) * 0.45;
 
-    final waveColor = waveIndex.isEven ? AppColors.accent : AppColors.secondary;
     return Container(
       width: size,
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         border: Border.all(
-          color: waveColor.withValues(alpha: opacity),
-          width: 3.2 - (eased * 1.8),
+          color: color.withValues(alpha: opacity),
+          width: 2.0 - (eased * 1.0),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: waveColor.withValues(alpha: opacity * 0.5),
-            blurRadius: 16 * (1 - eased),
-            spreadRadius: 2 * (1 - eased),
-          ),
-        ],
       ),
     );
   }
@@ -268,6 +264,9 @@ class _HoldToConfirmButtonState extends State<HoldToConfirmButton>
             final waveProgress = _waveController.value;
             final holdValue = _holdController.value;
             final isWaveActive = _isProcessing;
+            final showDone = isWaveActive;
+
+            final activeColor = showDone ? AppColors.success : buttonColor;
 
             final glow =
                 isWaveActive ? (1 - waveProgress).clamp(0.0, 1.0) : 0.0;
@@ -276,166 +275,167 @@ class _HoldToConfirmButtonState extends State<HoldToConfirmButton>
                 ? Curves.easeIn.transform(holdValue.clamp(0.0, 1.0))
                 : 0.0;
 
-            double scale = 1.0;
-            if (_isHolding) {
-              scale = 1.0 + 0.2 * Curves.easeOut.transform(holdValue);
-            } else if (isWaveActive) {
-              scale = 1.0 +
-                  0.2 * (1 - Curves.easeOutBack.transform(waveProgress));
-            }
-
-            final shake = _isHolding && holdValue > 0.6
-                ? math.sin(holdValue * 90) * (holdValue - 0.6) * 3
+            // Halo fades in quickly after press (~200 ms).
+            final appear = _isHolding
+                ? Curves.easeOut.transform((holdValue * 10).clamp(0.0, 1.0))
                 : 0.0;
 
-            final ringColor = isWaveActive
-                ? AppColors.success
-                : (_isHolding ? AppColors.accent : AppColors.secondary);
+            // Hold: slow grow. Blast: quick punch up (1.06 -> 1.2) then settle.
+            double scale = 1.0;
+            if (_isHolding) {
+              scale = 1.0 + 0.06 * Curves.easeOut.transform(holdValue);
+            } else if (isWaveActive) {
+              const punchAt = 0.12;
+              if (waveProgress < punchAt) {
+                final k = Curves.easeOut.transform(waveProgress / punchAt);
+                scale = 1.06 + 0.14 * k;
+              } else {
+                final k = Curves.easeOutCubic
+                    .transform((waveProgress - punchAt) / (1 - punchAt));
+                scale = 1.2 - 0.2 * k;
+              }
+            }
 
-            final showDone = isWaveActive;
+            // Slightly lighter / darker shades of the same colour -> premium look.
+            final hsl = HSLColor.fromColor(activeColor);
+            final light = hsl
+                .withLightness((hsl.lightness + 0.08).clamp(0.0, 1.0))
+                .toColor();
+            final dark = hsl
+                .withLightness((hsl.lightness - 0.06).clamp(0.0, 1.0))
+                .toColor();
 
             return Stack(
               alignment: Alignment.center,
               clipBehavior: Clip.none,
               children: [
-                if (_isHolding) ...[
+                // Soft single-colour halo while holding
+                if (_isHolding)
                   Container(
-                    width: 100 + charge * 40,
-                    height: 100 + charge * 40,
+                    width: 120 + charge * 24,
+                    height: 120 + charge * 24,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: RadialGradient(
                         colors: [
-                          buttonColor.withValues(alpha: 0.28 * charge),
+                          buttonColor.withValues(alpha: 0.20 * appear),
+                          buttonColor.withValues(alpha: 0.07 * appear),
                           buttonColor.withValues(alpha: 0),
                         ],
+                        stops: const [0.0, 0.6, 1.0],
                       ),
                     ),
                   ),
+
+                // ───── BLAST ─────
+                if (isWaveActive) ...[
                   CustomPaint(
                     size: const Size(100, 100),
-                    painter: _ChargePainter(
-                      progress: holdValue,
-                      color: buttonColor,
-                      accent: AppColors.accent,
+                    painter: _BlastPainter(
+                      t: waveProgress,
+                      color: AppColors.success,
                     ),
                   ),
+                  _buildPulseWave(waveProgress, 0, AppColors.success),
+                  _buildPulseWave(waveProgress, 1, AppColors.success),
                 ],
 
-                if (isWaveActive) ...[
-                  _buildPulseWave(waveProgress, 0),
-                  _buildPulseWave(waveProgress, 1),
-                  _buildPulseWave(waveProgress, 2),
-                  Container(
-                    width: 100 + (glow * 40),
-                    height: 100 + (glow * 40),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.primaryBlue
-                              .withValues(alpha: 0.28 * glow),
-                          blurRadius: 30 + (glow * 30),
-                          spreadRadius: 4 + (glow * 8),
+                Transform.scale(
+                  scale: scale,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    clipBehavior: Clip.none,
+                    children: [
+                      // Track ring
+                      SizedBox(
+                        width: 104,
+                        height: 104,
+                        child: CircularProgressIndicator(
+                          value: isWaveActive ? 1 : 0,
+                          strokeWidth: 4,
+                          strokeCap: StrokeCap.round,
+                          backgroundColor: buttonColor.withValues(alpha: 0.14),
+                          valueColor: const AlwaysStoppedAnimation<Color>(
+                              AppColors.success),
                         ),
-                        BoxShadow(
-                          color: AppColors.success
-                              .withValues(alpha: 0.35 * glow),
-                          blurRadius: 24 + (glow * 24),
-                          spreadRadius: 3 + (glow * 6),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                      ),
 
-                Transform.translate(
-                  offset: Offset(shake, 0),
-                  child: Transform.scale(
-                    scale: scale,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      clipBehavior: Clip.none,
-                      children: [
-                        SizedBox(
-                          width: 106,
-                          height: 106,
-                          child: CircularProgressIndicator(
-                            value: isWaveActive ? 1 : (_isHolding ? holdValue : 0),
-                            strokeWidth: _isHolding ? 4.5 + holdValue * 3 : 4.5,
-                            strokeCap: StrokeCap.round,
-                            backgroundColor:
-                                AppColors.primaryBlue.withValues(alpha: 0.13),
-                            valueColor:
-                                AlwaysStoppedAnimation<Color>(ringColor),
+                      // Progress ring while holding
+                      if (_isHolding)
+                        CustomPaint(
+                          size: const Size(104, 104),
+                          painter: _ProgressRingPainter(
+                            progress: holdValue,
+                            color: buttonColor,
+                            strokeWidth: 4.5,
                           ),
                         ),
-                        Container(
-                          width: 88,
-                          height: 88,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: LinearGradient(
-                              colors: [
-                                showDone ? AppColors.success : buttonColor,
-                                _isHolding
-                                    ? AppColors.secondaryDark
-                                    : (showDone
-                                        ? AppColors.success
-                                            .withValues(alpha: 0.8)
-                                        : buttonColor.withValues(alpha: 0.78)),
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
+
+                      // Full ring glow flash right at blast
+                      if (isWaveActive)
+                        CustomPaint(
+                          size: const Size(104, 104),
+                          painter: _ProgressRingPainter(
+                            progress: 1,
+                            color: AppColors.success,
+                            strokeWidth: 4.5,
+                            glowStrength: glow,
+                            showTip: false,
+                          ),
+                        ),
+
+                      // Main button
+                      Container(
+                        width: 86,
+                        height: 86,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: LinearGradient(
+                            colors: [light, dark],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: activeColor.withValues(
+                                alpha: 0.22 + (charge * 0.14) + (glow * 0.28),
+                              ),
+                              blurRadius: 16 + (charge * 8) + (glow * 22),
+                              spreadRadius: 0 + (charge * 2) + (glow * 4),
+                              offset: Offset(0, 6 * (1 - glow * 0.7)),
                             ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: buttonColor.withValues(
-                                  alpha: 0.24 + (charge * 0.3) + (glow * 0.25),
-                                ),
-                                blurRadius: 18 + (charge * 22) + (glow * 18),
-                                spreadRadius: 1 + (charge * 4) + (glow * 3),
-                              ),
-                              if (isWaveActive)
-                                BoxShadow(
-                                  color: AppColors.secondary
-                                      .withValues(alpha: 0.30 * glow),
-                                  blurRadius: 22,
-                                  spreadRadius: 2,
-                                ),
-                            ],
-                          ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                showDone
-                                    ? Icons.check_rounded
-                                    : Icons.fingerprint_rounded,
-                                size: showDone ? 46 : 42 + holdValue * 4,
-                                color: AppColors.surface,
-                              ),
-                              const SizedBox(height: 3),
-                              Text(
-                                showDone
-                                    ? 'DONE'
-                                    : (_isHolding
-                                        ? '${(holdValue * 100).round()}%'
-                                        : (widget.isCheckOut
-                                            ? 'CHECK OUT'
-                                            : 'CHECK IN')),
-                                style: GoogleFonts.inter(
-                                  color: AppColors.surface,
-                                  fontSize: _isHolding ? 11 : 9,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 0.8,
-                                ),
-                              ),
-                            ],
-                          ),
+                          ],
                         ),
-                      ],
-                    ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              showDone
+                                  ? Icons.check_rounded
+                                  : Icons.fingerprint_rounded,
+                              size: showDone ? 44 : 40 + holdValue * 3,
+                              color: AppColors.surface,
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              showDone
+                                  ? 'DONE'
+                                  : (_isHolding
+                                      ? '${(holdValue * 100).round()}%'
+                                      : (widget.isCheckOut
+                                          ? 'CHECK OUT'
+                                          : 'CHECK IN')),
+                              style: GoogleFonts.inter(
+                                color: AppColors.surface,
+                                fontSize: _isHolding ? 11 : 9,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.8,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -447,55 +447,189 @@ class _HoldToConfirmButtonState extends State<HoldToConfirmButton>
   }
 }
 
-/// Spinning energy rays + glowing spark at the tip of the progress ring.
-class _ChargePainter extends CustomPainter {
-  _ChargePainter({
+/// Clean single-colour progress ring with a small white dot at the tip.
+class _ProgressRingPainter extends CustomPainter {
+  _ProgressRingPainter({
     required this.progress,
     required this.color,
-    required this.accent,
+    required this.strokeWidth,
+    this.glowStrength = 1.0,
+    this.showTip = true,
   });
 
   final double progress;
   final Color color;
-  final Color accent;
+  final double strokeWidth;
+  final double glowStrength; // 0..1 (used for the blast flash)
+  final bool showTip;
 
   @override
   void paint(Canvas canvas, Size size) {
-    final center = size.center(Offset.zero);
     final p = progress.clamp(0.0, 1.0);
+    if (p <= 0) return;
 
-    const rays = 16;
-    final rotation = p * math.pi * 2;
-    for (int i = 0; i < rays; i++) {
-      final a = rotation + (i / rays) * math.pi * 2;
-      final inner = 60 + p * 6;
-      final len = (6 + p * 16) * (i.isEven ? 1.0 : 0.6);
-      final paint = Paint()
-        ..color = (i.isEven ? color : accent).withValues(alpha: 0.15 + p * 0.6)
-        ..strokeWidth = 2.2
-        ..strokeCap = StrokeCap.round;
-      canvas.drawLine(
-        center + Offset(math.cos(a), math.sin(a)) * inner,
-        center + Offset(math.cos(a), math.sin(a)) * (inner + len),
-        paint,
-      );
-    }
+    final center = size.center(Offset.zero);
+    final radius = (size.width - strokeWidth) / 2;
+    final rect = Rect.fromCircle(center: center, radius: radius);
+    final sweep = p * math.pi * 2;
 
-    final tipAngle = -math.pi / 2 + p * math.pi * 2;
-    final tip = center + Offset(math.cos(tipAngle), math.sin(tipAngle)) * 53;
-    canvas.drawCircle(
-      tip,
-      9,
+    // Subtle tint variation of the SAME colour (no rainbow).
+    final hsl = HSLColor.fromColor(color);
+    final lighter = hsl
+        .withLightness((hsl.lightness + 0.14).clamp(0.0, 1.0))
+        .toColor();
+
+    final shader = SweepGradient(
+      startAngle: -math.pi / 2,
+      endAngle: -math.pi / 2 + math.pi * 2,
+      colors: [color, lighter],
+    ).createShader(rect);
+
+    // Soft glow
+    canvas.drawArc(
+      rect,
+      -math.pi / 2,
+      sweep,
+      false,
       Paint()
-        ..color = accent.withValues(alpha: 0.45)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
+        ..color = color.withValues(alpha: 0.28 + 0.4 * glowStrength)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = strokeWidth + 4 + 6 * glowStrength
+        ..strokeCap = StrokeCap.round
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, 5 + 5 * glowStrength),
     );
-    canvas.drawCircle(tip, 3.5, Paint()..color = Colors.white);
+
+    // Main ring
+    canvas.drawArc(
+      rect,
+      -math.pi / 2,
+      sweep,
+      false,
+      Paint()
+        ..shader = shader
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = strokeWidth
+        ..strokeCap = StrokeCap.round,
+    );
+
+    // Small tip dot
+    if (showTip) {
+      final tipAngle = -math.pi / 2 + sweep;
+      final tip =
+          center + Offset(math.cos(tipAngle), math.sin(tipAngle)) * radius;
+      canvas.drawCircle(tip, 2.4, Paint()..color = Colors.white);
+    }
   }
 
   @override
-  bool shouldRepaint(covariant _ChargePainter old) =>
+  bool shouldRepaint(covariant _ProgressRingPainter old) =>
       old.progress != progress ||
       old.color != color ||
-      old.accent != accent;
+      old.strokeWidth != strokeWidth ||
+      old.glowStrength != glowStrength ||
+      old.showTip != showTip;
+}
+
+/// The success blast: flash + shockwave ring + radial sparks.
+/// t: 0..1 (the wave controller value).
+class _BlastPainter extends CustomPainter {
+  _BlastPainter({required this.t, required this.color});
+
+  final double t;
+  final Color color;
+
+  static const int _sparkCount = 28;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final c = size.center(Offset.zero);
+    const tau = math.pi * 2;
+
+    final hsl = HSLColor.fromColor(color);
+    final lighter = hsl
+        .withLightness((hsl.lightness + 0.22).clamp(0.0, 1.0))
+        .toColor();
+
+    // 1) Flash: quick bright burst behind the button.
+    if (t < 0.28) {
+      final f = t / 0.28;
+      final e = Curves.easeOut.transform(f);
+      final r = 46 + e * 46;
+      canvas.drawCircle(
+        c,
+        r,
+        Paint()
+          ..shader = RadialGradient(
+            colors: [
+              Colors.white.withValues(alpha: (1 - f) * 0.65),
+              color.withValues(alpha: (1 - f) * 0.45),
+              color.withValues(alpha: 0),
+            ],
+            stops: const [0.0, 0.5, 1.0],
+          ).createShader(Rect.fromCircle(center: c, radius: r)),
+      );
+    }
+
+    // 2) Shockwave ring: thick -> thin as it expands.
+    final sw = (t / 0.7).clamp(0.0, 1.0);
+    if (sw > 0 && sw < 1) {
+      final e = Curves.easeOutCubic.transform(sw);
+      final r = 52 + e * 64;
+      final stroke = 7.0 * (1 - e) + 0.8;
+      final alpha = (1 - e) * 0.9;
+
+      canvas.drawCircle(
+        c,
+        r,
+        Paint()
+          ..color = color.withValues(alpha: alpha * 0.5)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = stroke + 5
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
+      );
+      canvas.drawCircle(
+        c,
+        r,
+        Paint()
+          ..color = lighter.withValues(alpha: alpha)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = stroke,
+      );
+    }
+
+    // 3) Radial sparks (alternating long dashes and dots).
+    final st = ((t - 0.02) / 0.75).clamp(0.0, 1.0);
+    if (st > 0 && st < 1) {
+      final e = Curves.easeOutCubic.transform(st);
+      final fade = (1 - st);
+      final paint = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round;
+      final dot = Paint()..style = PaintingStyle.fill;
+
+      for (int i = 0; i < _sparkCount; i++) {
+        final angle = i / _sparkCount * tau + (i.isOdd ? 0.09 : 0.0);
+        final dir = Offset(math.cos(angle), math.sin(angle));
+        final variant = i % 3; // 0 long, 1 medium, 2 dot
+
+        final travel = variant == 0 ? 70.0 : (variant == 1 ? 54.0 : 62.0);
+        final startR = 52 + e * travel;
+
+        if (variant == 2) {
+          dot.color = lighter.withValues(alpha: fade);
+          canvas.drawCircle(c + dir * (startR + 6), 2.2 * fade + 0.4, dot);
+        } else {
+          final len = (variant == 0 ? 16.0 : 9.0) * fade + 2;
+          paint
+            ..color = (i.isEven ? color : lighter).withValues(alpha: fade)
+            ..strokeWidth = (variant == 0 ? 2.6 : 2.0) * (0.5 + 0.5 * fade);
+          canvas.drawLine(c + dir * startR, c + dir * (startR + len), paint);
+        }
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _BlastPainter old) =>
+      old.t != t || old.color != color;
 }

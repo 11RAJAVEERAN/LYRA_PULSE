@@ -574,15 +574,15 @@ class _ActivityTitle extends StatelessWidget {
             color: AppColors.primary.withValues(alpha: .08),
             borderRadius: BorderRadius.circular(10),
           ),
-          child: const SizedBox(
-            width: 40,
-            height: 40,
-            child: Icon(
-              Icons.show_chart_rounded,
-              color: AppColors.primary,
-              size: 28,
-            ),
-          ),
+          // child: const SizedBox(
+          //   width: 40,
+          //   height: 40,
+          //   child: Icon(
+          //     Icons.show_chart_rounded,
+          //     color: AppColors.primary,
+          //     size: 28,
+          //   ),
+          // ),
         ),
 
         const SizedBox(width: 14),
@@ -591,8 +591,8 @@ class _ActivityTitle extends StatelessWidget {
           "Today's activity",
           style: GoogleFonts.inter(
             color: AppColors.textPrimary,
-            fontSize: 15,
-            fontWeight: FontWeight.w500,
+            fontSize: 17,
+            fontWeight: FontWeight.w700,
           ),
         ),
       ],

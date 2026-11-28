@@ -28,9 +28,12 @@ class LeaveController extends GetxController {
 
   final RxBool isLoading = false.obs;
 
-  // Project A exposes no employee leave API or leave-type configuration.
-  // Keep the UI state empty until a real A contract is available.
-  final List<String> leaveTypes = const [];
+  // Balance-la irukkura types + kadaisila LWP (Loss of Pay)
+  List<String> get leaveTypes {
+    final types = leaveBalances.keys.where((k) => k != 'LWP').toList();
+    types.add('LWP');
+    return types;
+  }
 
   List<LeaveModel> get pendingLeaves =>
       leaveList.where((e) => e.status == 'Pending').toList();
@@ -52,18 +55,27 @@ class LeaveController extends GetxController {
       leaveBalances.containsKey(selectedLeaveType.value);
 
   double get calculatedDays {
-    if (startDate.value == null || endDate.value == null) {
-      return 0;
-    }
+    final start = startDate.value;
+    if (start == null) return 0;
 
-    final days = endDate.value!.difference(startDate.value!).inDays + 1;
+    // Half Day-na eppavum 0.5
+    if (selectedDuration.value == 'Half Day') return 0.5;
 
-    if (selectedDuration.value == 'Half Day') {
-      return 0.5;
-    }
+    final end = endDate.value ?? start;
 
-    return days.toDouble();
+    // time part remove panna
+    final s = DateTime(start.year, start.month, start.day);
+    final e = DateTime(end.year, end.month, end.day);
+
+    return (e.difference(s).inDays + 1).toDouble();
   }
+  // Half Day allow aaga: date select pannala / oru naal mattum select pannirukku
+bool get isSingleDay {
+  final start = startDate.value;
+  final end = endDate.value;
+  if (start == null || end == null) return true;
+  return DateUtils.isSameDay(start, end);
+}
 
   bool get isFormValid {
     if (selectedLeaveType.value.isEmpty ||
@@ -110,21 +122,52 @@ class LeaveController extends GetxController {
   }
 
   void selectDuration(String value) {
-    selectedDuration.value = value;
+  if (value == 'Half Day' && !isSingleDay) return; // multiple days-ku half day block
+  selectedDuration.value = value;
+}
+
+
+void selectDate(DateTime date) {
+  final selected = DateTime(date.year, date.month, date.day);
+
+  if (startDate.value == null ||
+      endDate.value != null ||
+      selected.isBefore(startDate.value!)) {
+    startDate.value = selected;
+    endDate.value = null;
+  } else {
+    endDate.value = selected;
   }
 
-  void selectDate(DateTime date) {
-    final selected = DateTime(date.year, date.month, date.day);
-
-    if (startDate.value == null ||
-        endDate.value != null ||
-        selected.isBefore(startDate.value!)) {
-      startDate.value = selected;
-      endDate.value = null;
-    } else {
-      endDate.value = selected;
-    }
+  // one day-ku mela pona Half Day-a Full Day-ku maathu
+  if (!isSingleDay) {
+    selectedDuration.value = 'Full Day';
   }
+}
+void _syncDuration() {
+  // one day-ku mela pona Half Day-a Full Day-ku maathu
+  if (!isSingleDay) {
+    selectedDuration.value = 'Full Day';
+  }
+}
+
+void setStartDate(DateTime date) {
+  final d = DateTime(date.year, date.month, date.day);
+  startDate.value = d;
+
+  // End date illana, illa start-ku munnadi irundha, end = start (one day leave)
+  if (endDate.value == null || endDate.value!.isBefore(d)) {
+    endDate.value = d;
+  }
+  _syncDuration();
+}
+
+void setEndDate(DateTime date) {
+  endDate.value = DateTime(date.year, date.month, date.day);
+  _syncDuration();
+}
+
+
 
   void changeMonth(int offset) {
     final current = calendarMonth.value;
